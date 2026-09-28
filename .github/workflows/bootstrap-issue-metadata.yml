@@ -37,8 +37,6 @@ jobs:
 
           PRIORITY_FIELD = 22639629
           EFFORT_FIELD = 22639632
-          PRIORITY = {"High": 39613419, "Medium": 39613420, "Low": 39613421}
-          EFFORT = {"High": 39613422, "Medium": 39613423, "Low": 39613424}
 
           features = {
               1:  ("High", "Medium", 1),
@@ -103,19 +101,13 @@ jobs:
                   headers=headers,
                   method=method,
               )
-              with urllib.request.urlopen(request) as response:
-                  body = response.read()
-                  return json.loads(body) if body else None
-
-          for name in ("feature", "task"):
               try:
-                  Request("POST", f"repos/{repo}/labels", {
-                      "name": name,
-                      "color": "ededed",
-                  })
+                  with urllib.request.urlopen(request) as response:
+                      body = response.read()
+                      return json.loads(body) if body else None
               except urllib.error.HTTPError as exc:
-                  if exc.code != 422:
-                      raise
+                  detail = exc.read().decode("utf-8", errors="replace")
+                  raise RuntimeError(f"{method} {path} failed: {exc.code} {detail}") from exc
 
           for issueType, mapping, label in (
               ("Feature", features, "feature"),
@@ -126,9 +118,11 @@ jobs:
                       "type": issueType,
                       "milestone": milestone,
                       "labels": [label],
+                  })
+                  Request("PUT", f"repos/{repo}/issues/{number}/issue-field-values", {
                       "issue_field_values": [
-                          {"field_id": PRIORITY_FIELD, "value": PRIORITY[priority]},
-                          {"field_id": EFFORT_FIELD, "value": EFFORT[effort]},
+                          {"field_id": PRIORITY_FIELD, "value": priority},
+                          {"field_id": EFFORT_FIELD, "value": effort},
                       ],
                   })
 
@@ -139,8 +133,8 @@ jobs:
                       Request("POST", f"repos/{repo}/issues/{parent}/sub_issues", {
                           "sub_issue_id": childIssue["id"],
                       })
-                  except urllib.error.HTTPError as exc:
-                      if exc.code != 422:
+                  except RuntimeError as exc:
+                      if "422" not in str(exc):
                           raise
 
           print("F-Layer issue metadata bootstrap completed.")

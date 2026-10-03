@@ -1,3 +1,3 @@
-"""F-Layer core package."""
+"""Public package foundation for F-Layer."""
 
-__all__ = []
+__all__: list[str] = []

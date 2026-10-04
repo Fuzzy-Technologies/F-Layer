@@ -1,0 +1,16 @@
+{
+  "envelope": "result",
+  "evidence": {
+    "resource_count": 1
+  },
+  "identity": {
+    "owner_id": "example-owner",
+    "project": "example",
+    "provider": "fake",
+    "scope_id": "scope-example",
+    "stack": "sandbox"
+  },
+  "operation": "state",
+  "request_id": "example-001",
+  "schema_version": 1
+}

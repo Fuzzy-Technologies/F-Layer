@@ -1,0 +1,28 @@
+{
+  "envelope": "result",
+  "evidence": {
+    "checks": [
+      {
+        "metrics": {
+          "byte_limit": 64,
+          "duration_seconds": 0.5,
+          "http_status": 206,
+          "received_bytes": 64,
+          "throughput_mbps": 0.001024
+        },
+        "status": "ok"
+      }
+    ],
+    "status": "ok"
+  },
+  "identity": {
+    "owner_id": "example-owner",
+    "project": "example",
+    "provider": "fake",
+    "scope_id": "scope-example",
+    "stack": "sandbox"
+  },
+  "operation": "benchmark",
+  "request_id": "example-001",
+  "schema_version": 1
+}

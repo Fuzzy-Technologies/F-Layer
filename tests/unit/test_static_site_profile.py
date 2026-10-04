@@ -507,12 +507,57 @@ def test_CloudInitValidatesGeneratedSchemaWithoutGuestExecution(tmp_path: Path) 
 def test_NginxParsesFixedConfigurationWithoutDaemonStartup(tmp_path: Path) -> None:
     """Run nginx test mode only with scratch paths and stderr logging, never a service."""
 
-    config = GuestFiles()["/etc/nginx/nginx.conf"]["content"].replace("/run/nginx.pid", str(tmp_path / "nginx.pid"))
+    config = GuestFiles()["/etc/nginx/nginx.conf"]["content"]
+    config = config.replace("pid /run/nginx.pid;", "\n".join((
+        f"pid {json.dumps(str(tmp_path / 'nginx.pid'))};", "error_log stderr;",
+        f"lock_file {json.dumps(str(tmp_path / 'nginx.lock'))};",
+    )))
+    temporary_directives: list[str] = []
+
+    for module in ("client_body", "proxy", "fastcgi", "uwsgi", "scgi"):
+        directory = tmp_path / (module + "-temp")
+        directory.mkdir(mode=0o700)
+        temporary_directives.append(f"    {module}_temp_path {json.dumps(str(directory))};")
+
+    config = config.replace("http {\n", "http {\n" + "\n".join(temporary_directives) + "\n", 1)
     path = tmp_path / "nginx.conf"
     path.write_text(config)
     result = subprocess.run([str(shutil.which("nginx")), "-t", "-e", "stderr", "-p", str(tmp_path), "-c", str(path)], capture_output=True, text=True, check=False, timeout=5)
 
-    assert result.returncode == 0, "Fixed nginx configuration must parse without startup"
+    assert result.returncode == 0, "Fixed nginx configuration must parse without startup: " + result.stderr
+
+
+def test_NginxValidatorIsolatesWritablePathsAndRetainsServerGrammar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Exercise the optional validator boundary through a fake installed executable without startup."""
+
+    calls: list[list[str]] = []
+
+    def FakeRun(command: list[str], **options: object) -> subprocess.CompletedProcess[str]:
+        """Inspect the complete test configuration and require bounded parser-only invocation."""
+
+        calls.append(command)
+        assert command[0] == "/synthetic/nginx" and "-t" in command, "Validator must invoke installed nginx only in test mode"
+        assert command[command.index("-e") + 1] == "stderr", "Early nginx diagnostics must not open a host error log"
+        assert Path(command[command.index("-p") + 1]) == tmp_path, "Relative nginx paths must use the owned sandbox prefix"
+        config = Path(command[command.index("-c") + 1]).read_text()
+        original = GuestFiles()["/etc/nginx/nginx.conf"]["content"]
+        assert config[config.index("    default_type text/html;"):] == original[original.index("    default_type text/html;"):], "Validation must retain the complete generated HTTP and server grammar"
+        assert "error_log stderr;" in config and "access_log off;" in config, "Nginx must have no writable default host logs"
+
+        for filename, directive in (("nginx.pid", "pid"), ("nginx.lock", "lock_file")):
+            assert f"{directive} {json.dumps(str(tmp_path / filename))};" in config, "Main nginx writable paths must remain sandbox owned"
+
+        for module in ("client_body", "proxy", "fastcgi", "uwsgi", "scgi"):
+            directory = tmp_path / (module + "-temp")
+            assert f"{module}_temp_path {json.dumps(str(directory))};" in config, "Every compiled HTTP temporary path must have an explicit sandbox override"
+            assert directory.is_dir() and directory.stat().st_mode & 0o777 == 0o700, "Temporary nginx paths must be precreated as private owned directories"
+
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="synthetic configuration test passed")
+
+    monkeypatch.setattr(shutil, "which", lambda name: "/synthetic/nginx")
+    monkeypatch.setattr(subprocess, "run", FakeRun)
+    test_NginxParsesFixedConfigurationWithoutDaemonStartup(tmp_path)
+    assert len(calls) == 1, "Configuration validation must not start another executable or service"
 
 
 def test_MaximumTextAndSourceBudgetsRemainWithinProviderArtifactLimit(tmp_path: Path) -> None:

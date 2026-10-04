@@ -26,6 +26,8 @@ class ProviderCapability(StrEnum):
 
     INVENTORY = "inventory"
     RESOURCE_LOOKUP = "resource_lookup"
+    CREATE_RESOURCE = "create_resource"
+    DELETE_RESOURCE = "delete_resource"
 
 
 class ProviderErrorCode(StrEnum):

@@ -7,14 +7,14 @@ are separate work. See [ADR 0001](../adr/0001-config-state-contracts.md).
 
 ## Module boundaries
 
-| Boundary | Owns | Excludes |
-| --- | --- | --- |
-| `flayer.core.contracts` | Schema validation, stack identity, ownership labels | Cloud authentication, cloud API behavior |
-| `flayer.core.config` | Desired resources, profile identifier, credential references, TOML loading | Credential resolution, regional defaults, provider-specific resource settings |
-| `flayer.core.state` | Owned resource locators, strict JSON loading, local atomic persistence | Provider observations, authorization, cloud deletion, generated artifacts |
-| Provider adapters | Provider settings, authentication, cloud API translation, ownership verification | Generic state storage policy |
-| Deployment profiles | Provider capability composition and profile-specific settings | Implicit core provider selection |
-| Diagnostics | Observations and reports with explicit execution boundaries | Desired state or ownership authority |
+| Boundary                | Owns                                                                             | Excludes                                                                      |
+| ----------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `flayer.core.contracts` | Schema validation, stack identity, ownership labels                              | Cloud authentication, cloud API behavior                                      |
+| `flayer.core.config`    | Desired resources, profile identifier, credential references, TOML loading       | Credential resolution, regional defaults, provider-specific resource settings |
+| `flayer.core.state`     | Owned resource locators, strict JSON loading, local atomic persistence           | Provider observations, authorization, cloud deletion, generated artifacts     |
+| Provider adapters       | Provider settings, authentication, cloud API translation, ownership verification | Generic state storage policy                                                  |
+| Deployment profiles     | Provider capability composition and profile-specific settings                    | Implicit core provider selection                                              |
+| Diagnostics             | Observations and reports with explicit execution boundaries                      | Desired state or ownership authority                                          |
 
 ## Desired configuration
 
@@ -95,7 +95,11 @@ The JSON schema has exactly `schema_version`, `identity`, and `resources`.
 It does not persist credential references or values, full configuration,
 provider response payloads, logs, health reports, generated files, or public
 endpoints. An absent file returns `None`; a corrupt or foreign file raises
-`StateError`. Duplicate JSON fields are rejected.
+`StateError`. Duplicate JSON fields are rejected. Reads and writes have a 1 MiB
+JSON limit. The opened descriptor must be a regular file; nonblocking open where
+available prevents a post-validation FIFO substitution from hanging a reader.
+Both the initial size and the bounded stream result are checked, so concurrent
+file growth cannot bypass the limit. Oversized writes fail before replacement.
 
 Every read, save, and removal requires an expected identity. All five
 identity fields must match. `SaveState` also validates an existing snapshot

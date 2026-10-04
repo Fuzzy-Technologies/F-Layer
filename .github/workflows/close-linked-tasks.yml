@@ -1,0 +1,86 @@
+name: Close linked Tasks after merge
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - develop
+      - master
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: read
+
+jobs:
+  close-linked-tasks:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      PR_URL: ${{ github.event.pull_request.html_url }}
+      PR_BODY: ${{ github.event.pull_request.body }}
+      HEAD_REF: ${{ github.event.pull_request.head.ref }}
+      BASE_REF: ${{ github.event.pull_request.base.ref }}
+
+    steps:
+      - name: Check out merged base
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Close explicitly linked Task issues
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -t linked_issues < <(python tools/pr_merge_links.py)
+
+          for issue_number in "${linked_issues[@]}"; do
+            issue="$(gh api "repos/$GH_REPO/issues/$issue_number")"
+
+            if [ "$(printf '%s' "$issue" | jq -r 'has("pull_request")')" = "true" ]; then
+              continue
+            fi
+
+            issue_type="$(printf '%s' "$issue" | jq -r '.type.name // ""')"
+            issue_state="$(printf '%s' "$issue" | jq -r '.state')"
+
+            if [ "$issue_type" != "Task" ] || [ "$issue_state" = "closed" ]; then
+              continue
+            fi
+
+            comment="$(jq -nc \
+              --arg body "Implemented by merged PR #$PR_NUMBER ($PR_URL). Automatically marked completed after merge into $BASE_REF." \
+              '{body:$body}')"
+
+            printf '%s' "$comment" | gh api \
+              --method POST \
+              "repos/$GH_REPO/issues/$issue_number/comments" \
+              --input - >/dev/null
+
+            printf '%s' '{"state":"closed","state_reason":"completed"}' | gh api \
+              --method PATCH \
+              "repos/$GH_REPO/issues/$issue_number" \
+              --input - >/dev/null
+          done
+
+      - name: Delete merged same-repository branch
+        if: >-
+          github.event.pull_request.head.repo.full_name == github.repository &&
+          github.event.pull_request.head.ref != 'master' &&
+          github.event.pull_request.head.ref != 'develop' &&
+          github.event.pull_request.head.ref != github.event.pull_request.base.ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          encoded_ref="${HEAD_REF//\//%2F}"
+          gh api --method DELETE "repos/$GH_REPO/git/refs/heads/$encoded_ref" || true

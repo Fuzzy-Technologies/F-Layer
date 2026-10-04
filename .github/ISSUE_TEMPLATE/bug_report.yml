@@ -1,0 +1,41 @@
+name: Bug report
+description: Report reproducible incorrect F-Layer behavior
+title: ""
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include credentials, tokens, private keys, or private infrastructure identifiers.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What went wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Provide the smallest safe reproduction that does not expose secrets or unrelated infrastructure.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: F-Layer version/commit, OS, runtime version, provider type, and other relevant non-secret context.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Sanitized logs, trace output, failing test, or other deterministic evidence.

@@ -412,6 +412,35 @@ def test_ArtifactIntegrityFailures(tmp_path: Path, mutation: str) -> None:
 
 
 @pytest.mark.parametrize("mutation", ["unowned", "changed", "missing", "wrong-root"])
+def test_ChangelogOwnershipAndCompleteness(tmp_path: Path, mutation: str) -> None:
+    """Shipped changelog bytes must be owned, intact, and present in source archives."""
+
+    sources = Sources()
+    sources["CHANGELOG.md"] = b"# F-Layer Changelog\n"
+    WriteArtifacts(tmp_path, sources)
+    release.AuditArtifacts(tmp_path, sources, VERSION)
+    path = tmp_path / f"f_layer-{VERSION}.tar.gz"
+    members = release.ReadSdist(path, VERSION)
+
+    if mutation == "unowned":
+        del sources["CHANGELOG.md"]
+
+    elif mutation == "changed":
+        members["CHANGELOG.md"] = b"Changed history\n"
+
+    elif mutation == "missing":
+        del members["CHANGELOG.md"]
+
+    else:
+        sources["PRIVATE_NOTES.md"] = members["PRIVATE_NOTES.md"] = b"Unapproved root file\n"
+
+    WriteSdist(path, members)
+
+    with pytest.raises(ValueError):
+        release.AuditArtifacts(tmp_path, sources, VERSION)
+
+
+@pytest.mark.parametrize("mutation", ["unowned", "changed", "missing", "wrong-root"])
 def test_SourceArchiveIntegrityFailures(tmp_path: Path, mutation: str) -> None:
     """A release source archive must carry complete reviewed rebuild inputs only."""
 

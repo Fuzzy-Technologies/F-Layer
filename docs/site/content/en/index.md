@@ -10,11 +10,10 @@ capabilities, deployment profiles, lifecycle operations, and diagnostic
 evidence. Those boundaries make individual integrations replaceable and
 operations reproducible.
 
-!!! info "Foundation stage"
-    F-Layer is in early development. This documentation describes the current
-    installed package and accepted architecture. There is no stable public API
-    or compatibility guarantee before `v1.0.0`. Architecture direction does
-    not imply that every lifecycle or deployment feature is implemented.
+!!! info "Versioned documentation"
+    GitHub Pages follows the latest stable `master` release. A local build
+    describes its installed source revision; `develop` can include accepted work
+    for later milestones. Use the tagged changelog to check each release's scope.
 
 <div class="grid cards" markdown>
 

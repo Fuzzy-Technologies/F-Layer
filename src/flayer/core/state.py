@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import stat
 import tempfile
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
@@ -22,6 +23,8 @@ from .contracts import (
     ValidateName,
     ValidateSchemaVersion,
 )
+
+MAX_JSON_BYTES = 1024 * 1024
 
 
 class StateError(ContractError):
@@ -160,6 +163,39 @@ def _OpenTextStream(descriptor: int, mode: str) -> IO[str]:
         raise
 
 
+def _ReadOwnedJson(path: Path) -> object:
+    """Read bounded regular JSON without blocking on a post-validation FIFO substitution."""
+
+    opened_descriptor = os.open(
+        path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    )
+    descriptor: int | None = opened_descriptor
+
+    try:
+        opened = os.fstat(opened_descriptor)
+
+        if not stat.S_ISREG(opened.st_mode) or opened.st_size > MAX_JSON_BYTES:
+            raise StateError("Owned JSON must be a bounded regular file")
+
+        stream_descriptor = opened_descriptor
+        descriptor = None
+
+        with _OpenTextStream(stream_descriptor, "r") as stream:
+            text = stream.read(MAX_JSON_BYTES + 1)
+
+        if len(text.encode("utf-8")) > MAX_JSON_BYTES:
+            raise StateError("Owned JSON exceeds its bounded read limit")
+
+        return json.loads(text, object_pairs_hook=_UniqueObject)
+
+    except FileNotFoundError as error:
+        raise StateError("Unable to read an opened owned JSON file") from error
+
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+
+
 def LoadState(path: str | Path, expected_identity: StackIdentity) -> StackState | None:
     """Return a strictly owned snapshot, or None only when the file is absent."""
 
@@ -170,17 +206,10 @@ def LoadState(path: str | Path, expected_identity: StackIdentity) -> StackState 
 
     try:
         _ValidatePath(state_path)
-        descriptor = os.open(state_path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        data = _ReadOwnedJson(state_path)
 
     except FileNotFoundError:
         return None
-
-    except OSError as error:
-        raise StateError("Unable to read a valid state snapshot") from error
-
-    try:
-        with _OpenTextStream(descriptor, "r") as stream:
-            data = json.load(stream, object_pairs_hook=_UniqueObject)
 
     except StateError:
         raise
@@ -252,6 +281,11 @@ def SaveState(path: str | Path, state: StackState, expected_identity: StackIdent
         raise StateError("state must be a StackState")
 
     _RequireIdentity(state.identity, expected_identity)
+    serialized = json.dumps(asdict(state), indent=2, sort_keys=True) + "\n"
+
+    if len(serialized.encode("utf-8")) > MAX_JSON_BYTES:
+        raise StateError("Owned state snapshot exceeds its bounded JSON storage limit")
+
     state_path = Path(path)
     temporary_path: Path | None = None
 
@@ -265,8 +299,7 @@ def SaveState(path: str | Path, state: StackState, expected_identity: StackIdent
             temporary_path = Path(temporary_name)
 
             with _OpenTextStream(descriptor, "w") as stream:
-                json.dump(asdict(state), stream, indent=2, sort_keys=True)
-                stream.write("\n")
+                stream.write(serialized)
                 stream.flush()
                 os.fsync(stream.fileno())
 

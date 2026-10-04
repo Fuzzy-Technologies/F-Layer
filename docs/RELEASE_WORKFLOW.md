@@ -6,14 +6,14 @@ It complements `DEVELOPMENT_PROTOCOL.md`. If these documents conflict, stop and 
 
 ## Branch roles
 
-| Branch pattern | Purpose | Normal source | Normal destination |
-| --- | --- | --- | --- |
-| `master` | Stable released/public state | release/hotfix/publication | tag/publication |
-| `develop` | Integration branch for the next release | `feature/*`, `fix/*` | `release/*` |
-| `feature/<name>` | Product, architecture, governance, or task work | `develop` | `develop` |
-| `fix/<name>` | Non-release correction | `develop` | `develop` |
-| `release/<version>` | Release stabilization | `develop` | `master` |
-| `hotfix/<name>` | Urgent released-state correction | `master` | `master` |
+| Branch pattern      | Purpose                                         | Normal source              | Normal destination |
+| ------------------- | ----------------------------------------------- | -------------------------- | ------------------ |
+| `master`            | Stable released/public state                    | release/hotfix/publication | tag/publication    |
+| `develop`           | Integration branch for the next release         | `feature/*`, `fix/*`       | `release/*`        |
+| `feature/<name>`    | Product, architecture, governance, or task work | `develop`                  | `develop`          |
+| `fix/<name>`        | Non-release correction                          | `develop`                  | `develop`          |
+| `release/<version>` | Release stabilization                           | `develop`                  | `master`           |
+| `hotfix/<name>`     | Urgent released-state correction                | `master`                   | `master`           |
 
 ## Protected branches
 

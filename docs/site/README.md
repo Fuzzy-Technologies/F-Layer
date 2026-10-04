@@ -16,6 +16,10 @@ installed source, validates strict links/anchors and localization, and writes
 `_build/api-reference/build-evidence.json`. A preprovisioned virtual environment
 can be selected with `--environment-python PATH` for offline/reproducible CI
 runners; its documentation versions must match the lock exactly.
+Place that environment outside `_build/api-reference/`, which the builder
+recreates. If environment creation restores stale generated output into the
+owned build root, the build fails before publishing and requests an external
+verified environment.
 
 Generated API symbols use the same blueprint source-hash scheme in a disposable
 registry, with `missing` RU/ZH states. They never receive synthetic reviews.

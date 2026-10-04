@@ -46,13 +46,13 @@ Pytest discovers `tests/` rather than only unit tests. Place each test in its
 stage directory; collection automatically adds the corresponding strict marker.
 An unclassified path causes collection to fail.
 
-| Directory / marker | Scope |
-| --- | --- |
-| `unit` | Isolated module behavior and failure branches |
-| `contract` | Shared interfaces and persisted data compatibility |
-| `functional` | Complete local workflows |
-| `integration` | Adapter composition with fakes or mocks |
-| `e2e` | Complete local scenarios without cloud mutation |
+| Directory / marker | Scope                                              |
+| ------------------ | -------------------------------------------------- |
+| `unit`             | Isolated module behavior and failure branches      |
+| `contract`         | Shared interfaces and persisted data compatibility |
+| `functional`       | Complete local workflows                           |
+| `integration`      | Adapter composition with fakes or mocks            |
+| `e2e`              | Complete local scenarios without cloud mutation    |
 
 Run a focused stage during development, followed by the full gate before review:
 

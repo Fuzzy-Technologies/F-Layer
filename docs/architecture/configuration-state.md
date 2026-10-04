@@ -7,14 +7,14 @@ are separate work. See [ADR 0001](../adr/0001-config-state-contracts.md).
 
 ## Module boundaries
 
-| Boundary | Owns | Excludes |
-| --- | --- | --- |
-| `flayer.core.contracts` | Schema validation, stack identity, ownership labels | Cloud authentication, cloud API behavior |
-| `flayer.core.config` | Desired resources, profile identifier, credential references, TOML loading | Credential resolution, regional defaults, provider-specific resource settings |
-| `flayer.core.state` | Owned resource locators, strict JSON loading, local atomic persistence | Provider observations, authorization, cloud deletion, generated artifacts |
-| Provider adapters | Provider settings, authentication, cloud API translation, ownership verification | Generic state storage policy |
-| Deployment profiles | Provider capability composition and profile-specific settings | Implicit core provider selection |
-| Diagnostics | Observations and reports with explicit execution boundaries | Desired state or ownership authority |
+| Boundary                | Owns                                                                             | Excludes                                                                      |
+| ----------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `flayer.core.contracts` | Schema validation, stack identity, ownership labels                              | Cloud authentication, cloud API behavior                                      |
+| `flayer.core.config`    | Desired resources, profile identifier, credential references, TOML loading       | Credential resolution, regional defaults, provider-specific resource settings |
+| `flayer.core.state`     | Owned resource locators, strict JSON loading, local atomic persistence           | Provider observations, authorization, cloud deletion, generated artifacts     |
+| Provider adapters       | Provider settings, authentication, cloud API translation, ownership verification | Generic state storage policy                                                  |
+| Deployment profiles     | Provider capability composition and profile-specific settings                    | Implicit core provider selection                                              |
+| Diagnostics             | Observations and reports with explicit execution boundaries                      | Desired state or ownership authority                                          |
 
 ## Desired configuration
 

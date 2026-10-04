@@ -4,15 +4,15 @@ F-Layer is organized around explicit boundaries. The documentation platform
 reads current modules from the installed wheel; the [API reference](api/index.md)
 shows the contracts actually present in this revision.
 
-| Boundary | Responsibility |
-|---|---|
-| Configuration | Validate user intent without embedding credentials or local machine paths. |
-| State | Preserve the minimum resource identity and lifecycle evidence needed for management. |
-| Provider | Own cloud API translation, authentication adapters, and capability discovery. |
-| Deployment profile | Compose capabilities into a concrete infrastructure outcome. |
-| Lifecycle | Coordinate create, observe, cleanup, rollback, and interrupted operations. |
-| Diagnostics | Produce bounded health and benchmark evidence without changing infrastructure. |
-| Generated artifacts | Expose clear ownership, provenance, and disposal rules. |
+| Boundary            | Responsibility                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------ |
+| Configuration       | Validate user intent without embedding credentials or local machine paths.           |
+| State               | Preserve the minimum resource identity and lifecycle evidence needed for management. |
+| Provider            | Own cloud API translation, authentication adapters, and capability discovery.        |
+| Deployment profile  | Compose capabilities into a concrete infrastructure outcome.                         |
+| Lifecycle           | Coordinate create, observe, cleanup, rollback, and interrupted operations.           |
+| Diagnostics         | Produce bounded health and benchmark evidence without changing infrastructure.       |
+| Generated artifacts | Expose clear ownership, provenance, and disposal rules.                              |
 
 These are architecture responsibilities, not a claim that every boundary has
 completed implementation. Provider-specific behavior belongs behind contracts;

@@ -18,6 +18,10 @@ operations reproducible.
 
 <div class="grid cards" markdown>
 
+- **Run the first checks**
+
+    [Install and configure F-Layer](guide/index.md) from an explicit source revision.
+
 - **Understand the boundaries**
 
     Read the [architecture](architecture.md) and its source-of-truth rules.
@@ -43,6 +47,9 @@ operations reproducible.
 - Configuration, desired state, observed state, and generated artifacts remain separate.
 - Local validation uses deterministic fixtures and never mutates real cloud resources.
 - Python annotations and English docstrings are the API source of truth.
+
+See the [user guide](guide/index.md) for console usage and the
+[project identity](brand.md) for the F-Layer logo family.
 
 [Fuzzy Technologies](https://fuzzy-technologies.github.io/) ·
 [GitHub repository](https://github.com/Fuzzy-Technologies/F-Layer)

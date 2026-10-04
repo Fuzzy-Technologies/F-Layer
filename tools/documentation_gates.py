@@ -6,10 +6,16 @@ import argparse
 import html.parser
 import re
 import subprocess
+import sys
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Protocol
 from urllib.parse import unquote, urlsplit
+
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from tools.markdown_tables import CheckMarkdownTables  # noqa: E402
 
 PUBLIC_ORIGIN = "https://fuzzy-technologies.github.io"
 PUBLIC_PATH = "/F-Layer"
@@ -215,6 +221,7 @@ def CheckAll(
 
     return tuple(sorted(set((
         *CheckSourceLinks(project_root), *CheckGeneratedPolicy(project_root),
+        *CheckMarkdownTables(project_root),
         *CheckRenderedLinks(site_root), *CheckApiCoverage(site_root, modules),
     ))))
 
@@ -226,7 +233,8 @@ def Main(arguments: Sequence[str] | None = None) -> int:
     parser.add_argument("--project-root", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--site-root", type=Path)
     options = parser.parse_args(arguments)
-    diagnostics = [*CheckSourceLinks(options.project_root), *CheckGeneratedPolicy(options.project_root)]
+    diagnostics = [*CheckSourceLinks(options.project_root), *CheckGeneratedPolicy(options.project_root),
+                   *CheckMarkdownTables(options.project_root)]
 
     if options.site_root:
         diagnostics.extend(CheckRenderedLinks(options.site_root.resolve()))

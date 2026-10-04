@@ -8,6 +8,42 @@ and security boundaries. Release entries follow [ADR 0014](docs/adr/0014-scoped-
 The first versioned infrastructure foundation. Operational validation against a
 real cloud account remains the operator's responsibility.
 
+## Minor 1.1
+
+### Patch 0 — v1.1.0 — 2026-10-05
+
+#### Digest
+
+- Install F-Layer as a typed Python package with a `flayer` console command,
+  follow practical setup and gateway guides, and inspect audited reproducible
+  release artifacts. Existing 1.0.0 runtime contracts remain supported.
+
+#### Added
+
+- PEP 561 typing metadata, installed console entry point, and a single literal
+  version source shared by runtime and distribution metadata.
+- Offline distribution installation and source-archive rebuild checks.
+- Reproducible wheel/source-archive audits, metadata/RECORD verification,
+  tracked-source ownership checks, and downloadable build evidence.
+- CI artifact previews and a separately guarded manual PyPI publishing workflow.
+  The workflow requires explicit owner configuration and confirmation.
+- User guides covering installation, provider configuration, CLI output, and
+  the first explicitly owned secure gateway deployment.
+
+#### Changed
+
+- Use the FuzzyRoutines-style FL logo family and clearer guide navigation.
+- Align Markdown table columns by their contents and check formatting in CI.
+- Document stable-tag installation and the released console command; include
+  release history in source archives and generated documentation.
+
+#### Security
+
+- Reject unowned, modified, missing, or unsafe archive payloads and recognizable
+  credential material; include the changelog as one explicitly owned root file.
+- Preserve 1.0.0's resource ownership and mutation-consent requirements. GitHub
+  release publication does not enable PyPI uploads or validate live cloud access.
+
 ## Minor 1.0
 
 ### Patch 0 — v1.0.0 — 2026-10-05
@@ -53,3 +89,5 @@ real cloud account remains the operator's responsibility.
   cloud mutations; live deployment and SSH access are not release-gate evidence.
 
 [v1.0.0]: https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.0.0
+
+[v1.1.0]: https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.1.0

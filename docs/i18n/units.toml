@@ -69,7 +69,7 @@ state = "missing"
 id = "page:guide"
 kind = "page"
 sourcePath = "docs/site/content/en/guide/index.md"
-sourceHash = "sha256:ad084b7e476dc15d86b6b0587c5f64e72636fa360a3c29992e880609cdbb58b1"
+sourceHash = "sha256:f24509b775d435ce32015c6dd967c06dc5635fe9a3a8fee10372777bf6ee202b"
 reviewClass = "technical"
 
 [units.translations.ru]
@@ -121,7 +121,7 @@ state = "missing"
 id = "page:guide.installation"
 kind = "page"
 sourcePath = "docs/site/content/en/guide/installation.md"
-sourceHash = "sha256:fde720cc25a92905c97ad540904a015512548b65ff5760b06723b8608c2ffd94"
+sourceHash = "sha256:37eb05a495ff7852dfd14b1adf6891f18256678042c35e21a1a82188ec3214ae"
 reviewClass = "technical"
 
 [units.translations.ru]
@@ -134,7 +134,7 @@ state = "missing"
 id = "page:index"
 kind = "page"
 sourcePath = "docs/site/content/en/index.md"
-sourceHash = "sha256:e6c9c464f945b16651d45389443d3c5786582a84406c015583cfb0cf4671e9b7"
+sourceHash = "sha256:c89d18dbea85dfbbe83a75b8aa3d4bb121461d87d9e3ee77e64dcb4856eeadca"
 reviewClass = "technical"
 
 [units.translations.ru]

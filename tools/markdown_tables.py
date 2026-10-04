@@ -1,4 +1,4 @@
-"""Align authored Markdown tables without changing cells or fenced examples."""
+"""Align authored Markdown tables without changing cells or literal code examples."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
 
 
 def SplitRow(line: str) -> list[str] | None:
-    """Split pipe-delimited cells while preserving escaped and code-span pipes."""
+    """Split cells at unescaped pipes, including pipes inside inline code."""
 
     stripped = line.strip()
 
@@ -23,7 +23,6 @@ def SplitRow(line: str) -> list[str] | None:
     cells: list[str] = []
     start = 1 if stripped.startswith("|") else 0
     index = start
-    code_ticks = 0
 
     while index < len(stripped):
         character = stripped[index]
@@ -32,24 +31,7 @@ def SplitRow(line: str) -> list[str] | None:
             index += 2
             continue
 
-        if character == "`":
-            end = index
-
-            while end < len(stripped) and stripped[end] == "`":
-                end += 1
-
-            run_length = end - index
-
-            if not code_ticks:
-                code_ticks = run_length
-
-            elif run_length == code_ticks:
-                code_ticks = 0
-
-            index = end
-            continue
-
-        if character == "|" and not code_ticks:
+        if character == "|":
             cells.append(stripped[start:index].strip())
             start = index + 1
 
@@ -59,6 +41,14 @@ def SplitRow(line: str) -> list[str] | None:
         cells.append(stripped[start:].strip())
 
     return cells if cells else None
+
+
+def _IndentedCode(line: str) -> bool:
+    """Recognize a four-column indentation boundary before table detection."""
+
+    prefix = line[:len(line) - len(line.lstrip(" \t"))]
+
+    return len(prefix.expandtabs(4)) >= 4
 
 
 def AlignMarkdown(text: str) -> str:
@@ -86,7 +76,11 @@ def AlignMarkdown(text: str) -> str:
             index += 1
             continue
 
-        if fence or index + 1 >= len(lines):
+        if fence or index + 1 >= len(lines) or _IndentedCode(lines[index]):
+            index += 1
+            continue
+
+        if _IndentedCode(lines[index + 1]):
             index += 1
             continue
 
@@ -103,6 +97,9 @@ def AlignMarkdown(text: str) -> str:
         end = index + 2
 
         while end < len(lines):
+            if _IndentedCode(lines[end]):
+                break
+
             row = SplitRow(lines[end])
 
             if row is None or len(row) != len(header):
@@ -162,7 +159,7 @@ def CheckMarkdownTables(project_root: Path) -> tuple[str, ...]:
 
 
 def Main(arguments: Sequence[str] | None = None) -> int:
-    """Check alignment by default or apply a requested whitespace-only table rewrite."""
+    """Check alignment by default or apply requested table padding and separator rules."""
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project-root", type=Path, default=Path(__file__).resolve().parents[1])

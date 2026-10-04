@@ -6,20 +6,25 @@ from pathlib import Path
 from tools.markdown_tables import AlignMarkdown, CheckMarkdownTables, SplitRow
 
 
-def test_TableAlignmentPreservesEscapedAndCodePipes() -> None:
-    """Column separators cannot split pipes that belong to a cell's content."""
+def test_TableAlignmentPreservesEscapedPipesInsideCode() -> None:
+    """GFM requires a pipe to be escaped even when it appears inside inline code."""
 
-    text = "| Cell | Note |\n| :--- | ---: |\n| `left|right` | escaped \\| pipe |\n"
+    text = "| Cell | Note |\n| :--- | ---: |\n| `left\\|right` | escaped \\| pipe |\n"
     aligned = AlignMarkdown(text)
-    original_rows = [SplitRow(line) for line in text.splitlines()]
     aligned_rows = [SplitRow(line) for line in aligned.splitlines()]
 
-    assert original_rows[0] == aligned_rows[0]
-    assert original_rows[2] == aligned_rows[2], "Alignment must preserve complete cell values"
+    assert aligned_rows[0] == ["Cell", "Note"]
+    assert aligned_rows[2] == ["`left\\|right`", "escaped \\| pipe"]
     assert aligned_rows[1] is not None
     assert aligned_rows[1][0].startswith(":")
     assert aligned_rows[1][1].endswith(":")
     assert AlignMarkdown(aligned) == aligned, "A second formatting pass must have no changes"
+
+
+def test_UnescapedPipeInsideCodeRemainsASeparator() -> None:
+    """Backticks cannot turn an unescaped GFM column delimiter into cell content."""
+
+    assert SplitRow("| `left|right` | note |") == ["`left", "right`", "note"]
 
 
 def test_FencedTablesAreNeverRewritten() -> None:
@@ -32,6 +37,19 @@ def test_FencedTablesAreNeverRewritten() -> None:
         )
 
         assert AlignMarkdown(example) == example, "Fenced literal content must remain untouched"
+
+
+def test_IndentedCodeTablesAreNeverRewritten() -> None:
+    """Table-looking literal code remains identical for spaces and tab indentation."""
+
+    for prefix in ("    ", "\t", "  \t"):
+        example = (
+            f"{prefix}| Short | Very long cell |\n"
+            f"{prefix}| --- | --- |\n"
+            f"{prefix}| Value | Result |\n"
+        )
+
+        assert AlignMarkdown(example) == example, "Indented literal code must remain untouched"
 
 
 def test_OptionalOuterPipesReceiveTheSameAlignment() -> None:

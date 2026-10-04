@@ -28,3 +28,23 @@ The copied validator retains the upstream hash, schema keys, and review semantic
 PRs and `develop` upload preview artifacts. Only an approved `master` push
 can deploy Pages. Routes: `/F-Layer/en/`, `/F-Layer/ru/`, `/F-Layer/zh-CN/`.
 Dependencies are separate from runtime metadata in `../requirements-api.txt`.
+
+## Completeness evidence
+
+The [coverage contract](../development/documentation-coverage.md) distinguishes
+rendered Markdown, generated public API, and explicitly justified source-only
+files. `_build/api-reference/repository-coverage.json` inventories every tracked
+file and defined package symbol. Unknown or overlapping file categories, source
+files omitted from the wheel, extra or changed package files, missing API
+anchors, and existing but unreachable Markdown pages fail the build.
+
+The generated coverage page links every file or rendered page. All canonical
+repository Markdown is included, including ADR templates, governance/release
+guides, and GitHub's PR template. The [architecture reference](../architecture/reference.md)
+connects implemented boundaries and diagrams to the current source contracts.
+
+The wheel is installed into a fresh owned build target, independently of the
+selected documentation-tool environment. An ambient or previously installed
+F-Layer cannot influence API discovery, and the environment is not mutated by
+the package install. Strict English output is assembled into a fresh publication
+tree before locale fallbacks are created; restored sibling routes are discarded.

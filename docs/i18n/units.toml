@@ -17,7 +17,7 @@ state = "missing"
 id = "page:architecture"
 kind = "page"
 sourcePath = "docs/site/content/en/architecture.md"
-sourceHash = "sha256:882e7341dfb927631866e3dd2f8fe577c564d7fed4cc02ebde9f42d30abf43f7"
+sourceHash = "sha256:ec88468bbf2a50a96f2365f47035ffbf747d6be85bbedaa558eaf04364a19df7"
 reviewClass = "technical"
 
 [units.translations.ru]
@@ -56,7 +56,7 @@ state = "missing"
 id = "page:documentation"
 kind = "page"
 sourcePath = "docs/site/content/en/documentation.md"
-sourceHash = "sha256:810c62fad44ec8064c99302f9753987c51eea8a0a1b3dbe413ce6c432bf03029"
+sourceHash = "sha256:aea7a3de31f6432c0f66d3be012e12572fd881a0178452fd35cf4850e23f3352"
 reviewClass = "technical"
 
 [units.translations.ru]

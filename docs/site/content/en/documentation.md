@@ -7,11 +7,23 @@ and SVG assets. Generated HTML remains disposable and untracked.
 
 ## API discovery
 
-Every Python module in the installed `flayer` package receives a generated API
-page. Discovery reads Python syntax and never imports the runtime package. An
-import guard makes an attempted package import fail the build. Package modules
-and public definition anchors are checked against generated HTML; each page
-links to its corresponding `develop` source.
+Every nonprivate Python module in the installed `flayer` package receives a
+generated API page; `flayer.__main__` is an explicit supported exception to the
+underscored-path rule. Private modules and helpers remain source-only and are
+recorded with reasons. Discovery reads syntax and never imports runtime code.
+An import guard makes attempted package execution fail the build. The entire
+installed package must match source inventory and bytes, excluding bytecode.
+Public definitions and callable protocols require exact generated HTML anchors;
+each API page links to its corresponding `develop` source.
+
+Every tracked file must match exactly one explicit coverage rule. All canonical
+Markdown, including policy, release guides, ADRs and templates, and repository
+entry points, is rendered and must be reachable from the English entry page.
+Tests, tools, workflows, examples, assets, and configuration have accountable
+dispositions rather than fabricated API documentation. Locale overlays are
+rendered by the locale wrapper with explicit review state.
+The [coverage contract](../../../development/documentation-coverage.md) defines
+the boundary and machine-readable evidence.
 
 Every tracked Markdown table uses content-aligned column padding. The source
 gate checks raw readability before publishing; it preserves escaped pipes,
@@ -24,9 +36,16 @@ IDs and versioned source hashes. Their target-language states are explicitly
 
 ## Language and review
 
-English is canonical. Russian and Simplified Chinese currently have explicit
-untranslated fallback routes. Language navigation never labels English content
-as an approved translation.
+English is canonical. When registered Russian or Simplified Chinese drafts are
+available, the multilingual wrapper renders them with explicit review-state
+banners. Missing or stale units use current English fallback text. Language
+navigation and per-page banners distinguish draft, review, stale, missing, and
+approved state; automation never creates human approvals.
+
+Each nonmissing translation records `basedOnSourceHash`, the canonical English
+source actually used. Refreshing the canonical registry cannot make an outdated
+draft current. Human language review and actual Pages publication remain
+outstanding rollout steps.
 
 A translated unit requires a stable unit ID, matching canonical source hash,
 a translation path, and accountable editorial/technical human reviews before

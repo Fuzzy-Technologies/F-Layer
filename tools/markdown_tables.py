@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import re
 import subprocess
+import unicodedata
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -49,6 +50,15 @@ def _IndentedCode(line: str) -> bool:
     prefix = line[:len(line) - len(line.lstrip(" \t"))]
 
     return len(prefix.expandtabs(4)) >= 4
+
+
+
+def DisplayWidth(text: str) -> int:
+    """Approximate raw monospace width with wide/fullwidth and combining characters."""
+
+    return sum(0 if unicodedata.combining(character) else
+               2 if unicodedata.east_asian_width(character) in {"W", "F"} else 1
+               for character in text)
 
 
 def AlignMarkdown(text: str) -> str:
@@ -109,7 +119,7 @@ def AlignMarkdown(text: str) -> str:
             end += 1
 
         widths = [max(3 + separator[column].count(":"),
-                      *(len(row[column]) for offset, row in enumerate(rows) if offset != 1))
+                      *(DisplayWidth(row[column]) for offset, row in enumerate(rows) if offset != 1))
                   for column in range(len(header))]
 
         for offset, row in enumerate(rows):
@@ -121,7 +131,7 @@ def AlignMarkdown(text: str) -> str:
                     right = ":" if cell.endswith(":") else ""
                     cell = left + "-" * (widths[column] - len(left) - len(right)) + right
 
-                rendered.append(cell.ljust(widths[column]))
+                rendered.append(cell + " " * (widths[column] - DisplayWidth(cell)))
 
             original = lines[index + offset]
             prefix = original[:len(original) - len(original.lstrip())]

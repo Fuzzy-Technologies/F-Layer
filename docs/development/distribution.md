@@ -10,7 +10,7 @@ has actually been published.
 `src/flayer/__init__.py` owns the literal `__version__`. Hatchling's regex
 version source reads that file without importing the package. Wheel metadata,
 sdist metadata and the installed runtime therefore share one version source.
-The bootstrap version remains `0.0.0`; this change does not cut a release.
+The 1.1.0 release uses this single source for package and runtime identity.
 
 Stable releases use `X.Y.Z` with an immutable annotated `vX.Y.Z` tag, as described
 in the [release workflow](../RELEASE_WORKFLOW.md). Version bumps belong to a
@@ -28,7 +28,7 @@ python tools/validate.py
 
 The wheel contains the typed `flayer` package, Apache-2.0 license metadata and
 the `flayer` console entry point. The sdist includes the sources, tests, tools,
-documentation and repository examples needed to rebuild the same package.
+documentation, changelog and repository examples needed to rebuild the same package.
 It excludes local environments, caches, state and generated reports. Generated
 distribution files remain untracked.
 

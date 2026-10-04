@@ -7,7 +7,7 @@ F-Layer требует **Python 3.11 или новее** и Git. Дистриб�
 ```bash
 git clone https://github.com/Fuzzy-Technologies/F-Layer.git
 cd F-Layer
-git switch develop
+git checkout v1.1.0
 python -m venv .venv
 ```
 

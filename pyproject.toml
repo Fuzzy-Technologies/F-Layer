@@ -52,7 +52,7 @@ path = "src/flayer/__init__.py"
 include = [
     "/src", "/tests", "/tools", "/docs", "/examples", "/.github",
     "/README.md", "/LICENSE", "/AGENTS.md", "/DEVELOPMENT_PROTOCOL.md",
-    "/SECURITY.md", "/CONTRIBUTING.md", "/pyproject.toml",
+    "/SECURITY.md", "/CONTRIBUTING.md", "/CHANGELOG.md", "/pyproject.toml",
 ]
 
 [tool.pytest.ini_options]

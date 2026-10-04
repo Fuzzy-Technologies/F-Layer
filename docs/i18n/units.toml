@@ -81,16 +81,16 @@ basedOnSourceHash = "sha256:aea7a3de31f6432c0f66d3be012e12572fd881a0178452fd35cf
 id = "page:guide"
 kind = "page"
 sourcePath = "docs/site/content/en/guide/index.md"
-sourceHash = "sha256:ad084b7e476dc15d86b6b0587c5f64e72636fa360a3c29992e880609cdbb58b1"
+sourceHash = "sha256:f24509b775d435ce32015c6dd967c06dc5635fe9a3a8fee10372777bf6ee202b"
 reviewClass = "technical"
 
 [units.translations.ru]
-state = "draft"
+state = "stale"
 path = "docs/site/content/ru/guide/index.md"
 basedOnSourceHash = "sha256:ad084b7e476dc15d86b6b0587c5f64e72636fa360a3c29992e880609cdbb58b1"
 
 [units.translations.zh-CN]
-state = "draft"
+state = "stale"
 path = "docs/site/content/zh-CN/guide/index.md"
 basedOnSourceHash = "sha256:ad084b7e476dc15d86b6b0587c5f64e72636fa360a3c29992e880609cdbb58b1"
 
@@ -149,16 +149,16 @@ basedOnSourceHash = "sha256:d1c5afa020315b55f923ff3b7fafd48a60f5dae8b9645239be8f
 id = "page:guide.installation"
 kind = "page"
 sourcePath = "docs/site/content/en/guide/installation.md"
-sourceHash = "sha256:fde720cc25a92905c97ad540904a015512548b65ff5760b06723b8608c2ffd94"
+sourceHash = "sha256:37eb05a495ff7852dfd14b1adf6891f18256678042c35e21a1a82188ec3214ae"
 reviewClass = "technical"
 
 [units.translations.ru]
-state = "draft"
+state = "stale"
 path = "docs/site/content/ru/guide/installation.md"
 basedOnSourceHash = "sha256:fde720cc25a92905c97ad540904a015512548b65ff5760b06723b8608c2ffd94"
 
 [units.translations.zh-CN]
-state = "draft"
+state = "stale"
 path = "docs/site/content/zh-CN/guide/installation.md"
 basedOnSourceHash = "sha256:fde720cc25a92905c97ad540904a015512548b65ff5760b06723b8608c2ffd94"
 
@@ -166,15 +166,15 @@ basedOnSourceHash = "sha256:fde720cc25a92905c97ad540904a015512548b65ff5760b06723
 id = "page:index"
 kind = "page"
 sourcePath = "docs/site/content/en/index.md"
-sourceHash = "sha256:e6c9c464f945b16651d45389443d3c5786582a84406c015583cfb0cf4671e9b7"
+sourceHash = "sha256:17a91b4b34b71e194a62858289386253c460029c1fa295b85fe71ae1d62f39ec"
 reviewClass = "technical"
 
 [units.translations.ru]
-state = "draft"
+state = "stale"
 path = "docs/site/content/ru/index.md"
 basedOnSourceHash = "sha256:e6c9c464f945b16651d45389443d3c5786582a84406c015583cfb0cf4671e9b7"
 
 [units.translations.zh-CN]
-state = "draft"
+state = "stale"
 path = "docs/site/content/zh-CN/index.md"
 basedOnSourceHash = "sha256:e6c9c464f945b16651d45389443d3c5786582a84406c015583cfb0cf4671e9b7"

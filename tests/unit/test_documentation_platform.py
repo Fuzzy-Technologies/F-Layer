@@ -200,6 +200,17 @@ def test_BuildRootRejectsUnownedDirectory(tmp_path: Path) -> None:
     assert sentinel.read_text() == "Keep"
 
 
+def test_EnvironmentCreationCannotRestoreStaleOutput(tmp_path: Path) -> None:
+    """A restored artifact must fail before stale content can contaminate publication."""
+
+    (tmp_path / "environment").mkdir()
+    build_api_reference.VerifyBuildWorkspace(tmp_path)
+    (tmp_path / "content/en").mkdir(parents=True)
+
+    with pytest.raises(ValueError, match="environment creation restored generated output"):
+        build_api_reference.VerifyBuildWorkspace(tmp_path)
+
+
 
 def test_GeneratedDirectoryLinksPreserveSourceLabels(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
@@ -218,6 +229,33 @@ def test_GeneratedDirectoryLinksPreserveSourceLabels(
         "[docs/adr/](docs/adr/README.md)"
     )
     assert source_path.read_text() == canonical, "Generated link adaptation cannot edit policy"
+
+
+def test_GeneratedApiNavigationPreservesAuthoredGuides(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Installed API generation cannot silently discard configured user navigation."""
+
+    content_root = tmp_path / "source"
+    (content_root / "api").mkdir(parents=True)
+    (content_root / "api/index.md").write_text("# API")
+    (content_root / "guide.md").write_text("# Guide")
+    config_path = tmp_path / "source.yml"
+    config_path.write_text(
+        "docs_dir: source\nsite_dir: site\nnav:\n"
+        "  - User guide:\n      - Get started: guide.md\n"
+        "  - API reference: api/index.md\n\nplugins:\n  - search\n",
+    )
+    build_root = tmp_path / "build"
+    build_root.mkdir()
+    monkeypatch.setattr(build_api_reference, "SOURCE_CONTENT", content_root)
+    monkeypatch.setattr(build_api_reference, "SOURCE_CONFIG", config_path)
+    monkeypatch.setattr(build_api_reference, "WriteEngineeringContent", lambda root: [])
+    generated = build_api_reference.WriteBuildContent((), build_root).read_text()
+
+    assert "  - User guide:\n      - Get started: guide.md\n" in generated
+    assert '  - API reference: [{"Index": "api/index.md"}]' in generated
+    assert "  - Engineering guides: []" in generated
 
 
 def test_LocaleFallbacksExposeMissingState(tmp_path: Path) -> None:

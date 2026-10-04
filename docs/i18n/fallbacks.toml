@@ -1,0 +1,8 @@
+# Localized navigation notices are not reviewed documentation translations.
+[ru]
+title = "Русский перевод пока отсутствует"
+body = "Проверенный перевод документации ещё не готов. Актуальная документация доступна на английском языке."
+
+[zh-CN]
+title = "暂无经过审核的简体中文翻译"
+body = "翻译尚未完成审核。请阅读最新的英文文档。"

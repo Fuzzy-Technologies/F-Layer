@@ -36,9 +36,16 @@ IDs and versioned source hashes. Their target-language states are explicitly
 
 ## Language and review
 
-English is canonical. Russian and Simplified Chinese currently have explicit
-untranslated fallback routes. Language navigation never labels English content
-as an approved translation.
+English is canonical. When registered Russian or Simplified Chinese drafts are
+available, the multilingual wrapper renders them with explicit review-state
+banners. Missing or stale units use current English fallback text. Language
+navigation and per-page banners distinguish draft, review, stale, missing, and
+approved state; automation never creates human approvals.
+
+Each nonmissing translation records `basedOnSourceHash`, the canonical English
+source actually used. Refreshing the canonical registry cannot make an outdated
+draft current. Human language review and actual Pages publication remain
+outstanding rollout steps.
 
 A translated unit requires a stable unit ID, matching canonical source hash,
 a translation path, and accountable editorial/technical human reviews before

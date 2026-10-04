@@ -56,7 +56,7 @@ state = "missing"
 id = "page:documentation"
 kind = "page"
 sourcePath = "docs/site/content/en/documentation.md"
-sourceHash = "sha256:54914184747ac120531de7ee4cf86113af5dc0510926ed546e210404e80869cf"
+sourceHash = "sha256:aea7a3de31f6432c0f66d3be012e12572fd881a0178452fd35cf4850e23f3352"
 reviewClass = "technical"
 
 [units.translations.ru]

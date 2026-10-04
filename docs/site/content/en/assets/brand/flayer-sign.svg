@@ -1,7 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title">
+<!--
+SPDX-FileCopyrightText: 2026 Timur Gilmullin and Fuzzy Technologies
+SPDX-License-Identifier: Apache-2.0
+-->
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title description">
   <title id="title">F-Layer sign</title>
-  <defs><linearGradient id="glow" x2="1" y2="1"><stop stop-color="#ad86ff"/><stop offset="1" stop-color="#64efaa"/></linearGradient></defs>
-  <rect x="3" y="3" width="90" height="90" rx="22" fill="#11101a" stroke="url(#glow)" stroke-width="3"/>
-  <path d="M24 26h51v12H38v13h29v12H38v19H24z" fill="url(#glow)"/>
-  <path d="m56 73 20-10v12L56 85z" fill="#64efaa"/>
+  <desc id="description">A pale geometric F beside an L formed by layered infrastructure lines.</desc>
+  <defs>
+    <linearGradient id="fl-spectrum" x1="34" y1="14" x2="53" y2="51" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#66d9ef"/>
+      <stop offset="0.52" stop-color="#9b7bff"/>
+      <stop offset="1" stop-color="#ff79c6"/>
+    </linearGradient>
+    <linearGradient id="fl-echo" x1="39" y1="35" x2="53" y2="47" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#66d9ef"/>
+      <stop offset="0.5" stop-color="#bd7aff"/>
+      <stop offset="1" stop-color="#ff79c6"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="13" fill="#101316" stroke="#2a343d" stroke-width="2"/>
+  <path d="M12 14H31V20H19V28H29V34H19V50H12Z" fill="#e7f8ff"/>
+  <path d="M35 14V49H53" fill="none" stroke="url(#fl-spectrum)" stroke-width="4.5" stroke-linecap="square" stroke-linejoin="round"/>
+  <path d="M40 35V43H53" fill="none" stroke="url(#fl-echo)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" opacity="0.82"/>
+  <path d="M45 35V38H53" fill="none" stroke="#66d9ef" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" opacity="0.72"/>
 </svg>

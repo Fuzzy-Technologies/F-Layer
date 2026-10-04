@@ -10,13 +10,17 @@ capabilities, deployment profiles, lifecycle operations, and diagnostic
 evidence. Those boundaries make individual integrations replaceable and
 operations reproducible.
 
-!!! info "Foundation stage"
-    F-Layer is in early development. This documentation describes the current
-    installed package and accepted architecture. There is no stable public API
-    or compatibility guarantee before `v1.0.0`. Architecture direction does
-    not imply that every lifecycle or deployment feature is implemented.
+!!! info "Versioned foundation"
+    This documentation describes the installed stable package and accepted
+    architecture. Release 1.1.0 adds installation and user-guide improvements
+    to the owned infrastructure baseline. Architecture direction does not imply
+    that features assigned to later milestones are included in this release.
 
 <div class="grid cards" markdown>
+
+- **Run the first checks**
+
+    [Install and configure F-Layer](guide/index.md) from an explicit source revision.
 
 - **Understand the boundaries**
 
@@ -43,6 +47,9 @@ operations reproducible.
 - Configuration, desired state, observed state, and generated artifacts remain separate.
 - Local validation uses deterministic fixtures and never mutates real cloud resources.
 - Python annotations and English docstrings are the API source of truth.
+
+See the [user guide](guide/index.md) for console usage and the
+[project identity](brand.md) for the F-Layer logo family.
 
 [Fuzzy Technologies](https://fuzzy-technologies.github.io/) ·
 [GitHub repository](https://github.com/Fuzzy-Technologies/F-Layer)

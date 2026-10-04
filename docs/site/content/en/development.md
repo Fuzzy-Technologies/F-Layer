@@ -39,6 +39,12 @@ toolchain in an isolated environment. It generates strict MkDocs output,
 checks exact rendered anchors and local links, validates language metadata,
 and records wheel provenance under `_build/api-reference/`.
 
+Markdown tables are padded to each column's widest cell so raw source stays
+readable. Check all tracked Markdown with `python -m tools.markdown_tables`;
+apply a requested whitespace-only alignment with
+`python -m tools.markdown_tables --write`. Fenced examples remain unchanged.
+The documentation build rejects table drift alongside broken links/anchors.
+
 ```bash
 python tools/build_api_reference.py --serve
 ```

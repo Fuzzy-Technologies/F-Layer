@@ -20,3 +20,6 @@ ADR numbers are stable once assigned.
 4. Do not silently rewrite an accepted ADR to represent a different decision; supersede it with a new ADR when necessary.
 
 Use [0000-template.md](0000-template.md) as the starting point.
+
+Release history and the human-readable changelog follow
+[ADR 0014](0014-scoped-releases-and-changelog.md).

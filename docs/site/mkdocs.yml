@@ -35,9 +35,16 @@ theme:
 
 nav:
   - Overview: index.md
+  - User guide:
+      - Get started: guide/index.md
+      - Install: guide/installation.md
+      - Configuration: guide/configuration.md
+      - CLI: guide/cli.md
+      - First deployment: guide/first-deployment.md
   - Architecture: architecture.md
   - Development: development.md
   - Documentation contracts: documentation.md
+  - Project identity: brand.md
   - API reference: api/index.md
 
 plugins:

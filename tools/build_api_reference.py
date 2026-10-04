@@ -118,6 +118,18 @@ def VerifyEnvironment(environment_python: Path) -> dict[str, str]:
     return versions
 
 
+def VerifyBuildWorkspace(build_root: Path) -> None:
+    """Reject stale generated output restored unexpectedly by environment creation."""
+
+    unexpected = [path for path in build_root.iterdir() if path.name != "environment"]
+
+    if unexpected:
+        raise ValueError(
+            "Documentation environment creation restored generated output in the clean build root; "
+            "use --environment-python with a verified environment outside _build/api-reference"
+        )
+
+
 def WriteImportGuard(guard_root: Path) -> None:
     """Fail if documentation discovery attempts to import the runtime package."""
 
@@ -128,10 +140,10 @@ def WriteImportGuard(guard_root: Path) -> None:
         "class FLayerImportGuard:\n"
         '    """Prevent runtime package execution during static discovery."""\n'
         "    def find_spec(self, fullname, path=None, target=None):\n"
-        '        """Reject F-Layer imports and delegate all other discovery."""\n'
+        '        """Reject F-Layer imports and delegate all other discovery."""\n\n'
         '        if fullname == "flayer" or fullname.startswith("flayer."):\n'
         '            raise RuntimeError("API discovery attempted to import flayer")\n'
-        "        return None\n\n"
+        "\n        return None\n\n"
         "sys.meta_path.insert(0, FLayerImportGuard())\n",
         encoding="utf-8",
     )
@@ -342,14 +354,18 @@ def WriteBuildContent(modules: tuple[ModuleSource, ...], build_root: Path) -> Pa
     config = re.sub(r"^site_dir:.*$", f"site_dir: {json.dumps(str(build_root / 'site' / 'en'))}",
                     config, flags=re.MULTILINE)
     engineering_navigation = WriteEngineeringContent(content_root)
-    navigation = [
-        {"Overview": "index.md"}, {"Architecture": "architecture.md"},
-        {"Development": "development.md"}, {"Documentation contracts": "documentation.md"},
-        {"API reference": [{"Index": "api/index.md"}, *module_navigation]},
-        {"Engineering guides": engineering_navigation},
-    ]
-    config = re.sub(r"nav:\n.*?(?=plugins:)",
-                    "nav: " + json.dumps(navigation) + "\n\n", config, flags=re.DOTALL)
+    api_navigation = json.dumps([{"Index": "api/index.md"}, *module_navigation])
+    navigation_marker = "  - API reference: api/index.md"
+
+    if config.count(navigation_marker) != 1:
+        raise ValueError("Authored navigation must contain exactly one API reference entry")
+
+    config = config.replace(navigation_marker, "  - API reference: " + api_navigation)
+    config = re.sub(
+        r"(?m)^plugins:",
+        "  - Engineering guides: " + json.dumps(engineering_navigation) + "\n\nplugins:",
+        config, count=1,
+    )
     config_path = build_root / "mkdocs.yml"
     config_path.write_text(config, encoding="utf-8")
 
@@ -400,9 +416,11 @@ def BuildReference(environment_python: Path | None = None) -> tuple[Path, dict[s
     if environment_python is None:
         RunCommand([sys.executable, "-m", "venv", BUILD_ROOT / "environment"])
         environment_python = EnvironmentPython(BUILD_ROOT / "environment")
+        VerifyBuildWorkspace(BUILD_ROOT)
         RunCommand([environment_python, "-m", "pip", "install", "--disable-pip-version-check",
                     "--requirement", REQUIREMENTS_PATH])
 
+    VerifyBuildWorkspace(BUILD_ROOT)
     versions = VerifyEnvironment(environment_python)
     artifact_root = BUILD_ROOT / "artifacts"
     RunCommand([environment_python, "-m", "build", "--no-isolation", "--wheel",

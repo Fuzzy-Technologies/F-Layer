@@ -27,10 +27,23 @@ state = "missing"
 state = "missing"
 
 [[units]]
+id = "page:brand"
+kind = "page"
+sourcePath = "docs/site/content/en/brand.md"
+sourceHash = "sha256:127f7edb6754371c8d196c939bc127cfcfa2a7da1fcbb4f13109f82933e9c11f"
+reviewClass = "technical"
+
+[units.translations.ru]
+state = "missing"
+
+[units.translations.zh-CN]
+state = "missing"
+
+[[units]]
 id = "page:development"
 kind = "page"
 sourcePath = "docs/site/content/en/development.md"
-sourceHash = "sha256:4dc1c3201d46ce71532cd303d73dcef79e7488ce17e881c2ac234619a4f4f730"
+sourceHash = "sha256:3e13b58ec7a14f97c5d4f774a4727fe67aeaf9ba91a4720972768bd8154450a2"
 reviewClass = "technical"
 
 [units.translations.ru]
@@ -43,7 +56,72 @@ state = "missing"
 id = "page:documentation"
 kind = "page"
 sourcePath = "docs/site/content/en/documentation.md"
-sourceHash = "sha256:736e3263dc3cb6a3bf392563f17bb3e3e8a1fe69bec7909eb85e8f4bfd94aa02"
+sourceHash = "sha256:810c62fad44ec8064c99302f9753987c51eea8a0a1b3dbe413ce6c432bf03029"
+reviewClass = "technical"
+
+[units.translations.ru]
+state = "missing"
+
+[units.translations.zh-CN]
+state = "missing"
+
+[[units]]
+id = "page:guide"
+kind = "page"
+sourcePath = "docs/site/content/en/guide/index.md"
+sourceHash = "sha256:f24509b775d435ce32015c6dd967c06dc5635fe9a3a8fee10372777bf6ee202b"
+reviewClass = "technical"
+
+[units.translations.ru]
+state = "missing"
+
+[units.translations.zh-CN]
+state = "missing"
+
+[[units]]
+id = "page:guide.cli"
+kind = "page"
+sourcePath = "docs/site/content/en/guide/cli.md"
+sourceHash = "sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc"
+reviewClass = "technical"
+
+[units.translations.ru]
+state = "missing"
+
+[units.translations.zh-CN]
+state = "missing"
+
+[[units]]
+id = "page:guide.configuration"
+kind = "page"
+sourcePath = "docs/site/content/en/guide/configuration.md"
+sourceHash = "sha256:072347586a80864d7df609f36662c002da9a27380ffc0884595c045fcdc0f6c9"
+reviewClass = "technical"
+
+[units.translations.ru]
+state = "missing"
+
+[units.translations.zh-CN]
+state = "missing"
+
+[[units]]
+id = "page:guide.first-deployment"
+kind = "page"
+sourcePath = "docs/site/content/en/guide/first-deployment.md"
+sourceHash = "sha256:d1c5afa020315b55f923ff3b7fafd48a60f5dae8b9645239be8fef2bc9cccb3c"
+reviewClass = "technical"
+
+[units.translations.ru]
+state = "missing"
+
+[units.translations.zh-CN]
+state = "missing"
+
+[[units]]
+id = "page:guide.installation"
+kind = "page"
+sourcePath = "docs/site/content/en/guide/installation.md"
+sourceHash = "sha256:37eb05a495ff7852dfd14b1adf6891f18256678042c35e21a1a82188ec3214ae"
 reviewClass = "technical"
 
 [units.translations.ru]
@@ -56,7 +134,7 @@ state = "missing"
 id = "page:index"
 kind = "page"
 sourcePath = "docs/site/content/en/index.md"
-sourceHash = "sha256:9b2025b9319ccbb0d15f7fa727368b9a36bbc554ab639378b49e7a4032fac6ed"
+sourceHash = "sha256:c89d18dbea85dfbbe83a75b8aa3d4bb121461d87d9e3ee77e64dcb4856eeadca"
 reviewClass = "technical"
 
 [units.translations.ru]

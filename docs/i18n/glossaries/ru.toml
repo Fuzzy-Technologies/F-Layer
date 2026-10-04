@@ -1,0 +1,10 @@
+schemaVersion = 1
+locale = "ru"
+
+[[terms]]
+id = "concept:infrastructure.provider"
+english = "provider"
+preferred = "провайдер"
+avoid = []
+note = "A cloud adapter behind an explicit infrastructure contract."
+references = ["docs/site/content/en/architecture.md"]

@@ -37,3 +37,6 @@ Thumbs.db
 .local/
 state/
 artifacts/
+
+# Generated documentation output
+_build/

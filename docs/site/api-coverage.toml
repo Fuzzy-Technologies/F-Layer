@@ -1,0 +1,8 @@
+# The tracked package foundation anchors the authored-unit manifest.
+# The builder inventories every module from the installed wheel dynamically.
+schemaVersion = 1
+
+[[surfaces]]
+module = "flayer"
+source = "src/flayer/__init__.py"
+mode = "authored"

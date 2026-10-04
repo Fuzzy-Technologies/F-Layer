@@ -1,0 +1,19 @@
+schemaVersion = 1
+projectId = "flayer"
+projectName = "F-Layer"
+sourceLocale = "en"
+locales = ["en", "ru", "zh-CN"]
+packageNames = ["flayer"]
+contentRoot = "docs/site/content"
+unitManifest = "docs/i18n/units.toml"
+buildRoot = "_build/api-reference"
+apiCoverageManifest = "docs/site/api-coverage.toml"
+publicationPath = "/F-Layer"
+
+[branding]
+organization = "Fuzzy Technologies"
+assetRoot = "docs/site/content/en/assets"
+
+[glossaries]
+ru = "docs/i18n/glossaries/ru.toml"
+zh-CN = "docs/i18n/glossaries/zh-CN.toml"

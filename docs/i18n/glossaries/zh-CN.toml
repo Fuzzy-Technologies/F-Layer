@@ -6,5 +6,53 @@ id = "concept:infrastructure.provider"
 english = "provider"
 preferred = "提供方"
 avoid = []
-note = "A cloud adapter behind an explicit infrastructure contract."
-references = ["docs/site/content/en/architecture.md"]
+note = "Draft terminology requires accountable human review."
+references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
+
+[[terms]]
+id = "concept:infrastructure.deployment-profile"
+english = "deployment profile"
+preferred = "部署配置档"
+avoid = []
+note = "Draft terminology requires accountable human review."
+references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
+
+[[terms]]
+id = "concept:infrastructure.lifecycle"
+english = "lifecycle"
+preferred = "生命周期"
+avoid = []
+note = "Draft terminology requires accountable human review."
+references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
+
+[[terms]]
+id = "concept:infrastructure.ownership"
+english = "ownership"
+preferred = "所有权"
+avoid = []
+note = "Draft terminology requires accountable human review."
+references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
+
+[[terms]]
+id = "concept:infrastructure.state"
+english = "state"
+preferred = "状态"
+avoid = []
+note = "Draft terminology requires accountable human review."
+references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
+
+[[terms]]
+id = "concept:infrastructure.scope"
+english = "scope"
+preferred = "作用域"
+avoid = []
+note = "Draft terminology requires accountable human review."
+references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
+
+[[terms]]
+id = "concept:infrastructure.generated-artifact"
+english = "generated artifact"
+preferred = "生成的制品"
+avoid = []
+note = "Draft terminology requires accountable human review."
+references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]

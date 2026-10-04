@@ -1,11 +1,12 @@
 # Documentation platform
 
 F-Layer follows the Fuzzy Technologies MkDocs Material documentation blueprint.
-English source lives in `content/en/`; localization hashes, missing states, and
+English source lives in `content/en/`; localization hashes, draft/review states, and
 glossaries live in `../i18n/`. Python API contracts remain in package docstrings.
 
 ```bash
 python tools/build_api_reference.py
+python tools/build_locale_sites.py
 python tools/build_api_reference.py --serve
 python -m tools.locale_documentation validate --output _build/documentation-gates/locales.json
 ```
@@ -24,6 +25,13 @@ verified environment.
 Generated API symbols use the same blueprint source-hash scheme in a disposable
 registry, with `missing` RU/ZH states. They never receive synthetic reviews.
 The copied validator retains the upstream hash, schema keys, and review semantics; internal identifiers follow house style.
+
+The multilingual wrapper renders tracked RU/ZH drafts with visible review-state
+banners and current English fallbacks for missing/stale pages. It preserves the
+installed-wheel import guard and strict links/anchors, adds per-route reachability
+evidence, and never creates human approvals. Translation basis hashes prevent a
+canonical registry refresh from hiding stale drafts. See [the rollout contract](../i18n/README.md).
+Human language review and actual Pages publication remain outstanding.
 
 PRs and `develop` upload preview artifacts. Only an approved `master` push
 can deploy Pages. Routes: `/F-Layer/en/`, `/F-Layer/ru/`, `/F-Layer/zh-CN/`.

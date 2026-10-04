@@ -41,13 +41,14 @@ def test_CanonicalHashPreservesBlueprintVector() -> None:
     ), "House-style port must preserve the corporate blueprint's exact hash scheme"
 
 
-def test_MissingLocalesRemainHonest(locale_project: Path) -> None:
-    """A complete missing-state registry passes without synthetic human reviews."""
+def test_UnreviewedLocalesRemainHonest(locale_project: Path) -> None:
+    """Missing and draft registry entries never claim synthetic human reviews."""
 
     report = ValidateLocales(locale_project)
 
     assert not report.diagnostics, "Canonical missing states and terminology must validate"
-    assert all(state == "missing" for states in report.states.values() for state in states.values())
+    assert all(state in {"missing", "draft", "stale"} for states in report.states.values()
+               for state in states.values()), "Unreviewed locales must retain honest states"
 
 
 def test_CanonicalSourceDriftFails(locale_project: Path) -> None:

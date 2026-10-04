@@ -64,6 +64,54 @@ def test_PrivateManifestExcludesSensitiveBytesAndCleanupIsExplicit(tmp_path: Pat
     assert not RemoveArtifactBundle(tmp_path / "absent", IDENTITY, kind="device", name="laptop")
 
 
+def test_ExpectedBundleAuthorizesExactCleanupContent(tmp_path: Path) -> None:
+    """Permit rollback only when the complete current bundle matches caller-held immutable intent."""
+
+    root, directory = Save(tmp_path)
+
+    assert RemoveArtifactBundle(root, IDENTITY, kind="device", name="laptop", expected_bundle=Bundle()), "Exact expected bundle content must authorize verified cleanup"
+    assert not directory.exists(), "Expected-content cleanup must remove the complete matching bundle"
+
+
+@pytest.mark.parametrize("replacement_files", [
+    (Artifact("client.conf", b"coherent-replacement"), Artifact("transport.json", b"{}")),
+    (Artifact("client.conf", SYNTHETIC_SECRET),),
+    (Artifact("client.conf", SYNTHETIC_SECRET), Artifact("transport.json", b"{}"), Artifact("added.json", b"{}")),
+    (Artifact("transport.json", b"{}"), Artifact("client.conf", SYNTHETIC_SECRET)),
+    (Artifact("client.conf", SYNTHETIC_SECRET, sensitive=False), Artifact("transport.json", b"{}")),
+])
+def test_ExpectedBundlePreservesValidDifferentOwnedContent(tmp_path: Path, replacement_files: tuple[Artifact, ...]) -> None:
+    """Reject coherent same-identity replacement bytes, membership, order, or sensitivity metadata."""
+
+    root = tmp_path / "artifacts"
+    replacement = replace(Bundle(), files=replacement_files)
+    directory = WriteArtifactBundle(root, replacement)
+    before = {path.name: path.read_bytes() for path in directory.iterdir()}
+
+    with pytest.raises(ArtifactError):
+        RemoveArtifactBundle(root, IDENTITY, kind="device", name="laptop", expected_bundle=Bundle())
+
+    assert {path.name: path.read_bytes() for path in directory.iterdir()} == before, "Expected-content refusal must preserve every replacement file and manifest"
+    assert not (root / ".device-laptop.lock").exists(), "Rejected cleanup must release only its own operation lock"
+    assert RemoveArtifactBundle(root, IDENTITY, kind="device", name="laptop", expected_bundle=replacement), "Preserved replacement must remain a complete valid owned bundle"
+
+
+@pytest.mark.parametrize("expected_bundle", [
+    "invalid", replace(Bundle(), identity=replace(IDENTITY, owner_id="foreign")),
+    replace(Bundle(), kind="server"), replace(Bundle(), name="different"),
+])
+def test_ExpectedBundleRequiresExactRequestedOwnership(tmp_path: Path, expected_bundle: object) -> None:
+    """Reject malformed or foreign expected intent before authorizing a removal lock."""
+
+    root, directory = Save(tmp_path)
+
+    with pytest.raises(ArtifactError):
+        RemoveArtifactBundle(root, IDENTITY, kind="device", name="laptop", expected_bundle=expected_bundle)  # type: ignore[arg-type]
+
+    assert (directory / "client.conf").read_bytes() == SYNTHETIC_SECRET, "Invalid expected ownership must not alter current bundle content"
+    assert not (root / ".device-laptop.lock").exists(), "Invalid expected intent must not leave an operation lock"
+
+
 def test_DeviceProfilesAreExplicitExternalSecrets(tmp_path: Path) -> None:
     """Represent externally issued profiles without implying successful transport deployment."""
 

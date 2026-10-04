@@ -1,0 +1,30 @@
+# Synthetic example only. Replace all placement, ownership, sources, and public key values.
+# Select an actual Ubuntu 24.04 cloud-init image explicitly; image selection is not verified locally.
+schema_version = 1
+profile = "static-site"
+guest_contract = "ubuntu-24.04-cloud-init"
+
+[identity]
+project = "example"
+stack = "site"
+provider = "yandex-cloud"
+scope_id = "example-folder"
+owner_id = "example-owner"
+
+[placement]
+zone_id = "example-zone"
+image_id = "example-image"
+subnet_cidr = "10.43.0.0/24"
+cores = 2
+memory_gib = 2
+boot_disk_gib = 20
+
+[admin]
+username = "site-admin"
+public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4"
+source_cidrs = ["198.51.100.42/32"]
+
+[site]
+title = "Example site"
+body = "A small public page."
+http_source_cidrs = ["0.0.0.0/0"]

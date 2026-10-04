@@ -196,6 +196,10 @@ Shell syntax and bootstrap ordering use isolated command fakes without touching
 host users, guest files, or services. OpenSSH configuration parsing runs offline
 when available. Cloud-init schema and nginx test-mode checks are optional
 development validators; an unavailable validator is skipped and is not a pass.
+The nginx fixture redirects writable paths and its listen endpoint to owned
+scratch storage and a Unix socket because test mode can bind sockets. It preserves
+the server/location rules and `default_server`; a separate assertion checks the
+production HTTP port 80 listener. It opens no privileged or public TCP listener.
 No real cloud resource, guest installation, nginx deployment, service restart,
 credential issuance, HTTP connection, or live guest readiness is validated here.
 

@@ -106,6 +106,7 @@ def test_StaticOutcomeHasOnePageAndSeparateAdministratorAuthority() -> None:
 
     assert "ip saddr 0.0.0.0/0 tcp dport 80 accept" in firewall, "Declared HTTP sources must receive HTTP only"
     assert "ip saddr 0.0.0.0/0 tcp dport 22" not in firewall, "Public HTTP must not widen administrator ingress"
+    assert "listen 80 default_server;" in files["/etc/nginx/nginx.conf"]["content"], "Production nginx must retain the declared HTTP port 80 listener"
     assert "policy drop" in firewall and "net.ipv4.ip_forward=0" in files["/etc/sysctl.d/90-f-layer-static.conf"]["content"], "Static site must not route packets"
     assert PUBLIC_KEY not in repr(profile) and profile.body not in repr(profile), "Public payloads must stay out of object representations"
 
@@ -505,7 +506,7 @@ def test_CloudInitValidatesGeneratedSchemaWithoutGuestExecution(tmp_path: Path) 
 
 @pytest.mark.skipif(shutil.which("nginx") is None, reason="Nginx is an optional offline configuration validator")
 def test_NginxParsesFixedConfigurationWithoutDaemonStartup(tmp_path: Path) -> None:
-    """Run nginx test mode only with scratch paths and stderr logging, never a service."""
+    """Run nginx test mode with owned scratch paths and a Unix socket, never a host TCP listener."""
 
     config = GuestFiles()["/etc/nginx/nginx.conf"]["content"]
     config = config.replace("pid /run/nginx.pid;", "\n".join((
@@ -520,6 +521,8 @@ def test_NginxParsesFixedConfigurationWithoutDaemonStartup(tmp_path: Path) -> No
         temporary_directives.append(f"    {module}_temp_path {json.dumps(str(directory))};")
 
     config = config.replace("http {\n", "http {\n" + "\n".join(temporary_directives) + "\n", 1)
+    socket_listener = "listen " + json.dumps("unix:" + str(tmp_path / "n.sock")) + " default_server;"
+    config = config.replace("listen 80 default_server;", socket_listener, 1)
     path = tmp_path / "nginx.conf"
     path.write_text(config)
     result = subprocess.run([str(shutil.which("nginx")), "-t", "-e", "stderr", "-p", str(tmp_path), "-c", str(path)], capture_output=True, text=True, check=False, timeout=5)
@@ -541,7 +544,10 @@ def test_NginxValidatorIsolatesWritablePathsAndRetainsServerGrammar(tmp_path: Pa
         assert Path(command[command.index("-p") + 1]) == tmp_path, "Relative nginx paths must use the owned sandbox prefix"
         config = Path(command[command.index("-c") + 1]).read_text()
         original = GuestFiles()["/etc/nginx/nginx.conf"]["content"]
-        assert config[config.index("    default_type text/html;"):] == original[original.index("    default_type text/html;"):], "Validation must retain the complete generated HTTP and server grammar"
+        socket_listener = "listen " + json.dumps("unix:" + str(tmp_path / "n.sock")) + " default_server;"
+        assert socket_listener in config and config.count("listen ") == 1, "Nginx test mode must have only the caller-owned Unix socket listener"
+        restored = config.replace(socket_listener, "listen 80 default_server;", 1)
+        assert restored[restored.index("    default_type text/html;"):] == original[original.index("    default_type text/html;"):], "Validation must retain generated HTTP and server grammar except its isolated listen endpoint"
         assert "error_log stderr;" in config and "access_log off;" in config, "Nginx must have no writable default host logs"
 
         for filename, directive in (("nginx.pid", "pid"), ("nginx.lock", "lock_file")):

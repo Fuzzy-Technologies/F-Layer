@@ -13,6 +13,10 @@ import guard makes an attempted package import fail the build. Package modules
 and public definition anchors are checked against generated HTML; each page
 links to its corresponding `develop` source.
 
+Every tracked Markdown table uses content-aligned column padding. The source
+gate checks raw readability before publishing; it preserves escaped pipes,
+inline code cells, alignment markers and literal fenced examples.
+
 Authored English pages use the tracked locale unit registry. Dynamically
 generated API units use a disposable inventory with the same stable symbol
 IDs and versioned source hashes. Their target-language states are explicitly

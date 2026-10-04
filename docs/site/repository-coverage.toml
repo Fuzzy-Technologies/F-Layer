@@ -1,0 +1,63 @@
+# fnmatch patterns are repository-relative; '*' also matches path separators.
+# Every tracked file must match exactly one rule. New file types fail closed.
+schemaVersion = 1
+
+[[rules]]
+patterns = ["*.md"]
+category = "markdown"
+reason = "Canonical repository Markdown is copied into navigable documentation."
+
+[[rules]]
+patterns = ["src/flayer/*.py"]
+category = "package"
+reason = "Installed public modules and supported definitions receive generated API pages."
+
+[[rules]]
+patterns = ["src/flayer/py.typed"]
+category = "typing"
+reason = "PEP 561 package marker; distribution contract documents its purpose."
+
+[[rules]]
+patterns = ["tests/*.py"]
+category = "tests"
+reason = "Executable validation evidence, not a supported consumer API; retained as source."
+
+[[rules]]
+patterns = ["tools/*.py", "tools/*.pyi"]
+category = "tools"
+reason = "Engineering commands and validator interfaces; usage belongs in development guides."
+
+[[rules]]
+patterns = ["examples/*.toml", "examples/*.json"]
+category = "examples"
+reason = "User-editable input or integration wire fixture; consumer guides explain usage and link source."
+
+[[rules]]
+patterns = [".github/workflows/*.yml"]
+category = "workflow"
+reason = "CI and release automation source; development and release guides define its gates."
+
+[[rules]]
+patterns = [".github/ISSUE_TEMPLATE/*.yml"]
+category = "template"
+reason = "GitHub issue-form configuration; repository governance defines its use."
+
+[[rules]]
+patterns = ["docs/i18n/*.toml"]
+category = "locale"
+reason = "Locale identity, glossary, and review metadata consumed by the locale validator."
+
+[[rules]]
+patterns = ["docs/site/content/*/assets/*.svg", "docs/site/content/*/assets/*.css"]
+category = "asset"
+reason = "Theme and branding assets are published with the site, without API pages."
+
+[[rules]]
+patterns = [".gitignore", "pyproject.toml", "docs/requirements-api.txt", "docs/site/*.toml", "docs/site/mkdocs.yml"]
+category = "configuration"
+reason = "Build, packaging, or documentation configuration; inspect the exact tracked source."
+
+[[rules]]
+patterns = ["LICENSE"]
+category = "license"
+reason = "Authoritative distribution license text, preserved as source and package metadata."

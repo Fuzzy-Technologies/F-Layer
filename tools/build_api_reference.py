@@ -16,11 +16,12 @@ import tomllib
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tools import documentation_gates  # noqa: E402
+from tools import documentation_coverage, documentation_gates  # noqa: E402
 from tools.locale_documentation import (  # noqa: E402
     CanonicalHash,
     DiscoverCanonicalUnits,
@@ -150,65 +151,63 @@ def WriteImportGuard(guard_root: Path) -> None:
 
 
 def DiscoverModules(installed_root: Path) -> tuple[ModuleSource, ...]:
-    """Inventory installed public modules without importing any project code."""
+    """Require exact package parity and discover supported surfaces without imports."""
 
+    installed_files = {path.relative_to(installed_root).as_posix(): path
+                       for path in (installed_root / "flayer").rglob("*")
+                       if path.is_file() and "__pycache__" not in path.parts
+                       and path.suffix not in {".pyc", ".pyo"}}
+    source_files = {path.relative_to(PROJECT_ROOT / "src").as_posix(): path
+                    for path in (PROJECT_ROOT / "src/flayer").rglob("*")
+                    if path.is_file() and "__pycache__" not in path.parts
+                    and path.suffix not in {".pyc", ".pyo"}}
+
+    if installed_files.keys() != source_files.keys():
+        missing = sorted(source_files.keys() - installed_files.keys())
+        unexpected = sorted(installed_files.keys() - source_files.keys())
+        raise ValueError(f"Installed wheel package inventory differs: missing={missing}, unexpected={unexpected}")
+
+    for relative, path in installed_files.items():
+        if source_files[relative].read_bytes() != path.read_bytes():
+            raise ValueError(f"Installed wheel differs from current source: src/{relative}")
+
+    installed_paths = {name: path for name, path in installed_files.items() if path.suffix == ".py"}
     modules = []
 
-    for path in sorted((installed_root / "flayer").rglob("*.py")):
-        relative = path.relative_to(installed_root)
-        parts = list(relative.with_suffix("").parts)
+    for relative, path in sorted(installed_paths.items()):
+        source_path = "src/" + relative
 
-        if parts[-1] == "__init__":
-            parts.pop()
+        syntax = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        definitions = documentation_coverage.InventoryDefinitions(source_path, syntax)
 
-        if any(part.startswith("_") for part in parts):
+        if not documentation_coverage.PublicModule(source_path):
             continue
 
-        module_name = ".".join(parts)
-        syntax = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        symbols = []
+        module_name = documentation_coverage.ModuleName(source_path)
 
         if not ast.get_docstring(syntax):
             raise ValueError(f"Public module lacks an English docstring: {module_name}")
 
-        for node in syntax.body:
-            if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
-                if node.name.startswith("_"):
-                    continue
-
-                if not ast.get_docstring(node):
-                    raise ValueError(f"Public symbol lacks a docstring: {module_name}.{node.name}")
-
-                symbol_name = f"{module_name}.{node.name}"
-                symbols.append(symbol_name)
-
-                if isinstance(node, ast.ClassDef):
-                    seen_members: set[str] = set()
-
-                    for member in node.body:
-                        if not isinstance(member, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                            continue
-
-                        if member.name.startswith("_") or member.name in seen_members:
-                            continue
-
-                        if not ast.get_docstring(member):
-                            raise ValueError(f"Public method lacks a docstring: {symbol_name}.{member.name}")
-
-                        seen_members.add(member.name)
-                        symbols.append(f"{symbol_name}.{member.name}")
-
-        source_path = f"src/{relative.as_posix()}"
-
-        if (PROJECT_ROOT / source_path).read_bytes() != path.read_bytes():
-            raise ValueError(f"Installed wheel differs from current source: {source_path}")
-
-        modules.append(ModuleSource(module_name, path, source_path, tuple(symbols)))
+        symbols = tuple(item.symbol for item in definitions if item.disposition == "generated-api")
+        modules.append(ModuleSource(module_name, path, source_path, symbols))
 
     if not modules:
         raise ValueError("Installed flayer package has no discoverable modules")
 
     return tuple(modules)
+
+
+def DiscoverDefinitions(installed_root: Path) -> tuple[documentation_coverage.DefinitionCoverage, ...]:
+    """Inventory private and public installed definitions for accountable omissions."""
+
+    definitions: list[documentation_coverage.DefinitionCoverage] = []
+
+    for path in sorted((installed_root / "flayer").rglob("*.py")):
+        source_path = "src/" + path.relative_to(installed_root).as_posix()
+        syntax = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        definitions.extend(documentation_coverage.InventoryDefinitions(source_path, syntax))
+
+    return tuple(definitions)
 
 
 def WriteApiLocaleInventory(modules: tuple[ModuleSource, ...], build_root: Path) -> None:
@@ -261,7 +260,6 @@ def WriteApiLocaleInventory(modules: tuple[ModuleSource, ...], build_root: Path)
 
 
 
-
 def RewriteDirectoryLinks(content: str, source_path: Path) -> str:
     """Resolve repository README directory links in generated Markdown only."""
 
@@ -284,39 +282,77 @@ def RewriteDirectoryLinks(content: str, source_path: Path) -> str:
     return documentation_gates.MARKDOWN_LINK.sub(Rewrite, content)
 
 
+def RewriteRepositoryLinks(content: str, source_path: Path, page_path: str) -> str:
+    """Route copied Markdown locally and retain source links for nonpage files."""
+
+    def Rewrite(match: re.Match[str]) -> str:
+        """Resolve one source-relative link against the complete repository page map."""
+
+        target = match.group(1)
+        parsed = urlsplit(target)
+
+        if parsed.scheme or parsed.netloc or not parsed.path:
+            return match.group(0)
+
+        resolved = (source_path.parent / unquote(parsed.path)).resolve()
+
+        if not resolved.is_relative_to(PROJECT_ROOT):
+            raise ValueError(f"Repository link escapes project: {target}")
+
+        if resolved.is_dir() and (resolved / "README.md").is_file():
+            resolved /= "README.md"
+
+        relative = resolved.relative_to(PROJECT_ROOT).as_posix()
+
+        if resolved.suffix == ".md":
+            destination = documentation_coverage.MarkdownPage(relative)
+            rewritten = os.path.relpath(destination, Path(page_path).parent).replace(os.sep, "/")
+
+        elif relative.startswith(documentation_coverage.SOURCE_CONTENT_PREFIX):
+            destination = relative.removeprefix(documentation_coverage.SOURCE_CONTENT_PREFIX)
+            rewritten = os.path.relpath(destination, Path(page_path).parent).replace(os.sep, "/")
+
+        else:
+            rewritten = documentation_coverage.SOURCE_URL + relative
+
+        if parsed.fragment:
+            rewritten += "#" + parsed.fragment
+
+        original = match.group(0)
+        start = match.start(1) - match.start()
+        end = match.end(1) - match.start()
+
+        return original[:start] + rewritten + original[end:]
+
+    return documentation_gates.MARKDOWN_LINK.sub(Rewrite, content)
+
+
 def WriteEngineeringContent(content_root: Path) -> list[dict[str, str]]:
-    """Render current repository architecture and decisions with relative links intact."""
+    """Render every classified canonical Markdown file, including policies and templates."""
 
     navigation = []
-    documentation_root = PROJECT_ROOT / "docs"
 
-    for folder in ("architecture", "adr", "development"):
-        source_root = documentation_root / folder
+    for item in documentation_coverage.InventoryFiles(PROJECT_ROOT):
+        if item.disposition != "rendered-markdown" or item.page_path is None:
+            continue
 
-        for source_path in sorted(source_root.rglob("*.md")):
-            relative = source_path.relative_to(PROJECT_ROOT)
-            destination = content_root / relative
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            content = RewriteDirectoryLinks(source_path.read_text(encoding="utf-8"), source_path)
-            source_link = (
-                "https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/"
-                + relative.as_posix()
-            )
-            destination.write_text(content + f"\n[Repository source]({source_link})\n",
-                                   encoding="utf-8")
-            heading = next((line.removeprefix("# ").strip() for line in content.splitlines()
-                            if line.startswith("# ")), source_path.stem)
-            navigation.append({heading: relative.as_posix()})
-
-    for name in ("AGENTS.md", "DEVELOPMENT_PROTOCOL.md", "docs/RELEASE_WORKFLOW.md"):
-        source_path = PROJECT_ROOT / name
-        destination = content_root / name
+        canonical_route = item.source_path.startswith(documentation_coverage.SOURCE_CONTENT_PREFIX)
+        source_path = PROJECT_ROOT / item.source_path
+        destination = content_root / item.page_path
         destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_text(
-            RewriteDirectoryLinks(source_path.read_text(encoding="utf-8"), source_path),
-            encoding="utf-8",
-        )
-        navigation.append({source_path.stem.replace("_", " ").title(): name})
+        content = RewriteRepositoryLinks(source_path.read_text(encoding="utf-8"),
+                                         source_path, item.page_path)
+
+        if canonical_route:
+            destination.write_text(content, encoding="utf-8")
+            continue
+
+        source_link = documentation_coverage.SOURCE_URL + item.source_path
+        destination.write_text(content + f"\n[Repository source]({source_link})\n",
+                               encoding="utf-8")
+        heading = next((line.removeprefix("# ").strip() for line in content.splitlines()
+                        if line.startswith("# ")), source_path.stem)
+        navigation.append({heading + " (" + item.source_path + ")": item.page_path})
 
     return navigation
 
@@ -338,7 +374,7 @@ def WriteBuildContent(modules: tuple[ModuleSource, ...], build_root: Path) -> Pa
         )
         page = (
             f"# {module.name}\n\n[Module source]({source_url})\n\n"
-            f"::: {module.name}\n"
+            f"::: {module.name}\n    options:\n      filters: [\"!^_(?!_call__$)\"]\n"
         )
         (module_root / f"{page_name}.md").write_text(page, encoding="utf-8")
         links.append(f"- [{module.name}](modules/{page_name}.md)")
@@ -351,7 +387,7 @@ def WriteBuildContent(modules: tuple[ModuleSource, ...], build_root: Path) -> Pa
     config = SOURCE_CONFIG.read_text(encoding="utf-8")
     config = re.sub(r"^docs_dir:.*$", f"docs_dir: {json.dumps(str(content_root))}",
                     config, flags=re.MULTILINE)
-    config = re.sub(r"^site_dir:.*$", f"site_dir: {json.dumps(str(build_root / 'site' / 'en'))}",
+    config = re.sub(r"^site_dir:.*$", f"site_dir: {json.dumps(str(build_root / 'rendered-en'))}",
                     config, flags=re.MULTILINE)
     engineering_navigation = WriteEngineeringContent(content_root)
     api_navigation = json.dumps([{"Index": "api/index.md"}, *module_navigation])
@@ -363,13 +399,34 @@ def WriteBuildContent(modules: tuple[ModuleSource, ...], build_root: Path) -> Pa
     config = config.replace(navigation_marker, "  - API reference: " + api_navigation)
     config = re.sub(
         r"(?m)^plugins:",
-        "  - Engineering guides: " + json.dumps(engineering_navigation) + "\n\nplugins:",
+        "  - Repository coverage: coverage/index.md\n  - Engineering guides: " + json.dumps(engineering_navigation) + "\n\nplugins:",
         config, count=1,
     )
     config_path = build_root / "mkdocs.yml"
     config_path.write_text(config, encoding="utf-8")
 
     return config_path
+
+
+def AssembleSite(build_root: Path) -> Path:
+    """Replace owned publication output with only the freshly rendered English tree."""
+
+    if build_root != BUILD_ROOT or build_root.is_symlink() or build_root.parent.is_symlink():
+        raise ValueError("Refusing to assemble an unowned or redirected documentation site")
+
+    rendered_root = build_root / "rendered-en"
+    site_root = build_root / "site"
+
+    if rendered_root.is_symlink() or site_root.is_symlink() or not rendered_root.is_dir():
+        raise ValueError("Fresh English output is absent or the generated site is redirected")
+
+    if site_root.exists():
+        shutil.rmtree(site_root)
+
+    site_root.mkdir()
+    rendered_root.rename(site_root / "en")
+
+    return site_root
 
 
 def WriteLocaleFallbacks(site_root: Path) -> None:
@@ -408,8 +465,38 @@ def WriteLocaleFallbacks(site_root: Path) -> None:
     (site_root / ".nojekyll").touch()
 
 
+def InstallWheel(environment_python: Path, wheel_path: Path, build_root: Path) -> Path:
+    """Install only the built wheel into a clean owned target, without mutating tools."""
+
+    if build_root != BUILD_ROOT or build_root.is_symlink() or build_root.parent.is_symlink():
+        raise ValueError("Refusing to install a wheel into an unowned or redirected build root")
+
+    installed_root = build_root / "installed"
+
+    if installed_root.exists():
+        raise ValueError("Fresh installed-wheel target already exists in the clean build root")
+
+    RunCommand([environment_python, "-m", "pip", "install", "--no-index", "--no-deps",
+                "--disable-pip-version-check", "--target", installed_root, wheel_path], cwd=build_root)
+    code = (
+        "import importlib.metadata as m; "
+        f"distributions = tuple(m.distributions(path=[{str(installed_root)!r}])); "
+        "assert len(distributions) == 1, 'Expected one installed wheel distribution'; "
+        "assert distributions[0].metadata['Name'] == 'f-layer', 'Unexpected wheel distribution'"
+    )
+    RunCommand([environment_python, "-c", code], cwd=build_root)
+
+    return installed_root
+
+
 def BuildReference(environment_python: Path | None = None) -> tuple[Path, dict[str, str], Path]:
     """Build, verify, and record evidence for a clean installed-wheel reference."""
+
+    documentation_coverage.InventoryFiles(PROJECT_ROOT)
+    input_diagnostics = documentation_coverage.CheckBuildInputs(PROJECT_ROOT)
+
+    if input_diagnostics:
+        raise ValueError("\n".join(input_diagnostics))
 
     RecreateBuildRoot(BUILD_ROOT)
 
@@ -431,12 +518,9 @@ def BuildReference(environment_python: Path | None = None) -> tuple[Path, dict[s
         raise ValueError("Expected exactly one built F-Layer wheel")
 
     wheel_path = wheels[0]
-    RunCommand([environment_python, "-m", "pip", "install", "--no-deps", "--force-reinstall",
-                "--disable-pip-version-check", wheel_path], cwd=BUILD_ROOT)
-    installed_root = Path(RunCommand([
-        environment_python, "-c", "import importlib.metadata as m; print(m.distribution('f-layer').locate_file(''))",
-    ], cwd=BUILD_ROOT))
+    installed_root = InstallWheel(environment_python, wheel_path, BUILD_ROOT)
     modules = DiscoverModules(installed_root)
+    definitions = DiscoverDefinitions(installed_root)
     locales = ValidateLocales(PROJECT_ROOT)
 
     if locales.diagnostics:
@@ -444,6 +528,7 @@ def BuildReference(environment_python: Path | None = None) -> tuple[Path, dict[s
 
     WriteApiLocaleInventory(modules, BUILD_ROOT)
     config_path = WriteBuildContent(modules, BUILD_ROOT)
+    documentation_coverage.WriteInventory(PROJECT_ROOT, BUILD_ROOT, definitions)
     guard_root = BUILD_ROOT / "import-guard"
     WriteImportGuard(guard_root)
     environment = dict(os.environ)
@@ -451,7 +536,7 @@ def BuildReference(environment_python: Path | None = None) -> tuple[Path, dict[s
     environment["FLAYER_INSTALLED_PACKAGES"] = str(installed_root)
     RunCommand([environment_python, "-m", "mkdocs", "build", "--strict", "--config-file",
                 config_path], cwd=BUILD_ROOT, environment=environment)
-    site_root = BUILD_ROOT / "site"
+    site_root = AssembleSite(BUILD_ROOT)
     WriteLocaleFallbacks(site_root)
     diagnostics = documentation_gates.CheckAll(PROJECT_ROOT, site_root, modules)
 
@@ -460,11 +545,17 @@ def BuildReference(environment_python: Path | None = None) -> tuple[Path, dict[s
 
     evidence = {
         "discovery": "static-installed-wheel", "runtimeImports": "blocked",
+        "wheelInstallIsolation": "fresh-owned-target",
         "sourceRevision": RunCommand(["git", "rev-parse", "HEAD"]),
         "sourceDirty": bool(RunCommand(["git", "status", "--porcelain", "--untracked-files=no"])),
         "documentationPackages": versions,
         "wheel": {"name": wheel_path.name, "sha256": hashlib.sha256(wheel_path.read_bytes()).hexdigest()},
         "modules": [module.name for module in modules],
+        "repositoryCoverage": {"status": "pass", "inventory": "repository-coverage.json",
+                               "files": len(documentation_coverage.InventoryFiles(PROJECT_ROOT)),
+                               "definitions": len(definitions)},
+        "sourceWheelPackageParity": "exact-excluding-bytecode",
+        "renderedMarkdownReachability": "pass",
         "authoredLocales": {"status": "pass", "states": locales.states},
         "renderedLinksAndAnchors": "pass", "generatedHtmlTracked": False,
     }

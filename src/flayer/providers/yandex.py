@@ -283,7 +283,7 @@ class YandexCloudProvider:
         try:
             payload: object = json.loads(result.stdout)
 
-        except (json.JSONDecodeError, RecursionError):
+        except (ValueError, RecursionError):
             pass
 
         else:

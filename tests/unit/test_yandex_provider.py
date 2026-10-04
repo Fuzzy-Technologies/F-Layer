@@ -387,7 +387,16 @@ def test_AddressResourcesRejectMalformedEndpoints(external: object) -> None:
     assert error.value.code == ProviderErrorCode.INVALID_RESPONSE, "Malformed endpoint was accepted"
 
 
-@pytest.mark.parametrize("output", ["", "synthetic-secret: not-json", "{" + '"a": [' * 1100])
+@pytest.mark.parametrize(
+    "output",
+    [
+        "",
+        "synthetic-secret: not-json",
+        "{" + '"a": [' * 1100,
+        "[" + "7" * 5000 + "]",
+        '["synthetic-secret",' + "7" * 5000 + "]",
+    ],
+)
 def test_JsonErrorsCannotExposeResponseText(output: str) -> None:
     """Invalid or excessively nested JSON produces only a stable sanitized error."""
 

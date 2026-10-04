@@ -1,0 +1,66 @@
+schemaVersion = 1
+
+[[units]]
+id = "page:api"
+kind = "page"
+sourcePath = "docs/site/content/en/api/index.md"
+sourceHash = "sha256:a323c487a92d4f00118f0fe423b37f0e4ab74b4ef8251dca6b443df8d99e0e74"
+reviewClass = "technical"
+
+[units.translations.ru]
+state = "missing"
+
+[units.translations.zh-CN]
+state = "missing"
+
+[[units]]
+id = "page:architecture"
+kind = "page"
+sourcePath = "docs/site/content/en/architecture.md"
+sourceHash = "sha256:882e7341dfb927631866e3dd2f8fe577c564d7fed4cc02ebde9f42d30abf43f7"
+reviewClass = "technical"
+
+[units.translations.ru]
+state = "missing"
+
+[units.translations.zh-CN]
+state = "missing"
+
+[[units]]
+id = "page:development"
+kind = "page"
+sourcePath = "docs/site/content/en/development.md"
+sourceHash = "sha256:4dc1c3201d46ce71532cd303d73dcef79e7488ce17e881c2ac234619a4f4f730"
+reviewClass = "technical"
+
+[units.translations.ru]
+state = "missing"
+
+[units.translations.zh-CN]
+state = "missing"
+
+[[units]]
+id = "page:documentation"
+kind = "page"
+sourcePath = "docs/site/content/en/documentation.md"
+sourceHash = "sha256:736e3263dc3cb6a3bf392563f17bb3e3e8a1fe69bec7909eb85e8f4bfd94aa02"
+reviewClass = "technical"
+
+[units.translations.ru]
+state = "missing"
+
+[units.translations.zh-CN]
+state = "missing"
+
+[[units]]
+id = "page:index"
+kind = "page"
+sourcePath = "docs/site/content/en/index.md"
+sourceHash = "sha256:9b2025b9319ccbb0d15f7fa727368b9a36bbc554ab639378b49e7a4032fac6ed"
+reviewClass = "technical"
+
+[units.translations.ru]
+state = "missing"
+
+[units.translations.zh-CN]
+state = "missing"

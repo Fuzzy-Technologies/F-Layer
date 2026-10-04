@@ -1,0 +1,37 @@
+# Replace all example identifiers, source CIDRs, and the synthetic public key before deployment.
+schema_version = 1
+profile = "secure-gateway"
+guest_contract = "ubuntu-24.04-cloud-init"
+
+[identity]
+project = "example"
+stack = "gateway"
+provider = "yandex-cloud"
+scope_id = "example-folder"
+owner_id = "example-owner"
+
+[gateway]
+zone_id = "example-zone"
+image_id = "example-ubuntu-image"
+subnet_cidr = "10.42.0.0/24"
+ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4"
+management_cidrs = ["198.51.100.42/32"]
+ssh_username = "gateway-admin"
+ssh_port = 22
+cores = 2
+memory_gib = 2
+boot_disk_gib = 20
+
+[transport]
+kind = "ssh-local-forward"
+username = "gateway-tunnel"
+
+[[transport.targets]]
+name = "web"
+host = "example.org"
+port = 443
+
+[[transport.devices]]
+device_id = "laptop"
+public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5"
+source_cidrs = ["198.51.100.42/32"]

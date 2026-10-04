@@ -1,0 +1,79 @@
+name: Documentation quality gates
+
+on:
+  pull_request:
+    branches: [develop, master]
+  push:
+    branches: [develop, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: documentation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-documentation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: docs/requirements-api.txt
+      - name: Install exact documentation and test tools
+        run: |
+          python -m pip install --requirement docs/requirements-api.txt
+          python -m pip install -e '.[dev]'
+      - name: Test documentation failure contracts
+        run: PYTHONPATH=src:. python -m pytest --no-cov tests/unit/test_documentation*.py
+      - name: Validate authored locale identity and review evidence
+        run: |
+          python -m tools.locale_documentation validate \
+            --output _build/documentation-gates/locales.json
+      - name: Build strict reference from a clean installed wheel
+        run: python -m tools.build_api_reference
+      - name: Upload previewable documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: flayer-documentation-preview
+          path: _build/api-reference/site
+          if-no-files-found: error
+      - name: Upload documentation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flayer-documentation-evidence
+          path: |
+            _build/documentation-gates
+            _build/api-reference/build-evidence.json
+            _build/api-reference/api-locales.json
+            _build/api-reference/api-units.toml
+            _build/api-reference/api-coverage.toml
+          if-no-files-found: warn
+      - name: Upload official Pages artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _build/api-reference/site
+
+  deploy-pages:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: build-documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy verified master-branch documentation
+        id: deployment
+        uses: actions/deploy-pages@v4

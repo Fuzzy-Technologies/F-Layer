@@ -1,0 +1,10 @@
+schemaVersion = 1
+locale = "zh-CN"
+
+[[terms]]
+id = "concept:infrastructure.provider"
+english = "provider"
+preferred = "提供方"
+avoid = []
+note = "A cloud adapter behind an explicit infrastructure contract."
+references = ["docs/site/content/en/architecture.md"]

@@ -4,13 +4,33 @@ build-backend = "hatchling.build"
 
 [project]
 name = "f-layer"
-version = "0.0.0"
+dynamic = ["version"]
 description = "Modular infrastructure automation platform for secure cloud environments"
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = []
+authors = [{ name = "Fuzzy Technologies" }]
+keywords = ["infrastructure", "cloud", "automation", "security", "yandex-cloud"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Systems Administration",
+]
+
+[project.urls]
+Homepage = "https://github.com/Fuzzy-Technologies/F-Layer"
+Repository = "https://github.com/Fuzzy-Technologies/F-Layer"
+Issues = "https://github.com/Fuzzy-Technologies/F-Layer/issues"
+Changelog = "https://github.com/Fuzzy-Technologies/F-Layer/releases"
+
+[project.scripts]
+flayer = "flayer.__main__:Main"
 
 [project.optional-dependencies]
 dev = [
@@ -24,9 +44,13 @@ dev = [
 [tool.hatch.build.targets.wheel]
 packages = ["src/flayer"]
 
+[tool.hatch.version]
+source = "regex"
+path = "src/flayer/__init__.py"
+
 [tool.hatch.build.targets.sdist]
 include = [
-    "/src", "/tests", "/tools", "/docs", "/.github",
+    "/src", "/tests", "/tools", "/docs", "/examples", "/.github",
     "/README.md", "/LICENSE", "/AGENTS.md", "/DEVELOPMENT_PROTOCOL.md",
     "/SECURITY.md", "/CONTRIBUTING.md", "/pyproject.toml",
 ]

@@ -1,8 +1,84 @@
-# Localized navigation notices are not reviewed documentation translations.
+# UI notices and labels are localization assets, not human review evidence.
 [ru]
-title = "Русский перевод пока отсутствует"
-body = "Проверенный перевод документации ещё не готов. Актуальная документация доступна на английском языке."
+title = "Русский перевод: требуется проверка"
+body = "Проверенный перевод ещё не готов. Актуальная документация доступна на английском языке."
+canonicalLink = "Актуальный оригинал на английском"
+statusLink = "Состояние перевода"
+statusTitle = "Состояние перевода"
+statusBody = "Новые переводы — черновики. Проверка человеком ещё не выполнена. Отсутствующие и устаревшие страницы показывают актуальный английский оригинал. Публикация сайта и проверка переводов — отдельные этапы."
+pageLabel = "Страница"
+stateLabel = "Состояние"
+
+[ru.states.missing]
+title = "Перевод отсутствует"
+body = "Ниже показан актуальный английский оригинал."
+[ru.states.draft]
+title = "Черновик перевода"
+body = "Текст ещё не прошёл редакционную и техническую проверку человеком."
+[ru.states.review]
+title = "Перевод на проверке"
+body = "Необходимые проверки человеком ещё не завершены."
+[ru.states.approved]
+title = "Проверенный перевод"
+body = "Метаданные содержат необходимые проверки текущего английского источника."
+[ru.states.stale]
+title = "Перевод устарел"
+body = "Английский источник изменился. Ниже показан актуальный английский оригинал."
+
+[ru.navigation]
+Overview = "Обзор"
+"User guide" = "Руководство пользователя"
+"Get started" = "Начало работы"
+Install = "Установка"
+Configuration = "Конфигурация"
+CLI = "Командная строка"
+"First deployment" = "Первое развёртывание"
+Architecture = "Архитектура"
+Development = "Разработка"
+"Documentation contracts" = "Правила документации"
+"Project identity" = "Символика проекта"
+"API reference" = "Справочник API"
+Index = "Оглавление"
+"Engineering guides" = "Инженерная документация"
 
 [zh-CN]
-title = "暂无经过审核的简体中文翻译"
-body = "翻译尚未完成审核。请阅读最新的英文文档。"
+title = "简体中文翻译需要审核"
+body = "尚无经过审核的译文。请阅读最新英文文档。"
+canonicalLink = "最新英文原文"
+statusLink = "翻译状态"
+statusTitle = "翻译状态"
+statusBody = "新译文均为草稿，尚未经人工审核。缺失或过时的页面显示最新英文原文。网站发布和译文审核是独立步骤。"
+pageLabel = "页面"
+stateLabel = "状态"
+
+[zh-CN.states.missing]
+title = "翻译缺失"
+body = "下方显示最新英文原文。"
+[zh-CN.states.draft]
+title = "翻译草稿"
+body = "尚未完成人工编辑审核和技术审核。"
+[zh-CN.states.review]
+title = "翻译审核中"
+body = "所需人工审核尚未完成。"
+[zh-CN.states.approved]
+title = "已审核的翻译"
+body = "元数据记录了针对当前英文源文的必要审核。"
+[zh-CN.states.stale]
+title = "翻译已过时"
+body = "英文源文已更改。下方显示最新英文原文。"
+
+[zh-CN.navigation]
+Overview = "概览"
+"User guide" = "用户指南"
+"Get started" = "开始使用"
+Install = "安装"
+Configuration = "配置"
+CLI = "命令行"
+"First deployment" = "首次部署"
+Architecture = "架构"
+Development = "开发"
+"Documentation contracts" = "文档规则"
+"Project identity" = "项目标识"
+"API reference" = "API 参考"
+Index = "目录"
+"Engineering guides" = "工程文档"

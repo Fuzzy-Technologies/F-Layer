@@ -21,10 +21,14 @@ sourceHash = "sha256:ec88468bbf2a50a96f2365f47035ffbf747d6be85bbedaa558eaf04364a
 reviewClass = "technical"
 
 [units.translations.ru]
-state = "missing"
+state = "draft"
+path = "docs/site/content/ru/architecture.md"
+basedOnSourceHash = "sha256:ec88468bbf2a50a96f2365f47035ffbf747d6be85bbedaa558eaf04364a19df7"
 
 [units.translations.zh-CN]
-state = "missing"
+state = "draft"
+path = "docs/site/content/zh-CN/architecture.md"
+basedOnSourceHash = "sha256:ec88468bbf2a50a96f2365f47035ffbf747d6be85bbedaa558eaf04364a19df7"
 
 [[units]]
 id = "page:brand"
@@ -47,10 +51,14 @@ sourceHash = "sha256:3e13b58ec7a14f97c5d4f774a4727fe67aeaf9ba91a4720972768bd8154
 reviewClass = "technical"
 
 [units.translations.ru]
-state = "missing"
+state = "draft"
+path = "docs/site/content/ru/development.md"
+basedOnSourceHash = "sha256:3e13b58ec7a14f97c5d4f774a4727fe67aeaf9ba91a4720972768bd8154450a2"
 
 [units.translations.zh-CN]
-state = "missing"
+state = "draft"
+path = "docs/site/content/zh-CN/development.md"
+basedOnSourceHash = "sha256:3e13b58ec7a14f97c5d4f774a4727fe67aeaf9ba91a4720972768bd8154450a2"
 
 [[units]]
 id = "page:documentation"
@@ -60,10 +68,14 @@ sourceHash = "sha256:aea7a3de31f6432c0f66d3be012e12572fd881a0178452fd35cf4850e23
 reviewClass = "technical"
 
 [units.translations.ru]
-state = "missing"
+state = "draft"
+path = "docs/site/content/ru/documentation.md"
+basedOnSourceHash = "sha256:aea7a3de31f6432c0f66d3be012e12572fd881a0178452fd35cf4850e23f3352"
 
 [units.translations.zh-CN]
-state = "missing"
+state = "draft"
+path = "docs/site/content/zh-CN/documentation.md"
+basedOnSourceHash = "sha256:aea7a3de31f6432c0f66d3be012e12572fd881a0178452fd35cf4850e23f3352"
 
 [[units]]
 id = "page:guide"
@@ -73,10 +85,14 @@ sourceHash = "sha256:ad084b7e476dc15d86b6b0587c5f64e72636fa360a3c29992e880609cdb
 reviewClass = "technical"
 
 [units.translations.ru]
-state = "missing"
+state = "draft"
+path = "docs/site/content/ru/guide/index.md"
+basedOnSourceHash = "sha256:ad084b7e476dc15d86b6b0587c5f64e72636fa360a3c29992e880609cdbb58b1"
 
 [units.translations.zh-CN]
-state = "missing"
+state = "draft"
+path = "docs/site/content/zh-CN/guide/index.md"
+basedOnSourceHash = "sha256:ad084b7e476dc15d86b6b0587c5f64e72636fa360a3c29992e880609cdbb58b1"
 
 [[units]]
 id = "page:guide.cli"
@@ -86,10 +102,14 @@ sourceHash = "sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c
 reviewClass = "technical"
 
 [units.translations.ru]
-state = "missing"
+state = "draft"
+path = "docs/site/content/ru/guide/cli.md"
+basedOnSourceHash = "sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc"
 
 [units.translations.zh-CN]
-state = "missing"
+state = "draft"
+path = "docs/site/content/zh-CN/guide/cli.md"
+basedOnSourceHash = "sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc"
 
 [[units]]
 id = "page:guide.configuration"
@@ -99,10 +119,14 @@ sourceHash = "sha256:072347586a80864d7df609f36662c002da9a27380ffc0884595c045fcdc
 reviewClass = "technical"
 
 [units.translations.ru]
-state = "missing"
+state = "draft"
+path = "docs/site/content/ru/guide/configuration.md"
+basedOnSourceHash = "sha256:072347586a80864d7df609f36662c002da9a27380ffc0884595c045fcdc0f6c9"
 
 [units.translations.zh-CN]
-state = "missing"
+state = "draft"
+path = "docs/site/content/zh-CN/guide/configuration.md"
+basedOnSourceHash = "sha256:072347586a80864d7df609f36662c002da9a27380ffc0884595c045fcdc0f6c9"
 
 [[units]]
 id = "page:guide.first-deployment"
@@ -112,10 +136,14 @@ sourceHash = "sha256:d1c5afa020315b55f923ff3b7fafd48a60f5dae8b9645239be8fef2bc9c
 reviewClass = "technical"
 
 [units.translations.ru]
-state = "missing"
+state = "draft"
+path = "docs/site/content/ru/guide/first-deployment.md"
+basedOnSourceHash = "sha256:d1c5afa020315b55f923ff3b7fafd48a60f5dae8b9645239be8fef2bc9cccb3c"
 
 [units.translations.zh-CN]
-state = "missing"
+state = "draft"
+path = "docs/site/content/zh-CN/guide/first-deployment.md"
+basedOnSourceHash = "sha256:d1c5afa020315b55f923ff3b7fafd48a60f5dae8b9645239be8fef2bc9cccb3c"
 
 [[units]]
 id = "page:guide.installation"
@@ -125,10 +153,14 @@ sourceHash = "sha256:fde720cc25a92905c97ad540904a015512548b65ff5760b06723b8608c2
 reviewClass = "technical"
 
 [units.translations.ru]
-state = "missing"
+state = "draft"
+path = "docs/site/content/ru/guide/installation.md"
+basedOnSourceHash = "sha256:fde720cc25a92905c97ad540904a015512548b65ff5760b06723b8608c2ffd94"
 
 [units.translations.zh-CN]
-state = "missing"
+state = "draft"
+path = "docs/site/content/zh-CN/guide/installation.md"
+basedOnSourceHash = "sha256:fde720cc25a92905c97ad540904a015512548b65ff5760b06723b8608c2ffd94"
 
 [[units]]
 id = "page:index"
@@ -138,7 +170,11 @@ sourceHash = "sha256:e6c9c464f945b16651d45389443d3c5786582a84406c015583cfb0cf467
 reviewClass = "technical"
 
 [units.translations.ru]
-state = "missing"
+state = "draft"
+path = "docs/site/content/ru/index.md"
+basedOnSourceHash = "sha256:e6c9c464f945b16651d45389443d3c5786582a84406c015583cfb0cf4671e9b7"
 
 [units.translations.zh-CN]
-state = "missing"
+state = "draft"
+path = "docs/site/content/zh-CN/index.md"
+basedOnSourceHash = "sha256:e6c9c464f945b16651d45389443d3c5786582a84406c015583cfb0cf4671e9b7"

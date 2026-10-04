@@ -7,6 +7,7 @@ __pycache__/
 .eggs/
 build/
 dist/
+_build/
 
 # Environments and secrets
 .venv/

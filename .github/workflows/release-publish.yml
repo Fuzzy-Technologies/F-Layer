@@ -1,0 +1,86 @@
+name: Publish an owner-approved PyPI release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing annotated vX.Y.Z tag owning the current master commit'
+        required: true
+        type: string
+      confirm_publication:
+        description: 'Publish the validated distributions to production PyPI'
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flayer-pypi-publication
+  cancel-in-progress: false
+
+jobs:
+  validate-release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out the selected workflow revision and local tag history
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+      - name: Install the pinned development and build tools
+        run: python -m pip install -e '.[dev]'
+      - name: Run the canonical full validation gate
+        run: python tools/validate.py
+      - name: Check owner consent, tag ownership, versions and reproducible artifacts
+        env:
+          FLAYER_RELEASE_TAG: ${{ inputs.tag }}
+          FLAYER_CONFIRM_PUBLICATION: ${{ inputs.confirm_publication }}
+          FLAYER_RELEASE_OWNER: ${{ vars.FLAYER_RELEASE_OWNER }}
+          FLAYER_PYPI_ENABLED: ${{ vars.FLAYER_PYPI_ENABLED }}
+        run: python tools/release_validation.py --publication --tag "$FLAYER_RELEASE_TAG"
+      - name: Upload the validated distributions for this exact run
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: flayer-approved-pypi-distributions
+          path: _build/release/dist
+          if-no-files-found: error
+      - name: Upload release build evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: flayer-approved-pypi-evidence
+          path: _build/release/build-evidence.json
+          if-no-files-found: error
+
+  publish-pypi:
+    needs: validate-release
+    if: >-
+      github.repository == 'Fuzzy-Technologies/F-Layer' &&
+      github.ref == 'refs/heads/master' &&
+      vars.FLAYER_PYPI_ENABLED == 'true' &&
+      vars.FLAYER_RELEASE_OWNER != '' &&
+      github.actor == vars.FLAYER_RELEASE_OWNER &&
+      inputs.confirm_publication == true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      id-token: write
+    steps:
+      - name: Retrieve the validated artifacts from this workflow run
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: flayer-approved-pypi-distributions
+          path: dist
+      - name: Publish with the configured PyPI Trusted Publisher
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        with:
+          packages-dir: dist
+          repository-url: https://upload.pypi.org/legacy/
+          skip-existing: false
+          attestations: true

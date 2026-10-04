@@ -20,12 +20,12 @@ Use an endpoint you have authorized for the requested traffic. `--endpoint` is m
 for network work. No command contacts a default service, discovers cloud resources,
 reads credentials, runs SSH, or mutates infrastructure.
 
-| Command | Current observation | Offline behavior |
-| --- | --- | --- |
-| `check` | Local Python runtime compatibility | Reports local execution only |
-| `status` | Runtime plus generic provider observation boundary | Provider observation is unsupported until an adapter supplies it |
-| `health` | An explicit endpoint returns HTTP 2xx | Missing endpoint is unsupported |
-| `benchmark` | Repeated limited HTTP downloads | Missing endpoint is unsupported |
+| Command     | Current observation                                | Offline behavior                                                 |
+| ----------- | -------------------------------------------------- | ---------------------------------------------------------------- |
+| `check`     | Local Python runtime compatibility                 | Reports local execution only                                     |
+| `status`    | Runtime plus generic provider observation boundary | Provider observation is unsupported until an adapter supplies it |
+| `health`    | An explicit endpoint returns HTTP 2xx              | Missing endpoint is unsupported                                  |
+| `benchmark` | Repeated limited HTTP downloads                    | Missing endpoint is unsupported                                  |
 
 `health` measures endpoint reachability. It does not establish cloud lifecycle state,
 guest hardening, tunnel handshakes, or application correctness. `benchmark` records the
@@ -39,14 +39,14 @@ array. Each check has `name`, `status`, `message`, and a `details` object. JSON 
 sorted; no response body or raw exception text is included. Text output uses the same
 sanitized observations, with one line per check.
 
-| Status | Exit code | Meaning |
-| --- | --- | --- |
-| `ok` | 0 | All requested observations succeeded |
-| `warning` | 1 | A supplied observation reports degraded or pending state |
-| `failed` | 1 | A check failed or structured evidence was invalid |
-| `stale` | 3 | Health evidence expired or has a future timestamp |
-| `unsupported` | 4 | No adapter/evidence/endpoint was supplied, or its schema is unsupported |
-| Invalid CLI input | 2 | Command arguments, endpoint, or bounds are invalid |
+| Status            | Exit code | Meaning                                                                 |
+| ----------------- | --------- | ----------------------------------------------------------------------- |
+| `ok`              | 0         | All requested observations succeeded                                    |
+| `warning`         | 1         | A supplied observation reports degraded or pending state                |
+| `failed`          | 1         | A check failed or structured evidence was invalid                       |
+| `stale`           | 3         | Health evidence expired or has a future timestamp                       |
+| `unsupported`     | 4         | No adapter/evidence/endpoint was supplied, or its schema is unsupported |
+| Invalid CLI input | 2         | Command arguments, endpoint, or bounds are invalid                      |
 
 Aggregation precedence is `failed`, `stale`, `unsupported`, `warning`, `ok`.
 An empty report is unsupported. A local runtime success cannot mask absent remote evidence.

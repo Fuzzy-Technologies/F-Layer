@@ -6,15 +6,15 @@ F-Layer providers translate cloud-specific authentication and resource observati
 
 Import the generic boundary from `flayer.providers.contracts` and the first adapter from `flayer.providers.yandex`.
 
-| Public API | Behavior |
-| --- | --- |
-| `CloudProvider.Identity` | Provider ID, explicit resource scope and non-secret authentication source |
+| Public API                   | Behavior                                                                        |
+| ---------------------------- | ------------------------------------------------------------------------------- |
+| `CloudProvider.Identity`     | Provider ID, explicit resource scope and non-secret authentication source       |
 | `CloudProvider.Capabilities` | Implemented inventory and lookup operations, independent of account permissions |
-| `CheckAvailability()` | Local CLI execution probe; authentication remains unknown |
-| `CheckAuthentication()` | Read-access probe to the configured folder through existing CLI credentials |
-| `ListResources(kind)` | Sorted, validated inventory for one supported resource kind |
-| `GetResource(reference)` | Lookup by resource ID with reference and returned-scope validation |
-| `DiscoverInventory()` | Inventory across every supported kind, or a failure without partial results |
+| `CheckAvailability()`        | Local CLI execution probe; authentication remains unknown                       |
+| `CheckAuthentication()`      | Read-access probe to the configured folder through existing CLI credentials     |
+| `ListResources(kind)`        | Sorted, validated inventory for one supported resource kind                     |
+| `GetResource(reference)`     | Lookup by resource ID with reference and returned-scope validation              |
+| `DiscoverInventory()`        | Inventory across every supported kind, or a failure without partial results     |
 
 A `ResourceReference` binds provider ID, scope ID, resource kind and resource ID. A `ProviderResource` contains that reference, name, vendor status, optional zone, immutable ownership labels and public IPv4 endpoints. Unknown state is explicitly `UNKNOWN`. Raw provider JSON, instance metadata and credentials never become resource fields.
 

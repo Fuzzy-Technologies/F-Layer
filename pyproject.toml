@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "f-layer"
-version = "0.0.0"
+version = "1.0.0"
 description = "Modular infrastructure automation platform for secure cloud environments"
 readme = "README.md"
 license = "Apache-2.0"
@@ -26,9 +26,9 @@ packages = ["src/flayer"]
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "/src", "/tests", "/tools", "/docs", "/.github",
+    "/src", "/tests", "/tools", "/docs", "/examples", "/.github",
     "/README.md", "/LICENSE", "/AGENTS.md", "/DEVELOPMENT_PROTOCOL.md",
-    "/SECURITY.md", "/CONTRIBUTING.md", "/pyproject.toml",
+    "/SECURITY.md", "/CONTRIBUTING.md", "/CHANGELOG.md", "/pyproject.toml",
 ]
 
 [tool.pytest.ini_options]

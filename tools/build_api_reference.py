@@ -278,7 +278,7 @@ def WriteEngineeringContent(content_root: Path) -> list[dict[str, str]]:
     navigation = []
     documentation_root = PROJECT_ROOT / "docs"
 
-    for folder in ("architecture", "adr", "development"):
+    for folder in ("architecture", "adr", "development", "releases"):
         source_root = documentation_root / folder
 
         for source_path in sorted(source_root.rglob("*.md")):
@@ -296,7 +296,7 @@ def WriteEngineeringContent(content_root: Path) -> list[dict[str, str]]:
                             if line.startswith("# ")), source_path.stem)
             navigation.append({heading: relative.as_posix()})
 
-    for name in ("AGENTS.md", "DEVELOPMENT_PROTOCOL.md", "docs/RELEASE_WORKFLOW.md"):
+    for name in ("AGENTS.md", "DEVELOPMENT_PROTOCOL.md", "CHANGELOG.md", "docs/RELEASE_WORKFLOW.md"):
         source_path = PROJECT_ROOT / name
         destination = content_root / name
         destination.parent.mkdir(parents=True, exist_ok=True)

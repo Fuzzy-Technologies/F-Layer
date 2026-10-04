@@ -1,5 +1,7 @@
 # F-Layer
 
+Release history: [Changelog](CHANGELOG.md) · [GitHub Releases](https://github.com/Fuzzy-Technologies/F-Layer/releases).
+
 F-Layer is a modular infrastructure automation platform by Fuzzy Technologies
 for deploying, managing, and integrating secure cloud environments.
 

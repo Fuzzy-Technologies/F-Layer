@@ -17,7 +17,7 @@ state = "missing"
 id = "page:architecture"
 kind = "page"
 sourcePath = "docs/site/content/en/architecture.md"
-sourceHash = "sha256:2f35380320084a7c32f4d85eba2064afdd7a74e374ca32006e838a18c7770247"
+sourceHash = "sha256:882e7341dfb927631866e3dd2f8fe577c564d7fed4cc02ebde9f42d30abf43f7"
 reviewClass = "technical"
 
 [units.translations.ru]

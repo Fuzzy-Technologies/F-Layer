@@ -38,9 +38,7 @@ temporary installed package are removed on success and failure.
 
 The package coverage floor measures production package code. Repository tools
 are checked by compileall and mypy and have behavior tests; the percentage does
-not claim coverage of workflows or documentation. The shared
-`tools/locale_documentation.py` blueprint validator retains its upstream typing
-and has a narrow mypy exception when present.
+not claim coverage of workflows or documentation.
 
 ## Test stages
 

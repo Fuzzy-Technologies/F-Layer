@@ -55,11 +55,6 @@ python_version = "3.11"
 files = ["src", "tools"]
 strict = true
 
-# The shared documentation-blueprint validator retains its upstream style and typing.
-[[tool.mypy.overrides]]
-module = "tools.locale_documentation"
-ignore_errors = true
-
 [tool.coverage.run]
 branch = true
 source = ["flayer"]

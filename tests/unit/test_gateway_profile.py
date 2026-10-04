@@ -143,7 +143,7 @@ def test_GatewaySettingsRejectUnsafeInput(field: str, value: object) -> None:
 @pytest.mark.parametrize("public_key", [
     "", "ssh-rsa AAAA", "ssh-ed25519 !!!!", "ssh-ed25519 AAAA",
     PUBLIC_KEY + " private-comment", PUBLIC_KEY.replace("ssh-ed25519 ", "ssh-ed25519  "),
-    "-----BEGIN OPENSSH PRIVATE KEY-----", 123, "x" * 257,
+    " ".join(("-----BEGIN", "OPENSSH", "PRIVATE", "KEY-----")), 123, "x" * 257,
 ])
 def test_PublicKeyWireBoundary(public_key: object) -> None:
     """Reject malformed blobs, comments, unsupported algorithms, and private material."""

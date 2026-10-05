@@ -6,6 +6,7 @@ F-Layer engineering guidance is organized around the repository development prot
 - [Python code style](PYTHON_CODE_STYLE.md)
 - [Branch and release workflow](../RELEASE_WORKFLOW.md)
 - [Documentation completeness contract](documentation-coverage.md)
+- [Documentation dependency security](dependency-security.md)
 - [Architecture Decision Records](../adr/README.md)
 
 The canonical shared evidence surface is GitHub: issues, pull requests, CI, ADRs, and release history must be sufficient to reconstruct implementation status without private chat history.

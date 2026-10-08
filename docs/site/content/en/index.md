@@ -10,11 +10,10 @@ capabilities, deployment profiles, lifecycle operations, and diagnostic
 evidence. Those boundaries make individual integrations replaceable and
 operations reproducible.
 
-!!! info "Versioned foundation"
-    This documentation describes the installed stable package and accepted
-    architecture. Release 1.1.0 adds installation and user-guide improvements
-    to the owned infrastructure baseline. Architecture direction does not imply
-    that features assigned to later milestones are included in this release.
+!!! info "Versioned documentation"
+    GitHub Pages follows the latest stable `master` release. A local build
+    describes its installed source revision; `develop` can include accepted work
+    for later milestones. Use the tagged changelog to check each release's scope.
 
 <div class="grid cards" markdown>
 

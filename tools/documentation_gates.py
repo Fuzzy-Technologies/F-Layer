@@ -15,6 +15,7 @@ from urllib.parse import unquote, urlsplit
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from tools import documentation_coverage  # noqa: E402
 from tools.markdown_tables import CheckMarkdownTables  # noqa: E402
 
 PUBLIC_ORIGIN = "https://fuzzy-technologies.github.io"
@@ -145,7 +146,12 @@ def CheckRenderedLinks(site_root: Path) -> tuple[str, ...]:
 def CheckSourceLinks(project_root: Path) -> tuple[str, ...]:
     """Reject broken repository-local Markdown and asset targets in authored docs."""
 
-    paths = [project_root / "README.md", *sorted((project_root / "docs").rglob("*.md"))]
+    try:
+        paths = [project_root / name for name in documentation_coverage.TrackedFiles(project_root)
+                 if name.endswith(".md")]
+
+    except subprocess.CalledProcessError:
+        paths = [*project_root.glob("*.md"), *sorted((project_root / "docs").rglob("*.md"))]
     diagnostics = []
 
     for path in paths:
@@ -214,6 +220,59 @@ def CheckApiCoverage(site_root: Path, modules: Sequence[ModuleContract]) -> tupl
     return tuple(diagnostics)
 
 
+def HtmlPage(page_path: str, site_root: Path) -> Path:
+    """Map one Markdown route to its directory-URL HTML artifact."""
+
+    return site_root / "en" / documentation_coverage.MarkdownArtifact(page_path)
+
+
+def CheckMarkdownReachability(project_root: Path, site_root: Path) -> tuple[str, ...]:
+    """Require every canonical Markdown artifact to be reachable from English entry."""
+
+    diagnostics = []
+    pages = {path.resolve(): ParsePage(path) for path in sorted(site_root.rglob("*.html"))}
+    entry = (site_root / "en/index.html").resolve()
+    pending = [entry]
+    reached: set[Path] = set()
+
+    while pending:
+        page_path = pending.pop()
+
+        if page_path in reached or page_path not in pages:
+            continue
+
+        reached.add(page_path)
+
+        for target in pages[page_path].targets:
+            try:
+                local = LocalTarget(page_path, target, site_root)
+
+            except ValueError:
+                continue
+
+            if local is not None and local[0].suffix == ".html":
+                pending.append(local[0])
+
+    for item in documentation_coverage.InventoryFiles(project_root):
+        if item.disposition not in {"rendered-markdown", "generated-api"} or item.page_path is None:
+            continue
+
+        expected = HtmlPage(item.page_path, site_root).resolve()
+
+        if not expected.is_file():
+            diagnostics.append(f"Missing classified documentation page: {item.source_path}")
+
+        elif expected not in reached:
+            diagnostics.append(f"Unreachable classified documentation page: {item.source_path}")
+
+    coverage_page = (site_root / "en/coverage/index.html").resolve()
+
+    if coverage_page not in reached:
+        diagnostics.append("Repository coverage inventory is not reachable from English entry")
+
+    return tuple(diagnostics)
+
+
 def CheckAll(
     project_root: Path, site_root: Path, modules: Sequence[ModuleContract] = (),
 ) -> tuple[str, ...]:
@@ -221,6 +280,8 @@ def CheckAll(
 
     return tuple(sorted(set((
         *CheckSourceLinks(project_root), *CheckGeneratedPolicy(project_root),
+        *documentation_coverage.CheckRepositoryCoverage(project_root),
+        *CheckMarkdownReachability(project_root, site_root),
         *CheckMarkdownTables(project_root),
         *CheckRenderedLinks(site_root), *CheckApiCoverage(site_root, modules),
     ))))
@@ -234,10 +295,12 @@ def Main(arguments: Sequence[str] | None = None) -> int:
     parser.add_argument("--site-root", type=Path)
     options = parser.parse_args(arguments)
     diagnostics = [*CheckSourceLinks(options.project_root), *CheckGeneratedPolicy(options.project_root),
-                   *CheckMarkdownTables(options.project_root)]
+                   *CheckMarkdownTables(options.project_root),
+                   *documentation_coverage.CheckRepositoryCoverage(options.project_root)]
 
     if options.site_root:
         diagnostics.extend(CheckRenderedLinks(options.site_root.resolve()))
+        diagnostics.extend(CheckMarkdownReachability(options.project_root, options.site_root.resolve()))
 
     if diagnostics:
         print("\n".join(diagnostics))

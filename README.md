@@ -21,7 +21,7 @@ later milestones. See the changelog for the scope of each released version.
 ```bash
 git clone https://github.com/Fuzzy-Technologies/F-Layer.git
 cd F-Layer
-git checkout v1.1.0
+git checkout v1.2.0
 python -m pip install .
 python -m flayer check --format json
 ```

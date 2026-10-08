@@ -304,7 +304,11 @@ def RewriteRepositoryLinks(content: str, source_path: Path, page_path: str) -> s
 
         relative = resolved.relative_to(PROJECT_ROOT).as_posix()
 
-        if resolved.suffix == ".md":
+        if (relative.startswith("docs/site/content/")
+                and not relative.startswith(documentation_coverage.SOURCE_CONTENT_PREFIX)):
+            rewritten = documentation_coverage.SOURCE_URL + relative
+
+        elif resolved.suffix == ".md":
             destination = documentation_coverage.MarkdownPage(relative)
             rewritten = os.path.relpath(destination, Path(page_path).parent).replace(os.sep, "/")
 

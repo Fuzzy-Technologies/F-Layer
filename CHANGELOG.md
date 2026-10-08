@@ -8,6 +8,56 @@ and security boundaries. Release entries follow [ADR 0014](docs/adr/0014-scoped-
 The first versioned infrastructure foundation. Operational validation against a
 real cloud account remains the operator's responsibility.
 
+## Minor 1.2
+
+### Patch 0 — v1.2.0 — 2026-10-08
+
+#### Digest
+
+- Browse complete repository documentation and EN/RU/ZH-CN routes with explicit
+  translation status, and use a patched documentation build dependency. Existing
+  1.1.0 runtime and CLI contracts remain supported; RU/ZH-CN prose is still draft.
+
+#### Added
+
+- A file-by-file documentation inventory with an explicit category and rationale
+  for every tracked file, including future files in established categories.
+- Navigable canonical Markdown covering repository entry points, policies,
+  architecture, ADRs and templates, development guides, and release history.
+- Installed-wheel API coverage for the executable CLI module and callable
+  protocols, plus accountable source-only records for private definitions.
+- An implemented architecture reference with composition, lifecycle/recovery,
+  and documentation/distribution diagrams.
+- Strict EN/RU/ZH-CN builds, localized navigation, 18 authored draft pages,
+  explicit English fallback, and source-hash-bound review handoff materials.
+
+#### Fixed
+
+- Generated repository pages now retain RU/ZH-CN draft links as source references
+  instead of linking to nonexistent canonical pages. Regression checks cover
+  both locales and preserved heading fragments.
+- Stable installation examples select `v1.2.0` in all three languages instead
+  of sending readers to an advanced development checkout.
+
+#### Changed
+
+- Require exact source/installed-wheel file and byte parity for the entire
+  package, including private modules and the executable entry point.
+- Verify rendered API anchors, all local links, repository-page reachability,
+  Markdown table alignment, and explicit file classification before publishing.
+- Tie current draft translations to their actual English source hashes. Draft,
+  stale, missing, review, and approved states remain distinct; generated API
+  translations remain explicitly missing.
+
+#### Security
+
+- Update the exact documentation setuptools pin from `80.9.0` to patched
+  `83.0.0` for GHSA-h35f-9h28-mq5c / CVE-2026-59890. Other documentation pins
+  and the Hatchling distribution backend are unchanged.
+- Preserve static API discovery and its runtime import guard, source ownership,
+  bounded cloud mutation, and master-only Pages publication. Human translation
+  approvals, live cloud readiness, and PyPI uploads are not implied by this release.
+
 ## Minor 1.1
 
 ### Patch 0 — v1.1.0 — 2026-10-05
@@ -91,3 +141,5 @@ real cloud account remains the operator's responsibility.
 [v1.0.0]: https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.0.0
 
 [v1.1.0]: https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.1.0
+
+[v1.2.0]: https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.2.0

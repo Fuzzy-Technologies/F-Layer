@@ -149,18 +149,18 @@ basedOnSourceHash = "sha256:d1c5afa020315b55f923ff3b7fafd48a60f5dae8b9645239be8f
 id = "page:guide.installation"
 kind = "page"
 sourcePath = "docs/site/content/en/guide/installation.md"
-sourceHash = "sha256:37eb05a495ff7852dfd14b1adf6891f18256678042c35e21a1a82188ec3214ae"
+sourceHash = "sha256:b9a10d56c86ab6cbd255310727c044f9e3112e06dba8a966c4442697ec32950f"
 reviewClass = "technical"
 
 [units.translations.ru]
 state = "draft"
 path = "docs/site/content/ru/guide/installation.md"
-basedOnSourceHash = "sha256:37eb05a495ff7852dfd14b1adf6891f18256678042c35e21a1a82188ec3214ae"
+basedOnSourceHash = "sha256:b9a10d56c86ab6cbd255310727c044f9e3112e06dba8a966c4442697ec32950f"
 
 [units.translations.zh-CN]
 state = "draft"
 path = "docs/site/content/zh-CN/guide/installation.md"
-basedOnSourceHash = "sha256:37eb05a495ff7852dfd14b1adf6891f18256678042c35e21a1a82188ec3214ae"
+basedOnSourceHash = "sha256:b9a10d56c86ab6cbd255310727c044f9e3112e06dba8a966c4442697ec32950f"
 
 [[units]]
 id = "page:index"

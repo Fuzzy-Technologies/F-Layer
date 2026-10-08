@@ -205,6 +205,29 @@ def test_CopiedMarkdownRoutesAndNonpageSourceReferences(
     assert "blob/develop/pyproject.toml)" in generated
 
 
+@pytest.mark.parametrize("locale", ["ru", "zh-CN"])
+def test_LocaleOverlayLinksRemainSourceReferences(
+    coverage_project: Path, monkeypatch: pytest.MonkeyPatch, locale: str,
+) -> None:
+    """Review links must not invent canonical routes for separately rendered locale drafts."""
+
+    source_path = Track(coverage_project, "docs/i18n/review-snapshot.md", "# Review\n")
+    Track(coverage_project, "docs/site/content/en/guide/index.md", "# Guide\n")
+    locale_path = f"docs/site/content/{locale}/guide/index.md"
+    Track(coverage_project, locale_path, "# Guide\n")
+    monkeypatch.setattr(build_api_reference, "PROJECT_ROOT", coverage_project)
+    generated = build_api_reference.RewriteRepositoryLinks(
+        f"[English](../site/content/en/guide/index.md#guide) "
+        f"[Draft](../site/content/{locale}/guide/index.md#guide)",
+        source_path, "repository/docs/i18n/review-snapshot.md",
+    )
+
+    assert "(../../../guide/index.md#guide)" in generated
+    assert f"({documentation_coverage.SOURCE_URL}{locale_path}#guide)" in generated, (
+        "Locale overlays are source references in canonical repository pages, not missing local pages"
+    )
+
+
 def test_ExistingButOrphanedMarkdownFailsReachability(coverage_project: Path) -> None:
     """An artifact's existence alone cannot establish navigable documentation."""
 

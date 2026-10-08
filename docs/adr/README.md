@@ -35,4 +35,7 @@ Use [0000-template.md](0000-template.md) as the starting point.
 | [ADR 0008](0008-reproducible-release-automation.md) | Reproducible distributions and explicit owner publication           |
 | [ADR 0009](0009-distribution-version-source.md)     | One source for distribution and runtime versions                    |
 | [ADR 0010](0010-documentation-completeness.md)      | Explicit repository documentation completeness                      |
-| [ADR 0014](0014-scoped-releases-and-changelog.md)   | Milestone-scoped release history and human-readable changelogs      |
+| [ADR 0014](0014-scoped-releases-and-changelog.md)   | Milestone-scoped releases and human-readable changelogs             |
+
+Release history and the human-readable changelog follow
+[ADR 0014](0014-scoped-releases-and-changelog.md).

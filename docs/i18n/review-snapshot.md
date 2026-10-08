@@ -4,7 +4,9 @@
 [Feature #8](https://github.com/Fuzzy-Technologies/F-Layer/issues/8) track the
 reviewed EN/RU/ZH-CN rollout for release-1.2. This snapshot follows the stable
 release back-merge and reconciles the six stale landing, guide-index and
-installation translations with their current English sources.
+installation translations with their current English sources. The 1.2.0
+release candidate also reconciles all three installation examples with its
+exact stable tag; these numeric updates preserve draft status without reviews.
 
 ## Current review scope
 
@@ -25,7 +27,7 @@ Every row requires editorial and technical review for each locale.
 | [page:guide.cli](../site/content/en/guide/cli.md)                           | [RU](../site/content/ru/guide/cli.md)              | [ZH-CN](../site/content/zh-CN/guide/cli.md)              | editorial + technical | `sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc` |
 | [page:guide.configuration](../site/content/en/guide/configuration.md)       | [RU](../site/content/ru/guide/configuration.md)    | [ZH-CN](../site/content/zh-CN/guide/configuration.md)    | editorial + technical | `sha256:072347586a80864d7df609f36662c002da9a27380ffc0884595c045fcdc0f6c9` |
 | [page:guide.first-deployment](../site/content/en/guide/first-deployment.md) | [RU](../site/content/ru/guide/first-deployment.md) | [ZH-CN](../site/content/zh-CN/guide/first-deployment.md) | editorial + technical | `sha256:d1c5afa020315b55f923ff3b7fafd48a60f5dae8b9645239be8fef2bc9cccb3c` |
-| [page:guide.installation](../site/content/en/guide/installation.md)         | [RU](../site/content/ru/guide/installation.md)     | [ZH-CN](../site/content/zh-CN/guide/installation.md)     | editorial + technical | `sha256:37eb05a495ff7852dfd14b1adf6891f18256678042c35e21a1a82188ec3214ae` |
+| [page:guide.installation](../site/content/en/guide/installation.md)         | [RU](../site/content/ru/guide/installation.md)     | [ZH-CN](../site/content/zh-CN/guide/installation.md)     | editorial + technical | `sha256:b9a10d56c86ab6cbd255310727c044f9e3112e06dba8a966c4442697ec32950f` |
 | [page:index](../site/content/en/index.md)                                   | [RU](../site/content/ru/index.md)                  | [ZH-CN](../site/content/zh-CN/index.md)                  | editorial + technical | `sha256:17a91b4b34b71e194a62858289386253c460029c1fa295b85fe71ae1d62f39ec` |
 
 ## Reviewing and recording evidence

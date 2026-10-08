@@ -61,6 +61,20 @@ Distinguish shipped behavior, actual test evidence, and outstanding operational
 validation. Preserve commands for checking out the exact tag; link the detailed
 changelog and source provenance without turning the digest into a commit dump.
 
+## Release-1.2 scope addendum — 2026-10-08
+
+Apply the same milestone selection to the owner-requested 1.2.0 publication:
+start at released 1.1.0 and select accepted PRs #46, #48, #59, and #60.
+Include bounded stabilization for locale-source links, versioned installation
+examples, source hashes, and release metadata. Plugin discovery, ecosystem
+integration contracts, and the static-site profile stay in later milestone work.
+
+Publish actual draft/fallback states without human approval records. Release
+publication is distinct from planning completion: Task #27, Feature #8, and
+release-1.2 remain open until their genuine human-review criteria are fulfilled
+and actual master/Pages evidence is recorded. Return the release-only changes
+to develop through a PR, preserving all accepted later milestone work.
+
 ## Consequences
 
 - Releases reflect their milestone scope even when integration is ahead.

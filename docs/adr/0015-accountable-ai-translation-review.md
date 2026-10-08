@@ -1,7 +1,8 @@
 # ADR 0015: Explicit, source-bound AI translation review
 
-- Status: Proposed for owner review
+- Status: Accepted
 - Date: 2026-10-09
+- Accepted through owner-reviewed [PR #66](https://github.com/Fuzzy-Technologies/F-Layer/pull/66)
 - Related: [Task #27](https://github.com/Fuzzy-Technologies/F-Layer/issues/27), [Feature #8](https://github.com/Fuzzy-Technologies/F-Layer/issues/8)
 
 ## Context

@@ -1,7 +1,7 @@
 # 首次部署 {#first-deployment}
 
-!!! info "第二轮集成"
-    基础包提供只读的提供方发现。本操作说明需要安装版本包含生命周期任务 #20 和安全网关任务 #22。缺少这些功能表示不可用，绝不表示部署成功。使用生命周期命令前，请验证 `python -m flayer lifecycle --help`。
+本指南部署稳定发行版中提供的安全 SSH 网关。需要 Yandex Cloud 账号和已认证的
+`yc` 配置档。先运行 `python -m flayer lifecycle --help` 查看可用命令。
 
 部署由明确的堆栈身份、编译后的资源计划、具有所有权的本地状态和有界提供方操作组成。安全网关还包括经过审查的服务器配置档和独立拥有的设备制品。凭据和私钥不得放入计划或文档。
 
@@ -64,7 +64,7 @@ source_cidrs = ["198.51.100.42/32"]
 
 允许 UDP 端口不会安装 VPN。SSH 本地转发使用配置的 SSH 端口；删除未使用的服务项并尽可能缩小范围。生成的客户机配置禁用密码和 root SSH 登录、IPv4 转发和 IPv6，并限制入站访问。它不建立包路由或就绪证据。独立的非 sudo 传输账户只允许声明的本地转发目标和逐设备源 CIDR；管理账户转发保持禁用。
 
-安装任务 #22 后，在 POSIX 控制台中本地生成并检查具有所有权的服务器制品包和生命周期计划：
+在 POSIX 控制台中本地生成并检查具有所有权的服务器制品包和生命周期计划：
 
 ```bash
 python - <<'PY'
@@ -96,7 +96,7 @@ PY
 
 ## 生命周期命令契约 {#lifecycle-command-contract}
 
-任务 #20 可用后，命令使用相同的明确计划、状态和配置档：
+命令使用相同的明确计划、状态和配置档：
 
 ```bash
 python -m flayer lifecycle status --config generated-artifacts/plan.toml --state generated-artifacts/stack.json --yc-profile example --format json

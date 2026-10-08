@@ -1,48 +1,51 @@
-![F-Layer by Fuzzy Technologies](../en/assets/brand/flayer-horizontal.svg){ .fl-brand-lockup }
+![Fuzzy Technologies 工程实验室中的 F-Layer 与 AIna](../en/assets/brand/FTech-card-F-Layer.png){ .fl-project-art }
 
-# 具有明确契约的基础设施 {#infrastructure-with-explicit-contracts}
+# 部署并管理云服务器 {#deploy-and-operate-cloud-servers}
 
-**F-Layer** 是用于部署、管理和集成安全云环境的模块化基础设施自动化平台。
+**F-Layer** 帮助工程师部署云服务器、管理服务使用的资源，并检查服务是否可访问。
+可以通过命令行使用，也可以将其 Python API 集成到自己的应用中。
 
-其架构将配置、持久资源状态、提供方能力、部署配置档、生命周期操作和诊断证据分离。这些边界使单独的集成可以替换，操作可以复现。
+在配置文件中描述部署。F-Layer 生成资源计划，在获得明确许可后创建云资源，
+并在本地保存资源标识。使用相同的计划和记录，可以查看部署状态、恢复中断的操作，
+或者删除该部署所属的资源。
 
-!!! info "文档版本"
-    GitHub Pages 对应 `master` 上的最新稳定发行版。本地构建描述已安装的源码版本；
-    `develop` 可能包含后续里程碑已接受的变更。请通过相应 Git 标签的 changelog
-    核对每个发行版包含的功能。
+当前发行版支持 **Yandex Cloud**、带有独立设备连接设置的**安全 SSH 网关**，
+以及 HTTP 可用性和响应、传输时间检查。它适用于自动化服务环境的团队，
+以及为产品添加基础设施功能的开发者。其他云平台和 VPN 配置仍在规划中。
+F-Layer 是开源软件；云资源费用由云提供方收取。
+
+## 快速开始 {#quick-start}
+
+[安装稳定发行版并运行首次检查](guide/index.md)。安装后，以下命令无需云访问：
+
+```bash
+python -m flayer check --format json
+```
+
+预期结果为 `"status": "ok"`，退出码为 `0`。这只确认本地 Python 和软件包可用。
+要创建服务器，请继续阅读部署指南。
+
+## 下一步 {#choose-your-next-step}
 
 <div class="grid cards" markdown>
 
-- **运行首次检查**
+- **准备云服务器**
 
-    从明确选定的源代码版本[安装并配置 F-Layer](guide/index.md)。
+    阅读[首次部署](guide/first-deployment.md)，生成网关计划、检查资源并授权部署。
 
-- **理解边界**
+- **检查运行中的服务**
 
-    阅读[架构](architecture.md)及其事实来源规则。
+    [CLI 指南](guide/cli.md)介绍 HTTP 检查、时间测量和 JSON 结果。
 
-- **查看实际 API**
+- **集成到自己的应用**
 
-    浏览由已安装 wheel 生成的 [API 参考](../en/api/index.md)。
+    查看 [Python API](../en/api/index.md)及配置、状态和提供方的[架构](architecture.md)。
 
-- **凭证据开发**
+- **扩展或参与开发**
 
-    遵循[开发流程](development.md)和确定性检查。
-
-- **保持文档准确**
-
-    查看[语言和发布规则](../en/documentation.md)。
+    [开发指南](development.md)介绍仓库流程和测试。
 
 </div>
 
-## 设计原则 {#design-commitments}
-
-- 核心独立于云提供方、网络协议和使用方应用。
-- 凭据和私有基础设施标识符不进入版本控制的源文件。
-- 配置、期望状态、观测状态和生成的制品相互分离。
-- 本地验证使用确定性测试数据，不修改真实云资源。
-- Python 类型注解和英文文档字符串是 API 的事实来源。
-
-[用户指南](guide/index.md)介绍控制台使用方法；[项目标识](../en/brand.md)介绍 F-Layer 标志系列。
-
-[Fuzzy Technologies](https://fuzzy-technologies.github.io/) · [GitHub 仓库](https://github.com/Fuzzy-Technologies/F-Layer)
+[Fuzzy Technologies](https://fuzzy-technologies.github.io/) ·
+[GitHub 仓库](https://github.com/Fuzzy-Technologies/F-Layer)

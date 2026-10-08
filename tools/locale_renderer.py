@@ -90,10 +90,11 @@ def TranslationBanner(
         f'data-documentation-unit="{html.escape(unit_id)}" '
         f'data-rendered-source-sha256="{rendered_source_hash}">\n'
         f'<strong>{html.escape(message["title"])}</strong> '
-        f'{html.escape(message["body"])} '
         f'<a href="{html.escape(canonical_url)}">{html.escape(notices["canonicalLink"])}</a>'
-        f' · <a href="{html.escape(notices["statusUrl"])}">'
-        f'{html.escape(notices["statusLink"])}</a>\n</aside>\n\n'
+        f' <details><summary>{html.escape(notices["statusLink"])}</summary>'
+        f'<p>{html.escape(message["body"])} '
+        f'<a href="{html.escape(notices["statusUrl"])}">'
+        f'{html.escape(notices["statusLink"])}</a></p></details>\n</aside>\n\n'
     )
 
 

@@ -7,7 +7,7 @@ F-Layer 需要 **Python 3.11 或更高版本**和 Git。`f-layer` 发行包包�
 ```bash
 git clone https://github.com/Fuzzy-Technologies/F-Layer.git
 cd F-Layer
-git checkout v1.2.0
+git checkout v1.2.1
 python -m venv .venv
 ```
 
@@ -27,9 +27,9 @@ python -m flayer --help
 python -m flayer check --format json
 ```
 
-`check` 检查本地运行环境和包是否可用，不认证云账户、不推断文件夹、不创建基础设施，也不证明客户机就绪。成功的诊断以 `0` 退出。
+`check` 检查本地运行环境和包是否可用，不认证云账户、不推断文件夹、不创建基础设施，也不证明虚拟机就绪。成功的诊断以 `0` 退出。
 
-在 1.2.0 中，模块命令 `python -m flayer` 和已安装的 `flayer` 控制台命令接受
+在 1.2.1 中，模块命令 `python -m flayer` 和已安装的 `flayer` 控制台命令接受
 相同参数。切换源码版本后请重新安装。
 
 ## 开发环境 {#development-checkout}
@@ -49,7 +49,7 @@ python tools/validate.py
 | ----------------------------- | ----------------------------------------------------------------------------- |
 | `No module named flayer`      | 激活执行 `python -m pip install .` 时使用的同一环境，然后从检出目录重新安装。 |
 | `python` 不可用               | 始终使用平台的 Python 3.11+ 启动器，例如 `python3` 或 `py -3.11`。            |
-| `flayer` 不可用但模块命令可用 | 激活安装环境并重新安装 1.2.0；在此之前使用 `python -m flayer`。               |
+| `flayer` 不可用但模块命令可用 | 激活安装环境并重新安装 1.2.1；在此之前使用 `python -m flayer`。               |
 | Windows 激活受阻              | 直接使用 `.venv\Scripts\python.exe` 执行安装和命令。                          |
 
 切换分支后请重新安装，使安装包与源码版本一致。生成的环境、凭据和运行时状态不要进入版本控制。

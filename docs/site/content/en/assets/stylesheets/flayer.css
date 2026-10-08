@@ -19,7 +19,7 @@
   background: linear-gradient(100deg, #0c0b10, #21162f 65%, #14251f);
   border-bottom: 1px solid #ad86ff40;
 }
-.md-header__button.md-logo img { width: 1.8rem; height: 1.8rem; }
+.md-header__button.md-logo img { width: 6.4rem; height: 1.6rem; object-fit: contain; }
 .md-typeset h1 { color: #f2f1fa; font-weight: 700; }
 .md-typeset h2, .md-typeset h3 { color: var(--fl-green); }
 .md-typeset a:hover, .md-typeset a:focus-visible { color: var(--fl-green); }
@@ -28,17 +28,26 @@
 .md-typeset .grid.cards > ul > li:hover { border-color: var(--fl-green); }
 :focus-visible { outline: 2px solid var(--fl-green); outline-offset: 3px; }
 .fl-brand-lockup { display: block; width: min(100%, 32rem); margin-bottom: 2rem; }
+.fl-project-art { display: block; width: 100%; height: auto; border-radius: 0.6rem; margin: 0 0 1.5rem; }
 .fl-fallback { color: var(--fl-text); background: var(--fl-background); font-family: system-ui, sans-serif; }
 .fl-fallback main { max-width: 48rem; margin: 8vh auto; padding: 2rem; background: var(--fl-panel); border: 1px solid #ad86ff55; border-radius: 1rem; }
 .fl-fallback a { color: var(--fl-violet); }
 .fl-fallback h1 { color: var(--fl-green); }
 .fl-fallback nav { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 2rem; }
 @media (max-width: 36rem) { .fl-brand-lockup { width: 100%; } .fl-fallback main { margin: 1rem; padding: 1.5rem; } }
-/* Keep review state visible on translated and English fallback pages. */
+/* Keep review state visible, with the explanation available on demand. */
 .fl-translation-notice {
-  margin: 1rem 0 1.5rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--md-accent-fg-color);
-  border-left-width: 0.3rem;
-  border-radius: 0.3rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.65rem;
+  margin: 0 0 1rem;
+  padding: 0.35rem 0.6rem;
+  color: var(--fl-muted);
+  font-size: 0.7rem;
+  border-left: 2px solid var(--fl-violet);
 }
+.fl-translation-notice details { border: 0; margin: 0; box-shadow: none; font-size: inherit; }
+.fl-translation-notice summary { cursor: pointer; background: transparent; padding: 0; }
+.fl-translation-notice details p { margin: 0.4rem 0 0; }
+.md-nav--primary .md-nav__item--nested > .md-nav__link { font-weight: 600; }

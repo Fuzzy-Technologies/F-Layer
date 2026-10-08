@@ -39,3 +39,8 @@ Use [0000-template.md](0000-template.md) as the starting point.
 
 Release history and the human-readable changelog follow
 [ADR 0014](0014-scoped-releases-and-changelog.md).
+
+## Proposed decisions
+
+[ADR 0015](0015-accountable-ai-translation-review.md) records explicit owner-authorized
+AI translation review for the release-1.2 finalization candidate.

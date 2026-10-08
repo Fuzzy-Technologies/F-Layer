@@ -9,7 +9,7 @@ install the checked-out source so its documentation and behavior match.
 ```bash
 git clone https://github.com/Fuzzy-Technologies/F-Layer.git
 cd F-Layer
-git checkout v1.2.0
+git checkout v1.2.1
 python -m venv .venv
 ```
 
@@ -34,7 +34,7 @@ cloud account, infer a folder, create infrastructure, or prove guest readiness.
 A successful diagnostic exits with `0`.
 
 Both `python -m flayer` and the installed `flayer` console command accept the
-same arguments in 1.2.0. Reinstall after switching source revisions.
+same arguments in 1.2.1. Reinstall after switching source revisions.
 
 ## Development checkout
 
@@ -56,7 +56,7 @@ use synthetic resources and deny unrequested network access. See the
 | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | `No module named flayer`                             | Activate the same environment used for `python -m pip install .`; reinstall from the checkout. |
 | `python` is unavailable                              | Use the platform's Python 3.11+ launcher consistently, for example `python3` or `py -3.11`.    |
-| `flayer` is unavailable but the module command works | Activate the installation environment and reinstall 1.2.0; use `python -m flayer` meanwhile.   |
+| `flayer` is unavailable but the module command works | Activate the installation environment and reinstall 1.2.1; use `python -m flayer` meanwhile.   |
 | Windows activation is blocked                        | Use `.venv\Scripts\python.exe` directly for installation and commands.                         |
 
 Reinstall after changing branches so the installed package matches the source

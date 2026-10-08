@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
+import xml.etree.ElementTree as element_tree
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,26 @@ from tools import build_api_reference, documentation_gates
 from tools.locale_documentation import CanonicalHash, CanonicalUnit, ValidateLocales
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
+@pytest.mark.parametrize("locale", ["en", "ru", "zh-CN"])
+def test_OverviewCardsRenderMarkdownInsideHtml(locale: str) -> None:
+    """Render the real landing cards so missing HTML Markdown support cannot regress."""
+
+    markdown = pytest.importorskip("markdown")
+    yaml = pytest.importorskip("yaml")
+    config = yaml.load((PROJECT_ROOT / "docs/site/mkdocs.yml").read_text(), Loader=yaml.BaseLoader)
+    extensions = [entry for entry in config["markdown_extensions"] if isinstance(entry, str)]
+    source = (PROJECT_ROOT / f"docs/site/content/{locale}/index.md").read_text(encoding="utf-8")
+    rendered = element_tree.fromstring("<main>" + markdown.markdown(source, extensions=extensions) + "</main>")
+    cards = rendered.find(".//div[@class='grid cards']/ul")
+
+    assert cards is not None, "Landing cards must render as a list, not raw Markdown text"
+    assert len(cards.findall("li")) == 4, "Every getting-started scenario must remain a distinct card"
+
+    for card in cards:
+        assert card.find(".//strong") is not None, "Card titles must render with emphasis"
+        assert card.find(".//a[@href]") is not None, "Card links must become usable navigation"
 
 
 @pytest.fixture

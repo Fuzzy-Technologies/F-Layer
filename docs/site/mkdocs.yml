@@ -1,5 +1,5 @@
 site_name: F-Layer
-site_description: Modular infrastructure automation by Fuzzy Technologies.
+site_description: Deploy cloud servers, manage their resources and check availability with F-Layer.
 site_url: https://fuzzy-technologies.github.io/F-Layer/en/
 repo_url: https://github.com/Fuzzy-Technologies/F-Layer
 repo_name: Fuzzy-Technologies/F-Layer
@@ -17,7 +17,7 @@ validation:
 theme:
   name: material
   language: en
-  logo: assets/brand/flayer-sign.svg
+  logo: assets/brand/flayer-horizontal.svg
   favicon: assets/brand/flayer-sign.svg
   font: false
   palette:
@@ -28,7 +28,6 @@ theme:
     - content.action.edit
     - content.code.copy
     - navigation.indexes
-    - navigation.sections
     - navigation.top
     - search.highlight
     - search.suggest
@@ -36,7 +35,7 @@ theme:
 nav:
   - Overview: index.md
   - User guide:
-      - Get started: guide/index.md
+      - Quick Start: guide/index.md
       - Install: guide/installation.md
       - Configuration: guide/configuration.md
       - CLI: guide/cli.md
@@ -74,6 +73,7 @@ plugins:
 
 markdown_extensions:
   - attr_list
+  - md_in_html
   - admonition
   - pymdownx.highlight
   - pymdownx.inlinehilite

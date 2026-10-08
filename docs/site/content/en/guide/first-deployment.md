@@ -1,10 +1,8 @@
 # First deployment
 
-!!! info "Second-wave integration"
-    The foundation has read-only provider discovery. This walkthrough requires
-    lifecycle task #20 and secure gateway task #22 in the installed revision.
-    Their absence is an unavailable feature, never a successful deployment.
-    Verify `python -m flayer lifecycle --help` before using lifecycle commands.
+This walkthrough deploys the secure SSH gateway included in the stable release.
+You need a Yandex Cloud account and an authenticated `yc` profile. Start with
+`python -m flayer lifecycle --help` to inspect the available commands.
 
 A deployment consists of explicit stack identity, a compiled resource plan,
 owned local state, and bounded provider operations. A secure gateway adds a
@@ -86,8 +84,8 @@ not establish packet routing or readiness evidence. The separate non-sudo
 transport account permits only the declared local-forward destinations and
 per-device source CIDRs; administrative forwarding remains disabled.
 
-Once task #22 is installed, generate and inspect the owned server bundle and
-lifecycle plan locally from a POSIX console:
+Generate and inspect the owned server bundle and lifecycle plan locally
+from a POSIX console:
 
 ```bash
 python - <<'PY'
@@ -123,7 +121,7 @@ and bundle outside Git and do not move the cloud-init file after compilation.
 
 ## Lifecycle command contract
 
-After task #20 is available, commands use the same explicit plan/state/profile:
+Commands use the same explicit plan/state/profile:
 
 ```bash
 python -m flayer lifecycle status --config generated-artifacts/plan.toml --state generated-artifacts/stack.json --yc-profile example --format json

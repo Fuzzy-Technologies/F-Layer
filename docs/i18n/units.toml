@@ -34,7 +34,7 @@ basedOnSourceHash = "sha256:ec88468bbf2a50a96f2365f47035ffbf747d6be85bbedaa558ea
 id = "page:brand"
 kind = "page"
 sourcePath = "docs/site/content/en/brand.md"
-sourceHash = "sha256:127f7edb6754371c8d196c939bc127cfcfa2a7da1fcbb4f13109f82933e9c11f"
+sourceHash = "sha256:7dc4a34669dc538db351ce211014c64ea31d79c00d540badb364bce3c4d620aa"
 reviewClass = "technical"
 
 [units.translations.ru]
@@ -81,18 +81,18 @@ basedOnSourceHash = "sha256:aea7a3de31f6432c0f66d3be012e12572fd881a0178452fd35cf
 id = "page:guide"
 kind = "page"
 sourcePath = "docs/site/content/en/guide/index.md"
-sourceHash = "sha256:f24509b775d435ce32015c6dd967c06dc5635fe9a3a8fee10372777bf6ee202b"
+sourceHash = "sha256:847717324cc0748455fa4307c33922f08c83fad7c9033f8ab13e55016deb3bee"
 reviewClass = "technical"
 
 [units.translations.ru]
 state = "draft"
 path = "docs/site/content/ru/guide/index.md"
-basedOnSourceHash = "sha256:f24509b775d435ce32015c6dd967c06dc5635fe9a3a8fee10372777bf6ee202b"
+basedOnSourceHash = "sha256:847717324cc0748455fa4307c33922f08c83fad7c9033f8ab13e55016deb3bee"
 
 [units.translations.zh-CN]
 state = "draft"
 path = "docs/site/content/zh-CN/guide/index.md"
-basedOnSourceHash = "sha256:f24509b775d435ce32015c6dd967c06dc5635fe9a3a8fee10372777bf6ee202b"
+basedOnSourceHash = "sha256:847717324cc0748455fa4307c33922f08c83fad7c9033f8ab13e55016deb3bee"
 
 [[units]]
 id = "page:guide.cli"
@@ -132,18 +132,18 @@ basedOnSourceHash = "sha256:072347586a80864d7df609f36662c002da9a27380ffc0884595c
 id = "page:guide.first-deployment"
 kind = "page"
 sourcePath = "docs/site/content/en/guide/first-deployment.md"
-sourceHash = "sha256:d1c5afa020315b55f923ff3b7fafd48a60f5dae8b9645239be8fef2bc9cccb3c"
+sourceHash = "sha256:6d25dab7598389367b6d943f45d9c60ff77f4d5bb2b5dcd8646d18faa6f50798"
 reviewClass = "technical"
 
 [units.translations.ru]
 state = "draft"
 path = "docs/site/content/ru/guide/first-deployment.md"
-basedOnSourceHash = "sha256:d1c5afa020315b55f923ff3b7fafd48a60f5dae8b9645239be8fef2bc9cccb3c"
+basedOnSourceHash = "sha256:6d25dab7598389367b6d943f45d9c60ff77f4d5bb2b5dcd8646d18faa6f50798"
 
 [units.translations.zh-CN]
 state = "draft"
 path = "docs/site/content/zh-CN/guide/first-deployment.md"
-basedOnSourceHash = "sha256:d1c5afa020315b55f923ff3b7fafd48a60f5dae8b9645239be8fef2bc9cccb3c"
+basedOnSourceHash = "sha256:6d25dab7598389367b6d943f45d9c60ff77f4d5bb2b5dcd8646d18faa6f50798"
 
 [[units]]
 id = "page:guide.installation"
@@ -166,15 +166,15 @@ basedOnSourceHash = "sha256:b9a10d56c86ab6cbd255310727c044f9e3112e06dba8a966c444
 id = "page:index"
 kind = "page"
 sourcePath = "docs/site/content/en/index.md"
-sourceHash = "sha256:17a91b4b34b71e194a62858289386253c460029c1fa295b85fe71ae1d62f39ec"
+sourceHash = "sha256:d976cde3058d4243de5ff36e9cc77fdf352abac825af9d4839e298f8a9d5ae1f"
 reviewClass = "technical"
 
 [units.translations.ru]
 state = "draft"
 path = "docs/site/content/ru/index.md"
-basedOnSourceHash = "sha256:17a91b4b34b71e194a62858289386253c460029c1fa295b85fe71ae1d62f39ec"
+basedOnSourceHash = "sha256:d976cde3058d4243de5ff36e9cc77fdf352abac825af9d4839e298f8a9d5ae1f"
 
 [units.translations.zh-CN]
 state = "draft"
 path = "docs/site/content/zh-CN/index.md"
-basedOnSourceHash = "sha256:17a91b4b34b71e194a62858289386253c460029c1fa295b85fe71ae1d62f39ec"
+basedOnSourceHash = "sha256:d976cde3058d4243de5ff36e9cc77fdf352abac825af9d4839e298f8a9d5ae1f"

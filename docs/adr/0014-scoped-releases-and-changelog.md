@@ -33,6 +33,11 @@ and a GitHub Release with audited assets. Publish 1.0.0 before advancing master 
 Temporary administrative workflows remain on isolated branches and are removed.
 GitHub Releases do not authorize PyPI publication or real infrastructure changes.
 
+Stable publication requires completed acceptance and a closed native `release-X.Y`
+milestone with no open items. Passing implementation CI or an instruction to finish
+a release does not waive its acceptance criteria. The owner verifies those criteria
+before closure; automation checks native milestone evidence without closing it.
+
 Use the Fuzzy Technologies changelog hierarchy:
 
 ```text
@@ -54,7 +59,8 @@ correct a proven factual error only with owner authorization. Do not add a
 free-form Unreleased section. A Digest states the user-visible result briefly;
 the detailed sections explain concrete behavior rather than commit chronology.
 
-GitHub release cards start with `## Digest`, followed by `## What's Changed`,
+GitHub release titles use `F-Layer vX.Y.Z — <short user-facing digest>`.
+Cards start with `## Digest`, followed by `## What's Changed`,
 `## Validation`, `## Breaking Changes`, `## Try it from source`, and `## Notes`
 when relevant. State None explicitly for an empty breaking-change section.
 Distinguish shipped behavior, actual test evidence, and outstanding operational
@@ -69,11 +75,16 @@ Include bounded stabilization for locale-source links, versioned installation
 examples, source hashes, and release metadata. Plugin discovery, ecosystem
 integration contracts, and the static-site profile stay in later milestone work.
 
-Publish actual draft/fallback states without human approval records. Release
-publication is distinct from planning completion: Task #27, Feature #8, and
-release-1.2 remain open until their genuine human-review criteria are fulfilled
-and actual master/Pages evidence is recorded. Return the release-only changes
-to develop through a PR, preserving all accepted later milestone work.
+Publish actual draft/fallback states without human approval records in candidate
+documentation. Task #27, Feature #8 and release-1.2 must be completed, including
+genuine human-review criteria and actual master/Pages evidence, before stable
+release publication. Return release-only changes to develop through a PR,
+preserving all accepted later milestone work.
+
+The earlier addendum incorrectly allowed stable publication before milestone
+completion. That exception was not owner-authorized and is withdrawn. On
+2026-10-08 the premature v1.2.0 release was reclassified as Pre-release, its title
+was corrected to include `v`, and its immutable tag and assets were preserved.
 
 ## Consequences
 

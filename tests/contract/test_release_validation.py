@@ -125,7 +125,100 @@ def PublicationEnvironment() -> dict[str, str]:
         "FLAYER_RELEASE_OWNER": "fixture-owner",
         "FLAYER_PYPI_ENABLED": "true",
         "FLAYER_CONFIRM_PUBLICATION": "true",
+        "FLAYER_RELEASE_MILESTONE": "3",
     }
+
+
+def ClosedMilestone() -> dict[str, object]:
+    """Represent the authoritative completed milestone for the fixture minor version."""
+
+    return {
+        "number": 3, "title": "release-1.2", "state": "closed", "open_issues": 0,
+        "url": f"https://api.github.com/repos/{release.REPOSITORY_NAME}/milestones/3",
+    }
+
+
+@pytest.mark.parametrize("changes", [
+    {"state": "open"}, {"state": "closed", "open_issues": 2},
+    {"open_issues": False}, {"open_issues": "0"}, {"open_issues": None},
+    {"title": "release-2.0"}, {"number": 4}, {"number": True},
+    {"url": "https://api.github.com/repos/fixture/other/milestones/3"},
+])
+def test_IncompleteOrUnrelatedMilestoneRejected(changes: dict[str, object]) -> None:
+    """Closure alone, malformed counts and another release cannot authorize publication."""
+
+    payload = ClosedMilestone() | changes
+
+    with pytest.raises(ValueError):
+        release.ValidateMilestone(payload, VERSION, 3)
+
+
+@pytest.mark.parametrize("payload", [None, [], {}, "closed"])
+def test_MissingMilestoneEvidenceRejected(payload: object) -> None:
+    """Unavailable or malformed native evidence cannot imply completed acceptance."""
+
+    with pytest.raises(ValueError):
+        release.ValidateMilestone(payload, VERSION, 3)
+
+
+def test_MilestoneReadUsesCanonicalRepository(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Only a read of the selected native milestone supplies publication evidence."""
+
+    calls: list[tuple[str, ...]] = []
+
+    def Read(_root: Path, arguments: tuple[str, ...], _environment: Mapping[str, str]) -> str:
+        """Return a deterministic API response without authenticating or using the network."""
+
+        calls.append(arguments)
+
+        return json.dumps(ClosedMilestone())
+
+    monkeypatch.setattr(release, "RunCommand", Read)
+    evidence = release.CheckReleaseMilestone(tmp_path, VERSION, 3)
+
+    assert calls == [("gh", "api", f"repos/{release.REPOSITORY_NAME}/milestones/3")], (
+        "Milestone lookup used another repository or a write operation"
+    )
+    assert evidence["title"] == "release-1.2" and evidence["open_issues"] == 0, (
+        "Completed native milestone evidence was not retained"
+    )
+
+
+@pytest.mark.parametrize("milestone_number", ["", "0", "-1", "3;fixture", "03", "3"])
+def test_PublicationRejectsIncompleteMilestoneBeforeBuilding(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, milestone_number: str,
+) -> None:
+    """An owner-confirmed dispatch cannot publish while release acceptance remains open."""
+
+    WriteRepository(tmp_path, Sources())
+
+    for name, value in PublicationEnvironment().items():
+        monkeypatch.setenv(name, value)
+
+    monkeypatch.setenv("FLAYER_RELEASE_MILESTONE", milestone_number)
+    monkeypatch.setattr(release, "RunCommand", lambda *_arguments: json.dumps(
+        ClosedMilestone() | {"state": "open", "open_issues": 2},
+    ))
+
+    with pytest.raises(ValueError, match="milestone"):
+        release.ValidateRelease(tmp_path, f"v{VERSION}", True)
+
+    assert not (tmp_path / "_build/release").exists(), "Rejected acceptance emitted artifacts"
+
+
+def test_MilestoneOnlyCheckDoesNotBuild(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """GitHub Release preflight reports native acceptance without performing artifact work."""
+
+    WriteRepository(tmp_path, Sources())
+    monkeypatch.setattr(release, "REPOSITORY_ROOT", tmp_path)
+    monkeypatch.setattr(release, "RunCommand", lambda *_arguments: json.dumps(ClosedMilestone()))
+
+    assert release.Main(["--check-milestone", "3"]) == 0, "Completed milestone preflight failed"
+    evidence = json.loads(capsys.readouterr().out)
+    assert evidence["published"] is False, "Read-only preflight claimed publication"
+    assert not (tmp_path / "_build").exists(), "Milestone-only preflight built artifacts"
 
 
 @pytest.mark.parametrize("source", [
@@ -516,8 +609,9 @@ def test_CliFailureDoesNotEchoTagOrPayload(monkeypatch: pytest.MonkeyPatch, caps
 
 
 @pytest.mark.parametrize("failure", [None, "reproducibility", "sdist-parity"])
+@pytest.mark.parametrize("publication", [False, True])
 def test_ReleaseEvidenceRequiresBothBuildComparisons(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str | None,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str | None, publication: bool,
 ) -> None:
     """Only matching repeated builds and a matching source rebuild emit artifacts."""
 
@@ -561,21 +655,34 @@ def test_ReleaseEvidenceRequiresBothBuildComparisons(
     monkeypatch.setattr(release, "Git", Git)
     monkeypatch.setattr(release, "SnapshotTrackedSources", Snapshot)
     monkeypatch.setattr(release, "BuildDistributions", Build)
+    tag = f"v{VERSION}" if publication else None
+
+    if publication:
+        for name, value in PublicationEnvironment().items():
+            monkeypatch.setenv(name, value)
+
+        monkeypatch.setattr(release, "ValidateTag", lambda *_arguments: "fixture-commit")
+        monkeypatch.setattr(release, "RunCommand", lambda *_arguments: json.dumps(ClosedMilestone()))
 
     if failure is not None:
         with pytest.raises(ValueError):
-            release.ValidateRelease(repo_root, None, False)
+            release.ValidateRelease(repo_root, tag, publication)
 
         assert not (repo_root / "_build/release").exists(), "Failed comparison emitted approved output"
 
     else:
-        evidence = release.ValidateRelease(repo_root, None, False)
+        evidence = release.ValidateRelease(repo_root, tag, publication)
         evidence_path = repo_root / "_build/release/build-evidence.json"
         assert json.loads(evidence_path.read_text()) == evidence, "Persisted evidence differs"
         assert evidence["reproducible"] is True and evidence["sdist_wheel_parity"] is True, (
             "Successful comparisons were not recorded"
         )
         assert evidence["published"] is False, "A build-only operation claimed publication"
+
+        if publication:
+            assert evidence["release_milestone"]["state"] == "closed", (
+                "Publication artifacts lack completed milestone evidence"
+            )
 
 
 def test_SnapshotExcludesUntrackedAndIgnoredInputs(

@@ -48,7 +48,7 @@ category = "locale"
 reason = "Locale identity, glossary, and review metadata consumed by the locale validator."
 
 [[rules]]
-patterns = ["docs/site/content/*/assets/*.svg", "docs/site/content/*/assets/*.css"]
+patterns = ["docs/site/content/*/assets/*.svg", "docs/site/content/*/assets/*.css", "docs/site/content/*/assets/*.png"]
 category = "asset"
 reason = "Theme and branding assets are published with the site, without API pages."
 

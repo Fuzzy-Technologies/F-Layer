@@ -36,21 +36,22 @@ IDs and versioned source hashes. Their target-language states are explicitly
 
 ## Language and review
 
-English is canonical. When registered Russian or Simplified Chinese drafts are
-available, the multilingual wrapper renders them with explicit review-state
-banners. Missing or stale units use current English fallback text. Language
-navigation and per-page banners distinguish draft, review, stale, missing, and
-approved state; automation never creates human approvals.
+English is canonical. The authored Russian and Simplified Chinese pages have
+been checked against their English sources by AIna-Dev, as requested by the
+project owner. Reviewed pages open directly without a draft notice. Missing
+or outdated translations display the current English text with a fallback notice.
+Generated API pages and untranslated engineering references remain in English.
 
-Each nonmissing translation records `basedOnSourceHash`, the canonical English
-source actually used. Refreshing the canonical registry cannot make an outdated
-draft current. Human language review and actual Pages publication remain
-outstanding rollout steps.
+Each translation records its stable unit ID, English source hash and path.
+Approval requires named editorial and technical reviews with UTC timestamps
+and the current source hash. F-Layer explicitly permits AI reviews under
+[ADR 0015](../../../adr/0015-accountable-ai-translation-review.md); those records
+identify the reviewer as AI and also bind the reviewed translation's text hash.
+They do not represent human review. Changing either text requires a new review;
+refreshing the English registry alone cannot restore approval.
 
-A translated unit requires a stable unit ID, matching canonical source hash,
-a translation path, and accountable editorial/technical human reviews before
-`approved` is valid. Automation may detect drift and emit `missing` records;
-it never creates approvals. Terminology lives in aligned locale glossaries.
+Terminology uses aligned locale glossaries. Review provenance remains available
+in the tracked registry and generated build evidence.
 
 ## Publication
 

@@ -1,54 +1,59 @@
-![F-Layer by Fuzzy Technologies](assets/brand/flayer-horizontal.svg){ .fl-brand-lockup }
+![F-Layer with AIna in the Fuzzy Technologies engineering laboratory](assets/brand/FTech-card-F-Layer.png){ .fl-project-art }
 
-# Infrastructure with explicit contracts
+# Deploy and operate cloud servers
 
-**F-Layer** is a modular infrastructure automation platform for deploying,
-managing, and integrating secure cloud environments.
+**F-Layer** helps engineers deploy servers in the cloud, manage the resources
+created for a service, and check whether that service is reachable. You can use
+it from the command line or integrate its Python APIs into your application.
 
-Its architecture separates configuration, durable resource state, provider
-capabilities, deployment profiles, lifecycle operations, and diagnostic
-evidence. Those boundaries make individual integrations replaceable and
-operations reproducible.
+Describe the deployment in a configuration file. F-Layer prepares a resource
+plan, creates the cloud resources you explicitly authorize, and keeps a local
+record of their identities. Use the same plan and record to inspect the stack,
+recover an interrupted operation or remove its resources.
 
-!!! info "Versioned documentation"
-    GitHub Pages follows the latest stable `master` release. A local build
-    describes its installed source revision; `develop` can include accepted work
-    for later milestones. Use the tagged changelog to check each release's scope.
+The current release supports **Yandex Cloud**, a **secure SSH gateway** with
+per-device connection settings, and HTTP availability and timing checks.
+It is useful for teams automating service environments and for developers
+building infrastructure features into their own products. Other clouds and VPN
+profiles are planned. F-Layer is open source; cloud usage is billed by your provider.
+
+## Quick Start
+
+[Install the stable release and run your first check](guide/index.md).
+Once installed, this command works without cloud access:
+
+```bash
+python -m flayer check --format json
+```
+
+Expect `"status": "ok"` and exit code `0`. This confirms local Python/package
+availability. To create a server, continue with the deployment walkthrough.
+
+## Choose your next step
 
 <div class="grid cards" markdown>
 
-- **Run the first checks**
+- **Prepare a cloud server**
 
-    [Install and configure F-Layer](guide/index.md) from an explicit source revision.
+    Follow the [first deployment](guide/first-deployment.md) to build a gateway
+    plan, review its resources and authorize deployment.
 
-- **Understand the boundaries**
+- **Check a running service**
 
-    Read the [architecture](architecture.md) and its source-of-truth rules.
+    Use the [CLI guide](guide/cli.md) for HTTP health checks, timing measurements
+    and JSON results.
 
-- **Inspect the actual API**
+- **Integrate with your application**
 
-    Browse the [API reference](api/index.md), generated from the installed wheel.
+    Explore the [Python API](api/index.md) and the
+    [architecture](architecture.md) behind configuration, state and providers.
 
-- **Build with evidence**
+- **Extend or contribute**
 
-    Follow the [development workflow](development.md) and deterministic gates.
-
-- **Keep documentation honest**
-
-    Review [language and publication contracts](documentation.md).
+    Read the [development guide](development.md) for the repository workflow
+    and tests.
 
 </div>
-
-## Design commitments
-
-- The core is independent from a cloud provider, network protocol, and consumer.
-- Credentials and private infrastructure identifiers stay outside tracked source.
-- Configuration, desired state, observed state, and generated artifacts remain separate.
-- Local validation uses deterministic fixtures and never mutates real cloud resources.
-- Python annotations and English docstrings are the API source of truth.
-
-See the [user guide](guide/index.md) for console usage and the
-[project identity](brand.md) for the F-Layer logo family.
 
 [Fuzzy Technologies](https://fuzzy-technologies.github.io/) ·
 [GitHub repository](https://github.com/Fuzzy-Technologies/F-Layer)

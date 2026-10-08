@@ -9,6 +9,8 @@ unitManifest = "docs/i18n/units.toml"
 buildRoot = "_build/api-reference"
 apiCoverageManifest = "docs/site/api-coverage.toml"
 publicationPath = "/F-Layer"
+# Owner-requested AIna review, recorded in ADR 0015; human remains the default elsewhere.
+reviewerTypes = ["human", "ai"]
 
 [branding]
 organization = "Fuzzy Technologies"

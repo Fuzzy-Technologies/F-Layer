@@ -10,10 +10,45 @@ real cloud account remains the operator's responsibility.
 
 ## Minor 1.2
 
+### Patch 1 — v1.2.1 — 2026-10-09
+
+#### Digest
+
+- Start with practical setup instructions and read clearer English, Russian and
+  Chinese guides. Authored translations have been verified by AIna and no longer
+  display draft notices. Runtime and CLI contracts remain compatible with 1.1.0.
+- Finalize release-1.2 with a closed-milestone publication gate; preserve the
+  preliminary v1.2.0 tag and artifacts.
+
+#### Added
+
+- A three-language Quick Start with offline checks, help and deployment entry points.
+- The company slide in the README and documentation, a compact header logo and favicon.
+- Editorial and technical AI review records for all 18 authored RU/ZH-CN pages,
+  tied to both current English sources and reviewed translation text.
+
+#### Changed
+
+- Explain supported cloud-server, secure SSH gateway and diagnostic workflows
+  directly for engineers and prospective customers.
+- Require a completed, closed native milestone before stable release publication.
+- Keep approved-page review provenance in metadata without a visible review notice;
+  missing and outdated translations retain explicit English fallback.
+
+#### Fixed
+
+- Clipped documentation slides and oversized header branding.
+- Russian resource-ownership wording, Chinese virtual-machine terminology,
+  localized links and consistent v1.2.1 installation instructions.
+- Reject unauthorized AI approval and invalidate it on source or translation drift.
+
 ### Patch 0 — v1.2.0 — 2026-10-08
 
 #### Digest
 
+- Preliminary artifact: its premature stable classification was withdrawn on
+  2026-10-08 because release-1.2 acceptance remains incomplete. The existing
+  v1.2.0 tag and assets are preserved; the latest stable release is v1.1.0.
 - Browse complete repository documentation and EN/RU/ZH-CN routes with explicit
   translation status, and use a patched documentation build dependency. Existing
   1.1.0 runtime and CLI contracts remain supported; RU/ZH-CN prose is still draft.
@@ -36,7 +71,7 @@ real cloud account remains the operator's responsibility.
 - Generated repository pages now retain RU/ZH-CN draft links as source references
   instead of linking to nonexistent canonical pages. Regression checks cover
   both locales and preserved heading fragments.
-- Stable installation examples select `v1.2.0` in all three languages instead
+- Snapshot installation examples select `v1.2.0` in all three languages instead
   of sending readers to an advanced development checkout.
 
 #### Changed

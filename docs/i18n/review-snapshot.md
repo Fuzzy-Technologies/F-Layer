@@ -4,8 +4,9 @@
 [Feature #8](https://github.com/Fuzzy-Technologies/F-Layer/issues/8) track the
 reviewed EN/RU/ZH-CN rollout for release-1.2. This snapshot follows the 1.2.0 release back-merge and the documentation
 entry-point refresh. Landing pages, Quick Start and first-deployment drafts
-match their current English sources. Installation commands select the stable
-1.2.0 tag. These edits preserve draft status without adding human reviews.
+match their current English sources. Stable installation commands select v1.1.0;
+v1.2.0 is a preliminary artifact until milestone acceptance is complete. These
+edits preserve draft status without adding human reviews.
 
 ## Current review scope
 
@@ -22,11 +23,11 @@ Every row requires editorial and technical review for each locale.
 | [page:architecture](../site/content/en/architecture.md)                     | [RU](../site/content/ru/architecture.md)           | [ZH-CN](../site/content/zh-CN/architecture.md)           | editorial + technical | `sha256:ec88468bbf2a50a96f2365f47035ffbf747d6be85bbedaa558eaf04364a19df7` |
 | [page:development](../site/content/en/development.md)                       | [RU](../site/content/ru/development.md)            | [ZH-CN](../site/content/zh-CN/development.md)            | editorial + technical | `sha256:3e13b58ec7a14f97c5d4f774a4727fe67aeaf9ba91a4720972768bd8154450a2` |
 | [page:documentation](../site/content/en/documentation.md)                   | [RU](../site/content/ru/documentation.md)          | [ZH-CN](../site/content/zh-CN/documentation.md)          | editorial + technical | `sha256:aea7a3de31f6432c0f66d3be012e12572fd881a0178452fd35cf4850e23f3352` |
-| [page:guide](../site/content/en/guide/index.md)                             | [RU](../site/content/ru/guide/index.md)            | [ZH-CN](../site/content/zh-CN/guide/index.md)            | editorial + technical | `sha256:847717324cc0748455fa4307c33922f08c83fad7c9033f8ab13e55016deb3bee` |
+| [page:guide](../site/content/en/guide/index.md)                             | [RU](../site/content/ru/guide/index.md)            | [ZH-CN](../site/content/zh-CN/guide/index.md)            | editorial + technical | `sha256:ab657295c5f2e44506a633ccecb88ba9c9874c61ad74d639f0a8e4114ef41a7c` |
 | [page:guide.cli](../site/content/en/guide/cli.md)                           | [RU](../site/content/ru/guide/cli.md)              | [ZH-CN](../site/content/zh-CN/guide/cli.md)              | editorial + technical | `sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc` |
 | [page:guide.configuration](../site/content/en/guide/configuration.md)       | [RU](../site/content/ru/guide/configuration.md)    | [ZH-CN](../site/content/zh-CN/guide/configuration.md)    | editorial + technical | `sha256:072347586a80864d7df609f36662c002da9a27380ffc0884595c045fcdc0f6c9` |
 | [page:guide.first-deployment](../site/content/en/guide/first-deployment.md) | [RU](../site/content/ru/guide/first-deployment.md) | [ZH-CN](../site/content/zh-CN/guide/first-deployment.md) | editorial + technical | `sha256:6d25dab7598389367b6d943f45d9c60ff77f4d5bb2b5dcd8646d18faa6f50798` |
-| [page:guide.installation](../site/content/en/guide/installation.md)         | [RU](../site/content/ru/guide/installation.md)     | [ZH-CN](../site/content/zh-CN/guide/installation.md)     | editorial + technical | `sha256:b9a10d56c86ab6cbd255310727c044f9e3112e06dba8a966c4442697ec32950f` |
+| [page:guide.installation](../site/content/en/guide/installation.md)         | [RU](../site/content/ru/guide/installation.md)     | [ZH-CN](../site/content/zh-CN/guide/installation.md)     | editorial + technical | `sha256:37eb05a495ff7852dfd14b1adf6891f18256678042c35e21a1a82188ec3214ae` |
 | [page:index](../site/content/en/index.md)                                   | [RU](../site/content/ru/index.md)                  | [ZH-CN](../site/content/zh-CN/index.md)                  | editorial + technical | `sha256:d976cde3058d4243de5ff36e9cc77fdf352abac825af9d4839e298f8a9d5ae1f` |
 
 ## Reviewing and recording evidence
@@ -79,8 +80,9 @@ GitHub Pages. The multilingual builder and Pages deployment must pass on the
 exact promoted `master` commit, with reachable `/F-Layer/en/`, `/F-Layer/ru/`
 and `/F-Layer/zh-CN/` routes and matching build evidence.
 
-Record the released source commit, successful Pages workflow/deployment URL,
+Record the candidate source commit, successful Pages workflow/deployment URL,
 reviewed locale states and evidence in Task #27 before completing it. Feature #8
 also requires its native child Tasks and feature acceptance criteria to be met.
+Complete and close release-1.2 before publishing the stable GitHub Release.
 This preparation PR must use `Related: #27`, so merge alone cannot auto-close the
 reviewed-publication Task.

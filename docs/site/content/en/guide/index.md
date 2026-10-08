@@ -8,7 +8,7 @@ You need **Python 3.11+ and Git**. The first check needs no cloud account.
 ```bash
 git clone https://github.com/Fuzzy-Technologies/F-Layer.git
 cd F-Layer
-git checkout v1.2.0
+git checkout v1.1.0
 python -m venv .venv
 ```
 

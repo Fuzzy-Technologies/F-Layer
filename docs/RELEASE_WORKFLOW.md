@@ -88,12 +88,48 @@ milestone instead of promoting the whole advanced develop tip. See
 release is finalized and tagged on master before the next candidate is promoted;
 release-only changes return to develop through a PR. The 1.2.0 scope addendum
 selects accepted documentation/security PRs #46, #48, #59, and #60 on released
-1.1.0. It publishes honest RU/ZH-CN drafts while their human-review planning
-criteria remain open; later milestone runtime features stay in develop.
+1.1.0. The premature stable classification of its artifact was withdrawn;
+RU/ZH-CN human-review acceptance remains required before stable publication.
+Later milestone runtime features stay in develop.
 Full regression gates run
 in CI, while local development checks the affected files.
 
-Tasks remain open during implementation and review. A merged PR may complete explicitly linked native Task issues through repository automation. Features close only when required child Tasks and feature-level acceptance criteria are satisfied. Milestone completion is planning state, not implementation evidence.
+Tasks remain open during implementation and review. A merged PR may complete explicitly linked native Task issues through repository automation. Features close only when required child Tasks and feature-level acceptance criteria are satisfied. Passing CI does not replace milestone acceptance.
+
+## Stable publication requires a completed milestone
+
+Before publishing a stable GitHub Release or uploading to PyPI, the owner must
+verify all Task, Feature and milestone acceptance criteria and close the native
+`release-X.Y` milestone. Its `open_issues` count must be zero. An instruction to
+finish a release does not waive unfinished acceptance criteria. Automation must
+not close planning items or invent human approvals to make publication pass.
+
+Use GitHub CLI with read access to the canonical repository for the preflight:
+
+```bash
+python tools/release_validation.py --check-milestone 3
+```
+
+This example checks release-1.2 against the checked-out package version. Replace
+the native milestone number for another release. The check reads GitHub's native
+state, validates repository/number/minor-version identity, and fails for open,
+incomplete, unavailable or malformed evidence. It does not build, publish or change
+planning state. Run it immediately before stable GitHub publication, alongside
+the exact-master CI and tag/artifact checks. Direct GitHub UI publication remains
+an owner-controlled action; the preflight is not a GitHub UI permission restriction.
+The PyPI workflow performs this check before full validation and repeats it when
+creating publication evidence.
+
+Release titles use `F-Layer vX.Y.Z — <short user-facing digest>`; annotated tags use
+`vX.Y.Z`, and package versions use `X.Y.Z`. Release-card section order follows
+ADR 0014. A candidate may have draft/fallback Pages and a GitHub **Pre-release**
+label, but it must not be advertised as the latest stable release.
+
+On 2026-10-08, v1.2.0 was incorrectly classified as stable while Task #27,
+Feature #8 and release-1.2 remained open. Its title was corrected and its release
+classification changed to Pre-release. The existing tag, commit and audited assets
+remain immutable. After acceptance is completed, changed release code requires a
+new patch version and tag; never move v1.2.0 onto a different commit.
 
 ## Implemented validation and release evidence
 
@@ -162,6 +198,7 @@ or package publication is created by the implementation PR.
 | `FLAYER_PYPI_ENABLED`         | `true`, set only after the intended Trusted Publisher is configured |
 | Workflow revision             | `master`, containing the reviewed release implementation            |
 | Dispatch tag                  | Existing annotated `vX.Y.Z`, matching current master and versions   |
+| Dispatch milestone            | Native `release-X.Y` number; closed with no open items              |
 | `confirm_publication`         | Explicitly checked for that manual dispatch                         |
 
 The owner must configure a normal Trusted Publisher for an owned existing PyPI
@@ -175,7 +212,8 @@ accept a token/password. Official setup instructions:
 
 After review and tag validation, the configured owner selects `master` in **Actions
 → Publish an owner-approved PyPI release**, enters the exact existing tag, and checks
-`confirm_publication`. Any missing opt-in, wrong owner, wrong branch/repository,
+`confirm_publication`. The dispatch also requires the native release milestone
+number. Any open/incomplete milestone, missing opt-in, wrong owner, wrong branch/repository,
 invalid tag, bootstrap version, failed full validation or failed artifact audit
 blocks publication. Successful validation transfers only this run's audited
 artifacts to a separate job. That job has OIDC permission and runs the pinned PyPA

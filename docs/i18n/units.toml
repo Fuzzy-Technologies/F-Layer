@@ -81,18 +81,18 @@ basedOnSourceHash = "sha256:aea7a3de31f6432c0f66d3be012e12572fd881a0178452fd35cf
 id = "page:guide"
 kind = "page"
 sourcePath = "docs/site/content/en/guide/index.md"
-sourceHash = "sha256:847717324cc0748455fa4307c33922f08c83fad7c9033f8ab13e55016deb3bee"
+sourceHash = "sha256:ab657295c5f2e44506a633ccecb88ba9c9874c61ad74d639f0a8e4114ef41a7c"
 reviewClass = "technical"
 
 [units.translations.ru]
 state = "draft"
 path = "docs/site/content/ru/guide/index.md"
-basedOnSourceHash = "sha256:847717324cc0748455fa4307c33922f08c83fad7c9033f8ab13e55016deb3bee"
+basedOnSourceHash = "sha256:ab657295c5f2e44506a633ccecb88ba9c9874c61ad74d639f0a8e4114ef41a7c"
 
 [units.translations.zh-CN]
 state = "draft"
 path = "docs/site/content/zh-CN/guide/index.md"
-basedOnSourceHash = "sha256:847717324cc0748455fa4307c33922f08c83fad7c9033f8ab13e55016deb3bee"
+basedOnSourceHash = "sha256:ab657295c5f2e44506a633ccecb88ba9c9874c61ad74d639f0a8e4114ef41a7c"
 
 [[units]]
 id = "page:guide.cli"
@@ -149,18 +149,18 @@ basedOnSourceHash = "sha256:6d25dab7598389367b6d943f45d9c60ff77f4d5bb2b5dcd8646d
 id = "page:guide.installation"
 kind = "page"
 sourcePath = "docs/site/content/en/guide/installation.md"
-sourceHash = "sha256:b9a10d56c86ab6cbd255310727c044f9e3112e06dba8a966c4442697ec32950f"
+sourceHash = "sha256:37eb05a495ff7852dfd14b1adf6891f18256678042c35e21a1a82188ec3214ae"
 reviewClass = "technical"
 
 [units.translations.ru]
 state = "draft"
 path = "docs/site/content/ru/guide/installation.md"
-basedOnSourceHash = "sha256:b9a10d56c86ab6cbd255310727c044f9e3112e06dba8a966c4442697ec32950f"
+basedOnSourceHash = "sha256:37eb05a495ff7852dfd14b1adf6891f18256678042c35e21a1a82188ec3214ae"
 
 [units.translations.zh-CN]
 state = "draft"
 path = "docs/site/content/zh-CN/guide/installation.md"
-basedOnSourceHash = "sha256:b9a10d56c86ab6cbd255310727c044f9e3112e06dba8a966c4442697ec32950f"
+basedOnSourceHash = "sha256:37eb05a495ff7852dfd14b1adf6891f18256678042c35e21a1a82188ec3214ae"
 
 [[units]]
 id = "page:index"

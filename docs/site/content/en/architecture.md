@@ -1,30 +1,32 @@
 # Architecture
 
-F-Layer is organized around explicit boundaries. The documentation platform
-reads current modules from the installed wheel; the [API reference](api/index.md)
-shows the contracts actually present in this revision.
+F-Layer has implemented configuration/state, generic provider boundaries,
+durable lifecycle/recovery, scoped Yandex translation, secure-gateway artifacts,
+and bounded diagnostics. The [installed API reference](api/index.md) lists the
+public contracts present in this revision, including the executable CLI module.
 
-| Boundary            | Responsibility                                                                       |
-| ------------------- | ------------------------------------------------------------------------------------ |
-| Configuration       | Validate user intent without embedding credentials or local machine paths.           |
-| State               | Preserve the minimum resource identity and lifecycle evidence needed for management. |
-| Provider            | Own cloud API translation, authentication adapters, and capability discovery.        |
-| Deployment profile  | Compose capabilities into a concrete infrastructure outcome.                         |
-| Lifecycle           | Coordinate create, observe, cleanup, rollback, and interrupted operations.           |
-| Diagnostics         | Produce bounded health and benchmark evidence without changing infrastructure.       |
-| Generated artifacts | Expose clear ownership, provenance, and disposal rules.                              |
+| Boundary            | Responsibility                                                                                      |
+| ------------------- | --------------------------------------------------------------------------------------------------- |
+| Configuration       | Validate explicit user intent and identity without embedding credentials.                           |
+| State               | Preserve owned locators and committed lifecycle evidence.                                           |
+| Provider            | Own cloud translation, scope validation, and capability discovery.                                  |
+| Deployment profile  | Compile an infrastructure outcome into provider-neutral plans and artifacts.                        |
+| Lifecycle           | Journal mutation intent, reconcile observations, persist state, and recover interrupted operations. |
+| Diagnostics         | Produce bounded, redacted health and benchmark evidence.                                            |
+| Generated artifacts | Enforce ownership, provenance, and explicit removal rules.                                          |
 
-These are architecture responsibilities, not a claim that every boundary has
-completed implementation. Provider-specific behavior belongs behind contracts;
-AI clients, future CLIs, and external integrations consume those contracts.
+The [implemented architecture reference](../../../architecture/reference.md)
+contains composition, recovery, and documentation diagrams. The
+[architecture index](../../../architecture/README.md) links each stable contract;
+the [ADR index](../../../adr/README.md) records accepted decisions and alternatives.
+Future extension and integration behavior requires its own explicit contract.
 
-## Source of truth
+## Evidence and scope
 
-- Accepted decisions live in [Architecture Decision Records](https://github.com/Fuzzy-Technologies/F-Layer/tree/develop/docs/adr).
-- Detailed designs live in [architecture sources](https://github.com/Fuzzy-Technologies/F-Layer/tree/develop/docs/architecture).
-- Public source contracts live in the installed Python package.
-- Runtime credentials and real resource state never become documentation fixtures.
+[Documentation coverage](../../../development/documentation-coverage.md)
+accounts for every tracked file without claiming that tests, tools, or private
+helpers are consumer APIs. Static discovery checks the entire installed package
+against source. API anchors, all canonical Markdown routes, and reachability
+from the English entry page are verified before publication.
 
-The first implementation wave establishes governance, configuration/state,
-provider boundaries, diagnostics, and validation. Lifecycle orchestration follows
-the stabilization of those contracts.
+Credentials and real resource state never become documentation fixtures.

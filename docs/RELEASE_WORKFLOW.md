@@ -86,7 +86,11 @@ milestone instead of promoting the whole advanced develop tip. See
 [ADR 0014](adr/0014-scoped-releases-and-changelog.md) and the
 [changelog](../CHANGELOG.md) for scope, history, and release-card rules. Each
 release is finalized and tagged on master before the next candidate is promoted;
-release-only changes return to develop through a PR. Full regression gates run
+release-only changes return to develop through a PR. The 1.2.0 scope addendum
+selects accepted documentation/security PRs #46, #48, #59, and #60 on released
+1.1.0. It publishes honest RU/ZH-CN drafts while their human-review planning
+criteria remain open; later milestone runtime features stay in develop.
+Full regression gates run
 in CI, while local development checks the affected files.
 
 Tasks remain open during implementation and review. A merged PR may complete explicitly linked native Task issues through repository automation. Features close only when required child Tasks and feature-level acceptance criteria are satisfied. Milestone completion is planning state, not implementation evidence.

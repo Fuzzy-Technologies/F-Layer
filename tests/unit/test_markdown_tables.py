@@ -3,7 +3,7 @@
 import subprocess
 from pathlib import Path
 
-from tools.markdown_tables import AlignMarkdown, CheckMarkdownTables, SplitRow
+from tools.markdown_tables import AlignMarkdown, CheckMarkdownTables, DisplayWidth, SplitRow
 
 
 def test_TableAlignmentPreservesEscapedPipesInsideCode() -> None:
@@ -85,3 +85,20 @@ def test_TrackedTableDriftIsReported(tmp_path: Path) -> None:
         "README.md: Markdown table columns need alignment",
     )
     assert page.read_text(encoding="utf-8") == original, "Validation must remain read-only"
+
+
+
+def test_CjkFullwidthAndCombiningCellsAlignWithoutChangingContent() -> None:
+    """Raw Markdown columns align for supported Unicode width classes, preserving cells."""
+
+    text = "| Name | Value |\n| :--- | ---: |\n| 中文 | Cafe\u0301 |\n| ＡＢ | e\u0301 |\n"
+    aligned = AlignMarkdown(text)
+    rows = aligned.splitlines()
+    boundaries = [[DisplayWidth(row[:index]) for index, character in enumerate(row)
+                   if character == "|"] for row in rows]
+
+    assert all(boundary == boundaries[0] for boundary in boundaries)
+    assert SplitRow(rows[2]) == ["中文", "Cafe\u0301"], "Combining bytes and CJK text must remain exact"
+    assert SplitRow(rows[3]) == ["ＡＢ", "e\u0301"], "Fullwidth cells must retain their original characters"
+    assert DisplayWidth("中文ＡＢe\u0301") == 9
+    assert AlignMarkdown(aligned) == aligned, "Unicode alignment must be idempotent"

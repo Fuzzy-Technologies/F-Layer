@@ -251,41 +251,41 @@ def _AuthoredUnits(
     relative_path = _Relative(source_path, project_root)
     syntax = ast.parse(_ReadCanonicalText(source_path), filename=str(source_path))
     units = []
+    seen_symbols = set()
 
-    for node in syntax.body:
-        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            continue
+    def Visit(nodes: list[ast.stmt], parent: str, class_scope: bool) -> None:
+        """Discover conditional public definitions while excluding function-local helpers."""
 
-        if node.name.startswith("_"):
-            continue
+        for node in nodes:
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                statements = []
 
-        symbol_name = f"{module_name}.{node.name}"
-        units.append(_NodeUnit(f"symbol:{symbol_name}", relative_path, node))
+                for child in ast.iter_child_nodes(node):
+                    if isinstance(child, ast.stmt):
+                        statements.append(child)
 
-        if not isinstance(node, ast.ClassDef):
-            continue
+                    elif isinstance(child, (ast.ExceptHandler, ast.match_case)):
+                        statements.extend(child.body)
 
-        seen_members = set()
-
-        for member in node.body:
-            if not isinstance(member, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                Visit(statements, parent, class_scope)
                 continue
 
-            if (
-                member.name.startswith("_")
-                or member.name in seen_members
-                or _IsPropertySetter(member)
-            ):
+            if node.name.startswith("_") and not (class_scope and node.name == "__call__"):
                 continue
 
-            seen_members.add(member.name)
-            units.append(
-                _NodeUnit(
-                    f"symbol:{symbol_name}.{member.name}",
-                    relative_path,
-                    member,
-                )
-            )
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and _IsPropertySetter(node):
+                continue
+
+            symbol_name = f"{parent}.{node.name}"
+
+            if symbol_name not in seen_symbols:
+                units.append(_NodeUnit(f"symbol:{symbol_name}", relative_path, node))
+                seen_symbols.add(symbol_name)
+
+            if isinstance(node, ast.ClassDef):
+                Visit(node.body, symbol_name, True)
+
+    Visit(syntax.body, module_name, False)
 
     return tuple(units)
 
@@ -793,6 +793,14 @@ def ValidateLocales(
 
             resolved_translation = project_root / translation_path
 
+            if unit.kind == "page" and translation_path:
+                locale_root = (project_root / project_manifest["contentRoot"] / locale).resolve()
+
+                if not resolved_translation.resolve().is_relative_to(locale_root):
+                    diagnostics.append(
+                        f"{record_label}: {locale} translation path must remain inside its locale"
+                    )
+
             if not translation_path or not resolved_translation.is_file():
                 diagnostics.append(
                     _TranslationDiagnostic(
@@ -805,6 +813,23 @@ def ValidateLocales(
                         "add the locale file or use state=missing",
                     )
                 )
+
+            based_on_hash = translation.get("basedOnSourceHash", "")
+
+            if not HASH_FORMAT.fullmatch(based_on_hash):
+                diagnostics.append(f"{record_label}: {locale} invalid basedOnSourceHash")
+
+            elif based_on_hash != current_hash:
+                states[identifier][locale] = "stale"
+
+                if state != "stale":
+                    diagnostics.append(
+                        _TranslationDiagnostic(
+                            identifier, locale, unit.source_path, translation_path,
+                            based_on_hash, current_hash,
+                            "set state=stale until the translation is updated against current English",
+                        )
+                    )
 
             if state != "approved":
                 continue
@@ -856,6 +881,21 @@ def ValidateLocales(
                         current_hash,
                         "set state=stale and obtain new accountable human reviews",
                     )
+                )
+
+    for locale in target_locales:
+        locale_root = project_root / project_manifest["contentRoot"] / locale
+        declared_paths = {
+            (project_root / record["translations"][locale]["path"]).resolve()
+            for record in records
+            if isinstance(record.get("translations", {}).get(locale), dict)
+            and record["translations"][locale].get("path")
+        }
+
+        for page_path in locale_root.rglob("*.md"):
+            if page_path.resolve() not in declared_paths:
+                diagnostics.append(
+                    f"{_Relative(page_path, project_root)}: locale page lacks explicit unit state"
                 )
 
     diagnostics.extend(_ValidateGlossaries(project_root, project_manifest))

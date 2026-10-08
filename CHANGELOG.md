@@ -14,6 +14,9 @@ real cloud account remains the operator's responsibility.
 
 #### Digest
 
+- Preliminary artifact: its premature stable classification was withdrawn on
+  2026-10-08 because release-1.2 acceptance remains incomplete. The existing
+  v1.2.0 tag and assets are preserved; the latest stable release is v1.1.0.
 - Browse complete repository documentation and EN/RU/ZH-CN routes with explicit
   translation status, and use a patched documentation build dependency. Existing
   1.1.0 runtime and CLI contracts remain supported; RU/ZH-CN prose is still draft.
@@ -36,7 +39,7 @@ real cloud account remains the operator's responsibility.
 - Generated repository pages now retain RU/ZH-CN draft links as source references
   instead of linking to nonexistent canonical pages. Regression checks cover
   both locales and preserved heading fragments.
-- Stable installation examples select `v1.2.0` in all three languages instead
+- Snapshot installation examples select `v1.2.0` in all three languages instead
   of sending readers to an advanced development checkout.
 
 #### Changed

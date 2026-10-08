@@ -184,6 +184,44 @@ def ValidatePublicationContext(environment: Mapping[str, str]) -> None:
         raise ValueError("Publication requires explicit dispatch confirmation")
 
 
+def ValidateMilestone(payload: object, version: str, milestone_number: int) -> dict[str, object]:
+    """Bind stable publication to the completed native milestone for this minor version."""
+
+    if (VERSION_PATTERN.fullmatch(version) is None or type(milestone_number) is not int
+            or milestone_number < 1 or not isinstance(payload, dict)):
+        raise ValueError("Release milestone identity is invalid")
+
+    expected_title = "release-" + ".".join(version.split(".")[:2])
+    expected_url = f"https://api.github.com/repos/{REPOSITORY_NAME}/milestones/{milestone_number}"
+
+    if (type(payload.get("number")) is not int or payload["number"] != milestone_number
+            or payload.get("title") != expected_title or payload.get("url") != expected_url):
+        raise ValueError("Release milestone does not own this repository and minor version")
+
+    if (payload.get("state") != "closed" or type(payload.get("open_issues")) is not int
+            or payload["open_issues"] != 0):
+        raise ValueError("Stable publication requires a closed milestone with no open items")
+
+    return {
+        "number": milestone_number, "title": expected_title, "state": "closed",
+        "open_issues": 0, "url": expected_url,
+    }
+
+
+def CheckReleaseMilestone(repo_root: Path, version: str, milestone_number: int) -> dict[str, object]:
+    """Read authoritative GitHub milestone state without changing planning or approvals."""
+
+    if type(milestone_number) is not int or milestone_number < 1:
+        raise ValueError("Release milestone number must be a positive integer")
+
+    response = RunCommand(
+        repo_root, ("gh", "api", f"repos/{REPOSITORY_NAME}/milestones/{milestone_number}"),
+        os.environ,
+    )
+
+    return ValidateMilestone(json.loads(response), version, milestone_number)
+
+
 def ValidateTag(repo_root: Path, tag: str, version: str) -> str:
     """Require an annotated stable tag owning the exact current master commit."""
 
@@ -474,6 +512,16 @@ def ValidateRelease(repo_root: Path, tag: str | None, publication: bool) -> dict
             raise ValueError("Publication requires an explicit stable release tag")
 
     version, source_version = ReadProjectVersion(repo_root, require_source=tag is not None)
+    milestone = None
+
+    if publication:
+        milestone_number = os.environ.get("FLAYER_RELEASE_MILESTONE", "")
+
+        if re.fullmatch(r"[1-9][0-9]*", milestone_number) is None:
+            raise ValueError("Publication requires an explicit native release milestone number")
+
+        milestone = CheckReleaseMilestone(repo_root, version, int(milestone_number))
+
     commit = (ValidateTag(repo_root, tag, version) if tag is not None
               else Git(repo_root, "rev-parse", "HEAD^{commit}").strip())
     epoch = Git(repo_root, "show", "-s", "--format=%ct", "HEAD").strip()
@@ -528,6 +576,10 @@ def ValidateRelease(repo_root: Path, tag: str | None, publication: bool) -> dict
             "wheel_members": len(wheel), "sdist_members": len(sdist), "artifacts": artifacts,
             "publication_requested": publication, "published": False,
         }
+
+        if milestone is not None:
+            evidence["release_milestone"] = milestone
+
         output_root.mkdir(parents=True)
         shutil.copytree(first_root, output_root / "dist")
         (output_root / "build-evidence.json").write_text(
@@ -543,14 +595,27 @@ def Main(arguments: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tag", help="Annotated stable tag owning the exact current master commit")
     parser.add_argument("--publication", action="store_true", help="Require manual owner publication gates")
+    parser.add_argument("--check-milestone", type=int, metavar="NUMBER",
+                        help="Check stable release milestone readiness without building or publishing")
     options = parser.parse_args(arguments)
 
     try:
-        evidence = ValidateRelease(REPOSITORY_ROOT, options.tag, options.publication)
+        if options.check_milestone is not None:
+            if options.tag is not None or options.publication:
+                raise ValueError("Milestone-only checking cannot request artifacts or publication")
+
+            version, _source_version = ReadProjectVersion(REPOSITORY_ROOT, require_source=True)
+            evidence = {"version": version, "published": False,
+                        "release_milestone": CheckReleaseMilestone(
+                            REPOSITORY_ROOT, version, options.check_milestone,
+                        )}
+
+        else:
+            evidence = ValidateRelease(REPOSITORY_ROOT, options.tag, options.publication)
 
     except (OSError, ValueError, tarfile.TarError, zipfile.BadZipFile,
             importlib.metadata.PackageNotFoundError):
-        print("Release validation failed; ownership, metadata or artifact checks did not pass.",
+        print("Release validation failed; milestone, ownership, metadata or artifact checks did not pass.",
               file=sys.stderr)
 
         return 1

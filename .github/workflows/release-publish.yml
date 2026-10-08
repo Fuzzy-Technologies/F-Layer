@@ -7,6 +7,10 @@ on:
         description: 'Existing annotated vX.Y.Z tag owning the current master commit'
         required: true
         type: string
+      milestone:
+        description: 'Native release-X.Y milestone number; must be closed with no open items'
+        required: true
+        type: string
       confirm_publication:
         description: 'Publish the validated distributions to production PyPI'
         required: true
@@ -15,6 +19,7 @@ on:
 
 permissions:
   contents: read
+  issues: read
 
 concurrency:
   group: flayer-pypi-publication
@@ -36,10 +41,17 @@ jobs:
           python-version: '3.11'
       - name: Install the pinned development and build tools
         run: python -m pip install -e '.[dev]'
+      - name: Require completed milestone acceptance before validation or publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FLAYER_RELEASE_MILESTONE: ${{ inputs.milestone }}
+        run: python tools/release_validation.py --check-milestone "$FLAYER_RELEASE_MILESTONE"
       - name: Run the canonical full validation gate
         run: python tools/validate.py
-      - name: Check owner consent, tag ownership, versions and reproducible artifacts
+      - name: Recheck milestone acceptance, owner consent, tag ownership and artifacts
         env:
+          GH_TOKEN: ${{ github.token }}
+          FLAYER_RELEASE_MILESTONE: ${{ inputs.milestone }}
           FLAYER_RELEASE_TAG: ${{ inputs.tag }}
           FLAYER_CONFIRM_PUBLICATION: ${{ inputs.confirm_publication }}
           FLAYER_RELEASE_OWNER: ${{ vars.FLAYER_RELEASE_OWNER }}

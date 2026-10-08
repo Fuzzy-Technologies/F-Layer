@@ -85,14 +85,14 @@ sourceHash = "sha256:f24509b775d435ce32015c6dd967c06dc5635fe9a3a8fee10372777bf6e
 reviewClass = "technical"
 
 [units.translations.ru]
-state = "stale"
+state = "draft"
 path = "docs/site/content/ru/guide/index.md"
-basedOnSourceHash = "sha256:ad084b7e476dc15d86b6b0587c5f64e72636fa360a3c29992e880609cdbb58b1"
+basedOnSourceHash = "sha256:f24509b775d435ce32015c6dd967c06dc5635fe9a3a8fee10372777bf6ee202b"
 
 [units.translations.zh-CN]
-state = "stale"
+state = "draft"
 path = "docs/site/content/zh-CN/guide/index.md"
-basedOnSourceHash = "sha256:ad084b7e476dc15d86b6b0587c5f64e72636fa360a3c29992e880609cdbb58b1"
+basedOnSourceHash = "sha256:f24509b775d435ce32015c6dd967c06dc5635fe9a3a8fee10372777bf6ee202b"
 
 [[units]]
 id = "page:guide.cli"
@@ -153,14 +153,14 @@ sourceHash = "sha256:37eb05a495ff7852dfd14b1adf6891f18256678042c35e21a1a82188ec3
 reviewClass = "technical"
 
 [units.translations.ru]
-state = "stale"
+state = "draft"
 path = "docs/site/content/ru/guide/installation.md"
-basedOnSourceHash = "sha256:fde720cc25a92905c97ad540904a015512548b65ff5760b06723b8608c2ffd94"
+basedOnSourceHash = "sha256:37eb05a495ff7852dfd14b1adf6891f18256678042c35e21a1a82188ec3214ae"
 
 [units.translations.zh-CN]
-state = "stale"
+state = "draft"
 path = "docs/site/content/zh-CN/guide/installation.md"
-basedOnSourceHash = "sha256:fde720cc25a92905c97ad540904a015512548b65ff5760b06723b8608c2ffd94"
+basedOnSourceHash = "sha256:37eb05a495ff7852dfd14b1adf6891f18256678042c35e21a1a82188ec3214ae"
 
 [[units]]
 id = "page:index"
@@ -170,11 +170,11 @@ sourceHash = "sha256:17a91b4b34b71e194a62858289386253c460029c1fa295b85fe71ae1d62
 reviewClass = "technical"
 
 [units.translations.ru]
-state = "stale"
+state = "draft"
 path = "docs/site/content/ru/index.md"
-basedOnSourceHash = "sha256:e6c9c464f945b16651d45389443d3c5786582a84406c015583cfb0cf4671e9b7"
+basedOnSourceHash = "sha256:17a91b4b34b71e194a62858289386253c460029c1fa295b85fe71ae1d62f39ec"
 
 [units.translations.zh-CN]
-state = "stale"
+state = "draft"
 path = "docs/site/content/zh-CN/index.md"
-basedOnSourceHash = "sha256:e6c9c464f945b16651d45389443d3c5786582a84406c015583cfb0cf4671e9b7"
+basedOnSourceHash = "sha256:17a91b4b34b71e194a62858289386253c460029c1fa295b85fe71ae1d62f39ec"

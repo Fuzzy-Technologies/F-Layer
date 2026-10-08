@@ -58,3 +58,9 @@ fallback route without weakening tracked-source link validation.
 Glossary keys, notes, and reference metadata remain English; preferred terms and
 navigation/banner labels are target-language localization assets. Draft glossary
 terms remain subject to human terminology review.
+
+## Release-1.2 review handoff
+
+The [review snapshot](review-snapshot.md) links all 18 current-source drafts,
+required human roles, canonical hashes, evidence fields and the master/Pages
+completion steps. It records review scope without manufacturing approvals.

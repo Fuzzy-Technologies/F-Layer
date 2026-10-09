@@ -6,6 +6,24 @@ AmneziaWG and VLESS Reality. Record the results in
 [Task 73](https://github.com/Fuzzy-Technologies/F-Layer/issues/73).
 Configuration tests and active systemd services do not replace this check.
 
+## Verify the AI entry point
+
+For AI-assisted acceptance, start a fresh assistant session with terminal access.
+Give it only the README's copyable task, the selected candidate identity and the
+operator's own environment/scope choices and authorizations. It must reach the
+[AI operator guide](../site/content/en/guide/ai-operator.md) and complete the same
+checks below without private development-chat context. Record the assistant and
+version, documentation revision, questions asked, approval boundary, manual
+interventions and actual outcomes. Preserve existing bounded authorizations when
+handing over; do not assume an unrelated session knows them.
+
+Before provisioning, check that an unsupported cloud choice and withheld paid
+resource approval stop the workflow without mutation. A missing Linux controller
+must produce a clear prerequisite and next action. Installed CLI smoke tests and
+documentation review do not establish that an independent assistant completed
+the live journey. Record that journey as `not run` until exercised; retain the
+same candidate and resource evidence requirements as the manual path.
+
 ## Choose the candidate and cloud scope
 
 Use the wheel and build evidence from the successful release-artifact CI run for

@@ -11,6 +11,11 @@ commands. Version 2.0 is not yet a published stable release.
 
 ## 1. Install the candidate
 
+To delegate these steps to an assistant with terminal access, copy the task from
+[AI Quick Start](ai-operator.md). It covers version selection, the questions the
+assistant should ask, paid-resource approval and evidence of a working connection.
+The commands below are the manual route.
+
 Use Linux or WSL, Python 3.11+, OpenSSH (`ssh` and `ssh-keygen`), and the
 [official Yandex Cloud CLI](https://yandex.cloud/en/docs/cli/quickstart).
 Download the reviewed candidate wheel from the project's CI artifacts. Create a

@@ -26,6 +26,28 @@ provider; F-Layer is open source under Apache 2.0.
 [Changelog](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/CHANGELOG.md) ·
 [Releases](https://github.com/Fuzzy-Technologies/F-Layer/releases)
 
+## Deploy with an AI assistant
+
+Have an assistant with terminal access? Give it the task below. It prepares the
+environment and configuration, asks for missing choices and gets your approval
+before creating paid resources. Sign-in and client setup may need your help.
+Read the [AI operator guide](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/site/content/en/guide/ai-operator.md) for the
+complete workflow and the distinction between a stable release and a candidate.
+
+> Help me deploy a personal VPN with F-Layer: https://github.com/Fuzzy-Technologies/F-Layer.
+> Read the AI operator guide linked from its README and use documentation matching
+> the selected release or explicitly approved candidate. Ask which cloud, region
+> and client devices I use, then select a supported adapter. Install the verified
+> package and prepare a private project. Show the resources, access rules, cost
+> estimate and cleanup plan; wait for my approval before creating paid resources.
+> Deploy through F-Layer, help connect my devices and verify traffic. Keep secrets
+> local. Finish with the actual results, ongoing costs and removal instructions.
+
+The current VPN workflow requires the reviewed **2.0 candidate**, not the stable
+v1.2.1 wheel below. Use PyPI only once the official release announces a verified
+published version. The [manual Quick Start](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/site/content/en/guide/index.md)
+remains available if you prefer to execute the commands yourself.
+
 ## Install
 
 Use Python 3.11 or newer. Install the release wheel in a virtual environment;

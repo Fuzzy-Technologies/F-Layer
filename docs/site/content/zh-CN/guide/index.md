@@ -10,6 +10,10 @@
 
 ## 1. 安装候选版本 {#1-install-the-candidate}
 
+如需委托能够访问终端的助手完成这些步骤，请复制 [AI 快速开始](ai-operator.md)
+中的任务。该指南涵盖版本选择、助手应询问的问题、付费资源批准以及实际连接验证。
+下方命令供手动执行。
+
 使用 Linux 或 WSL，并准备 Python 3.11+、OpenSSH（`ssh` 和 `ssh-keygen`）以及
 [官方 Yandex Cloud CLI](https://yandex.cloud/en/docs/cli/quickstart)。
 从项目 CI 中下载已审查候选版本的 wheel 构建产物。按照[安装指南](installation.md)

@@ -2,10 +2,10 @@
 
 ## Current authored-page review
 
-AIna-Dev reviewed all **11 authored English pages** against their Russian and
+AIna-Dev reviewed all **12 authored English pages** against their Russian and
 Simplified Chinese translations on 2026-10-09. Subsequent page edits have their
-own exact review timestamps in the registry. This covers 22 translations
-and 44 editorial/technical AI review records. No human approvals are claimed.
+own exact review timestamps in the registry. This covers 24 translations
+and 48 editorial/technical AI review records. No human approvals are claimed.
 The authority and source/translation hash contract are recorded in
 [ADR 0015](../adr/0015-accountable-ai-translation-review.md).
 
@@ -30,6 +30,13 @@ and protocol details. Generated API and engineering-reference translations use
 separate source-bound catalogs; this authored review does not approve content
 absent from those catalogs.
 
+The AI operator guide, README prompt and Quick Start entry points received
+editorial and technical self-review by AIna-Dev. This review checks version and
+provider honesty, bounded paid-resource consent, retained authorization,
+prerequisite handling, private state, real-client verification and cleanup.
+It is not an independent-agent live deployment; that evidence remains part of
+the release acceptance procedure.
+
 | Canonical unit                | Reviewed canonical hash                                                   |
 | ----------------------------- | ------------------------------------------------------------------------- |
 | `page:api`                    | `sha256:5d6a97e054991df75bd7d964df247aa0e77b3fa70251866f4f8ec19f1cd24728` |
@@ -37,7 +44,8 @@ absent from those catalogs.
 | `page:brand`                  | `sha256:7dc4a34669dc538db351ce211014c64ea31d79c00d540badb364bce3c4d620aa` |
 | `page:development`            | `sha256:3e13b58ec7a14f97c5d4f774a4727fe67aeaf9ba91a4720972768bd8154450a2` |
 | `page:documentation`          | `sha256:c80e615173c62b32beb8d6e363eedd39657c2c4357ebbe43518d4fbc5b76e4a0` |
-| `page:guide`                  | `sha256:8e1b32a624f4d39409c93707ce1aa798b12c2b600cd4f3e9ced78710e27e9881` |
+| `page:guide`                  | `sha256:e6fbeddc2c0746b1f2ca6c4e3e53a7b7d1efa54b7c461d8434a33a2e045ee96b` |
+| `page:guide.ai-operator`      | `sha256:d8b806e174ad5886a36707d1fc95f14f5d157d760a3fa3f4ff3c0c3a4666178b` |
 | `page:guide.cli`              | `sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc` |
 | `page:guide.configuration`    | `sha256:49c1db435ada063f2181b0b9e69381f8a8a518ce3742b44de8e7b4ed1054abc1` |
 | `page:guide.first-deployment` | `sha256:485cfb018ec5d44ec29e9d14d7901cfc6f78ff790dee979ebaa42b5071c41094` |

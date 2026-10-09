@@ -14,10 +14,10 @@
 SSH 网关和 HTTP 检查。其他云平台需要相应的适配器。
 F-Layer 是开源软件；云资源费用由云服务商收取。
 
-## 快速开始 {#quick-start}
+## 快速入门 {#quick-start}
 
 从[安装](guide/installation.md)开始。
-[快速开始](guide/index.md)介绍从安装 F-Layer 2.0 到创建私有项目、在 Yandex
+[快速入门](guide/index.md)介绍从安装 F-Layer 2.0 到创建私有项目、在 Yandex
 Cloud 部署和连接客户端的完整步骤。安装后，以下命令无需云访问：
 
 ```bash
@@ -33,7 +33,7 @@ python -m flayer check --format json
 
 - **通过自己的 VPN 服务器连接**
 
-    [快速开始](guide/index.md)介绍两种 VPN 协议；
+    [快速入门](guide/index.md)介绍两种 VPN 协议；
     [SSH 网关指南](guide/first-deployment.md)介绍受限的 SSH 转发。
 
 - **检查运行中的服务**

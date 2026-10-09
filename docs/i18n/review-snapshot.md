@@ -37,12 +37,19 @@ The owner-requested 2.0 preparation was re-reviewed across README, landing,
 installation, Quick Start, AI guidance and maintainer examples: old-version
 comparisons are removed, installation uses the 2.0.0 artifact, and the runtime
 version matches. These follow-up checks are AI self-reviews.
-The owner-requested 2.0 preparation was re-reviewed across README, landing,
-installation, Quick Start, AI guidance and maintainer examples: old-version
-comparisons are removed, installation uses the 2.0.0 artifact, and the runtime
-version matches. These follow-up checks are AI self-reviews.
 It is not an independent-agent live deployment; that evidence remains part of
 the release acceptance procedure.
+
+At the owner's request, AIna-Dev performed a further Simplified Chinese
+editorial and technical self-review of the 12 authored pages, README, API
+catalogs, UI labels and related engineering guides. Corrections distinguish
+CLI named settings from deployment profiles and configuration files, resource
+attribution from POSIX file ownership, nonsecret settings from publication,
+and IP packet forwarding from SSH port forwarding. The review also improves
+installation, approval, diagnostics and cleanup wording, and records the
+terminology in the aligned glossaries. Only changed translation records receive
+new hashes and timestamps; unchanged historical reviews are not renewed.
+This is an AI self-review, not a native-speaker or independent human approval.
 
 | Canonical unit                | Reviewed canonical hash                                                   |
 | ----------------------------- | ------------------------------------------------------------------------- |

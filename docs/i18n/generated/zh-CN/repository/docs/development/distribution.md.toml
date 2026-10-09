@@ -3,7 +3,7 @@ sourcePath = "docs/development/distribution.md"
 body = '''
 # Python 发行包与安装
 
-F-Layer 以 `f-layer` Python 包分发，安装后提供 `flayer` 命令及同名可导入包。用户安装 wheel；只有参与代码开发时才需要克隆仓库。release-2.0 的安装流程不要求 Docker 控制器镜像。
+F-Layer 以 `f-layer` Python 包分发，安装后提供 `flayer` 命令及同名可导入包。用户安装 wheel；只有参与代码开发时才需要克隆仓库。release-2.0 的安装流程不要求 Docker 控制端镜像。
 
 ## 安装发行包
 
@@ -57,7 +57,7 @@ PyPI 发布及上传后的安装验证步骤见下文。
 
 `src/flayer/__init__.py` 定义字面量 `__version__`。Hatchling 的正则版本源无需导入软件包即可读取该值。Wheel、源码归档元数据和已安装运行时共享同一版本。VPN 代码按需加载其依赖；安装或导入核心不会隐式启用该扩展。
 
-稳定发布采用 `X.Y.Z` 及不可变注释标签 `vX.Y.Z`，详见[发布流程](../RELEASE_WORKFLOW.md)。版本提升属于经过评审的发布分支。开发分支合并不会发布软件包。
+稳定发布采用 `X.Y.Z` 及不可变附注标签 `vX.Y.Z`，详见[发布流程](../RELEASE_WORKFLOW.md)。版本提升属于经过评审的发布分支。开发分支合并不会发布软件包。
 
 ## 构建与安装验证
 
@@ -92,7 +92,7 @@ python -m pytest tests/integration/test_distribution.py --no-cov
 1. 登录预期的 PyPI 账户，核实对 `f-layer` 的所有权。如果项目尚不存在，为该名称配置待创建项目的 Trusted Publisher。此类 publisher 不会保留名称。
 2. 将 publisher 的 GitHub 所有者设为 `Fuzzy-Technologies`，仓库设为 `F-Layer`，工作流文件名设为 `release-publish.yml`。当前上传作业不使用 GitHub 环境，因此可选环境字段留空。
 3. 将仓库变量 `FLAYER_RELEASE_OWNER` 设为准确的获授权 GitHub 登录名，仅在验证 publisher 后设置 `FLAYER_PYPI_ENABLED=true`。
-4. 完成并关闭原生发布里程碑，确保没有未完成项。评审并将发布合入 `master`，然后创建版本注释标签。
+4. 完成并关闭原生发布里程碑，确保没有未完成项。评审并将发布合入 `master`，然后创建版本附注标签。
 5. 从 `master` 运行 **Publish an owner-approved PyPI release**，提供该标签、原生里程碑编号并启用发布确认。
 6. 检查上传结果，核实 PyPI 项目 URL 和版本指向本仓库。在新环境中安装已发布版本并运行 `flayer check`，之后才能说明按包名安装已经可用。
 
@@ -109,8 +109,8 @@ python -m pytest tests/integration/test_distribution.py --no-cov
 - [Cryptography 变更记录](https://cryptography.io/en/latest/changelog/)
 '''
 sourceHash = "sha256:6858085830c5b86cae8e34c6407131cefc82581a7dc843356a5575222169d741"
-reviewedTranslationHash = "sha256:ef90b2c184a6fbd81bce6132c74e75a3871152d1a82f96cf05a6fcd3122beb51"
+reviewedTranslationHash = "sha256:543d0342c9ccc1198edb56f41dc0aa955c42571d3c6fe39f04881cf8168324ad"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:33:02Z"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]

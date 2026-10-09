@@ -4,11 +4,11 @@ schemaVersion = 1
 id = "module:flayer.guest"
 sourcePath = "src/flayer/guest.py"
 sourceHash = "sha256:0caa53198e6fa3b369c325f0e98341bd50135248d22e3c4a6d6da0c79b3fe186"
-body = "严格校验已固定主机密钥的 SSH 传输，用于私密 VPN 安装和服务状态检查。"
-reviewedTranslationHash = "sha256:25ededb34b8989e831768c8a873286de4a340a2af9669d95cdd55e3a9c566f97"
+body = "采用严格主机密钥固定与校验的 SSH 传输，用于安装含敏感配置的 VPN 服务并检查服务状态。"
+reviewedTranslationHash = "sha256:790af295933e029ded63137936c685772a7d3c7a669ca411a5a1af0eaabe851a"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.489144+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -37,11 +37,11 @@ reviewRoles = ["editorial", "technical"]
 id = "symbol:flayer.guest.GuestRunner.Run"
 sourcePath = "src/flayer/guest.py"
 sourceHash = "sha256:d26a0f16a3f10ba92ac7650eed8898e1903481ab844e96580f93410ce9a2aad8"
-body = "执行受限的参数向量，私密传入标准输入并捕获输出。"
-reviewedTranslationHash = "sha256:51718b94116f7cee80476dc0ac34de077580936736b45ed03990ec54f4977c49"
+body = "在限定范围内执行命令及其参数列表，通过标准输入传递敏感数据并捕获输出。"
+reviewedTranslationHash = "sha256:0c09680a127048ac2ab26b3fb90f48c7a5ea89d1482a90fa5a11cb8bb82436fe"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.489210+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -70,11 +70,11 @@ reviewRoles = ["editorial", "technical"]
 id = "symbol:flayer.guest.PrivatePath"
 sourcePath = "src/flayer/guest.py"
 sourceHash = "sha256:5b9dfa9a8ddacef1fb9b398b48256e7e27de0e9791a67b70b0d05181819d20f8"
-body = "要求 POSIX 对象归调用者所有且访问权限受限，不允许符号链接或具有硬链接的文件。"
-reviewedTranslationHash = "sha256:1e8d5594f587332ed810f4a85c757cd9c95ff7c666bc5b1c4cad37f706005ae6"
+body = "要求 POSIX 文件或目录归调用者所有且访问权限受限；拒绝符号链接以及硬链接数大于一的文件。"
+reviewedTranslationHash = "sha256:0a6683a8ec4c089e404a4000a085a29931a7374044981f80fa448c633f6ab950"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.489348+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -158,33 +158,33 @@ reviewRoles = ["editorial", "technical"]
 id = "symbol:flayer.vpn_project.CloudPlacement"
 sourcePath = "src/flayer/vpn_project.py"
 sourceHash = "sha256:9a9c778a47295f5d64b7e1081f60cfdda9420c282fc198d834218bb1c51733a6"
-body = "单台 Ubuntu 来宾的公开部署位置，以及严格限定的管理员入站访问。"
-reviewedTranslationHash = "sha256:3a9f31c513708341070ddbb6de3ec1c7768d8d822bccd7201267f76372109743"
+body = "单台 Ubuntu 虚拟机的非敏感部署参数，以及严格限定的管理员入站访问规则。"
+reviewedTranslationHash = "sha256:e340db8e00f33c07a3fc8b763e219112b5ab41c265bfd94b88f61de18e2fdb17"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.489475+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.vpn_project.VpnProject"
 sourcePath = "src/flayer/vpn_project.py"
 sourceHash = "sha256:7db99930a2302c2376c426b711992122a549e40a0789d3031293c58782788f78"
-body = "经校验的公开项目配置，明确引用私有本地存储位置。"
-reviewedTranslationHash = "sha256:ab1e57503cebb3ad5256d0efd80d7a50e7ab06e6c61a5935bd2390aff00f0358"
+body = "经校验且不含密钥等敏感数据的项目配置，明确引用私有本地存储位置。"
+reviewedTranslationHash = "sha256:84f80e7c0da3630504c109b4f4f23b6c442cd628c68bc2e134d321f952b66838"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.489487+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.vpn_project.VpnProject.Fingerprint"
 sourcePath = "src/flayer/vpn_project.py"
 sourceHash = "sha256:c5c0dcaeeb2dd0798e6b7d2a90284c0ae62e5a24cd4c17392a9dff3efd2354fe"
-body = "将准备好的材料绑定到全部公开项目设置，不持久记录秘密内容。"
-reviewedTranslationHash = "sha256:1774bbb5c5eaec1c50d29fede9701e06fb414a3b129d108e86d77a7b5644e260"
+body = "将已准备的材料绑定到全部非敏感项目设置，不持久保存密钥等敏感数据。"
+reviewedTranslationHash = "sha256:a9374d11d2df92576c3d5898791f74710625359cbf2803ac4dac743caa30606f"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.489499+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -202,11 +202,11 @@ reviewRoles = ["editorial", "technical"]
 id = "symbol:flayer.vpn_project.VpnProjectReport"
 sourcePath = "src/flayer/vpn_project.py"
 sourceHash = "sha256:ef45a0eb32edd24e9f2ff903d5d76bc9f1d42294867a30ed7b98e270ea73ba0d"
-body = "经过清理的生命周期及来宾观察结果，不包含传输凭据材料或提供商输出。"
-reviewedTranslationHash = "sha256:6f30a95a7932b449b314b45b4790cb86391634a960a05a7f6cae792486bd01f0"
+body = "经过脱敏的生命周期及来宾系统观测结果，不包含传输凭据材料或提供方原始输出。"
+reviewedTranslationHash = "sha256:f95b2d695087856cee1ed7b7617bc0587aeb39c7f42decf249cb30c5fffbf950"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.489523+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -235,11 +235,11 @@ reviewRoles = ["editorial", "technical"]
 id = "symbol:flayer.vpn_project.LoadVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
 sourceHash = "sha256:01ad5e1da22aa4d2e96b8a1c0412f44fb45dd9d8e142049cb55172ce05b84f14"
-body = "从私有存储读取明确指定且可编辑的公开 TOML 配置和管理公钥。"
-reviewedTranslationHash = "sha256:491953ebc9ea4b9569038ba1542ff03e90d0f2e4530fc8c8442cb767bd2ab745"
+body = "从私有存储读取明确指定、可编辑且不含秘密信息的 TOML 配置，以及管理公钥。"
+reviewedTranslationHash = "sha256:c1b02eaa716699506c6fbacfa21a48324369c1998e81ce4820e6cc6dc54e6258"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.489559+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -257,11 +257,11 @@ reviewRoles = ["editorial", "technical"]
 id = "symbol:flayer.vpn_project.CompileVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
 sourceHash = "sha256:507e20bed85a8908f53ddd014aa3e7e2848dcd1c01d64144520b1627ec8e08fa"
-body = "编译六个归属明确的资源，并仅绑定已校验且不含秘密的引导文件。"
-reviewedTranslationHash = "sha256:816db31373e3d56d3e3a1b318c941579a5f42db07d10cb120ac185bf3a72fd51"
+body = "编译包含六个归属明确资源的部署计划，仅绑定已校验且不含敏感数据的引导文件。"
+reviewedTranslationHash = "sha256:659baf9873bd3b289bcc4456161d1e8d1b012f6ee4b749cbc29b11b3211eb3a8"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.489623+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]

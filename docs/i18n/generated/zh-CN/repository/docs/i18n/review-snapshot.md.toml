@@ -13,6 +13,8 @@ API 首页与项目介绍页面也已翻译。随后，品牌图片路径已修�
 
 AI 操作指南、README 提示词和 Quick Start 入口由 AIna-Dev 完成编辑与技术自审。审核涵盖版本与服务商能力的如实说明、有界付费操作批准、已有授权的保留、前置条件处理、私有状态、实际客户端验证和清理。根据所有者要求，对 README、首页、安装、Quick Start、AI 指南及维护者示例中的 2.0 准备工作进行了再次评审：移除了旧版本对比，安装使用 2.0.0 产物，运行时版本与之匹配。这些后续检查属于 AI 自审。这不是独立代理的真实部署；相关证据仍属于发布验收流程。
 
+应所有者要求，AIna-Dev 对 12 个独立编写的指南页面、README、API 翻译目录、界面文字及相关工程指南的简体中文译文，进一步进行了文字和技术自审。本次修订区分了 CLI 命名配置、部署配置方案与配置文件，资源归属与 POSIX 文件属主，不含凭据的设置与数据发布，以及 IP 数据包转发与 SSH 端口转发。同时改进了安装、授权确认、诊断和清理说明，并将术语记录在各语言对应的术语表中。仅为已修改的译文更新审核哈希和时间戳，不刷新未修改历史文本的审核记录。这是 AI 自审，不代表中文母语人士或独立人工审核。
+
 | 原文单元                      | 已评审原文哈希                                                            |
 | ----------------------------- | ------------------------------------------------------------------------- |
 | `page:api`                    | `sha256:5d6a97e054991df75bd7d964df247aa0e77b3fa70251866f4f8ec19f1cd24728` |
@@ -38,9 +40,9 @@ AI 操作指南、README 提示词和 Quick Start 入口由 AIna-Dev 完成编�
 
 [F-Layer v1.2.1](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.2.1) 在[注释标签及可复现发行包审计](https://github.com/Fuzzy-Technologies/F-Layer/actions/runs/37862618156)后发布。标签准确指向该 master 源提交；下载的 wheel、源码归档和构建记录均与已审计的哈希及大小一致。预发布 v1.2.0 保持不可变。这些记录证明本次发布通过验收，不代表未来翻译已经获批。
 '''
-sourceHash = "sha256:a50a6fe57d5f8b454a514a7b873751a9d6bb1bf58f7bd7d1b8713befa1fb4146"
-reviewedTranslationHash = "sha256:10dda3ff75b9c490c81972e511e6b4ee3702d6e532f1614cf9f94fb3f27c3a77"
+sourceHash = "sha256:d8b429bee3456bca2c4021e584a1ab6d57ca975df13c8f61cb1caeee5a894e5f"
+reviewedTranslationHash = "sha256:9ec912901c16736214e73659c63744386763529de43f39a725d83ce68e10594d"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:33:02Z"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]

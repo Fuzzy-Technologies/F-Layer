@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/static-site.md"
 sourceHash = "sha256:7e870f42ef1575a404c26ca7dd03bc5df3d5de290960efa2b8824cb190ba31f1"
-reviewedTranslationHash = "sha256:0e0f7beea6c8e51eecaa44e22a93d15e5b1e090a86d2f88e87ffe30b38d00516"
+reviewedTranslationHash = "sha256:f11803b81c5dbe24d06131423339ce96031ea8342445ff4cd9a7287b2dff2a2e"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:50:59Z"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # 静态网站配置
@@ -26,7 +26,7 @@ body = '''
 | 格式       | 版本 1，`static-site`；拒绝未知字段和命令。                   |
 | 位置       | 明确 Yandex 身份、文件夹、所有者、可用区、镜像和子网。        |
 | 子网       | 规范 RFC1918 IPv4 子网，前缀 `/16` 至 `/28`。                 |
-| 管理员     | 明确非 root 用户名和一个规范 Ed25519 公共 wire 密钥。         |
+| 管理员     | 明确非 root 用户名和一个符合 SSH 编码格式的 Ed25519 公钥。    |
 | 管理来源   | 1–16 个规范 IPv4 CIDR，前缀 `/24` 至 `/32`。                  |
 | HTTP 来源  | 1–16 个明确规范 IPv4 CIDR；仅 HTTP 允许 `/0`。                |
 | 来源唯一性 | 同一来源集合内拒绝重复和重叠。                                |
@@ -42,7 +42,7 @@ body = '''
 包列表、凭据值、设备账号或 VPN 路由设置。只能使用可公开内容，页面会提供给
 声明的 HTTP 客户端。
 
-公钥只接受规范 `ssh-ed25519` 类型及完整公共 wire blob，无注释或密钥选项。
+公钥只接受规范的 `ssh-ed25519` 类型及完整的 SSH 公钥编码数据，无注释或密钥选项。
 配置不解析私钥、不输出秘密文件。HTTP 和管理员来源可以重叠，但 HTTP 许可
 不授予 SSH 22 端口访问。管理员不能命名为 `root`、`www-data` 或 `nginx`；
 Web 工作进程账号必须与特权管理员分离。
@@ -90,7 +90,7 @@ SHA-256 绑定到虚拟机描述。
 `auto-delete=false` 行为。新配置不改变生命周期恢复、提供方语义、云默认值或
 持久状态。
 
-现有显式生命周期 CLI 接收生成的计划。选择真实位置并预先认证 CLI 配置档后，
+现有显式生命周期 CLI 接收生成的计划。选择真实位置并预先认证 CLI 命名配置后，
 可以执行下列命令；准备阶段不会自行执行这些命令：
 
 ```bash
@@ -123,7 +123,7 @@ SSH 只选择 root 拥有的精确文件 `/etc/ssh/f-layer-static-admin-keys`。
 用户目录或镜像密钥、密钥命令和 SSH CA 不会成为额外授权来源。`AllowUsers`
 将唯一管理员限制到其来源 CIDR。禁用 root/密码登录、SSH 转发、agent 转发、
 Unix 套接字转发和隧道接口。HTTP 入站分别由云安全组和客户机防火墙限制。
-客户机禁止包转发并关闭 IPv6。
+客户机禁止 IP 数据包转发并关闭 IPv6。
 
 Nginx 仅从固定文档根提供 `/` 和 `/index.html`，其他 URL 返回 404。不提供
 目录索引和动态执行。页面和目录属于 root。HTTP 不加密；该有界配置不签发 TLS

@@ -56,3 +56,27 @@ preferred = "создаваемый файл"
 avoid = []
 note = "Terminology checked against the English guides by AIna-Dev; see ADR 0015."
 references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
+
+[[terms]]
+id = "concept:infrastructure.cli-profile"
+english = "CLI profile"
+preferred = "именованный профиль CLI"
+avoid = []
+note = "A named CLI settings collection, distinct from a configuration file path and a deployment profile."
+references = ["docs/site/content/en/guide/configuration.md"]
+
+[[terms]]
+id = "concept:infrastructure.public-intent"
+english = "public intent"
+preferred = "целевая конфигурация без секретов"
+avoid = []
+note = "Public contrasts with secret material in VPN models; it does not authorize publishing the project configuration."
+references = ["docs/architecture/amneziawg.md", "docs/adr/0019-private-vpn-project-workflow.md"]
+
+[[terms]]
+id = "concept:infrastructure.packet-forwarding"
+english = "packet forwarding"
+preferred = "пересылка пакетов"
+avoid = []
+note = "Distinguish IP packet forwarding from Python package distribution and SSH local port forwarding."
+references = ["docs/site/content/en/guide/first-deployment.md"]

@@ -719,11 +719,11 @@ reviewRoles = ["editorial", "technical"]
 id = "symbol:flayer.diagnostics.contracts.CheckResult"
 sourcePath = "src/flayer/diagnostics/contracts.py"
 sourceHash = "sha256:b68935ae63fee3fbda5bcac16e602a47471533a3077c9abf69cbe157f17f624c"
-body = "一次诊断观察的结果，其详细信息在序列化时经过敏感数据清理。"
-reviewedTranslationHash = "sha256:a486d0d6f6972fde88ff8a1afe33686508f20790a88a02fd46217e5ab4d14e8a"
+body = "一次诊断观测的结果，详细信息在序列化时脱敏。"
+reviewedTranslationHash = "sha256:5270e86a54d3e9048906df05cc538fba52e7a4a980f20ba875b4b92c15a9c9f5"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.495242+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -774,11 +774,11 @@ reviewRoles = ["editorial", "technical"]
 id = "symbol:flayer.diagnostics.contracts.DiagnosticReport.AsDict"
 sourcePath = "src/flayer/diagnostics/contracts.py"
 sourceHash = "sha256:9d875d4248a712ef2e41cafab39d6fe60ff649540a7ea24a0e0ca0e9d7d6a18a"
-body = "按确定顺序输出报告模式和已清理的观察结果。"
-reviewedTranslationHash = "sha256:c8d1bbdd04aaafdb3f8f61eec4b91571bd4bf993ed041c25e4e28dc8f1d30434"
+body = "按确定顺序输出报告的数据结构和已脱敏的观测结果。"
+reviewedTranslationHash = "sha256:e66eb36699afb27f48db5a84d1a4f0efac4f7a73666446079a103265e06e02d1"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.495326+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -862,11 +862,11 @@ reviewRoles = ["editorial", "technical"]
 id = "module:flayer.diagnostics.reporting"
 sourcePath = "src/flayer/diagnostics/reporting.py"
 sourceHash = "sha256:877b58407962e1ac56ce013b42d4dba77eca555f5ba5b70d442ad44ca7ebfdbb"
-body = "为已清理的诊断报告提供稳定 JSON 格式和简洁文本表示。"
-reviewedTranslationHash = "sha256:9b15257aa7f82e52449623f72272a6f2aa6ce8099b206dd7772b63e17f4afadc"
+body = "将已脱敏的诊断报告输出为稳定的 JSON 格式或简洁文本。"
+reviewedTranslationHash = "sha256:c6917e398a07f607ca1d13101b7a8ca4f3581945990eeb749afe3a8be525df1a"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.495520+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -928,11 +928,11 @@ reviewRoles = ["editorial", "technical"]
 id = "symbol:flayer.extensions.builtins.YandexReadOnlyExtension"
 sourcePath = "src/flayer/extensions/builtins.py"
 sourceHash = "sha256:1f0c744a894e49fb97fc7047e0b6d3be29d38502eadc5b3f5dc89d4086ce799f"
-body = "使用外部 CLI 配置文件引用，构造现有的 Yandex Cloud 只读适配器。"
-reviewedTranslationHash = "sha256:d6a8bb29d56b535ae039dc3679a5ea290b34ae2ac82fab0681b41e8c806a0d36"
+body = "通过外部 CLI 命名配置（profile）的引用，构造现有的 Yandex Cloud 只读适配器。"
+reviewedTranslationHash = "sha256:bf1de46ebf97371e30157297d64e79fce8b4a560ea16a51c5a8b6e3516dd0226"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.495620+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1247,11 +1247,11 @@ reviewRoles = ["editorial", "technical"]
 id = "symbol:flayer.extensions.discovery.ReadMetadataFile"
 sourcePath = "src/flayer/extensions/discovery.py"
 sourceHash = "sha256:bfc15fe263fd476c3f0513be44966d3faa7c95d19bcc072a6a90548a00ce4f35"
-body = "读取一个大小受限、无硬链接的普通文件，不跟随路径末端的符号链接。"
-reviewedTranslationHash = "sha256:607e1ae6618f7c2750037eeaf40e214cee2ea94e996851306eed5b08308e68d5"
+body = "读取大小受限且硬链接数为一的普通文件，不跟随路径末端的符号链接。"
+reviewedTranslationHash = "sha256:7ec2d7203279756d506a7d78c83ad49ef03e539a3c890903be4070d679ae5979"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.496182+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1951,11 +1951,11 @@ reviewRoles = ["editorial", "technical"]
 id = "symbol:flayer.profiles.static_site.BuildStaticSiteBundle"
 sourcePath = "src/flayer/profiles/static_site.py"
 sourceHash = "sha256:f3e06d2b21f29f442d1e7c51a3471d046092200570a4a01ddc6cec1f7982faf7"
-body = "生成不含凭据的公开初始化内容，不宣称来宾系统已就绪。"
-reviewedTranslationHash = "sha256:febf00d1d73d769dde6e4183891e81ac2f37319218251061bd4bb8417775a921"
+body = "生成不含凭据的初始化内容，不宣称来宾系统已就绪。"
+reviewedTranslationHash = "sha256:29ef6c4895fad4c367241bb0af8a014c00a5a9401326d65aa308aec2db5fa01c"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.497808+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -2072,11 +2072,11 @@ reviewRoles = ["editorial", "technical"]
 id = "symbol:flayer.providers.contracts.ProviderError"
 sourcePath = "src/flayer/providers/contracts.py"
 sourceHash = "sha256:60181c7eeefda040bd97614e5dcb4a5d93b2bad284c259a6377672f7751d2045"
-body = "经过清理的提供商错误，包含稳定错误码和重试建议。"
-reviewedTranslationHash = "sha256:0b2c66e8a0a015a65e29b26eb6cd1f7eabadaaff3aab80701865d648765f0df3"
+body = "已脱敏的提供方错误，包含稳定错误码和重试建议。"
+reviewedTranslationHash = "sha256:61dac9adde7d5e481f3391647dfeaa7a7c8f51a904ff7f19ba4a0489c797997c"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.497999+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -2138,11 +2138,11 @@ reviewRoles = ["editorial", "technical"]
 id = "symbol:flayer.providers.contracts.ProviderStatus"
 sourcePath = "src/flayer/providers/contracts.py"
 sourceHash = "sha256:902f5ce5abc30f7f6b19160e0a9716428fe9c1405f63f4bcd252726514e16a38"
-body = "经过清理的探测结果，区分身份验证状态未知与探测失败。"
-reviewedTranslationHash = "sha256:19cb4e04f0826274f369e94945ea41a3916b5edc8f91657858982b7a5a0d9a37"
+body = "已脱敏的探测结果，区分身份验证状态未知与探测失败。"
+reviewedTranslationHash = "sha256:3836500fae84c6867db28a67861ed4df234c60b8b94d9a1f488a2547a9435db3"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.498169+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -2281,11 +2281,11 @@ reviewRoles = ["editorial", "technical"]
 id = "symbol:flayer.providers.lifecycle.MutationError"
 sourcePath = "src/flayer/providers/lifecycle.py"
 sourceHash = "sha256:6e6ddafa4b2d389131e6bfa4b2ed4d5767e160d94951b5015235effe2057650b"
-body = "经过清理的资源变更错误，明确区分云端结果尚不确定的情况。"
-reviewedTranslationHash = "sha256:719ed62995337ac4f8a52fad80cf0acc80a7aa9e484972842214605bb405ff28"
+body = "已脱敏的资源变更错误，明确区分云端结果尚不确定的情况。"
+reviewedTranslationHash = "sha256:4a66b38f0ee620a3da6de598fcafd78ed07d3d26f1c16940fa1339497ff34b37"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.498396+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -2402,11 +2402,11 @@ reviewRoles = ["editorial", "technical"]
 id = "symbol:flayer.providers.yandex.YandexCloudSettings"
 sourcePath = "src/flayer/providers/yandex.py"
 sourceHash = "sha256:ef5e7ba89764db011f043049fadc210a0af6451b9d2af62b531738bdc0d268ba"
-body = "明确的 Yandex Cloud 文件夹和 CLI 配置文件设置，不保存令牌或秘密密钥。"
-reviewedTranslationHash = "sha256:1edf0079482c82917de882edf43b0080cc9131fc48affd25af7debbe8260dabd"
+body = "明确指定 Yandex Cloud 云文件夹和 CLI 命名配置（profile），不保存令牌或私密密钥。"
+reviewedTranslationHash = "sha256:c3cc54910421461c48109f0f7127b78a3bc38496ab944595990c4d4c983050b9"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.498629+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -2435,11 +2435,11 @@ reviewRoles = ["editorial", "technical"]
 id = "symbol:flayer.providers.yandex.CommandRunner.Run"
 sourcePath = "src/flayer/providers/yandex.py"
 sourceHash = "sha256:ebc5523360438b1625389f8a9684c52eed356b49ae1457c3753e14e087de08c7"
-body = "执行一个参数向量，不改变其顺序或作用范围。"
-reviewedTranslationHash = "sha256:a9bed38be1f10b80b8395abc801b48f66e0eeb90a0ac529e7a23a66c14d57846"
+body = "执行给定的命令及其参数列表，不改变参数顺序或作用域。"
+reviewedTranslationHash = "sha256:161be23655f6e3d273995da0b01d88d9464cfbc6d197b7871f9b63c85cb35e4b"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.498682+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -2501,11 +2501,11 @@ reviewRoles = ["editorial", "technical"]
 id = "symbol:flayer.providers.yandex.YandexCloudProvider.CheckAvailability"
 sourcePath = "src/flayer/providers/yandex.py"
 sourceHash = "sha256:1513eeab4d552ff1e7184b7bf02b1f58769a41729f301e5f06eade1746643266"
-body = "在本地检查 CLI 能否运行，不读取令牌、配置文件或基础设施。"
-reviewedTranslationHash = "sha256:d3deeb371a00a9da564f3911f8d1954798292a49386f83e4cca135da14f4007a"
+body = "在本地检查 CLI 能否运行，不读取令牌、CLI 命名配置或基础设施信息。"
+reviewedTranslationHash = "sha256:e3797099bedb6f0d7b8b7201f99751719bb2acd6903f0d80d703583ccbfe0fd7"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.498783+00:00"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]

@@ -15,7 +15,7 @@ python -m venv .venv
 | ----------------------- | ---------------------------- |
 | Linux/macOS bash 或 zsh | `source .venv/bin/activate`  |
 | Windows PowerShell      | `.venv\Scripts\Activate.ps1` |
-| Windows Command Prompt  | `.venv\Scripts\activate.bat` |
+| Windows 命令提示符      | `.venv\Scripts\activate.bat` |
 
 从[发布文件](https://github.com/Fuzzy-Technologies/F-Layer/releases)下载
 `f_layer-2.0.0-py3-none-any.whl` 和 `build-evidence.json`。
@@ -31,14 +31,14 @@ flayer vpn --help
 ```
 
 预期结果为 `"status": "ok"`，退出码为 `0`。`flayer` 和 `python -m flayer`
-接受相同参数。然后阅读 [VPN 快速开始](index.md)，或使用
+接受相同参数。然后阅读 [VPN 快速入门](index.md)，或使用
 [SSH 网关指南](first-deployment.md)配置受限的 SSH 转发。
 
 `vpn` 可选依赖提供用于在本地生成密钥的密码学库。发布文件还包括源码归档及
 包含代码修订和产物哈希的构建报告。请将报告与安装包一起保存。
 
 VPN 部署控制端应运行在 Linux 或用户管理的 WSL Linux 发行版中，并安装
-OpenSSH 和 Yandex Cloud CLI。私有项目文件使用 POSIX 所有权和权限。
+OpenSSH 和 Yandex Cloud CLI。私有项目文件需要通过 POSIX 文件属主和访问权限检查。
 Windows 可以运行软件包诊断；部署时使用 WSL 环境。
 
 ## 开发环境 {#development-checkout}

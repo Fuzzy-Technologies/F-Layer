@@ -31,8 +31,8 @@ inline code cells, alignment markers and literal fenced examples.
 
 Authored English pages use the tracked locale unit registry. Dynamically
 generated API units use a disposable inventory with the same stable symbol
-IDs and versioned source hashes. Their target-language states are explicitly
-`missing`; this generated inventory cannot manufacture a translation or review.
+IDs and versioned source hashes. A generated entry does not by itself establish translation or review: its
+state is determined from actual translations and review records.
 
 ## Language and review
 
@@ -40,7 +40,7 @@ English is canonical. The authored Russian and Simplified Chinese pages have
 been checked against their English sources by AIna-Dev, as requested by the
 project owner. Reviewed pages open directly without a draft notice. Missing
 or outdated translations display the current English text with a fallback notice.
-Generated API pages and untranslated engineering references remain in English.
+This also applies to untranslated API pages and engineering references.
 
 Each translation records its stable unit ID, English source hash and path.
 Approval requires named editorial and technical reviews with UTC timestamps

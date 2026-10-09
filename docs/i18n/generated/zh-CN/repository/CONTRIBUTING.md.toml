@@ -1,0 +1,25 @@
+schemaVersion = 1
+sourcePath = "CONTRIBUTING.md"
+body = '''
+# 参与 F-Layer 开发
+
+F-Layer 采用 Fuzzy Technologies 的开发流程。
+
+开始贡献前：
+
+1. 阅读 [AGENTS.md](AGENTS.md) 和 [DEVELOPMENT_PROTOCOL.md](DEVELOPMENT_PROTOCOL.md)；
+2. 从 `develop` 创建独立的 `feature/*` 或 `fix/*` 分支；
+3. 将实现关联到 GitHub 中类型为 Task 的任务；
+4. 根据所修改的组件边界补充测试和验证结果；
+5. 使用仓库模板向 `develop` 提交 pull request。
+
+不得提交凭据、私有基础设施标识符、本机绝对路径或特定环境的机密信息。
+
+影响架构的变更必须随实现一并提交相应的 ADR。
+'''
+sourceHash = "sha256:6ed6ef2e96c72b3b3f99111269657f529467c1e0e26b2e9885f9387b27479173"
+reviewedTranslationHash = "sha256:27cd362c2776409ef7b7ae30dd0cd64c58f1f5ee8aa18fa5e35dd1df4edf289c"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:54Z"
+reviewRoles = ["editorial", "technical"]

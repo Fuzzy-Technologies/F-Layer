@@ -1,0 +1,31 @@
+schemaVersion = 1
+sourcePath = "examples/integrations/README.md"
+sourceHash = "sha256:f6e7f851a687f10b569b8b93c2f84790848b8434d1f6b2c7a314a11cb66ed025"
+reviewedTranslationHash = "sha256:1e20f8bcb363a539f029ed42d561b79b0f2682c6177eb336b53f5baa9ac7ab00"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:49:02Z"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# 集成消息示例
+
+这些示例说明[生态集成](../../docs/architecture/ecosystem-integration.md)中已实现的
+F-Layer 版本 1 契约。身份和结果均为测试数据，不代表真实云资源、私有基础设施、
+已验证的 1337 兼容性、授权、远端证明或客户机就绪。
+
+| 观测         | 请求                                                           | 结果                                                         |
+| ------------ | -------------------------------------------------------------- | ------------------------------------------------------------ |
+| 状态         | [status-request.json](status-request.json)                     | [status-result.json](status-result.json)                     |
+| 健康         | [health-request.json](health-request.json)                     | [health-result.json](health-result.json)                     |
+| 测量         | [benchmark-request.json](benchmark-request.json)               | [benchmark-result.json](benchmark-result.json)               |
+| 所属状态     | [state-request.json](state-request.json)                       | [state-result.json](state-result.json)                       |
+| 生命周期结果 | [lifecycle-report-request.json](lifecycle-report-request.json) | [lifecycle-report-result.json](lifecycle-report-result.json) |
+
+每对消息的身份、操作、格式版本和请求 ID 完全相同。无提供方数据时，status 示例
+为 unsupported。health 和 benchmark 是构造的成功观测；状态数量仅代表已记录
+归属。生命周期示例报告缺失资源及恢复需求，不掩盖结果不完整。
+
+`ParseRequest` 和 `ParseResult` 验证表示形式，不调度任务或授予权限。不支持
+变更请求名称。`tests/contract/test_integration_contracts.py` 对这些数据执行
+序列化与反向解析测试。
+'''

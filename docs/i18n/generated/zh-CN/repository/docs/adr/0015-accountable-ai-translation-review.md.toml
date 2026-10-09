@@ -1,0 +1,40 @@
+schemaVersion = 1
+sourcePath = "docs/adr/0015-accountable-ai-translation-review.md"
+sourceHash = "sha256:cef6392e51b1b185a245f58c9895e4640052f9fe2910cdc5668a2ebbbb3972fe"
+reviewedTranslationHash = "sha256:9d24191ed5520b4030bf5d038e87c24266a9015fbf87004eb51e4a3e08e9fbc2"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:58:01.352835+00:00"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# ADR 0015：明确记录并绑定原文的 AI 翻译审核
+
+- 状态：已接受
+- 日期：2026-10-09
+- 通过所有者审核的 [PR #66](https://github.com/Fuzzy-Technologies/F-Layer/pull/66) 接受
+- 相关：[任务 #27](https://github.com/Fuzzy-Technologies/F-Layer/issues/27)、[功能 #8](https://github.com/Fuzzy-Technologies/F-Layer/issues/8)
+
+## 背景
+
+ADR 0004 规定翻译只能由人工批准。随后，所有者要求 AIna 重新核对俄文和中文文档，并删除将这些页面称为翻译草稿的提示。这一指令授权实际 AI 审核，而不是虚构人工批准。仅凭构建成功仍不足以证明翻译质量。
+
+## 决策
+
+F-Layer 在 Git 跟踪的项目清单中显式选择 `reviewerTypes = ["human", "ai"]`。没有显式启用的项目继续默认只允许人工审核。AI 审核记录 `reviewerType = "ai"`、实际审核者、编辑或技术审核角色、UTC 时间，以及当前 `reviewedSourceHash`。另外必须记录 `reviewedTranslationHash`，即规范化换行后的 UTF-8 译文 SHA-256。原文或译文发生变化都会使 AI 批准失效。现有角色、原文依据要求和 `fuzzy-doc-unit-v1` 方案不变。
+
+AIna-Dev 将九篇英文指南分别与两种语言版本核对，检查含义、术语、资源归属和授权约束、命令、代码、路径、锚点及导航。只有这 18 篇实际审核过的译文获得批准记录。生成的 API 页面和未翻译的仓库参考资料继续明确回退到英文。已批准页面保留机器可读来源信息，但不显示审核提示条。草稿、缺失和过期页面保留准确提示。构建证据区分指南审核完成与人工审核。
+
+本决策补充 ADR 0004 的审核权限规定，不豁免人工 PR 审查或稳定发布前的里程碑检查。任务 #27 仍要求从准确提升的 master 提交成功发布；稳定发布前，里程碑必须已完成、已关闭且没有未完成项。
+
+## 影响
+
+用户指南可以在不显示误导性草稿标签的情况下发布，同时保持 AI 审核来源可追溯。AI 审核可能有误，不被描述为独立人工认证。后续文字修改需要重新实际审核，不能只机械更新哈希。候选版本改为 v1.2.1；v1.2.0 保持不可变。
+
+## 备选方案
+
+保留草稿元数据却隐藏提示，会歪曲发布状态。添加虚构人工身份属于伪造证据。等待无关的人工审核者，也无法完成所有者明确要求的 AIna 核验。
+
+## 兼容性
+
+运行时和 CLI 行为保持兼容。已有人工记录默认使用 `reviewerType = "human"`。显式启用只扩展文档审核权限，不改变云资源、包索引上传或仓库访问规则。
+'''

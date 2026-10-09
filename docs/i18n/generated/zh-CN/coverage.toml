@@ -1,0 +1,276 @@
+schemaVersion = 1
+
+[[units]]
+id = "coverage:36b98249718bd16fae62c74038294d00ec87f7882c0179bd4c041f14f470cac7"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:44f4c04704030cc471cebfe3b5cd6d60259abb3be9b27e7766a8a0c2701e924b"
+body = "许可证原文保留在源代码和软件包元数据中。"
+reviewedTranslationHash = "sha256:b8ffc528dab26e1db6711eb6ed9ab68d6828c45e5011c72903b0d69f3c693b5c"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101454+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:ad914cbd4c7a20cd7b1bf2f4f830b030351690a4a1e9a11c2cfe252c04c4bfa6"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:de86d0c787075befb69a9e366f2db2dc0383496912d377185be3b2b3b13db6eb"
+body = "构建、打包或文档配置可在对应的源文件中查看。"
+reviewedTranslationHash = "sha256:1d9bf923cd95b57183679584f23a9a3ea54d769a65448e8013a9c86b3dd4083f"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101480+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:03228c3a3b43f3f814ecbab7f218028d09f789dc2ccfb56c4a80fc485fa6126d"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:b836e1724f5200cf0a62fbacd5bd28d3edf2972ef732d3023d72d4bccbe070ca"
+body = "CI 和发布自动化的源代码；检查要求见开发指南和发布指南。"
+reviewedTranslationHash = "sha256:4e5508e39c10400b658f2a145532389e62933d805d55fd92f9fa1c3a48765c63"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101495+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:b92bb289aebed319b79f093eb81e2b20f7ae32adfe5b5d15f612a9aacd9ca5cf"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:a9cdf1a2c87ad77e418c47fb6128bf2ad5bbb3e5d8a6bdd95adb9259153d7291"
+body = "仓库中的 Markdown 文件已纳入文档，并可通过导航访问。"
+reviewedTranslationHash = "sha256:1dd1de3571f7efb1e78f6498d09fff86d735c5cdbf9f497e2ed9b2445d4e182f"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101507+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:aeae221ab8ee780ebab0fdcd8e832ee45b90dc2eff781f37e8fbc4f8cd3785ea"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:3218ebe7596638471d90188de72f9493a6c3ce5d61e855e3f4605cae7ec9cab0"
+body = "文档覆盖规则"
+reviewedTranslationHash = "sha256:fa6a68815f7213a31345377ec37949ebe42686fa52f2f02c580908b07f5e884e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101519+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:e7407ba023d7cbb2d1cf9ac640cf9940cadd21608fb181eb277275f3b9a1ce98"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:581317de45905083b162be032e8521d8b44b67e745a01ecf74e464c2a94619f6"
+body = "软件包中定义的符号"
+reviewedTranslationHash = "sha256:8761480c2cc310b5401c288df8b45562c730268cea90d48bc957c37c1ed11b83"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101531+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:8881fc89a1e249594630730bf0469ed3892903412af85db5a4e95f9730e6cd2e"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:eb63093c805f37271218341240041fca33be34484a7be43b535a88d358d1840a"
+body = "呈现方式"
+reviewedTranslationHash = "sha256:ca02ad0b6db9fa1a10e74f8f4790df14730fa5ff1560935379b556a71b0ed4cf"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101543+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:5fa01e87f3ec934becf321dd157279070ad13fda1d44fff708075deb66ccd22b"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:f02f9eebf9dbf8e8762c0535a15fb07e4d0f04015d9d3b5fd5b79fcd1917329d"
+body = "开发工具或校验接口，其用法见开发指南。"
+reviewedTranslationHash = "sha256:b1ebb72a1150529b91e086680813d3439c306c949563ed200b087129e17fbac5"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101555+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:75d68202e8ba67020124acceec1b6878383f27e35e758e56b1381ba72cf60c4b"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:c7879490de7c273b8f19552bef36de3a2423d45e716a50d5c685c593d55beb92"
+body = "本表说明 Git 跟踪的每个文件如何在文档中呈现。API 参考介绍受支持的接口；内部辅助函数、测试、工具、配置、资源文件和工作流保留源代码链接，并说明原因。文件出现在清单中，并不表示它属于公共 API，也不表示其译文已通过审核。"
+reviewedTranslationHash = "sha256:b3bea9ef16380df4ef3b94e373cd27dfb3b818d326c7cecebc06394a74c447d3"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101603+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:ff6924ad5bae190228326db9ef6e672345664dd128328e87ed39730783afac69"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:5f168c27f6ce5d7b430dd4b9328270d3757095d7bf46fbf69d068d408409ff29"
+body = "测试用于验证程序行为，保留为源代码，不属于公共 API。"
+reviewedTranslationHash = "sha256:10aa32bfb031f4646f133acd162a02f051e6b0d7ff268e909cfbbdd726390ff8"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101617+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:50009ce1da4d15e1c4a04024df691eed5f0d598e2c4c67092f205366d0adf99e"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:2931e0d5d960a3a71430b8f9530a507dabb8b8a0072fb4168daa850baf7f798d"
+body = "文件"
+reviewedTranslationHash = "sha256:39932f24fe11a6baf55145a8ea05e1abd8f773d4a98a0785ca27183f2ececedb"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101629+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:92c5915b4e3b0c5bb1e97f1fbc4e6a0bc48793d6b778c4385f6b47fcd4c12b49"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:6f82d7d7341ced47eabc6eb1a1f52d5877f43a2c9473e3f4c50600d55bcd1423"
+body = "GitHub 议题表单配置，其用途由仓库协作规则规定。"
+reviewedTranslationHash = "sha256:e53421a07284a25a4835792df368780d08829111dbeab9415ecdc301f6463783"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101640+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:fd062ce67dc41f1603df83952d4bdc28c0cf7280fe8d17e1c1c054e15d520b30"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:b1372b834cdcdf30c8ba81e8bddaeea4d4ed45b47775d93ce6494d1a14adedd8"
+body = "导入的别名、常量、字段和继承的方法由其定义所在的模块或类说明，无需重复创建锚点。"
+reviewedTranslationHash = "sha256:4b5aa76bf57f8640f71df1ae70ed50c6061004d5d320e6c649e49e58b7d99a2d"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101653+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:61a84543b92debf20532aa49d54dab705f00f9b5bc07ad96e8c205d5c492a2d3"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:f0475243c2833f9194931fcd944a1b9f799081ccf2605471a8ebc765d969f1aa"
+body = "已安装软件包的公共模块和受支持的定义纳入生成的 API 参考。"
+reviewedTranslationHash = "sha256:72ba4043d4f4eba73760bc2c711ee8d125e92aeb1f88b5b3114193f710f726d6"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101664+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:734cc7b4e9bbff0a44e4b4bf4a3624a959f8651c747e11dc80d891245ca05313"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:0181a1d7f4c024218b808355c64a040e2076d80713b05424385b3b99ba30a2aa"
+body = "语言设置、术语表和翻译审核记录由文档校验工具读取。"
+reviewedTranslationHash = "sha256:432aa1d4751639c7b7541ae61a926277de45ff81f70bd6a0ab9c06982aeebc85"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101676+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:fd653fb76c1b00c4f2db8d7666036fee45f78657c58ef4e0951497cb7268f9b0"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:19179e0e6e51075e8902730d7b63e71f623fdaa5f809bc1b38b8f6bb16a2f138"
+body = "译文按实际审核状态显示；系统不会自动认定已由人工审核。"
+reviewedTranslationHash = "sha256:1a46dcdba2e82e0a0f0e2c678069c2564691e44f4c730151e8aae881f018c887"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101688+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:1864e633b8b357a2f56d28f9a77f95c10189e68002b1c650fbd923eb6d2c486b"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:568d76888ec7031a353f6b8554940894dfdb82f7694bcb9609e9efb8e1d33457"
+body = "PEP 561 类型信息标记，其用途见软件包分发规则。"
+reviewedTranslationHash = "sha256:23623c8115e6eca6a9e48a0787dcccbcdf2c691df63086829ac0d3860bdfc4ac"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101700+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:4bc311bf5a4082ceece9b40b8ecf26f6917daae010ce4b11164e2412738e3b3b"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:c4eb4460f920149055259b164203947bbc655741105c2cfaf6585d1e747e373e"
+body = "内部函数、特殊方法或嵌套定义可在源代码中查看。"
+reviewedTranslationHash = "sha256:fff15cca87c4bf6e708b8ebc6edf2b512e914507c4a93815f25ed5fa31e4bf45"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101711+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:d27c8a555f605c6a929247556b6dc7ecef9a86ff3ab425ea8349aec44a1e8338"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:6e7bad0dcbf9329762fa0e13c7ff0d7c28fc80606af720a067e9180d80d8ae0d"
+body = "公共接口在生成的 API 参考中有对应的准确锚点。"
+reviewedTranslationHash = "sha256:6a878aa1f2754aa3555dc37c073cfc20b77c1d8fcb51867a57245941d328b9ae"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101722+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:f81ab834de5f84918dc040b884267c2b61cb1a52d46442de10e97f35a94d0500"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:bda54da4283919e85bb4d098f7c4a58ecc0dbac75ffbaa36e840831e1aa65ece"
+body = "说明"
+reviewedTranslationHash = "sha256:4262c45dc797bb0cd5008331ef25b684413859f55b73c71fb4e2c01b645dbbb7"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101734+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:e10d1f8f536e0d8e64b2f436f35c314044452ae6127551ceb0d4664afef6996c"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:35f15f3216c81661d82b28b9960c279502cc32fd002faa8299943b1debe04e22"
+body = "仓库文档覆盖情况"
+reviewedTranslationHash = "sha256:6ff93e2f1ea18c1649eb78f83b1ad845ffb6e13a6378a4ee22703b4ab73565e0"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101745+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:ba0e4afa93400b805dfcc4b9e6aef549269946e2d1af5ababfc3a73c67912d89"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:176efebd3f1af08efb521f9feaa1d18e39751f2bafdc5d70080c1252f95f8d17"
+body = "符号"
+reviewedTranslationHash = "sha256:e892654a499d52a776c3d245b8800e9d15b1b07e6451fd2fa30d453a2b1a7b82"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101757+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:17a9e1bd1c696046ef837e629fee5c361fc3072f8795cf6e0257df8ba8d76f1d"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:884fcb06e8ba78d0311100cff95011af2ef7f2303040a2433992af1dfcc79e2c"
+body = "主题和品牌资源随站点发布，不生成单独的 API 页面。"
+reviewedTranslationHash = "sha256:f47967985466405c0cbd1ee9e5539771a55bda3b310e3744a952fe7ee2212dde"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101768+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:3da78608df6b0277a017886e278f18e66f7c1715b0bb7ab85daa3c8c22451c37"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:56c86d5ed7b2981896e55d3534e31d630dc55f7f630dc97c26a68cb0b3c3f694"
+body = "可编辑的配置示例或接口数据示例；用户指南说明其用法并链接到源文件。"
+reviewedTranslationHash = "sha256:e98d36b460833794cf2c1c91b980541881c1fbee23261bc1b106a51693f353ac"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101779+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:9ea6a9c6d68868fd80b18a1eccc087ccb489cc92232898ca8220e8a8fab27047"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:a994f36658a6cd4e0c8e4551f7c4d2947dc3defbb08840c98d103693777e3134"
+body = "软件包内部模块，其实现细节不属于受支持的公共 API。"
+reviewedTranslationHash = "sha256:ab34a8fed3cb41345b9c56ff9d708f9943620c856ee1c0b97d69758dbad211c5"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:52:13.887541+00:00"
+reviewRoles = ["editorial", "technical"]

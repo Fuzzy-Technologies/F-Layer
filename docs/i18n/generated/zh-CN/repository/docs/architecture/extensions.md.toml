@@ -1,0 +1,127 @@
+schemaVersion = 1
+sourcePath = "docs/architecture/extensions.md"
+sourceHash = "sha256:50eb83811347e4081383f461951f3ffbcd59a881bc10dc8aa3c0847f24ccdb0b"
+reviewedTranslationHash = "sha256:50867956c17e3556621d74f2222e4215a40f7a3ea449c4d259a856d0c7471a07"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:47:08Z"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# 扩展接口与发现
+
+`flayer.extensions` 新增用于显式注册提供方和部署配置的 Python API。现有
+生命周期核心、CLI、配置、归属、状态和文件契约不变。
+[ADR 0011](../adr/0011-explicit-extension-discovery.md)记录发现与加载边界。
+
+## 已实现的契约
+
+| 契约                         | 职责                                                |
+| ---------------------------- | --------------------------------------------------- |
+| `ExtensionDescriptor`        | 不可变类型、标识、发行包、精确版本、组和工厂。      |
+| `ProviderExtension`          | 从 `ProviderContext` 构造现有只读 `CloudProvider`。 |
+| `LifecycleProviderExtension` | 可选地构造独立 `LifecycleProvider`。                |
+| `ProfileExtension`           | 使用精确 `ProfileContext` 归属编译严格配置。        |
+| `CompiledProfile`            | 提供身份、服务器文件包生成和验证后的生命周期 TOML。 |
+| `ExtensionRegistry`          | 注册、选择并显式加载已验证描述。                    |
+
+`ProviderContext` 仅包含 `scope_id`、外部 CLI 的
+`authentication_reference`、有界命令超时及清单限制。不解析凭据、不读取凭据
+文件、不接受凭据字节、不选择可执行文件，也不携带任意选项字典。认证引用是已
+配置外部来源的名称，不能以令牌或密钥内容冒充标识。`ProfileContext` 包含已
+验证的 `StackIdentity`。配置值由选定的严格格式验证，拒绝未知字段并避免将私有
+凭据放入服务器配置。
+
+扩展对象提供精确的 `Descriptor`。外部 entry point 指向无参数工厂并返回该对象。
+对象必须满足所在组的协议，并返回包含所选元数据快照的原始描述。工厂可通过
+`DiscoverExtensions` 静态读取自身明确定位的 `.dist-info` 目录获得描述。
+结构协议检查验证必需方法和身份，受信任实现负责方法语义及输出。
+
+## 可用内置扩展
+
+| 类型   | 标识               | 适配器                                           |
+| ------ | ------------------ | ------------------------------------------------ |
+| 提供方 | `yandex-read-only` | `YandexCloudProvider`；清单和精确资源查询。      |
+| 提供方 | `yandex-lifecycle` | 独立只读工厂和 `YandexLifecycleProvider` 工厂。  |
+| 配置   | `secure-gateway`   | 实际严格网关解析器、编译器、服务器文件包和计划。 |
+
+内置扩展均使用软件包精确版本。列出描述和构造适配器不进行提供方操作。只读扩展
+不实现可选生命周期工厂；调用方必须明确选择该独立工厂，才能使用变更方法。
+
+```python
+"""Select a real scoped read-only adapter without performing cloud operations."""
+
+from flayer.extensions import (
+    ExtensionKind,
+    ExtensionRegistry,
+    ProviderContext,
+    ProviderExtension,
+)
+
+registry = ExtensionRegistry()
+descriptor = registry.Get(ExtensionKind.PROVIDER, "yandex-read-only")
+extension = registry.Load(descriptor)
+assert isinstance(extension, ProviderExtension)
+provider = extension.CreateProvider(ProviderContext("example-folder", "external-profile"))
+```
+
+网关选择 `ExtensionKind.PROFILE` 和 `secure-gateway`，再调用
+`CompileProfile(configuration, ProfileContext(identity))`。编译适配器拒绝
+配置归属不匹配。`BuildServerBundle()` 在内存中生成已有所属文件包；先通过
+`WriteArtifactBundle()` 保存，再调用 `RenderPlan(user_data_file=...)`。
+渲染会验证准确文件内容和清单，不部署计划，也不证明客户机或传输就绪。
+
+## 静态元数据发现
+
+`DiscoverExtensions(metadata_directories)` 接受明确且有数量限制的绝对
+`.dist-info` 目录序列，不允许重定向。每个目录只读取 `METADATA`、
+`entry_points.txt` 和 `RECORD`。不会遍历 Python 搜索路径、枚举安装包、调用
+元数据 finder hook、扫描源码模块、跟随最终符号链接、导入插件、查询网络、安装
+包或检查基础设施。目录/文件数量、大小、名称、目标和版本均有界。
+
+支持的 entry-point 组为 `flayer.providers.v1` 和 `flayer.profiles.v1`。
+例如，已安装发行包的 `entry_points.txt` 可以声明：
+
+```ini
+[flayer.providers.v1]
+example = example_plugin.plugin:CreateExtension
+```
+
+其他生态的组被忽略。未知 F-Layer 组、不支持的 ABI、错误目标、extras、重复
+元数据字段或扩展身份均被拒绝。名称是有界小写标识。发行包名规范为小写和连字符，
+仅支持稳定的三段版本。外部发行包不能声明 `f-layer` 或指向保留的 `flayer`
+模块空间。重复 `(kind, plugin_id)` 均被拒绝，包括覆盖内置扩展。
+
+描述包含三个元数据文件的 SHA-256 快照，只提供可检查的声明身份，不验证发布者、
+签名、安装来源或包的真实性。
+
+## 显式加载与源码归属
+
+通过 `ExtensionRegistry(descriptors)` 注册描述；发现不等于加载。
+`Load(descriptor, allowed=(exact_descriptor,))` 是对外部代码的独立明确授权。
+描述必须与注册项及调用方允许项完全相同，固定内容包括发行包、版本、组、目标、
+所选位置和元数据摘要。应用须先决定信任哪些已检查描述，再填充允许列表。
+内置扩展限制为精确已知注册项。
+
+导入前再次检查元数据快照，并根据 `RECORD` 验证目标模块及全部父包的 SHA-256
+和大小归属。每个源码须为所选安装根内的准确普通无链接文件。支持纯源码 Python
+模块和普通包；拒绝 namespace 包、二进制扩展、缺失父级归属、包/模块歧义、
+弱哈希或缺失哈希，以及已修改文件。
+
+加载直接执行已验证的不可变源码字节。临时 import hook 只服务所选源码链，使父包
+导入目标时使用相同字节，不使用旧字节码或环境搜索结果。加载结束或失败都会移除
+hook。预加载同名模块即使声称正确路径也被拒绝，除非加载器持有绑定精确模块对象、
+路径和执行哈希的记录。可复用加载器已持有的精确源码；已加载链的代码变化需要新
+进程。重复注册查询返回已验证扩展，不再次执行工厂。
+
+外部依赖导入及工厂执行仅发生于明确同意之后，属于对包和环境的信任。加载器不是
+代码沙箱、依赖验证器，也不保护对抗恶意进程。失败只移除本次加载创建的模块和
+记录，不能撤销任意插件副作用或依赖导入。运行错误被脱敏，描述或协议不匹配会
+拒绝加载。
+
+## 验证结果
+
+确定性测试覆盖无 finder/模块执行的发现、错误元数据、ABI、重复和内置覆盖、
+精确加载同意、元数据/源码漂移、RECORD 归属、旧缓存模块和字节码、错误脱敏、
+上下文边界、实际 Yandex 适配器构造，以及完整本地网关文件到计划流程。
+测试不使用真实云操作或凭据。
+'''

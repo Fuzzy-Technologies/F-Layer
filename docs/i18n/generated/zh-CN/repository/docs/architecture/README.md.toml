@@ -1,0 +1,27 @@
+schemaVersion = 1
+sourcePath = "docs/architecture/README.md"
+sourceHash = "sha256:43ef01522e33fa5d520309cca6ddb0c11110f8d6aafef3fc95ca0be09056c237"
+reviewedTranslationHash = "sha256:87befd8c110d58b4ec3063b0a1e08193c62d2d40cdc81fde6c378a51f8f78876"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:36:22Z"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# 架构
+
+首先阅读[已实现的架构概览](reference.md)，其中包含组件组合、资源生命周期以及
+文档和发行流程的图示。公开模块列表从已安装的 wheel 生成，
+[覆盖规则](../development/documentation-coverage.md)则记录仓库中的每个文件。
+
+| 组件边界                   | 详细说明                               |
+| -------------------------- | -------------------------------------- |
+| 配置与资源状态             | [配置和状态](configuration-state.md)   |
+| 云资源只读接口             | [提供方接口](provider-contract.md)     |
+| 持久化操作与恢复           | [生命周期](lifecycle.md)               |
+| 指定范围内的 Yandex 云变更 | [Yandex 生命周期](yandex-lifecycle.md) |
+| 部署配置与所属文件         | [安全网关](secure-gateway.md)          |
+| 脱敏后的健康检查与性能数据 | [诊断](diagnostics.md)                 |
+
+这些文档描述已实现的契约。路线图计划必须单独标明。重要决策、替代方案和兼容性
+影响记录在[架构决策记录](../adr/README.md)中。
+'''

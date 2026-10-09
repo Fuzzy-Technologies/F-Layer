@@ -36,7 +36,7 @@ jobs:
           python -m tools.locale_documentation validate \
             --output _build/documentation-gates/locales.json
       - name: Build strict reference from a clean installed wheel
-        run: python -m tools.build_locale_sites
+        run: python -m tools.build_locale_sites --require-complete-translations
       - name: Upload previewable documentation
         uses: actions/upload-artifact@v4
         with:
@@ -52,8 +52,6 @@ jobs:
             _build/documentation-gates
             _build/api-reference/build-evidence.json
             _build/api-reference/api-locales.json
-            _build/api-reference/api-units.toml
-            _build/api-reference/api-coverage.toml
             _build/api-reference/repository-coverage.json
           if-no-files-found: warn
       - name: Upload official Pages artifact

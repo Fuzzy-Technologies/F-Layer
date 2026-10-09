@@ -1,0 +1,176 @@
+schemaVersion = 1
+sourcePath = "docs/RELEASE_WORKFLOW.md"
+body = '''
+# 分支与发布流程
+
+本文档规定 F-Layer 的分支、合并、发布和标签流程。
+
+它补充 `DEVELOPMENT_PROTOCOL.md`。如果两份文档存在冲突，应停止发布工作，先解决冲突。
+
+## 分支职责
+
+| 分支模式            | 用途                       | 通常来源                   | 通常目标        |
+| ------------------- | -------------------------- | -------------------------- | --------------- |
+| `master`            | 稳定、已发布的公开状态     | release/hotfix/publication | tag/publication |
+| `develop`           | 下一版本的集成分支         | `feature/*`, `fix/*`       | `release/*`     |
+| `feature/<name>`    | 产品、架构、治理或任务实现 | `develop`                  | `develop`       |
+| `fix/<name>`        | 非发布流程的修复           | `develop`                  | `develop`       |
+| `release/<version>` | 发布稳定化                 | `develop`                  | `master`        |
+| `hotfix/<name>`     | 已发布版本的紧急修复       | `master`                   | `master`        |
+
+## 受保护分支
+
+`master` 和 `develop` 应受到保护。普通变更通过 pull request 进入；评审讨论在合并前解决；受保护分支不能被删除或强制推送；稳定的 CI 检查在对应上下文建立后设为必需项。所有者或管理员的绕过权限仅用于恢复。
+
+## 常规开发
+
+```text
+Task
+  ↓
+feature/* or fix/* from develop
+  ↓
+PR → develop
+  ↓
+CI + human review
+  ↓
+merge
+```
+
+普通 PR 合并到 `develop` 时默认采用 squash merge。
+
+## 发布流程
+
+F-Layer 使用不含构建编号的语义化版本：
+
+```text
+v1.0.0
+v1.0.1
+v1.1.0
+v1.1.1
+v2.0.0
+```
+
+发布基于 `develop` 中已经接受的变更：
+
+```text
+develop
+  ↓
+release/X.Y.Z
+  ↓
+validation + version/release metadata
+  ↓ PR
+master
+  ↓
+annotated tag vX.Y.Z
+  ↓
+back-merge to develop
+```
+
+发布标签不可变。标签、软件包版本、发布说明和分发文件的版本必须一致。
+
+## 紧急修复流程
+
+```text
+master
+  ↓
+hotfix/<name>
+  ↓ PR
+master → next patch tag
+  ↓
+back-merge to develop
+```
+
+不得只修复 `master` 而让 `develop` 保持不一致。
+
+## 完成任务
+
+所有者授权的 1.0.0/1.1.0 分阶段发布按里程碑选择已接受的提交，而不是将已经包含后续功能的 `develop` 分支顶端整体发布。范围、历史和发布卡片规则见 [ADR 0014](adr/0014-scoped-releases-and-changelog.md) 与[变更记录](../CHANGELOG.md)。每个版本必须先在 `master` 完成并打标签，再推进下一个候选版本；仅为发布所作的变更通过 PR 合回 `develop`。1.2.0 的范围补充是在已发布的 1.1.0 上选择文档和安全 PR #46、#48、#59、#60。该发行包被过早标为稳定版的状态已撤回；稳定发布前仍须验收 RU/ZH-CN 翻译。所有者要求由 AIna 核验；ADR 0015 记录了明确的 AI 评审授权以及原文和译文哈希要求。
+后续里程碑的运行时功能继续保留在 `develop`。
+完整回归检查在 CI 中运行，本地开发只检查受影响文件。
+
+实现和评审期间 Task 保持打开。PR 合并后，仓库自动化可以完成明确关联的原生 Task。Feature 只有在必需的子 Task 和功能级验收条件均满足后才能关闭。CI 通过不能替代里程碑验收。
+
+## 稳定发布必须先完成里程碑
+
+发布稳定版 GitHub Release 或上传 PyPI 前，所有者必须核实全部 Task、Feature 和里程碑的验收条件，并关闭原生 `release-X.Y` 里程碑，其 `open_issues` 必须为零。要求完成发布的指示不免除未完成的验收条件。自动化不得为使发布检查通过而擅自关闭规划项或虚构人工批准。
+
+使用对权威仓库具有读取权限的 GitHub CLI 执行预检：
+
+```bash
+python tools/release_validation.py --check-milestone 3
+```
+
+此示例根据当前工作副本的软件包版本检查 release-1.2。其他发布应替换原生里程碑编号。检查读取 GitHub 原生状态，核对仓库、编号与次版本身份；里程碑仍打开、未完成、数据不可用或格式错误时均失败。它不会构建、发布或修改规划状态。应在稳定版 GitHub 发布前立即运行，并同时检查精确 `master` 提交的 CI、标签和发行包。通过 GitHub 界面直接发布仍由所有者控制；该预检不是 GitHub 界面的权限限制。
+PyPI 工作流在完整验证前执行此检查，并在生成发布验证记录时再次执行。
+
+发布标题使用 `F-Layer vX.Y.Z — <short user-facing digest>`；注释标签使用 `vX.Y.Z`，软件包版本使用 `X.Y.Z`。发布卡片章节顺序遵循 ADR 0014。候选版本可以包含草稿或英文回退页面，并标为 GitHub **Pre-release**，但不得宣传为最新稳定版。
+
+2026-10-08，Task #27、Feature #8 和 release-1.2 尚未关闭时，v1.2.0 被错误归类为稳定版。其标题已修正，发布类型改为 Pre-release。现有标签、提交和已审计文件保持不可变。验收完成后，如果发布代码发生变化，必须使用新的补丁版本和标签；不得将 v1.2.0 移到另一提交。
+
+AIna 幻灯片保留在 README 和文档中。发布卡片中 Digest 下方的位置留给最终 release-2.0 里程碑；1.2.x 卡片不包含该幻灯片。
+
+## 已实现的验证与构建记录
+
+`Release artifact validation` 在 pull request、`develop`/`master` 推送和 `v*` 标签推送时运行，不具备写入或 OIDC 权限，也不执行发布。CI 上传 wheel、源码归档和 `build-evidence.json`，记录源提交、版本、固定构建时间、准确后端版本、文件大小、SHA256 摘要以及可复现和重建检查结果。
+
+可在干净且已提交的工作副本中运行同一发行包验证：
+
+```bash
+python -m pip install -e '.[dev]'
+python tools/release_validation.py
+```
+
+生成文件仅写入 `_build/release`。若输出目录已存在，工具会拒绝执行；有意重新运行前，应删除该生成目录。忽略或未跟踪的文件不会进入构建快照。发行包成员必须与项目跟踪的源文件一致，只允许 Hatchling 生成预期的打包元数据。审计会拒绝目录穿越、重复成员、链接、私有或生成路径、可识别的私钥与令牌格式、过大的解压内容、元数据不一致，以及错误的 wheel `RECORD` 哈希。这是内容归属和打包检查，无法识别已经获准的源文件中所有可能的机密，因此仍需评审受跟踪源码。
+
+两次构建使用相同的固定 Hatchling 版本及提交的 `SOURCE_DATE_EPOCH`，wheel 和源码归档必须逐字节一致。随后从已审计源码归档重新构建的 wheel 必须包含相同成员。因此源码归档包含重建所需的全部编写文档、测试、验证工具、工作流、许可证和软件包元数据。
+
+初始元数据（`0.0.0`，且没有 `flayer.__version__`）可用于 PR 的发行包预览。带标签的发布及正式上传要求存在非初始版本的字面量 `flayer.__version__`。静态项目版本必须与之相同；动态 Hatch 元数据必须直接读取 `src/flayer/__init__.py`。
+
+正式发布时，获取 master 和标签后验证现有标签：
+
+```bash
+git fetch origin master --tags
+python tools/validate.py
+python tools/release_validation.py --tag vX.Y.Z
+```
+
+标签必须是注释标签，采用稳定的 `vX.Y.Z` 格式，不含前导零、预发布后缀或构建编号；必须与全部软件包版本一致，并同时指向当前工作副本的精确提交和 `origin/master`。位于 `develop`、旧 master 提交上的标签、轻量标签或缺失的源码版本均会阻止发布。标签不会创建 GitHub Release，也不会完成 Feature 或 Milestone。
+
+## 由所有者控制的 PyPI 发布
+
+在所有者配置目标 PyPI 项目和 GitHub 仓库变量之前，发布处于禁用状态。实现 PR 不会创建账户、机密、环境、标签、GitHub Release 或软件包发布。
+
+| 配置                     | 必需值                                           |
+| ------------------------ | ------------------------------------------------ |
+| PyPI 项目                | `f-layer`；启用前核实名称可用性和所有权          |
+| Trusted Publisher 所有者 | `Fuzzy-Technologies`                             |
+| Trusted Publisher 仓库   | `F-Layer`                                        |
+| Trusted Publisher 工作流 | `release-publish.yml`                            |
+| Trusted Publisher 环境   | 留空；工作流不要求 GitHub 环境                   |
+| `FLAYER_RELEASE_OWNER`   | 获授权发布者的准确 GitHub 登录名                 |
+| `FLAYER_PYPI_ENABLED`    | 仅在目标 Trusted Publisher 配置完成后设为 `true` |
+| 工作流版本               | 包含已评审发布实现的 `master`                    |
+| 手动运行标签             | 现有注释标签 `vX.Y.Z`，与当前 master 和版本一致  |
+| 手动运行里程碑           | 原生 `release-X.Y` 编号；已关闭且没有未完成项    |
+| `confirm_publication`    | 对本次手动运行明确勾选                           |
+
+所有者必须为已拥有的 PyPI 项目配置普通 Trusted Publisher，或者在名称可用时配置待创建项目的 publisher。使用生产 PyPI 端点；该工作流无法将上传重定向到任意索引，也不接受令牌或密码。官方配置说明：
+
+- [通过 Trusted Publishing 创建项目](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/)
+- [为现有项目添加 publisher](https://docs.pypi.org/trusted-publishers/adding-a-publisher/)
+- [使用 Trusted Publisher 发布](https://docs.pypi.org/trusted-publishers/using-a-publisher/)
+
+评审和标签验证完成后，配置的所有者在 **Actions → Publish an owner-approved PyPI release** 中选择 `master`，输入准确的现有标签并勾选 `confirm_publication`。运行还需要原生发布里程碑编号。里程碑打开或未完成、未启用发布、所有者不符、分支或仓库错误、标签无效、仍为初始版本、完整验证或发行包审计失败，都会阻止发布。验证成功后，仅将本次运行的已审计文件传给独立作业。该作业获得 OIDC 权限，运行固定版本的 PyPA publisher，不检出仓库，也不执行项目构建代码。PyPI 独立验证所配置的仓库与工作流身份。本地测试不会验证包名可用性、Trusted Publisher 账户配置或真实上传。成功的受信任上传会由 Action 生成 PyPI 证明记录。
+
+推送标签不会发布。手动运行时的确认只表示本次运行的发布意图。重新执行发布使用相同的不可变标签；若 PyPI 版本已存在，则失败而非静默跳过上传。关闭 `FLAYER_PYPI_ENABLED` 会阻止后续发布作业。仓库管理员负责授权谁可以修改工作流和发布变量。
+
+## 完成与清理
+
+现有合并后自动化会先验证 PR 已合并且 issue 的原生类型为 Task，再关闭明确关联的 Task 并删除符合条件的已合并实现分支。发布工作流不会削弱此约定，也不会关闭 Feature 或 Milestone。所有者必须另行核实它们的验收条件。
+'''
+sourceHash = "sha256:fe2d9c5ff3afe35858667a7ff66b2d9019860d51ad3f1050c816d0d7b16ff184"
+reviewedTranslationHash = "sha256:4d3d5f336eb6e2e6a2432e9b0566879a90040d827e6d8a34c863e0b531765517"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:54Z"
+reviewRoles = ["editorial", "technical"]

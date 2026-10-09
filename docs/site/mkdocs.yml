@@ -35,8 +35,8 @@ theme:
 nav:
   - Overview: index.md
   - User guide:
-      - Quick Start: guide/index.md
       - Install: guide/installation.md
+      - Quick Start: guide/index.md
       - Configuration: guide/configuration.md
       - CLI: guide/cli.md
       - First deployment: guide/first-deployment.md

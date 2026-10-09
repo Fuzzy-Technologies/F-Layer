@@ -1,0 +1,114 @@
+schemaVersion = 1
+sourcePath = "docs/architecture/lifecycle.md"
+sourceHash = "sha256:bef8229cbf0d1e6f9dc22eb7da0e65e6702ff4cc0597c4ed8a2f336fb6f1c343"
+reviewedTranslationHash = "sha256:336a899075a918232c1d5114c45235678777830ae938b10b1094435dc567283d"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:02:09Z"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# 所属资源的生命周期管理
+
+核心通过 `flayer.core.lifecycle.LifecycleEngine` 实现通用的创建、状态查询、
+删除和显式恢复。云命令由 `flayer.providers.lifecycle.LifecycleProvider` 提供。
+首个实现是 [Yandex Cloud 适配器](yandex-lifecycle.md)。
+
+## 计划与持久化边界
+
+| 对象             | 含义                            | 保存的信息                               |
+| ---------------- | ------------------------------- | ---------------------------------------- |
+| `DeploymentPlan` | 不可变目标资源图，最多 128 项。 | 明确身份、不可变选项和依赖。             |
+| `StackState`     | 最小所属资源引用。              | 身份、逻辑 ID、通用类型和提供方 ID。     |
+| 操作日志         | 待完成动作及安全回滚条件。      | 身份、计划摘要、操作随机标识和资源引用。 |
+| 提供方结果       | 有界且限定范围的资源观测。      | 规范化引用、状态和归属标签。             |
+
+日志为 `.<state filename>.operation.json`，整个操作通过
+`.<state filename>.operation.lock` 协作互斥；快照写入使用原有状态写入锁。
+这些文件与调用方选择的状态文件相邻。名称属于本地恢复实现细节，不是云资源 ID。
+
+未完成日志会阻止新的创建或删除。计划指纹或归属身份不同会阻止恢复。资源参数和
+凭据不会复制进持久状态文件。TOML 中资源类型使用连字符：`security-group`
+明确映射到 `ResourceKind.SECURITY_GROUP`。
+
+## 显式命令行
+
+所有帮助均可离线使用。命令使用已有认证的 `yc` 配置档；F-Layer 不读取、输出
+或保存其凭据。
+
+```bash
+python -m flayer lifecycle create --config plan.toml --state stack.json \
+  --yc-profile sandbox --allow-mutation --scope-confirm example-folder --format json
+python -m flayer lifecycle status --config plan.toml --state stack.json \
+  --yc-profile sandbox --format json
+python -m flayer lifecycle destroy --config plan.toml --state stack.json \
+  --yc-profile sandbox --allow-mutation --scope-confirm example-folder --format json
+python -m flayer lifecycle recover --config plan.toml --state stack.json \
+  --yc-profile sandbox --allow-mutation --scope-confirm example-folder --rollback
+```
+
+以上是示例命令。创建、删除和恢复可能修改所选云账号；示例文件夹和配置档需要
+替换。缺少变更许可或确认值不等于 `identity.scope_id` 时，在执行提供方操作前
+就会拒绝。顶层诊断命令 `status` 保持原有行为，部署资源查询使用
+`lifecycle status`。
+
+## 通用部署计划
+
+生命周期计划与初始 `DesiredConfig` 模型分离。所有字段严格验证；未知字段和
+不支持的选项在创建前被拒绝。可选 `profile` 仅作说明，不会隐式加载部署配置。
+
+```toml
+schema_version = 1
+profile = "generic"
+
+[identity]
+project = "example"
+stack = "sandbox"
+provider = "yandex-cloud"
+scope_id = "example-folder"
+owner_id = "example-owner"
+
+[[resources]]
+logical_id = "network"
+kind = "network"
+name = "example-network"
+
+[[resources]]
+logical_id = "subnet"
+kind = "subnet"
+name = "example-subnet"
+dependencies = ["network"]
+
+[resources.parameters]
+network_dependency = "network"
+zone_id = "ru-central1-a"
+ipv4_cidr = "10.23.0.0/24"
+```
+
+资源参数只允许不可变的标量、数组和表。适配器验证支持的键、边界和关系。
+参数必须是不含秘密的部署选项；生命周期计划没有存放秘密的字段。
+
+## 操作行为
+
+创建会先验证并接管归属完全匹配的现有资源，再进行变更。现有依赖图损坏会阻止
+创建。新资源按依赖顺序创建，记入日志，再保存到最小状态快照。确定失败只回滚
+新建且仍带本次 `flayer-operation` 随机标识的资源，保留预先存在的资源。核心
+和适配器在回滚删除前都验证该标识。如果既有资源依赖待回滚资源，清理被阻止。
+每个完整部署身份应使用唯一权威状态路径；本地锁不是分布式云租约。
+
+结果不明确的创建仍保持待处理，即使清单暂未显示结果。恢复只有在找到确切所属
+资源后才能继续或回滚，不会盲目重试不确定请求。部分删除从已保存的引用继续，
+已确认不存在的资源视为清理成功。非零结果和 `recovery_required` 用于区分
+部分或不确定进度与完成状态。
+
+`lifecycle status` 对计划中每个资源报告 `present`、`missing` 或
+`not-recorded`，存在时附带规范化 `provider_status`。它不改变快照、不发现
+无关基础设施，也不证明虚拟机就绪。资源存在不等于 SSH 可连接、安全配置完成
+或应用健康。
+
+进程崩溃后，检查本地操作锁或状态写入锁，并确认旧进程停止后再移除锁。保留
+日志和快照，然后执行显式恢复。创建结果仍有歧义时，需要在提供方侧调查；尚未
+实现自动放弃未决操作。
+
+失败顺序、替代方案和兼容性决策见
+[ADR 0005](../adr/0005-durable-owned-lifecycle.md)。
+'''

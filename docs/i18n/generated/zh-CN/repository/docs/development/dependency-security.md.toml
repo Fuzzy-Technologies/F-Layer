@@ -1,0 +1,27 @@
+schemaVersion = 1
+sourcePath = "docs/development/dependency-security.md"
+body = '''
+# 文档依赖安全
+
+文档工具链的版本固定在 `docs/requirements-api.txt` 中。这些依赖用于开发和构建；`f-layer` 运行时不依赖第三方库，仍使用经过评审的 Hatchling 构建后端。
+
+## 修复 setuptools 安全问题
+
+[任务 #54](https://github.com/Fuzzy-Technologies/F-Layer/issues/54) 跟踪 [Dependabot 警报 #1](https://github.com/Fuzzy-Technologies/F-Layer/security/dependabot/1)，对应 [GHSA-h35f-9h28-mq5c / CVE-2026-59890](https://github.com/advisories/GHSA-h35f-9h28-mq5c)。release-1.2 的修复将 setuptools 从固定版本 `80.9.0` 升级到已修复的 `83.0.0`，其他文档依赖版本保持不变。
+
+该漏洞涉及 macOS APFS/HFS+ 上 setuptools 处理 `MANIFEST.in` 排除规则时的 Unicode 规范化冲突，原本应排除的文件可能进入源码归档。F-Layer 自身的发行包使用 Hatchling 构建，并明确核对归档内容与受 Git 跟踪的源文件。警报表明文档工具依赖存在漏洞，并不证明 F-Layer 归档曾泄露私有数据。
+
+## 验证与发布后的检查
+
+在临时环境中安装锁定的文档依赖，检查依赖兼容性及文档模块导入。开发时在本地执行针对性检查；PR 的 CI 使用相同的锁定工具，从已安装的 wheel 严格构建 EN/RU/ZH-CN 站点并审计发行包。
+
+修复通过对应任务的 PR 合并到 `develop`。Dependabot 扫描默认分支，因此只要已发布的 `master` 仍使用旧版本，警报继续保持打开状态就是正常情况。release-1.2 的相关变更进入 `master` 后，应再次检查默认分支的依赖图和警报状态。在修复版本实际进入该分支前，不要手动将警报标记为已修复。
+
+已经发布的 1.0.0 和 1.1.0 标签保留原有历史。新的修复验证结果属于新的源代码版本和发布，不得重写旧发行包。
+'''
+sourceHash = "sha256:5259864f0887dc9b5266ec359b8cb5f8373ea88426a44b1650cccccf217b7e6d"
+reviewedTranslationHash = "sha256:656439c9d47bac3efb3da905c0cc3259a775abe0de16b85e94f8eed37d93178e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:54Z"
+reviewRoles = ["editorial", "technical"]

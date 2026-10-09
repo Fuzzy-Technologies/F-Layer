@@ -1,0 +1,25 @@
+schemaVersion = 1
+sourcePath = ".github/pull_request_template.md"
+body = '''
+## Изменения
+
+<!-- Что изменено и зачем? -->
+
+## Проверки
+
+<!-- Перечислите фактически выполненные проверки или тесты и их результаты. -->
+
+## Влияние на безопасность и инфраструктуру
+
+<!-- Укажите влияние на операции в облаке, учётные данные, создаваемые файлы, маршрутизацию, совместимость и жизненный цикл ресурсов. Если влияния нет, напишите «None». -->
+
+## Задача
+
+Closes #
+'''
+sourceHash = "sha256:2b48d71dfbf6604229061608db2f26dc1ab70377cf80102efd64a07ecc10ee85"
+reviewedTranslationHash = "sha256:0a328daf089db9d680a2f7f25477866d88e9dbcde6a9f87e63a19be76d62a62f"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:54Z"
+reviewRoles = ["editorial", "technical"]

@@ -1,0 +1,88 @@
+schemaVersion = 1
+sourcePath = "docs/development/PYTHON_CODE_STYLE.md"
+body = '''
+# Python 代码风格
+
+这些规则适用于 Fuzzy Technologies 工程仓库中的所有 Python 文件，包括生产代码、测试、脚本和测试数据中嵌入的 Python 代码。
+
+## 语言
+
+- Python 代码、标识符、文档字符串、注释、断言信息和嵌入的 Python 源代码仅使用英语。
+- 网站本地化内容不受这项 Python 规则约束。
+- 注释应解释原因、不变条件、限制或架构决策，不应复述显而易见的代码行为。
+
+## 命名
+
+项目自有标识符使用：
+
+- 函数和方法：`PascalCase`，包括 `Main()`；
+- 类、协议和枚举：`PascalCase`；
+- 变量、参数和字段：`snake_case`，内部实现细节允许使用前导下划线；
+- 常量：`UPPER_SNAKE_CASE`，单词之间使用下划线；
+- 测试文件：`test_*.py`；
+- 测试函数：必需的 `test_` 前缀后接 `PascalCase`。
+
+保留 Python、框架、SDK、模式、协议和第三方 API 规定的名称，包括特殊方法、pytest 夹具与钩子、回调、CLI 选项、配置键和兼容性约定。
+
+## 文档字符串
+
+- 每个生产或测试模块、类、函数和方法均应有简洁的英文文档字符串。
+- 文档字符串必须是所在作用域的第一条语句。
+- 函数或方法的文档字符串与实现之间保留一个空行。
+
+## 垂直间距
+
+在函数或方法内部，用一个空行区分逻辑阶段。
+
+新的控制流程阶段前、后续的 `return`/`raise`/`yield` 前、已完成的嵌套控制块后、`elif`/`else`/`except`/`finally` 前、类方法之间以及模块入口判断前，均保留一个空行。
+
+不要在 `def`、`class`、`try`、`if`、`elif`、`else`、`except`、`finally`、`for`、`while`、`with`、`match` 或 `case` 标头后立即插入空行。
+
+紧密相关的赋值和调用应放在一起。模块级函数和类之间保留两个空行。
+
+## 格式与静态检查
+
+`ruff format` 不是项目标准格式化工具，不得用于自动重写整个仓库，也不得作为 CI 检查要求。
+
+使用 Ruff 执行代码和静态检查：
+
+```bash
+python -m ruff check .
+```
+
+仅调整格式的变更不得重命名受保护接口、修改行为或合并逻辑块。
+
+## 验证
+
+常见的仓库检查命令：
+
+```bash
+python -m compileall -q src tests
+python -m ruff check .
+python -m mypy
+python -m pytest
+```
+
+基础设施、清理、回滚、授权、资源管理和错误分支需要确定性测试，不得调用真实生产基础设施。
+
+## 断言与测试
+
+- 断言信息应指出被违反的不变条件及可能原因。
+- 控制流程较多的代码应测量分支覆盖率。
+- 不得通过自动重试掩盖不稳定测试。
+- 除非明确隔离，否则测试不得依赖执行顺序或共享的可变状态。
+
+## Git
+
+提交信息应简洁、使用英语，并采用祈使句。
+
+## 最终原则
+
+代码应一致、易读、可复现且可验证：明确行为优于隐式机制，证据优于假设，测试优于个人信心，稳定性优于表面上的重构。
+'''
+sourceHash = "sha256:5c3161d4b872fc313fd73998d30812797ad58e0986a18b6796d30cc7ea6f8c6d"
+reviewedTranslationHash = "sha256:68d8ceb0c6426d1c6f5ea4a0a3c2fa1781a19d9acb7dbe0dd7a0f88d941a78e8"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:54Z"
+reviewRoles = ["editorial", "technical"]

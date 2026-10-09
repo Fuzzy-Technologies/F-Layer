@@ -1,0 +1,80 @@
+schemaVersion = 1
+sourcePath = "README.md"
+sourceHash = "sha256:968a698d5bb05e738bc7d6a4c2be6b9ab48aa61406801d0bff762bd409a11ce1"
+reviewedTranslationHash = "sha256:7692203a32e3256df4e6c19d4bcb3e3abeee59b9552aea42a906d2bd28e12c19"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:43Z"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# F-Layer
+
+![Fuzzy Technologies 工程实验室中的 F-Layer 与 AIna](https://raw.githubusercontent.com/Fuzzy-Technologies/F-Layer/master/docs/site/content/en/assets/brand/FTech-card-F-Layer.png)
+
+**通过 Python 或命令行部署云服务器、管理资源并检查可用性。**
+
+F-Layer 根据部署配置创建云资源，并在本地记录所创建的资源。
+这些记录用于检查部署、恢复中断的操作，以及删除属于当前部署的资源。
+它可以自动化服务环境，也可以为应用程序提供可复用的基础设施管理能力，
+无需为每个场景维护独立的部署脚本。
+
+当前版本支持 **Yandex Cloud**、为各设备分别配置连接的**安全 SSH 网关**，
+以及 HTTP 可用性和耗时检查。其他云平台和 VPN 配置档仍在规划中。
+云资源由云服务商计费；F-Layer 按 Apache 2.0 许可证开源。
+
+[文档](https://fuzzy-technologies.github.io/F-Layer/) ·
+[快速开始](https://fuzzy-technologies.github.io/F-Layer/en/guide/) ·
+[首次部署](https://fuzzy-technologies.github.io/F-Layer/en/guide/first-deployment/) ·
+[API 参考](https://fuzzy-technologies.github.io/F-Layer/en/api/) ·
+[更新日志](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/CHANGELOG.md) ·
+[发布版本](https://github.com/Fuzzy-Technologies/F-Layer/releases)
+
+## 安装
+
+需要 Python 3.11 或更新版本。在虚拟环境中安装发布的 wheel 文件；
+不需要 Git 或 Docker：
+
+```bash
+python -m venv .venv
+```
+
+在 Linux/macOS 中运行 `source .venv/bin/activate` 激活环境；
+PowerShell 使用 `.venv\Scripts\Activate.ps1`，Windows 命令提示符使用
+`.venv\Scripts\activate.bat`。然后运行：
+
+```bash
+python -m pip install https://github.com/Fuzzy-Technologies/F-Layer/releases/download/v1.2.1/f_layer-1.2.1-py3-none-any.whl
+python -m flayer --help
+python -m flayer check --format json
+```
+
+预期结果：本地检查输出 `"status": "ok"`，退出码为 `0`。
+它检查 Python 和软件包是否可用，不需要云凭据或网络访问。
+这只是安装后的首次检查，并不会部署服务器。
+
+## 快速开始
+
+接下来可按[快速开始](https://fuzzy-technologies.github.io/F-Layer/en/guide/)
+检查一个网络端点，或按[网关部署步骤](https://fuzzy-technologies.github.io/F-Layer/en/guide/first-deployment/)
+准备服务器计划，并在明确提供云访问权限后执行部署。
+
+## 可以实现什么
+
+- **受管云环境：**使用同一份配置和状态文件创建、检查、恢复、删除所属部署的资源。
+- **访问受控的 SSH 网关：**准备服务器配置，并为各设备生成仅通往明确允许目标的 SSH 本地转发。
+- **运行检查：**检查 HTTP 端点，在指定限制内测量响应和传输耗时，并输出可供自动化使用的 JSON 报告。
+- **应用程序集成：**在自己的工具中复用 Python 配置、提供方和资源生命周期 API。
+
+[架构文档](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/architecture/README.md)
+说明了这些部分的协作方式。稳定版本在 `master` 上打标签，更新日志记录发布范围。
+`develop` 还包含已接受、计划进入后续版本的工作。
+
+## 参与开发
+
+请阅读 [AGENTS.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/AGENTS.md)
+和 [DEVELOPMENT_PROTOCOL.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/DEVELOPMENT_PROTOCOL.md)。
+运行 `python tools/build_api_reference.py`，从已安装的 wheel 构建 API 文档；
+详见[文档环境设置](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/site/README.md)。
+
+[发布流程](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/RELEASE_WORKFLOW.md) · [Apache License 2.0](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/LICENSE)
+'''

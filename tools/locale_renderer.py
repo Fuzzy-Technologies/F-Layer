@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 
-from tools import documentation_gates
+from tools import documentation_gates, generated_localization
 from tools.locale_documentation import ValidateLocales
 from tools.markdown_tables import AlignMarkdown
 
@@ -155,9 +155,13 @@ def _PrepareLocale(
     project_root: Path, build_root: Path, locale: str, project: Mapping[str, Any],
     registry: Mapping[str, Any], states: Mapping[str, Mapping[str, str]],
     notices: dict[str, Any], publication_root: str,
+    generated_units: Mapping[str, Any] | None = None,
+    generated_translations: Mapping[str, generated_localization.ReviewedTranslation] | None = None,
 ) -> tuple[Path, dict[str, dict[str, str]]]:
     """Overlay tracked translations onto disposable canonical source with visible state."""
 
+    generated_units = generated_units or {}
+    generated_translations = generated_translations or {}
     canonical_root = build_root / "content/en"
     content_root = build_root / "content" / locale
 
@@ -188,6 +192,44 @@ def _PrepareLocale(
                 translation_path.read_text(encoding="utf-8"), translation_path,
                 project_root / project["contentRoot"] / "en",
             )
+
+        elif not record:
+            repository_id = "repository:" + relative_path.as_posix().removeprefix("repository/")
+
+            if relative_path.as_posix().startswith("repository/github/"):
+                repository_id = repository_id.replace("repository:github/", "repository:.github/", 1)
+
+            if repository_id in generated_units:
+                from tools.build_api_reference import RewriteRepositoryLinks
+
+                unit_id = repository_id
+                translation = generated_translations.get(unit_id)
+                state = translation.state if translation else "missing"
+
+                if translation and state == "approved":
+                    unit = generated_units[unit_id]
+                    body = generated_localization.CanonicalHeadingAnchors(unit.body, translation.body)
+                    body = RewriteRepositoryLinks(body, project_root / unit.source_path,
+                                                  relative_path.as_posix())
+
+            elif relative_path.as_posix() == "coverage/index.md" and generated_units:
+                body, state = generated_localization.RenderCoverage(project_root, generated_translations)
+                unit_id = "generated:coverage/index.md"
+
+            elif relative_path.parts[:2] == ("api", "modules"):
+                module_id = "module:" + relative_path.stem.replace("-", ".")
+                module = generated_units.get(module_id)
+
+                if module:
+                    unit_id = module_id
+                    related = [identifier for identifier, unit in generated_units.items()
+                               if unit.kind == "symbol" and unit.source_path == module.source_path]
+                    review_states = [generated_translations[identifier].state
+                                     if identifier in generated_translations else "missing"
+                                     for identifier in related]
+                    state = ("approved" if all(value == "approved" for value in review_states)
+                             else "stale" if "stale" in review_states else "missing")
+                    body = body.replace("[Module source]", f"[{notices.get('moduleSource', 'Module source')}]")
 
         rendered_source_hash = hashlib.sha256(body.encode("utf-8")).hexdigest()
         (content_root / relative_path).write_text(
@@ -239,6 +281,8 @@ def RenderLocaleSites(
     project = tomllib.loads((project_root / "docs/i18n/project.toml").read_text(encoding="utf-8"))
     registry = tomllib.loads((project_root / project["unitManifest"]).read_text(encoding="utf-8"))
     VerifyTrackedTranslations(project_root, registry)
+    generated_units = generated_localization.DiscoverGeneratedUnits(project_root)
+    generated_translations = generated_localization.LoadTranslations(project_root, generated_units)
     locale_data = tomllib.loads((project_root / "docs/i18n/fallbacks.toml").read_text(encoding="utf-8"))
     canonical_config = config_path.read_text(encoding="utf-8")
     publication_root = "https://fuzzy-technologies.github.io" + project["publicationPath"]
@@ -259,10 +303,41 @@ def RenderLocaleSites(
 
         content_root, pages = _PrepareLocale(
             project_root, build_root, locale, project, registry, report.states,
-            locale_data[locale], publication_root,
+            locale_data[locale], publication_root, generated_units, generated_translations[locale],
         )
+        labels = dict(locale_data[locale]["navigation"])
+
+        for identifier, unit in generated_units.items():
+            translation = generated_translations[locale].get(identifier)
+
+            if identifier.startswith("repository:") and translation and translation.state == "approved":
+                canonical_title = next((line[2:].strip() for line in unit.body.splitlines()
+                                        if line.startswith("# ")), Path(unit.source_path).stem)
+                translated_title = next((line[2:].strip() for line in translation.body.splitlines()
+                                         if line.startswith("# ")), canonical_title)
+                labels[f"{canonical_title} ({unit.source_path})"] = (
+                    f"{translated_title} ({unit.source_path})"
+                )
+
         config = LocalizeConfig(canonical_config, locale, content_root, staged_root,
-                                locale_data[locale]["navigation"], publication_root)
+                                labels, publication_root)
+        extension, overlay = generated_localization.WriteApiOverlay(
+            project_root, build_root, locale, generated_translations[locale], generated_units,
+        )
+        extension_config = [{str(extension): {"translations_path": str(overlay)}}]
+        templates = generated_localization.WriteApiTemplates(project_root, build_root, locale)
+
+        if config.count("  - mkdocstrings:\n") != 1:
+            raise ValueError("Locale configuration must contain exactly one mkdocstrings plugin")
+
+        config = config.replace("  - mkdocstrings:\n", "  - mkdocstrings:\n      custom_templates: "
+                                + json.dumps(str(templates)) + "\n", 1)
+
+        if config.count("          options:\n") != 1:
+            raise ValueError("Locale configuration must contain exactly one Python handler options block")
+
+        config = config.replace("          options:\n", "          options:\n            extensions: "
+                                + json.dumps(extension_config) + "\n", 1)
         config = re.sub(r"(?m)^plugins:",
                         f'  - {json.dumps(locale_data[locale]["statusTitle"], ensure_ascii=False)}: '
                         "translation-status/index.md\n\nplugins:", config, count=1)
@@ -278,6 +353,8 @@ def RenderLocaleSites(
             raise RuntimeError(f"Strict locale build failed: {locale}\n{process.stdout}{process.stderr}")
 
         VerifyRenderedLocale(build_root / "rendered-locales", locale, pages)
+        generated_localization.VerifyApiProse(build_root / "rendered-locales", locale,
+                                              generated_units, generated_translations[locale])
 
         if site_root.exists():
             shutil.rmtree(site_root)
@@ -288,12 +365,16 @@ def RenderLocaleSites(
         reviewed_records = [record["translations"][locale] for record in registry["units"]
                             if record["translations"][locale].get("path")]
         result[locale] = {
-            "strictBuild": "pass", "pages": pages,
+            "strictBuild": "pass", "pages": pages, "renderedApiProse": "pass",
+            "generatedTranslationStates": {identifier: locales[locale] for identifier, locales in
+                generated_localization.TranslationStates(generated_units, generated_translations).items()},
+            "translationReviewComplete": all(entry["state"] == "approved" for entry in pages.values()),
             "authoredTranslationReviewComplete": bool(reviewed_records) and all(
                 report.states[record["id"]][locale] == "approved" for record in registry["units"]
                 if record["translations"][locale].get("path")
             ),
             "humanReviewComplete": all(entry["state"] == "approved" for entry in pages.values())
+            and all(entry.reviewer_type == "human" for entry in generated_translations[locale].values())
             and all(review.get("reviewerType", "human") == "human"
                     for translation in reviewed_records for review in translation.get("reviews", ())),
         }

@@ -1,0 +1,120 @@
+schemaVersion = 1
+sourcePath = "docs/development/distribution.md"
+body = '''
+# Python 发行包与安装
+
+F-Layer 以 `f-layer` Python 包分发，安装后提供 `flayer` 命令及同名可导入包。用户安装 wheel；只有参与代码开发时才需要克隆仓库。release-2.0 的安装流程不要求 Docker 控制器镜像。
+
+## 安装已发布版本
+
+使用 Python 3.11 或更新版本。云网关流程的控制器应运行在 Linux 或 WSL 中，因为生成的私密文件需要 POSIX 权限。云服务商 CLI 和 VPN 客户端是单独应用，按用户指南安装。安装 Python 包不会配置云账户。
+
+现有 [GitHub Releases](https://github.com/Fuzzy-Technologies/F-Layer/releases) 包含 wheel。例如，以下命令通过 pipx 安装已发布的 **1.2.1** CLI：
+
+```bash
+pipx install https://github.com/Fuzzy-Technologies/F-Layer/releases/download/v1.2.1/f_layer-1.2.1-py3-none-any.whl
+flayer --help
+flayer check
+```
+
+如果尚无 [pipx](https://pipx.pypa.io/latest/how-to/install-pipx.html)，请先安装。运行 `pipx ensurepath`；若仍找不到 `flayer`，重新打开终端。pipx 会为命令创建隔离环境。
+
+对于应用程序或不使用 pipx 的环境，可在虚拟环境中通过 pip 安装同一 wheel：
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install https://github.com/Fuzzy-Technologies/F-Layer/releases/download/v1.2.1/f_layer-1.2.1-py3-none-any.whl
+python -m flayer check
+```
+
+1.2.1 不包含 release-2.0 的 VPN 流程。请下载所需版本的 wheel，不要将预览 wheel 重命名为正式发布版本。
+
+## 安装 2.0 的 VPN 扩展依赖
+
+release-2.0 软件包增加用于本地生成密钥的 `vpn` 扩展依赖组，安装 `cryptography==50.0.2`。核心包仍没有必需的第三方运行时依赖。同一依赖也包含在开发依赖组中，使普通开发环境能测试 VPN 行为。
+
+官方 2.0.0 wheel 发布后，网关的标准安装方式为：
+
+```bash
+pipx install 'f-layer[vpn] @ https://github.com/Fuzzy-Technologies/F-Layer/releases/download/v2.0.0/f_layer-2.0.0-py3-none-any.whl'
+flayer check
+```
+
+对于已下载的发行包或 CI 预览 wheel，使用实际文件名：
+
+```bash
+python -m pip install './f_layer-2.0.0-py3-none-any.whl[vpn]'
+```
+
+最后这条命令应在虚拟环境中执行。依赖解析器从配置的 Python 索引下载扩展所需库，而 F-Layer wheel 本身来自明确指定的本地文件或 GitHub URL。Wheel 不包含 SSH 密钥、VPN 凭据或项目配置。
+
+确认 PyPI 项目所有权并完成发布后，同一个包可以按名称安装：
+
+```bash
+pipx install 'f-layer[vpn]==2.0.0'
+```
+
+该命令说明目标发布方式，不证明名称已经保留，也不证明 2.0.0 已在 PyPI 上可用。在完成发布前，应使用官方 GitHub Release 附带的准确 wheel。
+
+## 版本来源
+
+`src/flayer/__init__.py` 定义字面量 `__version__`。Hatchling 的正则版本源无需导入软件包即可读取该值。Wheel、源码归档元数据和已安装运行时共享同一版本。VPN 代码按需加载其依赖；安装或导入核心不会隐式启用该扩展。
+
+稳定发布采用 `X.Y.Z` 及不可变注释标签 `vX.Y.Z`，详见[发布流程](../RELEASE_WORKFLOW.md)。版本提升属于经过评审的发布分支。开发分支合并不会发布软件包。
+
+## 构建与安装验证
+
+在通过 `python -m pip install -e '.[dev]'` 安装的开发环境中运行：
+
+```bash
+python -m hatchling build --directory _build/distribution
+python -m pytest tests/integration/test_distribution.py --no-cov
+```
+
+Wheel 包含带类型信息的 `flayer`、Apache-2.0 许可证元数据及控制台入口。源码归档包含重建所需代码、测试、工具、文档、变更记录和示例，排除本地环境、私有状态及生成报告。构建输出不受 Git 跟踪。
+
+安装测试构建两种格式，从源码归档重建 wheel 并比较字节。测试将 wheel 安装到新的虚拟环境，在源码工作副本外运行命令，比较模块和控制台行为，执行本地运行时诊断并检查依赖。核心安装还确认没有引入可选的 cryptography 包。
+
+发布 CI 在上传前，对**准确的已审计文件**执行这些测试。它先获取 VPN 依赖的 wheel，然后在第二个干净环境中离线安装带 `vpn` 扩展的 F-Layer wheel。VPN 基本检查在内存中生成 X25519 和 RSA 密钥，并核对依赖一致性，不调用云服务商。可按以下方式重现该针对性检查：
+
+```bash
+python -m pip download --only-binary=:all: --dest _build/vpn-wheels './_build/distribution/f_layer-1.2.1-py3-none-any.whl[vpn]'
+FLAYER_DISTRIBUTION_DIRECTORY=_build/distribution \
+FLAYER_DISTRIBUTION_WHEELHOUSE=_build/vpn-wheels \
+python -m pytest tests/integration/test_distribution.py --no-cov
+```
+
+使用本地构建 wheel 的实际版本。分支预览在发布稳定化之前保留当前源码版本。完整回归、文档和发行包检查在 CI 中运行。未明确提供 wheel 目录时，测试重新构建发行包。缺少依赖 wheel 目录时，VPN 扩展安装测试会报告跳过，而不是声称已经验证该流程。
+
+## 配置并执行 PyPI 发布
+
+受跟踪工作流为 `.github/workflows/release-publish.yml`，使用 PyPI Trusted Publishing 和 GitHub OIDC，不需要长期上传令牌。仅创建工作流并不会获得 PyPI 项目所有权。
+
+首次生产上传前，所有者需要完成以下设置：
+
+1. 登录预期的 PyPI 账户，核实对 `f-layer` 的所有权。如果项目尚不存在，为该名称配置待创建项目的 Trusted Publisher。此类 publisher 不会保留名称。
+2. 将 publisher 的 GitHub 所有者设为 `Fuzzy-Technologies`，仓库设为 `F-Layer`，工作流文件名设为 `release-publish.yml`。当前上传作业不使用 GitHub 环境，因此可选环境字段留空。
+3. 将仓库变量 `FLAYER_RELEASE_OWNER` 设为准确的获授权 GitHub 登录名，仅在验证 publisher 后设置 `FLAYER_PYPI_ENABLED=true`。
+4. 完成并关闭原生发布里程碑，确保没有未完成项。评审并将发布合入 `master`，然后创建版本注释标签。
+5. 从 `master` 运行 **Publish an owner-approved PyPI release**，提供该标签、原生里程碑编号并启用发布确认。
+6. 检查上传结果，核实 PyPI 项目 URL 和版本指向本仓库。在新环境中安装已发布版本并运行 `flayer check`，之后才能说明按包名安装已经可用。
+
+验证要求配置的所有者、明确确认、精确标签/master 一致性，以及已完成的对应里程碑。上传作业只接收通过审计和隔离安装验证的文件，只有该作业获得 OIDC 权限。普通 PR 和标签推送都不会发布到 PyPI。
+
+实际账户所有权、publisher 配置、首次上传及上传后安装都是发布验收的操作步骤。在实际结果得到检查前，它们仍属于未验证事项。
+
+## 参考资料
+
+- [ADR 0017：软件包安装与可选 VPN 依赖](../adr/0017-package-installation.md)
+- [Hatch 正则版本源](https://hatch.pypa.io/latest/plugins/version-source/regex/)
+- [PyPA 项目元数据](https://packaging.python.org/en/latest/specifications/pyproject-toml/)
+- [PyPI 待创建项目的 publisher](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/)
+- [Cryptography 变更记录](https://cryptography.io/en/latest/changelog/)
+'''
+sourceHash = "sha256:208f86e47a58fd1bd84a6b4085316732cd0fd0016e97b37530c8fa6cb82d3070"
+reviewedTranslationHash = "sha256:a73ae142371875bf362de462dfd8ee4301f20219dde9df276138e0d2116c43cc"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:54Z"
+reviewRoles = ["editorial", "technical"]

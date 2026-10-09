@@ -1,0 +1,36 @@
+schemaVersion = 1
+sourcePath = "examples/integrations/README.md"
+sourceHash = "sha256:f6e7f851a687f10b569b8b93c2f84790848b8434d1f6b2c7a314a11cb66ed025"
+reviewedTranslationHash = "sha256:431de33a406e749c3502d701a4031c01ad21d8b898963546083ea33f29582f1e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:49:02Z"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# Примеры сообщений интеграции
+
+Примеры показывают реализованную сторону F-Layer формата версии 1 из
+[руководства по интеграции](../../docs/architecture/ecosystem-integration.md).
+Все идентификаторы и результаты приведены для примера. Они не описывают реальные
+облачные ресурсы, частную инфраструктуру, проверенную совместимость с 1337,
+разрешения доступа, аттестацию или готовность гостевой системы.
+
+| Наблюдение                 | Запрос                                                         | Ответ                                                        |
+| -------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------ |
+| Состояние                  | [status-request.json](status-request.json)                     | [status-result.json](status-result.json)                     |
+| Доступность                | [health-request.json](health-request.json)                     | [health-result.json](health-result.json)                     |
+| Измерение                  | [benchmark-request.json](benchmark-request.json)               | [benchmark-result.json](benchmark-result.json)               |
+| Учтённые ресурсы           | [state-request.json](state-request.json)                       | [state-result.json](state-result.json)                       |
+| Результат жизненного цикла | [lifecycle-report-request.json](lifecycle-report-request.json) | [lifecycle-report-result.json](lifecycle-report-result.json) |
+
+В каждой паре совпадают идентификаторы, операция, версия формата и ID запроса.
+Пример status возвращает unsupported без данных провайдера. Health и benchmark
+содержат пример успешных измерений. Число ресурсов отражает лишь локальный учёт.
+Пример жизненного цикла сообщает об отсутствующих ресурсах и необходимости
+восстановления, не скрывая неполноту данных.
+
+`ParseRequest` и `ParseResult` проверяют формат, но не запускают операции
+и не дают разрешения. Имена операций изменения не поддерживаются. Примеры
+проверяются сериализацией и обратным разбором в
+`tests/contract/test_integration_contracts.py`.
+'''

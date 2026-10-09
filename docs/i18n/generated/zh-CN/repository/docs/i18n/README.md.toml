@@ -1,0 +1,63 @@
+schemaVersion = 1
+sourcePath = "docs/i18n/README.md"
+body = '''
+# 本地化评审规则
+
+英文仍为权威原文。俄文（`ru`）和简体中文（`zh-CN`）译文需要编辑与技术评审。所有者依据 [ADR 0015](../adr/0015-accountable-ai-translation-review.md) 授权 AIna-Dev 记录可归属到评审者的 AI 评审。已评审页面打开时不显示评审提示。缺失或过期的翻译显示当前英文原文及实际状态。内容批准与成功发布分别检查。
+
+```bash
+python -m tools.locale_documentation validate
+python -m tools.build_locale_sites
+```
+
+封装构建器使用相同的导入保护和固定工具链，从已安装 wheel 严格构建英文及各语言站点，验证来源属性、链接、锚点和路由可达性。临时 `build-evidence.json` 区分 `authoredTranslationReviewComplete`、`translationReviewComplete` 与 `humanReviewComplete`，也逐一记录生成单元的状态。AI 评审永远不计为人工评审；未翻译页面仍标为 missing。
+
+## 单元身份与状态
+
+稳定 ID 和权威 `sourceHash` 保持 `fuzzy-doc-unit-v1` 数据格式。每份现有译文记录路径及 `basedOnSourceHash`。仅更新权威元数据不能使过期译文变为最新。
+
+| 元数据状态 | 显示文本         | 评审含义                   |
+| ---------- | ---------------- | -------------------------- |
+| `missing`  | 当前英文回退。   | 不声称存在译文或评审。     |
+| `draft`    | 本地化草稿。     | 必需评审尚未完成。         |
+| `review`   | 正在评审的译文。 | 必需评审尚未完成。         |
+| `stale`    | 当前英文回退。   | 原文或已评审译文发生变化。 |
+| `approved` | 已评审译文。     | 获授权角色已核对当前原文。 |
+
+批准需要 `reviewClass` 指定的角色、具名评审者、UTC `reviewedAt` 以及当前 `reviewedSourceHash`。`reviewerType` 默认为 `human`。AI 批准需要项目明确启用，并在每条 AI 记录中设置 `reviewerType = "ai"`。还必须提供 `reviewedTranslationHash`，即统一换行符后的 UTF-8 译文 SHA-256。角色缺失、未获授权的评审者类型、原文或已评审译文变化，都会使验证失败。可以记录 AI 实际完成的评审，但不得虚构人工身份。
+
+## 更新译文
+
+1. 检查英文变更，刷新其权威哈希。
+2. 将受影响译文标记为 `stale`，保留以前的评审来源记录。
+3. 对照当前原文核对含义、术语、归属与授权说明、命令、代码、路径和明确的标题锚点。
+4. 设置当前 `basedOnSourceHash`，取得实际且获授权的评审。
+5. 记录真实的评审者类型、身份、角色、UTC 时间和匹配的源哈希；AI 记录还必须绑定已评审译文哈希。
+6. 仅批准实际评审过的文本，运行受影响的检查，并由 CI 构建站点。
+
+路径必须位于对应语言目录内；未注册覆盖文件会使检查失败。术语表的概念 ID 和备注保持英文，首选术语则进行本地化。指向缺失译文的源链接会解析为该语言站点中的英文回退页面。
+
+## 生成参考的翻译目录
+
+[ADR 0018](../adr/0018-generated-documentation-translations.md) 将与原文绑定的评审扩展到仓库指南、API 描述及清单说明。仓库译文存放于 `docs/i18n/generated/<locale>/repository/<source-path>.toml`。API 与清单目录在相同语言目录下包含 `[[units]]` 记录。
+
+每条记录包含 `sourcePath`、`sourceHash`、翻译后的 `body`、`reviewedTranslationHash`、`reviewer`、`reviewerType`、带时区的 `reviewedAt`，以及 `reviewRoles = ["editorial", "technical"]`。仓库 ID 为 `repository:<source-path>`；API 保留 `symbol:<qualified-name>`，并为模块介绍增加 `module:<qualified-name>`。现有的版本化权威哈希包含可调用对象的签名，因此签名变化也需要重新评审。目录文件必须受 Git 跟踪；重复或未知 ID 会使验证失败。
+
+仓库译文保留全部标题、原始锚点和精确代码块。静态 API 扩展翻译文档对象，同时保留原始源码列表、签名及已安装 wheel 的字节。仅当模块全部渲染描述都已评审时，才使用译文。清单说明从实际文件与符号清单翻译；源路径、代码和机器标识符保持原拼写。
+
+## 发布验证记录
+
+[评审快照](review-snapshot.md)记录编写指南的评审结果。构建文件包含针对精确提交的完整发现清单及真实评审状态。只有评审并不代表已经部署：发布要求提升到 master 的提交成功部署到 Pages。稳定发布还要求里程碑已关闭且没有未完成项。
+
+从 2.0 起，如果任何已渲染说明页面在两种语言中没有完成且仍有效的完整评审，文档构建器都会拒绝构建。更早的稳定化分支也可显式启用相同检查：
+
+```bash
+python -m tools.build_locale_sites --require-complete-translations
+```
+'''
+sourceHash = "sha256:7ce2a03c4e72f0159a3460f398f0dcde7cb458089c6bb3874feae57a9f0fcfa0"
+reviewedTranslationHash = "sha256:723ec61af4bf1a4ad9d5b9379809b151fe7ef82cce1826c37c1a42a348447060"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:54Z"
+reviewRoles = ["editorial", "technical"]

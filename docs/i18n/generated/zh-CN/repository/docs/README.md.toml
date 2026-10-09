@@ -1,0 +1,22 @@
+schemaVersion = 1
+sourcePath = "docs/README.md"
+body = '''
+# F-Layer 文档
+
+- [`site/`](site/README.md)：从已安装 wheel 生成、采用公司视觉风格的 MkDocs Material 文档；
+- [`architecture/`](architecture/)：已接受的架构边界与源码接口；
+- [`adr/`](adr/)：架构决策记录；
+- [`development/`](development/)：工程约定与 Python 风格；
+- [`RELEASE_WORKFLOW.md`](RELEASE_WORKFLOW.md)：分支、发布和标签流程；
+- [`i18n/`](i18n/project.toml)：稳定的英文单元、统一术语及翻译状态。
+
+英文版本为权威原文。经过评审的俄文和简体中文页面与其一同发布。缺失或过期的翻译显示当前英文原文及提示。评审记录注明评审者，并绑定原文和译文哈希；项目依据 [ADR 0015](adr/0015-accountable-ai-translation-review.md) 允许可追溯的 AI 评审。
+构建器将当前架构与 ADR 源文件纳入站点，并从已安装的软件包中静态发现公开 API 模块。
+生成的 HTML 是可重新生成的临时输出，位于 `_build/`，不受 Git 跟踪。
+'''
+sourceHash = "sha256:2459ef424a2f8e08a6c7a5dde2a414b572067f9c328c658564e4618aece545f5"
+reviewedTranslationHash = "sha256:71151538d0a485cad6b2d265b20656bce8ccb0b8c3be0a14e3484ce1a2ba8772"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:54Z"
+reviewRoles = ["editorial", "technical"]

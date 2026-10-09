@@ -1,0 +1,92 @@
+schemaVersion = 1
+sourcePath = "README.md"
+sourceHash = "sha256:968a698d5bb05e738bc7d6a4c2be6b9ab48aa61406801d0bff762bd409a11ce1"
+reviewedTranslationHash = "sha256:79857314be3dbaafff12180cb53cf33865e846d352f86cbf2789ca215080cf6a"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:43Z"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# F-Layer
+
+![F-Layer и АИна в инженерной лаборатории Fuzzy Technologies](https://raw.githubusercontent.com/Fuzzy-Technologies/F-Layer/master/docs/site/content/en/assets/brand/FTech-card-F-Layer.png)
+
+**Развёртывайте облачные серверы, управляйте ресурсами и проверяйте доступность из Python или командной строки.**
+
+F-Layer создаёт облачные ресурсы по конфигурации развёртывания и сохраняет
+локальную запись о созданном. С её помощью можно проверить развёртывание,
+восстановить прерванную операцию и удалить ресурсы своего проекта.
+Используйте F-Layer для автоматизации окружения сервиса или управления
+инфраструктурой из приложения, чтобы не поддерживать отдельные скрипты
+развёртывания для каждого случая.
+
+Текущий релиз поддерживает **Yandex Cloud**, **защищённый SSH-шлюз** с настройками
+подключения для каждого устройства, а также HTTP-проверки доступности и времени
+ответа. Другие облака и VPN-профили запланированы. Облачные ресурсы оплачиваются
+провайдеру; исходный код F-Layer открыт по лицензии Apache 2.0.
+
+[Документация](https://fuzzy-technologies.github.io/F-Layer/) ·
+[Быстрый старт](https://fuzzy-technologies.github.io/F-Layer/en/guide/) ·
+[Первое развёртывание](https://fuzzy-technologies.github.io/F-Layer/en/guide/first-deployment/) ·
+[Справочник API](https://fuzzy-technologies.github.io/F-Layer/en/api/) ·
+[История изменений](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/CHANGELOG.md) ·
+[Релизы](https://github.com/Fuzzy-Technologies/F-Layer/releases)
+
+## Установка
+
+Нужен Python 3.11 или новее. Установите wheel-файл релиза в виртуальное окружение;
+Git и Docker не нужны:
+
+```bash
+python -m venv .venv
+```
+
+Активируйте окружение командой `source .venv/bin/activate` в Linux/macOS,
+`.venv\Scripts\Activate.ps1` в PowerShell или
+`.venv\Scripts\activate.bat` в командной строке Windows. Затем выполните:
+
+```bash
+python -m pip install https://github.com/Fuzzy-Technologies/F-Layer/releases/download/v1.2.1/f_layer-1.2.1-py3-none-any.whl
+python -m flayer --help
+python -m flayer check --format json
+```
+
+Ожидаемый результат: локальная проверка выводит `"status": "ok"` и завершается
+с кодом `0`. Она проверяет Python и доступность пакета без облачных учётных
+данных и сетевого доступа. Это первая проверка установки, а не развёртывание
+сервера.
+
+## Быстрый старт
+
+Перейдите к [быстрому старту](https://fuzzy-technologies.github.io/F-Layer/en/guide/),
+чтобы проверить доступность адреса, или к
+[инструкции по шлюзу](https://fuzzy-technologies.github.io/F-Layer/en/guide/first-deployment/),
+чтобы подготовить план сервера и развернуть его с явно предоставленным доступом
+к провайдеру.
+
+## Возможности
+
+- **Управляемое облачное окружение:** создание, проверка, восстановление и удаление
+  ресурсов своего развёртывания с одной конфигурацией и файлом состояния.
+- **SSH-шлюз с ограниченным доступом:** подготовка серверной конфигурации и локальных
+  SSH-пробросов для устройств только к разрешённым адресам.
+- **Эксплуатационные проверки:** проверка HTTP-адреса, измерение времени ответа
+  и передачи данных с заданными ограничениями; JSON-отчёты для автоматизации.
+- **Интеграция с приложениями:** использование Python API конфигурации, провайдеров
+  и управления ресурсами в своих инструментах.
+
+В [описании архитектуры](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/architecture/README.md)
+показано, как связаны эти части. Стабильные релизы отмечаются тегами в `master`;
+их состав записан в истории изменений. В `develop` также находится принятая
+работа для следующих релизов.
+
+## Участие в разработке
+
+Прочитайте [AGENTS.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/AGENTS.md)
+и [DEVELOPMENT_PROTOCOL.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/DEVELOPMENT_PROTOCOL.md).
+Справочник API по установленному wheel собирается командой
+`python tools/build_api_reference.py`; см.
+[настройку документации](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/site/README.md).
+
+[Выпуск релиза](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/RELEASE_WORKFLOW.md) · [Лицензия Apache 2.0](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/LICENSE)
+'''

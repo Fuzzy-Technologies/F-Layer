@@ -1,0 +1,96 @@
+schemaVersion = 1
+sourcePath = "docs/architecture/reference.md"
+sourceHash = "sha256:1c451e63e39ba6d4ac192fa24914ea89251466149406775dbdfd675fedda1308"
+reviewedTranslationHash = "sha256:6155f9bc88fbceec69cd53045712265ae36c65495e1cfe8683608dd83a1191b6"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:36:22Z"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# Обзор реализованной архитектуры
+
+Здесь описаны устойчивые правила, уже реализованные в исходниках.
+[Автоматический анализ API](../development/documentation-coverage.md) даёт точный
+список установленных модулей; принятые решения перечислены в [каталоге ADR](../adr/README.md).
+Новые расширения и интеграции должны описывать собственные интерфейсы и решения.
+
+## Компоненты и зависимости
+
+```mermaid
+flowchart TD
+    CLI["Explicit CLI input"] --> Config["Configuration and identity"]
+    Config --> Engine["Lifecycle engine"]
+    Engine --> State["Owned state and operation journal"]
+    Engine --> Contract["Provider contracts"]
+    Contract --> Adapter["Yandex adapter"]
+    Profile["Gateway profile"] --> Plan["Deployment plan"]
+    Plan --> Engine
+    Profile --> Artifacts["Owned artifact bundles"]
+    Adapter --> Runner["Injected command runner"]
+    Diagnostics["Bounded diagnostics"] --> Reports["Redacted diagnostic reports"]
+```
+
+Ядро использует общие интерфейсы провайдеров. Конкретные облачные команды
+формирует адаптер, который CLI выбирает по переданным параметрам. Адаптер также
+проверяет каталог и принадлежность ресурсов. Отдельный исполнитель команд
+позволяет подменять их в тестах предсказуемыми ответами. Эти интерфейсы сами по
+себе не разрешают менять реальную инфраструктуру при разработке.
+
+| Интерфейс                                         | Реализация                                            | Описание архитектуры                               |
+| ------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------- |
+| Идентификаторы, конфигурация и состояние ресурсов | `flayer.core.contracts`, `config`, `state`            | [Конфигурация и состояние](configuration-state.md) |
+| Чтение данных провайдера                          | `flayer.providers.contracts`, `yandex`                | [Интерфейс провайдера](provider-contract.md)       |
+| Жизненный цикл и операции изменения               | `flayer.core.lifecycle`, `flayer.providers.lifecycle` | [Жизненный цикл](lifecycle.md)                     |
+| Создание и удаление в Yandex Cloud                | `flayer.providers.yandex_lifecycle`                   | [Жизненный цикл Yandex](yandex-lifecycle.md)       |
+| Подготовка шлюза и наборов файлов                 | `flayer.profiles.gateway`, `artifacts`                | [Защищённый шлюз](secure-gateway.md)               |
+| Проверки доступности, измерения и отчёты          | `flayer.diagnostics`                                  | [Диагностика](diagnostics.md)                      |
+| Точка входа командной строки                      | `flayer.__main__`                                     | [Руководство CLI](../site/content/en/guide/cli.md) |
+
+## Принадлежность ресурсов и прерванные операции
+
+```mermaid
+stateDiagram-v2
+    [*] --> Planned
+    Planned --> Journaled: mutation intent persisted
+    Journaled --> Observed: provider evidence reconciled
+    Observed --> Saved: owned locators persisted
+    Saved --> Complete: operation journal cleared
+    Journaled --> Interrupted: uncertain result or process failure
+    Observed --> Interrupted: durable state unavailable
+    Interrupted --> Journaled: explicit recover
+    Interrupted --> Rollback: explicit rollback recovery
+    Rollback --> Complete: proven owned resources removed
+    Complete --> [*]
+```
+
+Журнал операций хранит сведения для восстановления отдельно от состояния уже
+учтённых ресурсов. При сверке используются проект, владелец и ID ресурсов.
+Если результат облачной операции неизвестен, требуется дополнительная проверка
+или явное восстановление. Удаление и откат затрагивают только ресурсы с
+подтверждённой принадлежностью, а не весь список доступных ресурсов. Точное
+поведение при ошибках определяют ядро жизненного цикла и адаптер; схема помогает
+найти нужный раздел, но не заменяет эти правила.
+
+## Документация и дистрибутив
+
+```mermaid
+flowchart TD
+    Source["Tracked source and coverage rules"] --> Wheel["Built installed wheel"]
+    Source --> Files["Repository file inventory"]
+    Wheel --> Parity["Exact package file parity"]
+    Parity --> AST["Static API and definition inventory"]
+    Files --> Markdown["Canonical Markdown pages"]
+    AST --> HTML["Strict generated site"]
+    Markdown --> HTML
+    HTML --> Gate["Links, anchors, and reachability"]
+    Gate --> Evidence["Disposable site and provenance evidence"]
+```
+
+Защита импорта не позволяет выполнять код пакета при генерации справочника API.
+Версии инструментов документации закреплены отдельно. В сайт входят
+архитектурные документы, ADR и шаблоны, политики, руководства по выпускам и
+инженерные справочники. Для тестов, инструментов, ресурсов и workflow явно
+указано назначение; они не объявляются публичным API. Публикация выполняется
+отдельным процессом с ограничением по ветке, описанным в
+[ADR 0004](../adr/0004-documentation-platform.md).
+'''

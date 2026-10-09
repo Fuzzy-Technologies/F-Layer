@@ -1,0 +1,46 @@
+schemaVersion = 1
+sourcePath = "docs/adr/0008-reproducible-release-automation.md"
+body = '''
+# ADR 0008：可复现发行包与所有者明确授权的发布
+
+## 状态
+
+已接受，进入实现；PyPI 账号配置仍须由所有者完成。
+
+## 背景
+
+F-Layer 已有本地及 CI 的 Python 和文档检查，以及安全的合并后任务与分支清理。软件包发布还需要证据，确认 wheel 和源码发行包只包含已接受的项目文件，版本一致，能够一致地重复构建，并属于稳定分支。发布初始引导包或在每个标签出现时自动上传都会超出这一契约。PyPI 上的软件包所有权尚未配置或验证。
+
+## 决策
+
+在 PR 和集成分支 push 时，从干净的受版本控制文件快照构建只读预览。时间戳固定为源提交时间，要求固定的 Hatchling 版本，逐字节比较两次独立构建，并从经过审计的源码归档重新构建 wheel。验证归档路径、成员类型和限制、源码归属、元数据、常见凭据特征，以及完整的 wheel `RECORD` 哈希。将 SHA256、源码、版本和构建证据与已审计产物一起写入被忽略的 `_build` 目录。
+
+静态初始版本仅用于预览。带标签的发布要求非初始值的字面量软件包版本，以及静态和动态元数据一致。必须使用带注释的稳定 `vX.Y.Z` 标签，解析到准确的当前 checkout 和最新获取的 `origin/master`。正式发布还要求由配置的发布所有者在规范仓库的 `master` 上手动触发，对本次运行明确确认，并通过仓库变量显式启用。
+
+分离构建/测试作业与上传作业。只有上传作业获得 OIDC 权限，下载本次运行经过审计的产物，并调用固定版本的 PyPA 发布器，上传到固定的生产 PyPI 地址。上传作业不 checkout 项目代码。使用 PyPI Trusted Publishing，不自动配置令牌、账号、环境或分支保护前置条件。PR 和标签验证绝不上传包。
+
+## 影响
+
+- 无需 PyPI 账号即可执行只读产物验证。
+- 元数据和源码版本可以从初始静态元数据迁移到规范 Hatch 包源，无需更改发布检查。
+- 启用发布需要所有者有意识地配置并手动触发；在此之前，名称可用性、账号归属和真实 OIDC 上传兼容性仍未验证。
+- 稳定发布不能直接来自旧的 master 提交或 `develop`。
+- 对于任意值、且不匹配有限凭据特征的秘密，仍由源码评审负责；任何扫描器都无法证明不存在所有可能的秘密。
+- 现有原生任务和分支清理机制保持不变。功能与里程碑完成，以及 GitHub Release 创建，仍是独立的明确操作。
+
+## 替代方案
+
+自动按标签发布会取消所有者对每个版本的明确确认。令牌上传会引入长期凭据。从活动工作树构建可能意外包含被忽略或私有文件。仅检查元数据无法发现危险成员名称、被修改的软件包源码或不完整的 `RECORD` 数据。
+
+## 参考资料
+
+- [发布工作流](../RELEASE_WORKFLOW.md)
+- [PyPI Trusted Publisher 使用指南](https://docs.pypi.org/trusted-publishers/using-a-publisher/)
+- [PyPA 构建与发布作业分离](https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/)
+'''
+sourceHash = "sha256:4428f098ca6f0ea9c43b3b96356151b9c614c0ce57e3b36f7f59881d225d051a"
+reviewedTranslationHash = "sha256:486a75896ecbdfab1c654f6c73baede34f45bc9149e60ab56121ce1c80d388df"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:48:24.891591+00:00"
+reviewRoles = ["editorial", "technical"]

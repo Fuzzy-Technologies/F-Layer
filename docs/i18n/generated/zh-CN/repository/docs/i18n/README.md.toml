@@ -43,7 +43,7 @@ python -m tools.build_locale_sites
 
 每条记录包含 `sourcePath`、`sourceHash`、翻译后的 `body`、`reviewedTranslationHash`、`reviewer`、`reviewerType`、带时区的 `reviewedAt`，以及 `reviewRoles = ["editorial", "technical"]`。仓库 ID 为 `repository:<source-path>`；API 保留 `symbol:<qualified-name>`，并为模块介绍增加 `module:<qualified-name>`。现有的版本化权威哈希包含可调用对象的签名，因此签名变化也需要重新评审。目录文件必须受 Git 跟踪；重复或未知 ID 会使验证失败。
 
-仓库译文保留全部标题、原始锚点和精确代码块。静态 API 扩展翻译文档对象，同时保留原始源码列表、签名及已安装 wheel 的字节。仅当模块全部渲染描述都已评审时，才使用译文。清单说明从实际文件与符号清单翻译；源路径、代码和机器标识符保持原拼写。
+仓库译文保留全部标题、原始锚点和精确的可执行代码块。Mermaid 标签会被翻译，但节点 ID、连接关系和方向保持不变。静态 API 扩展翻译文档对象，同时保留原始源码列表、签名及已安装 wheel 的字节。仅当模块全部渲染描述都已评审时，才使用译文。清单说明从实际文件与符号清单翻译；源路径、代码和机器标识符保持原拼写。
 
 ## 发布验证记录
 
@@ -55,9 +55,9 @@ python -m tools.build_locale_sites
 python -m tools.build_locale_sites --require-complete-translations
 ```
 '''
-sourceHash = "sha256:7ce2a03c4e72f0159a3460f398f0dcde7cb458089c6bb3874feae57a9f0fcfa0"
-reviewedTranslationHash = "sha256:723ec61af4bf1a4ad9d5b9379809b151fe7ef82cce1826c37c1a42a348447060"
+sourceHash = "sha256:8fd20568f6b9de4400fc432ba5af7fd001b28dccaf10a3ea6394e2f25666d212"
+reviewedTranslationHash = "sha256:b38ba18229317cd31f671a9db7093333d47a7d3423b1f4650677f92320405cc8"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:54Z"
+reviewedAt = "2026-10-09T08:06:40.549154+00:00"
 reviewRoles = ["editorial", "technical"]

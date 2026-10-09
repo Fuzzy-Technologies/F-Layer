@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/vless-reality.md"
-sourceHash = "sha256:dc8709d673fb21714eb7bad1800fb30e307f6acfc418a94e060e15f3fe59c78e"
-reviewedTranslationHash = "sha256:510ce2774649e046b9c61c18b20764b2ba8341ce29c55d7acf04b9e06413b543"
+sourceHash = "sha256:16af6d39b2c76eb01d7cf8f5bf8de07173f1973e3efead9f900c658b548aef9a"
+reviewedTranslationHash = "sha256:5fc24ef92a82731276aed90f98696b0b9b641a4257df1db9fb137e78984099d8"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:00:49Z"
+reviewedAt = "2026-10-09T08:08:58.251144+00:00"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # VLESS Reality 网关
@@ -40,7 +40,9 @@ F-Layer 校验这些设置的语法。修改虚拟机服务前，安装程序会
 `GenerateVlessMaterial()` 生成一对 X25519 密钥，并为每台设备生成独立 UUID。
 `EncodeVlessMaterial()` 和 `DecodeVlessMaterial()` 让控制端在云平台分配 IP 地址前，
 就能把这些凭据保存在自己的敏感文件包中。为实际端点生成客户端配置时应复用这些
-凭据；重新生成凭据会使现有客户端凭据失效。
+凭据。在控制端重新生成密钥和 UUID 不会改变已部署的服务器，也不会撤销现有
+客户端的访问权限。安装程序会拒绝使用不同的输入替换现有部署。此流程尚不支持
+通过替换服务器配置来轮换或撤销凭据。
 
 `PrepareVless()` 生成以下文件：
 
@@ -107,7 +109,7 @@ DNS 策略。导入 [v2rayN](https://github.com/2dust/v2rayN) 或
 
 首次安装期间强制终止进程或断电，可能留下不完整的执行记录。
 后续操作会停止，不会猜测哪些文件可删除或覆盖。重试前，应检查该部署，
-并恢复其已知的私密文件包；目前没有针对这种中断状态的自动恢复机制。
+并恢复该部署原有的私密文件包；目前没有针对这种中断状态的自动恢复机制。
 删除操作会拒绝未知文件、符号链接、已更改的凭据以及不属于本部署的文件。
 空的归属锁文件会保留，以避免锁 inode 变更造成的竞争。
 

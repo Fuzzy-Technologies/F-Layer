@@ -72,7 +72,8 @@ canonical hash includes the callable signature, so signature changes also requir
 review. Catalog files must be tracked, and duplicate or unknown IDs fail validation.
 
 Repository translations retain all headings, their canonical anchors, and exact
-code fences. The static API extension translates documentation objects while
+executable code fences. Mermaid labels are translated without changing node IDs,
+connections, or direction. The static API extension translates documentation objects while
 preserving original source listings, signatures, and installed-wheel bytes.
 A module uses translated prose only when all its rendered descriptions are reviewed.
 Inventory descriptions are translated from the actual file and symbol inventory;

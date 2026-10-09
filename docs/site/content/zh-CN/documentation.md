@@ -6,7 +6,7 @@ F-Layer 采用 [Fuzzy Technologies 文档蓝图](https://github.com/Fuzzy-Techno
 
 已安装 `flayer` 包中每个非私有 Python 模块都生成 API 页面；`flayer.__main__` 是下划线路径规则的明确受支持例外。私有模块和辅助函数仅保留源码，并记录原因。发现过程读取语法，从不导入运行时代码。导入保护使尝试执行包的构建失败。除字节码外，整个安装包必须与源码清单和字节匹配。公开定义和可调用协议要求精确的生成 HTML 锚点；每个 API 页面链接到对应 `develop` 源码。
 
-每个已跟踪文件必须匹配且仅匹配一个明确覆盖规则。所有规范 Markdown，包括政策、发布指南、ADR、模板和仓库入口，都必须渲染并可从英文入口到达。测试、工具、工作流、示例、资源和配置具有可说明的用途，而不是虚构 API 文档。本地化覆盖内容由语言构建包装工具渲染，并显示明确审核状态。[覆盖契约](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/development/documentation-coverage.md)定义边界和机器可读证据。
+每个已跟踪文件必须匹配且仅匹配一个明确覆盖规则。所有规范 Markdown，包括政策、发布指南、ADR、模板和仓库入口，都必须渲染并可从英文入口到达。测试、工具、工作流、示例、资源和配置具有可说明的用途，而不是虚构 API 文档。本地化覆盖内容由语言构建包装工具渲染，并显示明确审核状态。[覆盖契约](../../../development/documentation-coverage.md)定义边界和机器可读证据。
 
 每个已跟踪 Markdown 表格按列内容对齐。源码检查在发布前验证原文可读性，保留转义竖线、代码单元格、对齐标记和代码块中的字面示例。
 
@@ -34,4 +34,4 @@ Pull request 和 `develop` 生成可下载的预览和证据制品。仅 `master
 
 公开路由为 `/F-Layer/en/`、`/F-Layer/ru/` 和 `/F-Layer/zh-CN/`。根路径打开英文参考。在稳定发布之前，不宣称拥有不可变版本文档。
 
-[ADR 0004](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/adr/0004-documentation-platform.md)记录已接受的生成器、审核、源码哈希、回退和发布边界。
+[ADR 0004](../../../adr/0004-documentation-platform.md)记录已接受的生成器、审核、源码哈希、回退和发布边界。

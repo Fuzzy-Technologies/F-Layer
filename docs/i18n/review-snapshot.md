@@ -3,7 +3,8 @@
 ## Current authored-page review
 
 AIna-Dev reviewed all **11 authored English pages** against their Russian and
-Simplified Chinese translations on `2026-10-09T07:31:37Z`. This covers 22 translations
+Simplified Chinese translations on 2026-10-09. Subsequent page edits have their
+own exact review timestamps in the registry. This covers 22 translations
 and 44 editorial/technical AI review records. No human approvals are claimed.
 The authority and source/translation hash contract are recorded in
 [ADR 0015](../adr/0015-accountable-ai-translation-review.md).
@@ -14,15 +15,20 @@ actual release availability. Russian prose now explains concrete settings and
 actions; Linux and Yandex Cloud directories use «каталог». The Russian Yandex
 CLI link opens the vendor's Russian instructions. Install precedes Quick Start,
 which leads with a concrete Yandex Cloud walkthrough. Installation uses the
-existing release wheel; future PyPI or 2.0 publication is not claimed.
+existing release wheel for v1.2.1 and an explicitly identified CI candidate wheel
+for the new VPN workflow; PyPI or stable 2.0 publication is not claimed.
 
 The API landing page and project identity page are now translated as well.
 The brand-image paths were subsequently corrected to the canonical asset
 location and re-reviewed; their exact later timestamps are in the registry.
 The API landing no longer repeats the obsolete pre-1.0 compatibility notice.
-Localized links stay in their language's API route. Missing generated API and
-engineering-reference translations remain separately visible; this authored
-review does not approve content absent from the registry.
+Localized links stay in their language's API and engineering-reference routes.
+The new Quick Start covers candidate installation, private project settings,
+authenticated guest provisioning, both client imports, DNS and routing checks,
+and cleanup. Independent AI reviewers checked Russian and Chinese terminology
+and protocol details. Generated API and engineering-reference translations use
+separate source-bound catalogs; this authored review does not approve content
+absent from those catalogs.
 
 | Canonical unit                | Reviewed canonical hash                                                   |
 | ----------------------------- | ------------------------------------------------------------------------- |
@@ -31,12 +37,12 @@ review does not approve content absent from the registry.
 | `page:brand`                  | `sha256:7dc4a34669dc538db351ce211014c64ea31d79c00d540badb364bce3c4d620aa` |
 | `page:development`            | `sha256:3e13b58ec7a14f97c5d4f774a4727fe67aeaf9ba91a4720972768bd8154450a2` |
 | `page:documentation`          | `sha256:c80e615173c62b32beb8d6e363eedd39657c2c4357ebbe43518d4fbc5b76e4a0` |
-| `page:guide`                  | `sha256:a537c4f70104ba93e298f8846f0f9b7aa66bf668bdf4a29e624978195ae90c7e` |
+| `page:guide`                  | `sha256:8e1b32a624f4d39409c93707ce1aa798b12c2b600cd4f3e9ced78710e27e9881` |
 | `page:guide.cli`              | `sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc` |
 | `page:guide.configuration`    | `sha256:49c1db435ada063f2181b0b9e69381f8a8a518ce3742b44de8e7b4ed1054abc1` |
 | `page:guide.first-deployment` | `sha256:485cfb018ec5d44ec29e9d14d7901cfc6f78ff790dee979ebaa42b5071c41094` |
-| `page:guide.installation`     | `sha256:14fcabcd286e8caf4852d0965b8e417cb66b449621cd70e66278442de3d8c09c` |
-| `page:index`                  | `sha256:a8bfac93bc8384f9d5d2a5949dc821f753db0cc780a9ad5539ae62a25477f690` |
+| `page:guide.installation`     | `sha256:a15b039e30245d5ac0e53d635972c360018ffffc9875715b15333aa3763bd590` |
+| `page:index`                  | `sha256:d107a7d1b3d988c56b609d8062d6b016d325160176185b2a8b55b640d8d0e77a` |
 
 `docs/i18n/units.toml` records each translated text hash, named reviewer, reviewer
 type, role and UTC timestamp. A later edit requires a fresh review. The current

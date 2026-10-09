@@ -14,7 +14,7 @@ python -m mypy
 python -m pytest
 ```
 
-Исходный код, комментарии, docstring, тесты и каноническая документация написаны на английском. [Правила стиля Python](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/development/PYTHON_CODE_STYLE.md) являются обязательными.
+Исходный код, комментарии, docstring, тесты и каноническая документация написаны на английском. [Правила стиля Python](../../../development/PYTHON_CODE_STYLE.md) являются обязательными.
 
 ## Безопасность инфраструктуры {#infrastructure-safety}
 

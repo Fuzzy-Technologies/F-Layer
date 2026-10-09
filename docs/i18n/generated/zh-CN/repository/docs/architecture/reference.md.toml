@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/reference.md"
-sourceHash = "sha256:1c451e63e39ba6d4ac192fa24914ea89251466149406775dbdfd675fedda1308"
-reviewedTranslationHash = "sha256:4d960555c390099ee9b4fb55550d6b58710ffec975f7f6582fd9ea118260bdf5"
+sourceHash = "sha256:b045a968d47e17ec97f0226738db9c0be054ce2c705657ffc086737a80e6d7ae"
+reviewedTranslationHash = "sha256:ede930f64cf01428c8ca83a5ffe36b5931d5a02c425a35ee876ae8206e4e2f03"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:36:22Z"
+reviewedAt = "2026-10-09T08:06:40.547916+00:00"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # 已实现的架构概览
@@ -17,16 +17,16 @@ body = '''
 
 ```mermaid
 flowchart TD
-    CLI["Explicit CLI input"] --> Config["Configuration and identity"]
-    Config --> Engine["Lifecycle engine"]
-    Engine --> State["Owned state and operation journal"]
-    Engine --> Contract["Provider contracts"]
-    Contract --> Adapter["Yandex adapter"]
-    Profile["Gateway profile"] --> Plan["Deployment plan"]
+    CLI["明确的 CLI 输入"] --> Config["配置与标识"]
+    Config --> Engine["生命周期引擎"]
+    Engine --> State["资源归属状态与操作日志"]
+    Engine --> Contract["提供商接口契约"]
+    Contract --> Adapter["Yandex 适配器"]
+    Profile["网关配置"] --> Plan["部署计划"]
     Plan --> Engine
-    Profile --> Artifacts["Owned artifact bundles"]
-    Adapter --> Runner["Injected command runner"]
-    Diagnostics["Bounded diagnostics"] --> Reports["Redacted diagnostic reports"]
+    Profile --> Artifacts["归属明确的文件包"]
+    Adapter --> Runner["可注入的命令执行器"]
+    Diagnostics["受限诊断"] --> Reports["已脱敏的诊断报告"]
 ```
 
 核心使用通用提供方接口，不负责转换具体云平台的命令。CLI 根据明确输入组合
@@ -47,16 +47,23 @@ flowchart TD
 
 ```mermaid
 stateDiagram-v2
+    state "已制定计划" as Planned
+    state "已记入日志" as Journaled
+    state "已核对资源" as Observed
+    state "已保存状态" as Saved
+    state "已完成" as Complete
+    state "已中断" as Interrupted
+    state "回滚" as Rollback
     [*] --> Planned
-    Planned --> Journaled: mutation intent persisted
-    Journaled --> Observed: provider evidence reconciled
-    Observed --> Saved: owned locators persisted
-    Saved --> Complete: operation journal cleared
-    Journaled --> Interrupted: uncertain result or process failure
-    Observed --> Interrupted: durable state unavailable
-    Interrupted --> Journaled: explicit recover
-    Interrupted --> Rollback: explicit rollback recovery
-    Rollback --> Complete: proven owned resources removed
+    Planned --> Journaled: 已记录变更计划
+    Journaled --> Observed: 已核对提供商数据
+    Observed --> Saved: 已保存自有资源标识
+    Saved --> Complete: 已清除操作日志
+    Journaled --> Interrupted: 结果不确定或进程失败
+    Observed --> Interrupted: 持久状态不可用
+    Interrupted --> Journaled: 显式调用 recover
+    Interrupted --> Rollback: 显式执行回滚恢复
+    Rollback --> Complete: 已删除归属得到确认的资源
     Complete --> [*]
 ```
 
@@ -69,15 +76,15 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Source["Tracked source and coverage rules"] --> Wheel["Built installed wheel"]
-    Source --> Files["Repository file inventory"]
-    Wheel --> Parity["Exact package file parity"]
-    Parity --> AST["Static API and definition inventory"]
-    Files --> Markdown["Canonical Markdown pages"]
-    AST --> HTML["Strict generated site"]
+    Source["Git 跟踪源码与覆盖规则"] --> Wheel["已构建并安装的 wheel"]
+    Source --> Files["仓库文件清单"]
+    Wheel --> Parity["包文件精确一致性"]
+    Parity --> AST["API 与定义的静态清单"]
+    Files --> Markdown["规范 Markdown 页面"]
+    AST --> HTML["严格校验的生成站点"]
     Markdown --> HTML
-    HTML --> Gate["Links, anchors, and reachability"]
-    Gate --> Evidence["Disposable site and provenance evidence"]
+    HTML --> Gate["链接与锚点及页面可达性"]
+    Gate --> Evidence["临时站点与来源验证记录"]
 ```
 
 导入保护阻止 API 渲染期间执行软件包代码。文档依赖单独锁定版本。纳入网站的

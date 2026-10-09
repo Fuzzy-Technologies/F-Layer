@@ -28,7 +28,7 @@ flayer check --format json
 
 Expected result: `"status": "ok"` and exit code `0`. `flayer` and
 `python -m flayer` accept the same arguments. Continue with the
-[Quick Start](index.md) to prepare your Yandex Cloud deployment.
+[SSH gateway walkthrough](first-deployment.md) for this stable version.
 
 You can also download `f_layer-1.2.1-py3-none-any.whl` from the release assets
 and pass its local path to `python -m pip install`. The same release provides
@@ -40,6 +40,17 @@ The cloud deployment walkthrough requires Linux or macOS because generated
 configuration files use POSIX owner and permission checks. Windows users can
 install the package and run local diagnostics; use a Linux environment for
 the deployment walkthrough.
+
+## Install the 2.0 candidate
+
+For AmneziaWG and VLESS Reality, use a reviewed 2.0 candidate wheel with the `vpn`
+extra, on Linux or WSL. The [Quick Start](index.md) shows the exact local wheel
+installation, project settings and deployment commands. Candidate artifacts come
+from the reviewed revision's [CI run](https://github.com/Fuzzy-Technologies/F-Layer/actions),
+not the v1.2.1 release download. Retain the artifact's filename and version.
+A candidate can still report the current development package version; verify
+its revision and the presence of `flayer project` and `flayer vpn` commands.
+PyPI and stable 2.0 publication are not claimed by this guide.
 
 ## Development checkout
 

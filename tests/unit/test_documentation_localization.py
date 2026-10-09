@@ -130,6 +130,45 @@ def test_GeneratedCatalogCannotAlterRunnableExamples() -> None:
         generated_localization.ValidateTranslation(unit, record, ["ai"])
 
 
+@pytest.mark.parametrize("change", ["labels", "node", "arrow", "direction", "state-id",
+                                     "extra-edge", "caption-injection", "language", "command"])
+def test_DiagramTranslationPreservesTopologyAndExecutableExamples(change: str) -> None:
+    """Visible diagram prose can change, but nodes, aliases, edges, and shell commands cannot."""
+
+    source = ('# Diagram\n\n```mermaid\nflowchart TD\n'
+              '    Input["Explicit input"] --> Config["Configuration"]\n```\n\n'
+              '```mermaid\nstateDiagram-v2\n    state "Planned" as Planned\n'
+              '    state "Complete" as Complete\n'
+              '    Planned --> Complete: operation finished\n```\n\n'
+              '```bash\nflayer status\n```\n')
+    translated = source.replace("# Diagram", "# Схема").replace('"Explicit input"', '"Ввод"')
+    translated = translated.replace('"Configuration"', '"配置"').replace('"Planned"', '"План готов"')
+    translated = translated.replace('"Complete"', '"Завершено"').replace("operation finished", "操作完成")
+    substitutions = {
+        "node": ('Config["配置"]', 'Changed["配置"]'),
+        "arrow": ("Input[\"Ввод\"] -->", "Input[\"Ввод\"] ---"),
+        "direction": ("flowchart TD", "flowchart LR"),
+        "state-id": ('"План готов" as Planned', '"План готов" as Changed'),
+        "extra-edge": ("操作完成", "操作完成\n    Complete --> Planned"),
+        "caption-injection": ("操作完成", "操作完成; Complete --> Planned"),
+        "language": ("```mermaid", "```bash"),
+        "command": ("flayer status", "flayer destroy"),
+    }
+
+    if change in substitutions:
+        translated = translated.replace(*substitutions[change])
+
+    unit = CanonicalUnit("repository:diagram.md", "page", "diagram.md", "", source)
+    record = ReviewRecord(unit, translated)
+
+    if change == "labels":
+        assert generated_localization.ValidateTranslation(unit, record, ["ai"]).state == "approved"
+
+    else:
+        with pytest.raises(ValueError, match="changed code examples"):
+            generated_localization.ValidateTranslation(unit, record, ["ai"])
+
+
 def test_TrackedCatalogsDoNotConcealNewMissingContracts(generated_project: Path) -> None:
     """Approved catalog entries never imply coverage of newly discovered source units."""
 

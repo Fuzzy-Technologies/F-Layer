@@ -10,10 +10,14 @@ an interrupted operation, and remove the resources belonging to your stack.
 Use it to automate a service environment or give your application a reusable
 infrastructure backend instead of maintaining separate provisioning scripts.
 
-The current release supports **Yandex Cloud**, a **secure SSH gateway** with
-per-device connection settings, and HTTP availability and timing checks.
-Other clouds and VPN profiles are roadmap work. Cloud resources are billed by
-your provider; F-Layer is open source under Apache 2.0.
+The **2.0 development candidate** can deploy a Yandex Cloud server with
+**AmneziaWG 3.1** and **VLESS Reality**, then export separate connection settings
+for each device. Install the candidate wheel, initialize a private project,
+fill in the cloud settings and deploy from the CLI. The published **v1.2.1**
+release supports the secure SSH gateway and HTTP checks; it does not include the
+new VPN commands. Version 2.0 is not yet published as a stable release.
+Other cloud providers need an adapter. Cloud resources are billed by your
+provider; F-Layer is open source under Apache 2.0.
 
 [Documentation](https://fuzzy-technologies.github.io/F-Layer/) ·
 [Quick Start](https://fuzzy-technologies.github.io/F-Layer/en/guide/) ·
@@ -47,14 +51,19 @@ access. This is a working first check, not a server deployment.
 
 ## Quick Start
 
-Next, follow the [Quick Start](https://fuzzy-technologies.github.io/F-Layer/en/guide/) to try an
-endpoint check, or the [gateway walkthrough](https://fuzzy-technologies.github.io/F-Layer/en/guide/first-deployment/)
-to prepare a server plan and deploy it with explicit provider access.
+Follow the [2.0 candidate Quick Start](https://fuzzy-technologies.github.io/F-Layer/en/guide/)
+to install the candidate with its `vpn` extra, create a private project, deploy
+in Yandex Cloud and import the generated client settings. The guide covers both
+protocols, DNS and route checks, and removal of the cloud resources.
+For the published v1.2.1 package installed above, use the
+[SSH gateway walkthrough](https://fuzzy-technologies.github.io/F-Layer/en/guide/first-deployment/).
 
 ## What you can build
 
 - **A managed cloud environment:** create, inspect, recover and destroy an owned
   stack through the same configuration and state file.
+- **A private VPN server in the 2.0 candidate:** deploy AmneziaWG and VLESS Reality
+  together, with per-device client files and explicit cloud cleanup.
 - **A controlled SSH gateway:** prepare server configuration and per-device
   SSH local forwards to explicitly allowed destinations.
 - **Operational checks:** test an HTTP endpoint and measure bounded response

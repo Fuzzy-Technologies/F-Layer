@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "README.md"
-sourceHash = "sha256:968a698d5bb05e738bc7d6a4c2be6b9ab48aa61406801d0bff762bd409a11ce1"
-reviewedTranslationHash = "sha256:79857314be3dbaafff12180cb53cf33865e846d352f86cbf2789ca215080cf6a"
+sourceHash = "sha256:7a5cc414df1392e07343f3dd6a990682dd6e84b8647fcd4140ac18a2fda128e8"
+reviewedTranslationHash = "sha256:237faa9420669dd38e443e1a55ad04a5dafdf2fac270b63ad8c1cb9a7505d8c4"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:43Z"
+reviewedAt = "2026-10-09T08:10:03Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # F-Layer
@@ -20,15 +20,19 @@ F-Layer создаёт облачные ресурсы по конфигурац
 инфраструктурой из приложения, чтобы не поддерживать отдельные скрипты
 развёртывания для каждого случая.
 
-Текущий релиз поддерживает **Yandex Cloud**, **защищённый SSH-шлюз** с настройками
-подключения для каждого устройства, а также HTTP-проверки доступности и времени
-ответа. Другие облака и VPN-профили запланированы. Облачные ресурсы оплачиваются
-провайдеру; исходный код F-Layer открыт по лицензии Apache 2.0.
+**Предварительная сборка 2.0** развёртывает сервер Yandex Cloud с
+**AmneziaWG 3.1** и **VLESS Reality** и готовит отдельные настройки подключения
+для каждого устройства. Установите wheel этой сборки, создайте приватный проект,
+заполните настройки облака и запустите развёртывание из CLI. Опубликованный релиз
+**v1.2.1** поддерживает защищённый SSH-шлюз и HTTP-проверки; новых VPN-команд в нём
+нет. Стабильный релиз 2.0 пока не опубликован. Для других облачных провайдеров
+нужен адаптер. Облачные ресурсы оплачиваются провайдеру; исходный код F-Layer
+открыт по лицензии Apache 2.0.
 
-[Документация](https://fuzzy-technologies.github.io/F-Layer/) ·
-[Быстрый старт](https://fuzzy-technologies.github.io/F-Layer/en/guide/) ·
-[Первое развёртывание](https://fuzzy-technologies.github.io/F-Layer/en/guide/first-deployment/) ·
-[Справочник API](https://fuzzy-technologies.github.io/F-Layer/en/api/) ·
+[Документация](https://fuzzy-technologies.github.io/F-Layer/ru/) ·
+[Быстрый старт](https://fuzzy-technologies.github.io/F-Layer/ru/guide/) ·
+[Первое развёртывание](https://fuzzy-technologies.github.io/F-Layer/ru/guide/first-deployment/) ·
+[Справочник API](https://fuzzy-technologies.github.io/F-Layer/ru/api/) ·
 [История изменений](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/CHANGELOG.md) ·
 [Релизы](https://github.com/Fuzzy-Technologies/F-Layer/releases)
 
@@ -58,16 +62,20 @@ python -m flayer check --format json
 
 ## Быстрый старт
 
-Перейдите к [быстрому старту](https://fuzzy-technologies.github.io/F-Layer/en/guide/),
-чтобы проверить доступность адреса, или к
-[инструкции по шлюзу](https://fuzzy-technologies.github.io/F-Layer/en/guide/first-deployment/),
-чтобы подготовить план сервера и развернуть его с явно предоставленным доступом
-к провайдеру.
+Следуйте [быстрому старту для предварительной сборки 2.0](https://fuzzy-technologies.github.io/F-Layer/ru/guide/):
+установите её с дополнением `vpn`, создайте приватный проект, разверните сервер
+в Yandex Cloud и импортируйте созданные настройки клиентов. Руководство охватывает
+оба протокола, проверку DNS и маршрутов и удаление облачных ресурсов.
+Для опубликованного пакета v1.2.1, установленного выше, используйте
+[инструкцию по SSH-шлюзу](https://fuzzy-technologies.github.io/F-Layer/ru/guide/first-deployment/).
 
 ## Возможности
 
 - **Управляемое облачное окружение:** создание, проверка, восстановление и удаление
   ресурсов своего развёртывания с одной конфигурацией и файлом состояния.
+- **Свой VPN-сервер в предварительной сборке 2.0:** совместное развёртывание
+  AmneziaWG и VLESS Reality с отдельными файлами клиентов и управляемым удалением
+  облачных ресурсов.
 - **SSH-шлюз с ограниченным доступом:** подготовка серверной конфигурации и локальных
   SSH-пробросов для устройств только к разрешённым адресам.
 - **Эксплуатационные проверки:** проверка HTTP-адреса, измерение времени ответа

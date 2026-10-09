@@ -214,16 +214,31 @@ def ValidateTranslation(
             or record["reviewedTranslationHash"] != translation_hash):
         state = "stale"
 
-    if unit.kind == "page" and CODE_FENCE.findall(unit.body) != CODE_FENCE.findall(body):
-        raise ValueError(f"Generated translation changed code fences: {unit.identifier}")
-
-    source_code = [match.group(0) for match in CODE_FENCE.finditer(unit.body)]
-    translated_code = [match.group(0) for match in CODE_FENCE.finditer(body)]
+    source_code = [DiagramStructure(match.group(0)) for match in CODE_FENCE.finditer(unit.body)]
+    translated_code = [DiagramStructure(match.group(0)) for match in CODE_FENCE.finditer(body)]
 
     if source_code != translated_code:
         raise ValueError(f"Generated translation changed code examples: {unit.identifier}")
 
     return ReviewedTranslation(body, state, source_hash, translation_hash, str(reviewer_type))
+
+
+def DiagramStructure(fence: str) -> str:
+    """Permit diagram-label translation while preserving topology and every executable example."""
+
+    if not re.match(r"^(?:`{3,}|~{3,})mermaid\n", fence):
+        return fence
+
+    # Only quoted node labels, explicit state aliases, and transition captions are prose.
+    # Everything outside those positions, including identifiers and arrows, stays exact.
+    prose = r"[\w ,.!?():/—–+\-]+"
+    normalized = re.sub(rf'(\b[A-Za-z_]\w*\["){prose}("\])', r"\1<label>\2", fence)
+    normalized = re.sub(rf'(?m)^(\s*state "){prose}(" as [A-Za-z_]\w*)$',
+                        r"\1<label>\2", normalized)
+    node = r"(?:[A-Za-z_]\w*|\[\*\])"
+    normalized = re.sub(rf"(?m)^(\s*{node} --> {node}: ){prose}$", r"\1<label>", normalized)
+
+    return normalized
 
 
 def LoadTranslations(

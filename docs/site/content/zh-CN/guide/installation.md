@@ -26,7 +26,7 @@ flayer check --format json
 ```
 
 预期结果为 `"status": "ok"`，退出码为 `0`。`flayer` 和 `python -m flayer`
-接受相同参数。接下来阅读[快速开始](index.md)，准备在 Yandex Cloud 中部署。
+接受相同参数。此稳定版本的部署步骤请见 [SSH 网关指南](first-deployment.md)。
 
 也可以从发行页下载 `f_layer-1.2.1-py3-none-any.whl`，将本地文件路径传给
 `python -m pip install`。该发行页还提供源码压缩包和包含文件哈希的构建报告。
@@ -35,6 +35,17 @@ PyPI 发布是独立步骤；正式宣布 PyPI 发布之前，请使用上述 wh
 
 部署指南需要 Linux 或 macOS，因为保存配置文件时会检查 POSIX 文件所有者和
 访问权限。Windows 可以安装软件包并运行本地诊断；部署请使用 Linux 环境。
+
+## 安装 2.0 预发布版本 {#install-the-20-candidate}
+
+要使用 AmneziaWG 和 VLESS Reality，请在 Linux 或 WSL 中安装经过审核的
+2.0 预发布 wheel，并启用 `vpn` 可选依赖。[快速开始](index.md)提供本地 wheel
+安装命令、项目设置和部署步骤。应从已审核代码版本对应的
+[CI 运行](https://github.com/Fuzzy-Technologies/F-Layer/actions)下载构建产物，
+不要使用 v1.2.1 发行页上的 wheel。保留文件原始名称和版本。
+预发布构建可能仍显示当前开发中的软件包版本；请核对代码版本，并确认存在
+`flayer project` 和 `flayer vpn` 命令。本指南不表示软件包已在 PyPI 发布，
+也不表示 2.0 稳定版已经发布。
 
 ## 开发环境 {#development-checkout}
 

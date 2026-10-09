@@ -20,8 +20,10 @@ source listings exact.
   review to the existing `fuzzy-doc-unit-v1` canonical hash and the exact translated
   text hash. Require editorial and technical review, reviewer identity and type,
   a timezone-aware date, and the project authority from ADR 0015.
-- Preserve all Markdown headings, their canonical anchors, code fences, and source
-  link destinations. Translated documents retain their existing locale routes.
+- Preserve all Markdown headings, their canonical anchors, executable code fences,
+  and source link destinations. Mermaid node labels, state aliases, and transition
+  captions are translated while identifiers, connections, and direction stay exact.
+  Translated documents retain their existing locale routes.
 - Use a static Griffe extension to replace documentation objects only. The wheel,
   Python identifiers, signatures, original source listings, and import guard remain
   unchanged. A module is translated only when all its rendered prose is reviewed.

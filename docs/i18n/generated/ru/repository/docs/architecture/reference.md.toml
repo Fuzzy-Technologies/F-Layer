@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/reference.md"
-sourceHash = "sha256:1c451e63e39ba6d4ac192fa24914ea89251466149406775dbdfd675fedda1308"
-reviewedTranslationHash = "sha256:6155f9bc88fbceec69cd53045712265ae36c65495e1cfe8683608dd83a1191b6"
+sourceHash = "sha256:b045a968d47e17ec97f0226738db9c0be054ce2c705657ffc086737a80e6d7ae"
+reviewedTranslationHash = "sha256:31f70977c46f27b7d5ce29ab614ef089525e44b37c985c16957e374be6ff6744"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:36:22Z"
+reviewedAt = "2026-10-09T08:06:40.544464+00:00"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # Обзор реализованной архитектуры
@@ -18,16 +18,16 @@ body = '''
 
 ```mermaid
 flowchart TD
-    CLI["Explicit CLI input"] --> Config["Configuration and identity"]
-    Config --> Engine["Lifecycle engine"]
-    Engine --> State["Owned state and operation journal"]
-    Engine --> Contract["Provider contracts"]
-    Contract --> Adapter["Yandex adapter"]
-    Profile["Gateway profile"] --> Plan["Deployment plan"]
+    CLI["Явные параметры CLI"] --> Config["Настройки и идентификаторы"]
+    Config --> Engine["Управление жизненным циклом"]
+    Engine --> State["Состояние ресурсов и журнал операций"]
+    Engine --> Contract["Интерфейсы провайдеров"]
+    Contract --> Adapter["Адаптер Yandex Cloud"]
+    Profile["Профиль шлюза"] --> Plan["План развёртывания"]
     Plan --> Engine
-    Profile --> Artifacts["Owned artifact bundles"]
-    Adapter --> Runner["Injected command runner"]
-    Diagnostics["Bounded diagnostics"] --> Reports["Redacted diagnostic reports"]
+    Profile --> Artifacts["Наборы файлов своего стека"]
+    Adapter --> Runner["Подключаемый исполнитель команд"]
+    Diagnostics["Диагностика с ограничениями"] --> Reports["Диагностические отчёты без секретов"]
 ```
 
 Ядро использует общие интерфейсы провайдеров. Конкретные облачные команды
@@ -50,16 +50,23 @@ flowchart TD
 
 ```mermaid
 stateDiagram-v2
+    state "План готов" as Planned
+    state "Операция записана в журнал" as Journaled
+    state "Ресурсы сверены" as Observed
+    state "Состояние сохранено" as Saved
+    state "Завершено" as Complete
+    state "Прервано" as Interrupted
+    state "Откат" as Rollback
     [*] --> Planned
-    Planned --> Journaled: mutation intent persisted
-    Journaled --> Observed: provider evidence reconciled
-    Observed --> Saved: owned locators persisted
-    Saved --> Complete: operation journal cleared
-    Journaled --> Interrupted: uncertain result or process failure
-    Observed --> Interrupted: durable state unavailable
-    Interrupted --> Journaled: explicit recover
-    Interrupted --> Rollback: explicit rollback recovery
-    Rollback --> Complete: proven owned resources removed
+    Planned --> Journaled: план изменения записан
+    Journaled --> Observed: данные провайдера сверены
+    Observed --> Saved: ID своих ресурсов сохранены
+    Saved --> Complete: журнал операции очищен
+    Journaled --> Interrupted: неизвестный результат или сбой процесса
+    Observed --> Interrupted: сохранённое состояние недоступно
+    Interrupted --> Journaled: явный вызов recover
+    Interrupted --> Rollback: явный вызов восстановления с откатом
+    Rollback --> Complete: удалены ресурсы с подтверждённой принадлежностью
     Complete --> [*]
 ```
 
@@ -75,15 +82,15 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    Source["Tracked source and coverage rules"] --> Wheel["Built installed wheel"]
-    Source --> Files["Repository file inventory"]
-    Wheel --> Parity["Exact package file parity"]
-    Parity --> AST["Static API and definition inventory"]
-    Files --> Markdown["Canonical Markdown pages"]
-    AST --> HTML["Strict generated site"]
+    Source["Исходники в Git и правила охвата"] --> Wheel["Собранный и установленный wheel"]
+    Source --> Files["Перечень файлов репозитория"]
+    Wheel --> Parity["Точное совпадение файлов пакета"]
+    Parity --> AST["Статический анализ API и определений"]
+    Files --> Markdown["Исходные страницы Markdown"]
+    AST --> HTML["Сайт со строгой проверкой сборки"]
     Markdown --> HTML
-    HTML --> Gate["Links, anchors, and reachability"]
-    Gate --> Evidence["Disposable site and provenance evidence"]
+    HTML --> Gate["Ссылки, якоря и доступность страниц"]
+    Gate --> Evidence["Сайт и отчёт о происхождении сборки"]
 ```
 
 Защита импорта не позволяет выполнять код пакета при генерации справочника API.

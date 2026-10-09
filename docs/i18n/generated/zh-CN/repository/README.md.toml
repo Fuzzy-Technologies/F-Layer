@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "README.md"
-sourceHash = "sha256:968a698d5bb05e738bc7d6a4c2be6b9ab48aa61406801d0bff762bd409a11ce1"
-reviewedTranslationHash = "sha256:7692203a32e3256df4e6c19d4bcb3e3abeee59b9552aea42a906d2bd28e12c19"
+sourceHash = "sha256:7a5cc414df1392e07343f3dd6a990682dd6e84b8647fcd4140ac18a2fda128e8"
+reviewedTranslationHash = "sha256:7bcf6167bac4baf83005cb93b98b0d72e0ceb79515fb4e26fbce4a42cf7b4deb"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:43Z"
+reviewedAt = "2026-10-09T08:10:03Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # F-Layer
@@ -18,14 +18,17 @@ F-Layer 根据部署配置创建云资源，并在本地记录所创建的资源
 它可以自动化服务环境，也可以为应用程序提供可复用的基础设施管理能力，
 无需为每个场景维护独立的部署脚本。
 
-当前版本支持 **Yandex Cloud**、为各设备分别配置连接的**安全 SSH 网关**，
-以及 HTTP 可用性和耗时检查。其他云平台和 VPN 配置档仍在规划中。
-云资源由云服务商计费；F-Layer 按 Apache 2.0 许可证开源。
+**2.0 预发布版本**可以在 Yandex Cloud 部署同时运行 **AmneziaWG 3.1** 和
+**VLESS Reality** 的服务器，并为每台设备导出独立连接设置。安装该版本的 wheel，
+初始化私有项目，填写云配置，再从 CLI 执行部署。已发布的 **v1.2.1** 支持安全
+SSH 网关和 HTTP 检查，不包含新的 VPN 命令。2.0 稳定版尚未发布。
+其他云平台需要相应的适配器。云资源由云服务商计费；F-Layer 按 Apache 2.0
+许可证开源。
 
-[文档](https://fuzzy-technologies.github.io/F-Layer/) ·
-[快速开始](https://fuzzy-technologies.github.io/F-Layer/en/guide/) ·
-[首次部署](https://fuzzy-technologies.github.io/F-Layer/en/guide/first-deployment/) ·
-[API 参考](https://fuzzy-technologies.github.io/F-Layer/en/api/) ·
+[文档](https://fuzzy-technologies.github.io/F-Layer/zh-CN/) ·
+[快速开始](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/) ·
+[首次部署](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/first-deployment/) ·
+[API 参考](https://fuzzy-technologies.github.io/F-Layer/zh-CN/api/) ·
 [更新日志](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/CHANGELOG.md) ·
 [发布版本](https://github.com/Fuzzy-Technologies/F-Layer/releases)
 
@@ -54,13 +57,17 @@ python -m flayer check --format json
 
 ## 快速开始
 
-接下来可按[快速开始](https://fuzzy-technologies.github.io/F-Layer/en/guide/)
-检查一个网络端点，或按[网关部署步骤](https://fuzzy-technologies.github.io/F-Layer/en/guide/first-deployment/)
-准备服务器计划，并在明确提供云访问权限后执行部署。
+按照 [2.0 预发布版本快速开始](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/)
+安装包含 `vpn` 可选依赖的预发布版本，创建私有项目，在 Yandex Cloud 部署，
+并导入生成的客户端设置。指南涵盖两种协议、DNS 和路由检查，以及云资源删除。
+如果使用上文安装的已发布 v1.2.1 软件包，请阅读
+[SSH 网关指南](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/first-deployment/)。
 
 ## 可以实现什么
 
 - **受管云环境：**使用同一份配置和状态文件创建、检查、恢复、删除所属部署的资源。
+- **2.0 预发布版本中的私有 VPN 服务器：**同时部署 AmneziaWG 和 VLESS Reality，
+  分别生成各设备的客户端文件，并明确清理所属云资源。
 - **访问受控的 SSH 网关：**准备服务器配置，并为各设备生成仅通往明确允许目标的 SSH 本地转发。
 - **运行检查：**检查 HTTP 端点，在指定限制内测量响应和传输耗时，并输出可供自动化使用的 JSON 报告。
 - **应用程序集成：**在自己的工具中复用 Python 配置、提供方和资源生命周期 API。

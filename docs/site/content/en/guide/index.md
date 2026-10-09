@@ -1,90 +1,137 @@
 # Quick Start
 
-Deploy a small server in Yandex Cloud, connect through it and remove the
-resources when you finish. The stable **v1.2.1** walkthrough uses an SSH gateway:
-it forwards selected connections through the server. The two-protocol VPN
-workflow is being prepared for 2.0 and is not part of that stable package.
+Create a private VPN project, deploy one Yandex Cloud server, and connect a device
+using **AmneziaWG** or **VLESS Reality**. F-Layer creates the cloud resources,
+installs both services and exports separate client settings for each device.
 
-## 1. Check the installation
+This walkthrough requires a **2.0 development candidate** with `flayer project`
+and `flayer vpn` commands. The published **v1.2.1** package supports the
+[SSH gateway walkthrough](first-deployment.md), but does not include these VPN
+commands. Version 2.0 is not yet a published stable release.
 
-[Install the release package](installation.md), then run:
+## 1. Install the candidate
+
+Use Linux or WSL, Python 3.11+, OpenSSH (`ssh` and `ssh-keygen`), and the
+[official Yandex Cloud CLI](https://yandex.cloud/en/docs/cli/quickstart).
+Download the reviewed candidate wheel from the project's CI artifacts. Create a
+virtual environment as described in [Install](installation.md), activate it,
+then install that wheel with its `vpn` extra. Replace the path below with the
+actual downloaded filename; retain its original version:
 
 ```bash
-flayer check --format json
+FLAYER_WHEEL=/absolute/path/to/downloaded-candidate.whl
+python -m pip install "${FLAYER_WHEEL}[vpn]"
+flayer project --help
+flayer vpn --help
 ```
 
-Expected result: `"status": "ok"`, exit code `0`. This confirms the local
-installation. Cloud access is configured in the next step.
+The extra supplies the cryptography library used to generate keys locally.
+Git and Docker are not needed. Installing v1.2.1 from its release URL does not
+install a 2.0 candidate, even if a candidate currently carries the same package
+version. Choose the artifact from the reviewed revision.
 
-## 2. Connect your Yandex Cloud account
+## 2. Set up the project
 
-Use Linux or macOS for this walkthrough. Install and initialize the
-[official Yandex Cloud CLI](https://yandex.cloud/en/docs/cli/quickstart), then
-check the available profiles:
+Initialize `yc` using its official instructions, then inspect your profiles:
 
 ```bash
-yc --version
 yc config profile list
+flayer project init ~/flayer-vpn
 ```
 
-Keep the profile name and the ID of the cloud folder where you want the server.
-In the commands below, replace `example` with that profile name and
-`example-folder` with that folder ID. Your account needs permission to create
-and remove compute and network resources there. Yandex Cloud charges for the
-resources while they exist.
+Open `~/flayer-vpn/project.toml`. Replace these values before preparation:
 
-## 3. Prepare the server settings
+| Setting                                  | What to enter                                                                                                        |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `identity.project`, `stack`, `owner_id`  | Names identifying your project, deployment and owner.                                                                |
+| `identity.scope_id`                      | The Yandex Cloud folder ID in which to create resources.                                                             |
+| `cloud.yc_profile`                       | The configured `yc` profile with permission to create and remove compute and network resources in that folder.       |
+| `cloud.zone_id`, `cloud.image_id`        | Your availability zone and an Ubuntu 24.04 **amd64** image ID.                                                       |
+| `cloud.management_cidrs`                 | Your current public administrator IPv4 address with `/32`; replace the example address.                              |
+| `devices`                                | Device names and unique tunnel addresses, starting with the example `laptop` / `10.66.0.2`.                          |
+| `vless.target_host`, `vless.server_name` | A reachable TLS 1.3 / HTTP/2 site with a valid certificate for the server name. The supplied hostname is an example. |
 
-Copy the `gateway.toml` example from [First deployment](first-deployment.md#prepare-a-secure-gateway-locally)
-into a new working directory. Fill in the cloud folder ID, availability zone,
-Ubuntu 24.04 image ID, management IP range and your SSH public keys. The example
-creates a network, subnet, firewall, public address, boot disk and virtual machine.
+Keep the initial route settings to try full IPv4 routing. Before connecting,
+disable IPv6 in the VPN client's settings or on the device: this version does
+not route IPv6. Changing `ipv6_policy` in TOML does not change the device's OS.
 
-Run the local preparation snippet in that guide. It creates the server's
-cloud-init file and `generated-artifacts/plan.toml`. Inspect these files before
-creating resources. Keep the configuration and generated files in the same
-working directory for the remaining commands.
+The project directory contains private SSH and VPN keys. Keep it outside Git and
+shared directories, retain its access permissions, and keep a private backup.
+Decide which devices and routes you need before the next step.
 
-## 4. Create and inspect the deployment
+## 3. Prepare and deploy
 
 ```bash
-flayer lifecycle create --config generated-artifacts/plan.toml --state generated-artifacts/stack.json --yc-profile example --allow-mutation --scope-confirm example-folder --format json
-flayer lifecycle status --config generated-artifacts/plan.toml --state generated-artifacts/stack.json --yc-profile example --format json
+flayer vpn prepare --project ~/flayer-vpn
+flayer vpn deploy --project ~/flayer-vpn --allow-mutation --scope-confirm YOUR_FOLDER_ID
+flayer vpn status --project ~/flayer-vpn
 ```
 
-The first command creates cloud resources and records their IDs in `stack.json`.
-The second reads their current state. Keep that state file: recovery and cleanup
-use it to identify your resources. If creation is interrupted, use the
-[recovery procedure](first-deployment.md#recovery-and-cleanup).
+Replace `YOUR_FOLDER_ID` with the exact `identity.scope_id` value. `prepare`
+creates local files without contacting the cloud. `deploy` creates a network,
+subnet, security group, public address, boot disk and VM, then installs both VPN
+services. Yandex Cloud bills for those resources while they exist.
 
-Once cloud-init has finished, follow [Connect one authorized device](first-deployment.md#connect-one-authorized-device)
-to create the client configuration and open the SSH connection. With the example
-settings, traffic to `127.0.0.1:8443` reaches `example.org:443` through the server.
-A running virtual machine alone does not prove that this connection works.
+F-Layer verifies the VM's SSH host key against the key obtained through the
+Yandex API for that owned VM before transferring private files. A deployment
+report showing `services-active` confirms running server processes; the client
+connection still needs the check below.
 
-## 5. Remove the resources
+## 4. Connect a device
 
-When you finish, review the folder and project names, then run:
+Use the files for your own device. For the default `laptop` device:
+
+| Protocol      | Import                                                                     | Client setup                                                                                                                                    |
+| ------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| AmneziaWG     | `~/flayer-vpn/artifacts/device-laptop-amneziawg/amneziawg.conf`            | Import into an AmneziaWG 3.1-compatible client and activate the tunnel. Ordinary WireGuard clients do not understand the added protocol fields. |
+| VLESS Reality | The URI in `~/flayer-vpn/artifacts/device-laptop-vless-reality/import.txt` | Import into a compatible client such as v2rayN or v2rayNG. Set DNS, routing and VPN/TUN mode explicitly for device-wide traffic.                |
+
+A VLESS import link does not carry the complete DNS and route policy. For the
+raw Xray client, the same directory contains `client.json`, which preserves the
+application-proxy policy and listens on `127.0.0.1:10808`. Applications must use
+`socks5h://127.0.0.1:10808`; this does not automatically route other applications.
+See the [AmneziaWG](../../../../architecture/amneziawg.md) and
+[VLESS Reality](../../../../architecture/vless-reality.md) guides for compatible
+clients, split routing and protocol details.
+
+Test the protocols **one at a time**. Open an HTTPS site through each client,
+check that the visible public IPv4 address is the server's address, and verify
+DNS and IPv6 behavior. A successful import or active server service alone does
+not prove that traffic is using the tunnel.
+
+## 5. Recover or remove the deployment
+
+If cloud creation was interrupted, keep the same project files and use:
 
 ```bash
-flayer lifecycle destroy --config generated-artifacts/plan.toml --state generated-artifacts/stack.json --yc-profile example --allow-mutation --scope-confirm example-folder --format json
+flayer vpn recover --project ~/flayer-vpn --allow-mutation --scope-confirm YOUR_FOLDER_ID
 ```
 
-Check the command result and cloud state before discarding the state file.
-The deployment guide also explains how to remove the generated local files.
+Read the report before retrying. A guest installation interrupted partway through
+may require inspection and restoration of its known private files; cloud recovery
+does not authorize overwriting an unknown server configuration.
 
-## Other ways to use F-Layer
-
-To check an existing HTTP service, replace the example URL with your endpoint:
+To remove the cloud resources belonging to this project:
 
 ```bash
-flayer health --endpoint https://example.com/ --timeout 3 --format json
+flayer vpn destroy --project ~/flayer-vpn --allow-mutation --scope-confirm YOUR_FOLDER_ID
 ```
 
-The [CLI guide](cli.md) explains diagnostics and exit codes. To integrate
-F-Layer into Python, see [Configuration](configuration.md) and the
-[API reference](../api/index.md). Yandex Cloud is the implemented cloud provider;
-other providers need their own adapter before they can be used.
+Check the result and the cloud folder. Local keys, client files and state remain
+in the project directory. Keep them until cleanup is confirmed.
 
-In command help, braces such as `{create,status,destroy,recover}` mean
+Prepared project settings are immutable in this version. To add a device or
+change routes, first destroy the old deployment using its unchanged project,
+then initialize a **new private project directory** with the desired settings.
+The CLI does not yet offer in-place device addition, revocation or key rotation.
+
+## Next steps
+
+Yandex Cloud is the implemented cloud provider. Other clouds require an adapter.
+For existing services, use [CLI diagnostics](cli.md); for Python integrations,
+see [Configuration](configuration.md) and the [API reference](../api/index.md).
+Release maintainers record real cloud and client checks in the
+[VPN release acceptance procedure](../../../../development/vpn-release-acceptance.md).
+
+In command help, braces such as `{prepare,deploy,status,destroy,recover}` mean
 **choose one command**. Do not type the braces.

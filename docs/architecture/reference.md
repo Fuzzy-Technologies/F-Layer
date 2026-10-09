@@ -41,6 +41,13 @@ real infrastructure mutation during development.
 
 ```mermaid
 stateDiagram-v2
+    state "Planned" as Planned
+    state "Journaled" as Journaled
+    state "Observed" as Observed
+    state "Saved" as Saved
+    state "Complete" as Complete
+    state "Interrupted" as Interrupted
+    state "Rollback" as Rollback
     [*] --> Planned
     Planned --> Journaled: mutation intent persisted
     Journaled --> Observed: provider evidence reconciled

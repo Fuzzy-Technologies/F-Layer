@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "f-layer"
 dynamic = ["version"]
-description = "Modular infrastructure automation platform for secure cloud environments"
+description = "Deploy and manage cloud gateways with explicit project configuration"
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -25,6 +25,7 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/Fuzzy-Technologies/F-Layer"
+Documentation = "https://fuzzy-technologies.github.io/F-Layer/"
 Repository = "https://github.com/Fuzzy-Technologies/F-Layer"
 Issues = "https://github.com/Fuzzy-Technologies/F-Layer/issues"
 Changelog = "https://github.com/Fuzzy-Technologies/F-Layer/releases"
@@ -33,7 +34,9 @@ Changelog = "https://github.com/Fuzzy-Technologies/F-Layer/releases"
 flayer = "flayer.__main__:Main"
 
 [project.optional-dependencies]
+vpn = ["cryptography==50.0.2"]
 dev = [
+    "cryptography==50.0.2",
     "hatchling==1.32.0",
     "mypy==2.3.1",
     "pytest==9.1.1",

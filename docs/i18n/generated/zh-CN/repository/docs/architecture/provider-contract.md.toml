@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/provider-contract.md"
-sourceHash = "sha256:8a2b1712b64fddd13e3f6b4b4bb7e9aeb1cc23e6710a2d1b15a1b6e6bee10b50"
-reviewedTranslationHash = "sha256:660cd8a2d75a16fc94e54cd4f11bf1274d3df7b7c76a9e262003990d29a6ad68"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:cb01f193ac1fac2dfee1f127210a9f819a45e6896e7e92f4bff81934d1a08cef"
+reviewedTranslationHash = "sha256:ed1cd89fdc27271b2067e96a51429ca151aeaf91c0ce89f68bb5853267e38737"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
+reviewedAt = "2026-10-09T19:31:45Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # 提供方接口
@@ -60,10 +60,15 @@ CLI 可以跨所有可访问文件夹按 ID 查找资源。因此适配器验证
 
 ## 结果完整性与失败行为
 
-CLI 列表操作有明确上限，默认每种类型 10 000 个资源。响应数量达到或超过上限
-时，适配器以 `INCOMPLETE_INVENTORY` 拒绝结果。该保守规则也可能拒绝数量恰好
-等于上限的完整结果；在允许范围内增加上限可以消除歧义。未来可用分页替代该规则，
-但调用方要求完整结果的契约不变。
+适配器对每种资源类型采用配置的清单上限与 1000 中的较小值作为请求上限。
+为保持兼容，配置的默认上限仍为 10 000，但它不能覆盖云 API 每页最多 1000
+个结果的限制。具体来说，`yc` 1.40.0 会把过大的网络列表上限直接传给 API，
+即使文件夹为空，API 也会拒绝该请求。
+
+响应数量达到或超过实际请求上限时，适配器以 `INCOMPLETE_INVENTORY` 拒绝结果，
+绝不将其视为完整的资源归属证据。这一保守规则也可能拒绝数量恰好等于上限的完整
+结果。提高较小的配置上限只能在 1000 的云端限制以内消除歧义。达到该限制的
+文件夹需要尚未实现的分页支持；把配置上限设为大于 1000 不能绕过完整性检查。
 
 JSON 无效、响应结构异常、资源 ID 无效或重复、地址格式错误或范围未验证均导致
 拒绝。一种类型失败就会中止 `DiscoverInventory()`，不返回部分清单。资源发现
@@ -107,6 +112,7 @@ if status.authenticated:
 
 官方参考：
 
+- [Network.List 的每页结果上限与分页](https://yandex.cloud/en/docs/vpc/api-ref/Network/list)
 - [Yandex CLI 虚拟机列表和通用参数](https://yandex.cloud/en/docs/compute/cli-ref/instance/list)
 - [资源 ID 查询范围](https://yandex.cloud/en/docs/compute/operations/vm-info/get-info)
 - [磁盘列表](https://yandex.cloud/en/docs/cli/cli-ref/compute/cli-ref/disk/list)

@@ -66,8 +66,11 @@ To add or remove a device, change public intent and call
 `GenerateAmneziaWgSecrets(profile, previous)` with the retained credentials.
 Unchanged devices and the server retain their keys. To replace one compromised
 device key, explicitly supply `rotate_device_ids=("phone",)`.
-Preparation alone does not revoke a device: deploy the replacement server
-configuration first, verify it, and only then remove obsolete local artifacts.
+Preparation alone does not revoke a device. The initial guest installer accepts
+only a new deployment or an identical retry; it refuses changed existing
+deployments until an explicit expected-deployment receipt is supported end to
+end. For now, changed credentials require controlled removal and recreation.
+Verify the resulting server before removing obsolete local client artifacts.
 
 ## Guest installation contract
 
@@ -97,8 +100,10 @@ initial installation.
 The service and interface names derive from the complete stack ownership
 identity. Installation refuses foreign or symlinked managed paths. Repeating an
 unchanged healthy installation returns without reinstalling dependencies. A
-changed configuration is backed up before replacement; a failed service start
-restores the previous files and attempts to restart the previous service.
+changed or missing saved payload receipt stops installation before downloads or
+service changes. An unhealthy identical installation can be repaired; its files
+are backed up first, and a failed start restores the previous files and attempts
+to restart the previous service.
 The systemd unit starts the tunnel and its owned firewall rules after a reboot.
 
 The guest bootstrap must explicitly allow the declared UDP ingress and permit

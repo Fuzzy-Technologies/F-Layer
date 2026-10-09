@@ -400,7 +400,11 @@ for name in install.sh server.conf firewall.nft network.sh service.service; do
   [ "$(stat -c '%u:%a:%h' "$source_dir/$name")" = '0:600:1' ]
 done
 payload_hash="$(cd "$source_dir" && sha256sum install.sh server.conf firewall.nft network.sh service.service | sha256sum | cut -d ' ' -f 1)"
-if [ -f "$base/payload-hash" ] && [ "$(cat "$base/payload-hash")" = "$payload_hash" ]; then
+if [ -d "$base" ]; then
+  if [ ! -f "$base/payload-hash" ] || [ "$(cat "$base/payload-hash")" != "$payload_hash" ]; then
+    echo 'Replacement requires an explicit expected deployment receipt' >&2
+    exit 1
+  fi
   if Check; then exit 0; fi
 fi
 apt-get -q update

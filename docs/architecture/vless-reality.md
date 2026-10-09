@@ -107,12 +107,14 @@ corresponding `flayer-vless-<ownership-hash>.service`. It:
 6. confirms configuration syntax, systemd activity, and the local TCP listener.
 
 A per-deployment lock rejects concurrent operations. Reapplying unchanged input
-checks the running service without replacing credentials. Replacing an owned
-configuration checks the previous receipt and exact file hashes first. A
-synchronous failed start restores the previous files and restarts the previous
-service. Failed first installation removes the files created by that attempt.
+checks the running service without replacing credentials. Different configuration
+bytes for an existing owned deployment are rejected before managed files or
+services change. Credential rotation and revocation need a future explicit
+expected-old authorization contract; silently replacing a working configuration
+is not supported. Failed first installation removes the files created by that
+attempt.
 
-A forced process kill or power loss during replacement can leave an incomplete
+A forced process kill or power loss during initial installation can leave an incomplete
 receipt. Subsequent operations then stop instead of guessing which files to
 remove or overwrite. Inspect the owned deployment and restore its known private
 bundle before retrying; automatic recovery from this interrupted state is not
@@ -122,8 +124,8 @@ foreign ownership. Empty ownership lock files remain to prevent lock-inode races
 ## Validation and release evidence
 
 Unit tests cover credential separation, import fields, split routing, malformed
-settings, hash verification, malicious archive entries, owned replacement,
-rollback, cleanup, private-file link rejection, and installer entry points.
+settings, hash verification, malicious archive entries, unauthorized replacement rejection,
+failed-install cleanup, private-file link rejection, and installer entry points.
 `FLAYER_XRAY_BINARY` enables a targeted test that passes generated server and
 client configurations to the actual checksum-verified Xray 26.3.27 executable.
 

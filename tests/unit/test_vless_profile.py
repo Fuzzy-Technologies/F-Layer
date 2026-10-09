@@ -270,8 +270,8 @@ def test_GuestRefusesForeignAndChangedFiles(tmp_path: Path, monkeypatch: pytest.
     assert root.exists() and service.exists()
 
 
-def test_FailedReplacementRestoresPreviousCredentials(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """A failed service health check must not revoke the previously working client credentials."""
+def test_ReplacementRequiresExplicitExpectedOldAuthorization(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A changed input must not revoke existing credentials or touch the active service."""
 
     request, config = guest._Request(PreparedDirectory(tmp_path))
     root, service = GuestPaths(tmp_path, monkeypatch)
@@ -285,7 +285,7 @@ def test_FailedReplacementRestoresPreviousCredentials(tmp_path: Path, monkeypatc
 
     monkeypatch.setattr(guest, "_Health", FailHealth)
 
-    with pytest.raises(guest.GuestError, match="restored"):
+    with pytest.raises(guest.GuestError, match="expected-old authorization"):
         guest._Install(root, service, request, config + b" ")
 
     assert snapshot == {path: path.read_bytes() for path in (*root.iterdir(), service)}

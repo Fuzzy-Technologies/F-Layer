@@ -288,13 +288,15 @@ def _Health(root: Path, service: Path, port: int) -> None:
 
 
 def _Install(root: Path, service: Path, request: dict[str, Any], config: bytes) -> None:
-    """Stage syntax-tested bytes, replace owned files, and roll back synchronous failures."""
+    """Install or retry exact owned bytes; reject implicit credential replacement."""
 
     previous = _Existing(root, service, request["owner"])
-    _TargetHealth(config)
     unit = _Unit(root)
 
-    if previous is not None and previous["files"]["server.json"] == _Digest(config):
+    if previous is not None:
+        if previous["files"]["server.json"] != _Digest(config):
+            raise GuestError("VLESS credential replacement requires an explicit expected-old authorization")
+
         if previous["files"]["service"] != _Digest(unit):
             raise GuestError("Owned service layout differs from this installer version")
 
@@ -302,13 +304,8 @@ def _Install(root: Path, service: Path, request: dict[str, Any], config: bytes) 
 
         return
 
+    _TargetHealth(config)
     binary = _DownloadBinary()
-    backup = None if previous is None else (
-        _Read(root / "xray", MAX_BINARY_BYTES, root_owned=True),
-        _Read(root / "server.json", 1048576, root_owned=True),
-        _Read(service, 16384, root_owned=True),
-        _Read(root / "owner.json", 4096, root_owned=True),
-    )
 
     with tempfile.TemporaryDirectory(prefix=".verify-", dir=BASE) as temporary:
         staged = Path(temporary)
@@ -332,26 +329,15 @@ def _Install(root: Path, service: Path, request: dict[str, Any], config: bytes) 
         _Atomic(root / "owner.json", (json.dumps(receipt, sort_keys=True) + "\n").encode(), 0o600)
 
     except (GuestError, OSError):
-        if backup is not None:
-            for path, content, mode in (
-                (root / "xray", backup[0], 0o755), (root / "server.json", backup[1], 0o600),
-                (service, backup[2], 0o644), (root / "owner.json", backup[3], 0o600),
-            ):
-                _Atomic(path, content, mode)
+        _Command(["systemctl", "disable", "--now", service.name])
 
-            _Command(["systemctl", "daemon-reload"])
-            _Command(["systemctl", "restart", service.name])
+        for path in (service, root / "xray", root / "server.json", root / "owner.json"):
+            path.unlink(missing_ok=True)
 
-        else:
-            _Command(["systemctl", "disable", "--now", service.name])
+        root.rmdir()
+        _Command(["systemctl", "daemon-reload"])
 
-            for path in (service, root / "xray", root / "server.json", root / "owner.json"):
-                path.unlink(missing_ok=True)
-
-            root.rmdir()
-            _Command(["systemctl", "daemon-reload"])
-
-        raise GuestError("VLESS installation failed; the previous owned installation was restored") from None
+        raise GuestError("VLESS installation failed; this attempt's owned files were removed") from None
 
 
 def _Remove(root: Path, service: Path, owner: str) -> None:

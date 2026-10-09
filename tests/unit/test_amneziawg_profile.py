@@ -179,6 +179,8 @@ def test_InstallerUsesPinnedSourcesOwnedPathsAndNoPrivateKeys() -> None:
     assert "--remove)" in installer and "--check)" in installer
     assert "set -x" not in installer
     assert "Restart=on-failure" in files["service.service"]
+    assert installer.index("Replacement requires an explicit expected deployment receipt") < installer.index("apt-get -q update")
+    assert 'if Check; then exit 0; fi' in installer
 
 
 def test_GeneratedShellParsesWithoutExecutingGuestOperations() -> None:

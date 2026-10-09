@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/yandex-lifecycle.md"
 sourceHash = "sha256:a3b974737f2187fad1ab332e2acbcf03da061c5b6859e66aff7f5a842c943b75"
-reviewedTranslationHash = "sha256:6fd9edc541db659a53eceb660149be42eb9fdb95d76154d7ffe73c578ccb5e38"
+reviewedTranslationHash = "sha256:f6b05cf83ffabfe6dd06f187bfaf7ec24cc6381a4589973224ef9880cb52d1cc"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:43:53Z"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # Yandex 生命周期适配器
@@ -53,7 +53,7 @@ SHA256 派生的 40 字符标签；操作 ID 是核心日志的 32 字符小写�
 规范化标签中，使引擎区分本次创建、既有及并发创建的资源。
 
 `CreateResource` 在验证和发现后最多执行一次创建命令。每次都明确传入文件夹、
-配置档和 JSON 输出，关闭浏览器认证，设置 `--retry 0`，在明确期限内无 shell
+CLI 命名配置和 JSON 输出，关闭浏览器认证，设置 `--retry 0`，在明确期限内无 shell
 执行。成功输出必须匹配范围、归属、操作和所需名称/可用区。
 
 请求发出后的任何失败都被视为结果不确定，包括超时、成功响应格式错误和传输

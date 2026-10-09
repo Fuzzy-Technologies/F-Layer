@@ -26,9 +26,9 @@ python -m pytest
 python tools/build_api_reference.py
 ```
 
-该命令构建 wheel，并在隔离环境中安装它及所有版本固定的文档工具。它生成严格的 MkDocs 输出，检查精确的渲染锚点和本地链接，验证语言元数据，并在 `_build/api-reference/` 中记录 wheel 来源。
+该命令构建 wheel，并在隔离环境中安装它及所有版本固定的文档工具。它以严格模式构建 MkDocs 站点，检查精确的渲染锚点和本地链接，验证语言元数据，并在 `_build/api-reference/` 中记录 wheel 来源。
 
-Markdown 表格按每列最宽单元格补齐，方便阅读原文。使用 `python -m tools.markdown_tables` 检查所有已跟踪 Markdown；使用 `python -m tools.markdown_tables --write` 执行明确请求的纯空白对齐。代码块中的示例不会改变。文档构建会拒绝表格漂移以及失效链接和锚点。
+Markdown 表格按每列最宽单元格补齐，便于阅读 Markdown 源文件。使用 `python -m tools.markdown_tables` 检查所有已跟踪 Markdown；如已明确要求调整表格对齐，可运行 `python -m tools.markdown_tables --write`，该命令只修改空白。代码块中的示例不会改变。文档构建会拒绝不符合对齐规则的表格以及失效链接和锚点。
 
 ```bash
 python tools/build_api_reference.py --serve

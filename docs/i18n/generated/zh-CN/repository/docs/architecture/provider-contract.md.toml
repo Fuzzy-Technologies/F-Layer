@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/provider-contract.md"
 sourceHash = "sha256:8a2b1712b64fddd13e3f6b4b4bb7e9aeb1cc23e6710a2d1b15a1b6e6bee10b50"
-reviewedTranslationHash = "sha256:b0cb98e8dcaa3562edbd3f6c3e69b04285dc8f2d6a1b7893f12d8bba8cd1300c"
+reviewedTranslationHash = "sha256:660cd8a2d75a16fc94e54cd4f11bf1274d3df7b7c76a9e262003990d29a6ad68"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:38:22Z"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # 提供方接口
@@ -40,11 +40,11 @@ F-Layer 提供方把各云平台的认证和资源信息转换为明确的通用
 
 ## 明确认证和作用范围
 
-`YandexCloudSettings` 必须提供文件夹 ID，不使用配置档的默认文件夹。还可设置
-配置档名称、CLI 可执行文件、有界命令超时和清单上限。设置不包含令牌、密钥、
+`YandexCloudSettings` 必须提供文件夹 ID，不使用 CLI 命名配置的默认文件夹。还可设置
+CLI 命名配置名称、CLI 可执行文件、有界命令超时和清单上限。设置不包含令牌、密钥、
 凭据文件或本地基础设施假设。
 
-适配器使用 CLI 已有的认证机制，不初始化配置档、不读取凭据文件、不导出令牌、
+适配器使用 CLI 已有的认证机制，不初始化 CLI 命名配置、不读取凭据文件、不导出令牌、
 不调用 `iam create-token`，也不修改认证设置。`CheckAuthentication()` 验证指定
 文件夹的访问权限；失败可能来自凭据无效、权限不足或基础设施不可用。成功不代表
 拥有每一种资源类型的权限。

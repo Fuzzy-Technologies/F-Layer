@@ -6,13 +6,14 @@ id = "concept:infrastructure.provider"
 english = "provider"
 preferred = "提供方"
 avoid = []
+# Use 云服务商 for the vendor and 提供方/提供方接口 for the software abstraction.
 note = "Terminology checked against the English guides by AIna-Dev; see ADR 0015."
 references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
 
 [[terms]]
 id = "concept:infrastructure.deployment-profile"
 english = "deployment profile"
-preferred = "部署配置档"
+preferred = "部署配置方案"
 avoid = []
 note = "Terminology checked against the English guides by AIna-Dev; see ADR 0015."
 references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
@@ -28,8 +29,10 @@ references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guid
 [[terms]]
 id = "concept:infrastructure.ownership"
 english = "ownership"
-preferred = "所有权"
+preferred = "资源归属"
 avoid = []
+# Stack ownership is resource attribution; POSIX ownership is 文件属主.
+# Retain 所有权 for legal/package ownership, not as a blanket replacement.
 note = "Terminology checked against the English guides by AIna-Dev; see ADR 0015."
 references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
 
@@ -56,3 +59,27 @@ preferred = "生成的制品"
 avoid = []
 note = "Terminology checked against the English guides by AIna-Dev; see ADR 0015."
 references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
+
+[[terms]]
+id = "concept:infrastructure.cli-profile"
+english = "CLI profile"
+preferred = "CLI 命名配置（profile）"
+avoid = []
+note = "A named CLI settings collection, distinct from a configuration file path and a deployment profile. Use 命名配置 after defining profile on the page."
+references = ["docs/site/content/en/guide/configuration.md"]
+
+[[terms]]
+id = "concept:infrastructure.public-intent"
+english = "public intent"
+preferred = "不含凭据的目标配置"
+avoid = []
+note = "Public contrasts with secret material in VPN models; it does not authorize publishing the project configuration. Public APIs and public IP addresses retain their own meanings."
+references = ["docs/architecture/amneziawg.md", "docs/adr/0019-private-vpn-project-workflow.md"]
+
+[[terms]]
+id = "concept:infrastructure.packet-forwarding"
+english = "packet forwarding"
+preferred = "数据包转发"
+avoid = []
+note = "Distinguish IP packet forwarding from Python package distribution and SSH local port forwarding."
+references = ["docs/site/content/en/guide/first-deployment.md"]

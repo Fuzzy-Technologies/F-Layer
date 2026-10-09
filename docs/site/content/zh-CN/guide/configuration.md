@@ -1,10 +1,10 @@
 # 配置和提供方访问 {#configuration-and-provider-access}
 
-配置文件指定项目、部署配置和需要创建的资源，并记录资源所属的部署，供后续管理使用。读取文件只会验证配置内容。Yandex Cloud 的访问权限需要通过下文的 `yc` 单独配置；不要把访问令牌或私钥写进配置文件。
+配置文件指定项目、部署配置方案和需要创建的资源，并记录资源所属的部署，供后续管理使用。读取文件只会验证配置内容。Yandex Cloud 的访问权限需要通过下文的 `yc` 单独配置；不要把访问令牌或私钥写进配置文件。
 
 ## 明确项目和资源归属 {#explicit-identity}
 
-`intent.toml` 等基础配置使用模式版本 `1`：
+`intent.toml` 等基础配置使用格式版本 `1`：
 
 ```toml
 schema_version = 1
@@ -34,11 +34,11 @@ config = LoadConfig("intent.toml")
 print(config.identity.project, config.profile)
 ```
 
-该基础模型记录资源的标识和归属。生命周期部署计划添加明确的依赖和提供方参数，由单独的加载器读取。网关配置档将安全设置编译到该计划中。完整操作步骤见[首次部署](first-deployment.md)。
+该基础模型记录资源的标识和归属。生命周期部署计划添加明确的依赖和提供方参数，由单独的加载器读取。网关配置方案将安全设置编译到该计划中。完整操作步骤见[首次部署](first-deployment.md)。
 
 ## 现有 Yandex CLI 认证 {#existing-yandex-cli-authentication}
 
-安装[官方 Yandex Cloud CLI](https://yandex.cloud/en/docs/cli/quickstart)，按厂商说明配置命名账户和配置档。请自行选择目标文件夹。F-Layer 不初始化配置档、不导出访问令牌，也不回退到配置档的默认文件夹。
+安装[官方 Yandex Cloud CLI](https://yandex.cloud/en/docs/cli/quickstart)，按厂商说明设置账号和 CLI 命名配置（profile）。请明确选择目标云文件夹。F-Layer 不初始化 CLI 配置、不导出访问令牌，也不回退到该配置中的默认云文件夹。
 
 ```bash
 yc --version
@@ -60,7 +60,7 @@ if status.authenticated:
     print(len(instances))
 ```
 
-对已获授权的账户使用实际作用域和配置档值。每条云命令显式提供文件夹和配置档；返回的作用域 ID 必须匹配。读取认证成功不证明拥有变更权限，也不证明可以访问所有资源类型。适配器不会将厂商的原始 stdout/stderr 包含在公开错误中。确切结果类型见[提供方契约](../architecture.md)和生成的 [API 参考](../api/index.md)。
+对已获授权的账号，填写实际的作用域 ID 和 CLI 命名配置。每条云命令都显式指定云文件夹和命名配置；返回的作用域 ID 必须匹配。读取权限验证通过不代表拥有变更权限，也不证明可以访问所有资源类型。适配器不会将厂商的原始 stdout/stderr 包含在公开错误中。确切结果类型见[提供方契约](../architecture.md)和生成的 [API 参考](../api/index.md)。
 
 ## 凭据和持久状态 {#credentials-and-durable-state}
 

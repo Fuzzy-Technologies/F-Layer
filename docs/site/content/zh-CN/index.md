@@ -9,17 +9,16 @@
 并在本地保存资源标识。使用相同的计划和记录，可以查看部署状态、恢复中断的操作，
 或者删除该部署所属的资源。
 
-**2.0 预发布版本**增加了私有 VPN 项目流程：在 Yandex Cloud 部署一台同时运行
-**AmneziaWG 3.1** 和 **VLESS Reality** 的服务器，再将生成的设置导入客户端。
-已发布的 **v1.2.1** 提供安全 SSH 网关和 HTTP 检查，不包含新的 VPN 命令。
-2.0 稳定版尚未发布。其他云平台需要相应的适配器。
+**F-Layer 2.0** 在 Yandex Cloud 部署运行 **AmneziaWG 3.1** 和
+**VLESS Reality** 的企业 VPN，并为每台设备生成连接设置。此外还支持安全
+SSH 网关和 HTTP 检查。其他云平台需要相应的适配器。
 F-Layer 是开源软件；云资源费用由云服务商收取。
 
-## 快速开始 {#quick-start}
+## 快速入门 {#quick-start}
 
-在[安装](guide/installation.md)中选择稳定版或预发布版本。
-[快速开始](guide/index.md)介绍从安装 2.0 预发布版本到创建私有项目、
-在 Yandex Cloud 部署和连接客户端的完整步骤。安装后，以下命令无需云访问：
+从[安装](guide/installation.md)开始。
+[快速入门](guide/index.md)介绍从安装 F-Layer 2.0 到创建私有项目、在 Yandex
+Cloud 部署和连接客户端的完整步骤。安装后，以下命令无需云访问：
 
 ```bash
 python -m flayer check --format json
@@ -34,8 +33,8 @@ python -m flayer check --format json
 
 - **通过自己的 VPN 服务器连接**
 
-    [快速开始](guide/index.md)介绍 2.0 预发布版本中的两种协议；
-    v1.2.1 用户请阅读 [SSH 网关指南](guide/first-deployment.md)。
+    [快速入门](guide/index.md)介绍两种 VPN 协议；
+    [SSH 网关指南](guide/first-deployment.md)介绍受限的 SSH 转发。
 
 - **检查运行中的服务**
 

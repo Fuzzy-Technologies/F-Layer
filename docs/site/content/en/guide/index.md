@@ -4,31 +4,28 @@ Create a private VPN project, deploy one Yandex Cloud server, and connect a devi
 using **AmneziaWG** or **VLESS Reality**. F-Layer creates the cloud resources,
 installs both services and exports separate client settings for each device.
 
-This walkthrough requires a **2.0 development candidate** with `flayer project`
-and `flayer vpn` commands. The published **v1.2.1** package supports the
-[SSH gateway walkthrough](first-deployment.md), but does not include these VPN
-commands. Version 2.0 is not yet a published stable release.
+## 1. Install F-Layer
 
-## 1. Install the candidate
+To delegate these steps to an assistant with terminal access, copy the task from
+[AI Quick Start](ai-operator.md). It covers installation, the questions the
+assistant should ask, paid-resource approval and evidence of a working connection.
+The commands below are the manual route.
 
 Use Linux or WSL, Python 3.11+, OpenSSH (`ssh` and `ssh-keygen`), and the
 [official Yandex Cloud CLI](https://yandex.cloud/en/docs/cli/quickstart).
-Download the reviewed candidate wheel from the project's CI artifacts. Create a
-virtual environment as described in [Install](installation.md), activate it,
-then install that wheel with its `vpn` extra. Replace the path below with the
-actual downloaded filename; retain its original version:
+Download the F-Layer 2.0.0 wheel and verify its hash as described in
+[Install](installation.md). Create and activate a virtual environment, then
+install the wheel with its `vpn` extra. Replace the path with your downloaded file:
 
 ```bash
-FLAYER_WHEEL=/absolute/path/to/downloaded-candidate.whl
+FLAYER_WHEEL=/absolute/path/to/f_layer-2.0.0-py3-none-any.whl
 python -m pip install "${FLAYER_WHEEL}[vpn]"
 flayer project --help
 flayer vpn --help
 ```
 
 The extra supplies the cryptography library used to generate keys locally.
-Git and Docker are not needed. Installing v1.2.1 from its release URL does not
-install a 2.0 candidate, even if a candidate currently carries the same package
-version. Choose the artifact from the reviewed revision.
+Git and Docker are not needed.
 
 ## 2. Set up the project
 

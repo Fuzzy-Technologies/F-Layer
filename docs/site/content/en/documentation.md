@@ -60,8 +60,7 @@ Only a `push` event for the `master` branch may deploy the verified Pages
 artifact. Documentation publishing is separate from package publication.
 
 The public routes are `/F-Layer/en/`, `/F-Layer/ru/`, and `/F-Layer/zh-CN/`.
-The root opens the English reference. No immutable release documentation is
-claimed before a stable release exists.
+The root opens the English reference.
 
 [ADR 0004](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/adr/0004-documentation-platform.md)
 records the accepted generator, review, source-hash, fallback, and publication

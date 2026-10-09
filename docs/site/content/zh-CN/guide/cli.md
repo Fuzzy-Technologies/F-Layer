@@ -1,6 +1,6 @@
 # CLI 和诊断结果 {#cli-and-diagnostic-results}
 
-基础包提供模块 CLI。所有帮助命令都可离线运行。`check` 是本地操作；HTTP 诊断需要明确的端点。
+基础包支持通过 `python -m flayer` 调用命令行接口。所有帮助命令都可离线运行。`check` 是本地操作；HTTP 诊断需要明确的端点。
 
 ```bash
 python -m flayer --help
@@ -17,7 +17,7 @@ python -m flayer benchmark --help
 | `health`    | 一个明确指定的 HTTP(S) 端点响应。 | 仅指定端点。          |
 | `benchmark` | 有界 HTTP(S) 采样和传输计时。     | 仅指定端点。          |
 
-在观测适配器接入之前，顶层 `status` 对提供方状态报告 `unsupported`，不会将空云视为健康。任务 #20 引入的生命周期 `status` 是具有明确作用域的独立命令；参见[首次部署](first-deployment.md)。
+在观测适配器接入之前，顶层 `status` 对提供方状态报告 `unsupported`，不会把缺少云端观测结果当作健康状态。任务 #20 引入的生命周期 `status` 是具有明确作用域的独立命令；参见[首次部署](first-deployment.md)。
 
 ## 明确端点的探测 {#explicit-endpoint-probes}
 
@@ -28,7 +28,7 @@ python -m flayer health --endpoint https://example.com/ --timeout 3 --format jso
 python -m flayer benchmark --endpoint https://example.com/ --timeout 3 --count 3 --bytes 65536 --format json
 ```
 
-端点 URL 不允许凭据、查询字符串和片段。TLS 证书验证保持开启，重定向和代理发现被禁用。报告省略端点、响应正文和原始异常材料。每次采样超时最多 30 秒，采样数最多 10，每次字节数最多 1 MiB。即使 DNS、TLS 或读取失败，总工作量仍有限。结果描述从本机执行的此次探测，不代表提供方 SLA、VPN 吞吐量保证或部署成功。
+端点 URL 不允许凭据、查询字符串和片段。TLS 证书验证保持开启，重定向和代理发现被禁用。报告省略端点、响应正文和原始异常内容。每次采样超时最多 30 秒，采样数最多 10，每次字节数最多 1 MiB。即使 DNS、TLS 或读取失败，总体执行时间和数据量仍受限制。结果描述从本机执行的此次探测，不代表提供方 SLA、VPN 吞吐量保证或部署成功。
 
 ## 退出状态 {#exit-status}
 
@@ -40,4 +40,4 @@ python -m flayer benchmark --endpoint https://example.com/ --timeout 3 --count 3
 | `3`    | 观测已过时。              | 获取新证据。                   |
 | `4`    | 请求的观测不受支持。      | 提供端点或使用已实现的适配器。 |
 
-JSON 报告包含 `schema_version`、`command`、汇总 `status` 和单项 `checks`。汇总严重程度不会隐藏失败观测。自动化应检查进程退出码并解析结构化状态；不能因存在 JSON 报告就认定成功。
+JSON 报告包含 `schema_version`、`command`、汇总 `status` 和单项 `checks`。汇总状态不会掩盖任何失败的检查。自动化应检查进程退出码并解析结构化状态；不能因存在 JSON 报告就认定成功。

@@ -1,36 +1,33 @@
-# 快速开始 {#quick-start}
+# 快速入门 {#quick-start}
 
 创建一个私有 VPN 项目，将服务部署到 Yandex Cloud 服务器，再通过 **AmneziaWG**
 或 **VLESS Reality** 连接设备。F-Layer 会创建云资源、安装两种服务，并为每台设备
 分别导出客户端配置。
 
-本教程需要包含 `flayer project` 和 `flayer vpn` 命令的 **2.0 开发候选版本**。
-已发布的 **v1.2.1** 支持 [SSH 网关部署](first-deployment.md)，但不包含这些 VPN
-命令。2.0 尚未发布为稳定版。
+## 1. 安装 F-Layer {#1-install-f-layer}
 
-## 1. 安装候选版本 {#1-install-the-candidate}
+如需委托能够访问终端的助手完成这些步骤，请复制 [AI 快速入门](ai-operator.md)
+中的任务。该指南涵盖安装、助手应询问的问题、付费资源批准以及实际连接验证。
+下方命令供手动执行。
 
 使用 Linux 或 WSL，并准备 Python 3.11+、OpenSSH（`ssh` 和 `ssh-keygen`）以及
 [官方 Yandex Cloud CLI](https://yandex.cloud/en/docs/cli/quickstart)。
-从项目 CI 中下载已审查候选版本的 wheel 构建产物。按照[安装指南](installation.md)
-创建并激活虚拟环境，然后安装该 wheel 及其 `vpn` 可选依赖。将下面的路径替换为
-实际下载文件的路径，保留文件原有的版本号：
+下载 F-Layer 2.0.0 wheel，并按[安装指南](installation.md)核对哈希。
+创建并激活虚拟环境，然后安装 wheel 及其 `vpn` 可选依赖。
+将下面的路径替换为实际下载文件的路径：
 
 ```bash
-FLAYER_WHEEL=/absolute/path/to/downloaded-candidate.whl
+FLAYER_WHEEL=/absolute/path/to/f_layer-2.0.0-py3-none-any.whl
 python -m pip install "${FLAYER_WHEEL}[vpn]"
 flayer project --help
 flayer vpn --help
 ```
 
 `vpn` 可选依赖提供用于在本地生成密钥的密码学库，无需 Git 或 Docker。
-通过 v1.2.1 的发行版链接安装，得到的仍是 v1.2.1，而不是 2.0 候选版本；即使候选
-构建暂时使用相同的软件包版本号，两者也不同。请选择经过审查的代码版本所对应的
-构建产物。
 
 ## 2. 创建并配置项目 {#2-set-up-the-project}
 
-按照官方说明初始化 `yc`，然后查看配置档并创建项目：
+按照官方说明初始化 `yc`，查看 CLI 命名配置（profile），再创建项目：
 
 ```bash
 yc config profile list
@@ -43,13 +40,13 @@ flayer project init ~/flayer-vpn
 | ---------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | `identity.project`, `stack`, `owner_id`  | 用于标识项目、部署和所有者的名称。                                                             |
 | `identity.scope_id`                      | 用于创建资源的 Yandex Cloud 文件夹 ID。                                                        |
-| `cloud.yc_profile`                       | 已配置的 `yc` 配置档，需要有权在该文件夹中创建和删除计算及网络资源。                           |
+| `cloud.yc_profile`                       | 已配置的 `yc` 命名配置，需要有权在该文件夹中创建和删除计算及网络资源。                         |
 | `cloud.zone_id`, `cloud.image_id`        | 目标可用区和 Ubuntu 24.04 **amd64** 镜像 ID。                                                  |
 | `cloud.management_cidrs`                 | 管理员当前的公网 IPv4 地址，加上 `/32`；必须替换示例地址。                                     |
 | `devices`                                | 设备名称及各自唯一的隧道地址；可以先使用示例中的 `laptop` 和 `10.66.0.2`。                     |
 | `vless.target_host`, `vless.server_name` | 云服务器能够访问的 TLS 1.3 / HTTP/2 站点，其证书必须对指定服务器名称有效。预填主机名只是示例。 |
 
-先保留示例路由设置，试用 IPv4 的 full 模式。连接前，请在 VPN 客户端设置中或设备
+先保留示例路由设置，试用 IPv4 全隧道（`full`）模式。连接前，请在 VPN 客户端设置中或设备
 系统中关闭 IPv6，因为此版本不转发 IPv6。修改 TOML 中的 `ipv6_policy` 不会更改
 设备的操作系统设置。
 
@@ -117,7 +114,7 @@ flayer vpn destroy --project ~/flayer-vpn --allow-mutation --scope-confirm YOUR_
 
 ## 后续步骤 {#next-steps}
 
-目前实现的云提供方是 Yandex Cloud，其他云需要相应适配器。检查现有服务可使用
+目前已实现的云适配器支持 Yandex Cloud，其他云需要相应适配器。检查现有服务可使用
 [CLI 诊断](cli.md)；要集成到 Python 应用，请阅读[配置指南](configuration.md)
 和 [API 参考](../api/index.md)。发行版维护者按照
 [VPN 发行验收流程](../../../../development/vpn-release-acceptance.md)记录真实云部署

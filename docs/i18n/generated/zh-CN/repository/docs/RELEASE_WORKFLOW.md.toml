@@ -97,10 +97,10 @@ back-merge to develop
 使用对权威仓库具有读取权限的 GitHub CLI 执行预检：
 
 ```bash
-python tools/release_validation.py --check-milestone 3
+python tools/release_validation.py --check-milestone 4
 ```
 
-此示例根据当前工作副本的软件包版本检查 release-1.2。其他发布应替换原生里程碑编号。检查读取 GitHub 原生状态，核对仓库、编号与次版本身份；里程碑仍打开、未完成、数据不可用或格式错误时均失败。它不会构建、发布或修改规划状态。应在稳定版 GitHub 发布前立即运行，并同时检查精确 `master` 提交的 CI、标签和发行包。通过 GitHub 界面直接发布仍由所有者控制；该预检不是 GitHub 界面的权限限制。
+此示例根据当前工作副本的软件包版本检查 release-2.0。其他发布应替换原生里程碑编号。检查读取 GitHub 原生状态，核对仓库、编号与次版本身份；里程碑仍打开、未完成、数据不可用或格式错误时均失败。它不会构建、发布或修改规划状态。应在稳定版 GitHub 发布前立即运行，并同时检查精确 `master` 提交的 CI、标签和发行包。通过 GitHub 界面直接发布仍由所有者控制；该预检不是 GitHub 界面的权限限制。
 PyPI 工作流在完整验证前执行此检查，并在生成发布验证记录时再次执行。
 
 发布标题使用 `F-Layer vX.Y.Z — <short user-facing digest>`；注释标签使用 `vX.Y.Z`，软件包版本使用 `X.Y.Z`。发布卡片章节顺序遵循 ADR 0014。候选版本可以包含草稿或英文回退页面，并标为 GitHub **Pre-release**，但不得宣传为最新稳定版。
@@ -168,9 +168,9 @@ python tools/release_validation.py --tag vX.Y.Z
 
 现有合并后自动化会先验证 PR 已合并且 issue 的原生类型为 Task，再关闭明确关联的 Task 并删除符合条件的已合并实现分支。发布工作流不会削弱此约定，也不会关闭 Feature 或 Milestone。所有者必须另行核实它们的验收条件。
 '''
-sourceHash = "sha256:fe2d9c5ff3afe35858667a7ff66b2d9019860d51ad3f1050c816d0d7b16ff184"
-reviewedTranslationHash = "sha256:4d3d5f336eb6e2e6a2432e9b0566879a90040d827e6d8a34c863e0b531765517"
+sourceHash = "sha256:9495b723fd967708cf21d0db3f1d9c5df91fe0c1f867d2f2527eadf9180c112d"
+reviewedTranslationHash = "sha256:08dd70b94c5a58a92c634e1c257a85e2202c437b91d51753fa22caeaa683dd43"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:54Z"
+reviewedAt = "2026-10-09T15:33:02Z"
 reviewRoles = ["editorial", "technical"]

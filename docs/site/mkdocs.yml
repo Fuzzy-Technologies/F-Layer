@@ -37,6 +37,7 @@ nav:
   - User guide:
       - Install: guide/installation.md
       - Quick Start: guide/index.md
+      - AI Quick Start: guide/ai-operator.md
       - Configuration: guide/configuration.md
       - CLI: guide/cli.md
       - First deployment: guide/first-deployment.md

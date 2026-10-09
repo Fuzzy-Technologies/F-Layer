@@ -3,65 +3,61 @@ sourcePath = "docs/development/distribution.md"
 body = '''
 # Python 发行包与安装
 
-F-Layer 以 `f-layer` Python 包分发，安装后提供 `flayer` 命令及同名可导入包。用户安装 wheel；只有参与代码开发时才需要克隆仓库。release-2.0 的安装流程不要求 Docker 控制器镜像。
+F-Layer 以 `f-layer` Python 包分发，安装后提供 `flayer` 命令及同名可导入包。用户安装 wheel；只有参与代码开发时才需要克隆仓库。release-2.0 的安装流程不要求 Docker 控制端镜像。
 
-## 安装已发布版本
+## 安装发行包
 
-使用 Python 3.11 或更新版本。云网关流程的控制器应运行在 Linux 或 WSL 中，因为生成的私密文件需要 POSIX 权限。云服务商 CLI 和 VPN 客户端是单独应用，按用户指南安装。安装 Python 包不会配置云账户。
+使用 Python 3.11 或更新版本。云部署控制端应运行在 Linux 或 WSL 中，因为
+私有项目文件需要 POSIX 权限。云服务商 CLI 和 VPN 客户端是单独的应用，
+其安装方法见用户指南。
 
-现有 [GitHub Releases](https://github.com/Fuzzy-Technologies/F-Layer/releases) 包含 wheel。例如，以下命令通过 pipx 安装已发布的 **1.2.1** CLI：
+从[发布文件](https://github.com/Fuzzy-Technologies/F-Layer/releases)下载
+`f_layer-2.0.0-py3-none-any.whl` 和 `build-evidence.json`。
+核对 wheel 哈希，然后在下载目录中安装核心 CLI：
 
 ```bash
-pipx install https://github.com/Fuzzy-Technologies/F-Layer/releases/download/v1.2.1/f_layer-1.2.1-py3-none-any.whl
+pipx install ./f_layer-2.0.0-py3-none-any.whl
 flayer --help
 flayer check
 ```
 
-如果尚无 [pipx](https://pipx.pypa.io/latest/how-to/install-pipx.html)，请先安装。运行 `pipx ensurepath`；若仍找不到 `flayer`，重新打开终端。pipx 会为命令创建隔离环境。
-
-对于应用程序或不使用 pipx 的环境，可在虚拟环境中通过 pip 安装同一 wheel：
+如有需要，先安装 [pipx](https://pipx.pypa.io/latest/how-to/install-pipx.html)。
+运行 `pipx ensurepath`；若找不到 `flayer`，重新打开终端。
+pipx 会创建隔离环境。如需使用 pip：
 
 ```bash
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install https://github.com/Fuzzy-Technologies/F-Layer/releases/download/v1.2.1/f_layer-1.2.1-py3-none-any.whl
+python -m pip install ./f_layer-2.0.0-py3-none-any.whl
 python -m flayer check
 ```
 
-1.2.1 不包含 release-2.0 的 VPN 流程。请下载所需版本的 wheel，不要将预览 wheel 重命名为正式发布版本。
+## 安装 VPN 扩展依赖
 
-## 安装 2.0 的 VPN 扩展依赖
-
-release-2.0 软件包增加用于本地生成密钥的 `vpn` 扩展依赖组，安装 `cryptography==50.0.2`。核心包仍没有必需的第三方运行时依赖。同一依赖也包含在开发依赖组中，使普通开发环境能测试 VPN 行为。
-
-官方 2.0.0 wheel 发布后，网关的标准安装方式为：
+`vpn` 可选依赖组提供 `cryptography==50.0.2`，用于在本地生成密钥。
+核心包没有必需的第三方运行时依赖。开发依赖组包含同一库，以支持 VPN 测试。
+部署 VPN 时，通过 pipx 安装：
 
 ```bash
-pipx install 'f-layer[vpn] @ https://github.com/Fuzzy-Technologies/F-Layer/releases/download/v2.0.0/f_layer-2.0.0-py3-none-any.whl'
+pipx install './f_layer-2.0.0-py3-none-any.whl[vpn]'
 flayer check
 ```
 
-对于已下载的发行包或 CI 预览 wheel，使用实际文件名：
+或者在虚拟环境中使用 pip：
 
 ```bash
 python -m pip install './f_layer-2.0.0-py3-none-any.whl[vpn]'
 ```
 
-最后这条命令应在虚拟环境中执行。依赖解析器从配置的 Python 索引下载扩展所需库，而 F-Layer wheel 本身来自明确指定的本地文件或 GitHub URL。Wheel 不包含 SSH 密钥、VPN 凭据或项目配置。
-
-确认 PyPI 项目所有权并完成发布后，同一个包可以按名称安装：
-
-```bash
-pipx install 'f-layer[vpn]==2.0.0'
-```
-
-该命令说明目标发布方式，不证明名称已经保留，也不证明 2.0.0 已在 PyPI 上可用。在完成发布前，应使用官方 GitHub Release 附带的准确 wheel。
+依赖解析器从配置的 Python 索引获取扩展所需的库。F-Layer wheel 来自明确
+指定的本地文件。Wheel 不包含 SSH 密钥、VPN 凭据或项目配置。
+PyPI 发布及上传后的安装验证步骤见下文。
 
 ## 版本来源
 
 `src/flayer/__init__.py` 定义字面量 `__version__`。Hatchling 的正则版本源无需导入软件包即可读取该值。Wheel、源码归档元数据和已安装运行时共享同一版本。VPN 代码按需加载其依赖；安装或导入核心不会隐式启用该扩展。
 
-稳定发布采用 `X.Y.Z` 及不可变注释标签 `vX.Y.Z`，详见[发布流程](../RELEASE_WORKFLOW.md)。版本提升属于经过评审的发布分支。开发分支合并不会发布软件包。
+稳定发布采用 `X.Y.Z` 及不可变附注标签 `vX.Y.Z`，详见[发布流程](../RELEASE_WORKFLOW.md)。版本提升属于经过评审的发布分支。开发分支合并不会发布软件包。
 
 ## 构建与安装验证
 
@@ -79,13 +75,13 @@ Wheel 包含带类型信息的 `flayer`、Apache-2.0 许可证元数据及控制
 发布 CI 在上传前，对**准确的已审计文件**执行这些测试。它先获取 VPN 依赖的 wheel，然后在第二个干净环境中离线安装带 `vpn` 扩展的 F-Layer wheel。VPN 基本检查在内存中生成 X25519 和 RSA 密钥，并核对依赖一致性，不调用云服务商。可按以下方式重现该针对性检查：
 
 ```bash
-python -m pip download --only-binary=:all: --dest _build/vpn-wheels './_build/distribution/f_layer-1.2.1-py3-none-any.whl[vpn]'
+python -m pip download --only-binary=:all: --dest _build/vpn-wheels './_build/distribution/f_layer-2.0.0-py3-none-any.whl[vpn]'
 FLAYER_DISTRIBUTION_DIRECTORY=_build/distribution \
 FLAYER_DISTRIBUTION_WHEELHOUSE=_build/vpn-wheels \
 python -m pytest tests/integration/test_distribution.py --no-cov
 ```
 
-使用本地构建 wheel 的实际版本。分支预览在发布稳定化之前保留当前源码版本。完整回归、文档和发行包检查在 CI 中运行。未明确提供 wheel 目录时，测试重新构建发行包。缺少依赖 wheel 目录时，VPN 扩展安装测试会报告跳过，而不是声称已经验证该流程。
+使用本地构建 wheel 的实际版本。完整回归、文档和发行包检查在 CI 中运行。未明确提供 wheel 目录时，测试重新构建发行包。缺少依赖 wheel 目录时，VPN 扩展安装测试会报告跳过，而不是声称已经验证该流程。
 
 ## 配置并执行 PyPI 发布
 
@@ -96,7 +92,7 @@ python -m pytest tests/integration/test_distribution.py --no-cov
 1. 登录预期的 PyPI 账户，核实对 `f-layer` 的所有权。如果项目尚不存在，为该名称配置待创建项目的 Trusted Publisher。此类 publisher 不会保留名称。
 2. 将 publisher 的 GitHub 所有者设为 `Fuzzy-Technologies`，仓库设为 `F-Layer`，工作流文件名设为 `release-publish.yml`。当前上传作业不使用 GitHub 环境，因此可选环境字段留空。
 3. 将仓库变量 `FLAYER_RELEASE_OWNER` 设为准确的获授权 GitHub 登录名，仅在验证 publisher 后设置 `FLAYER_PYPI_ENABLED=true`。
-4. 完成并关闭原生发布里程碑，确保没有未完成项。评审并将发布合入 `master`，然后创建版本注释标签。
+4. 完成并关闭原生发布里程碑，确保没有未完成项。评审并将发布合入 `master`，然后创建版本附注标签。
 5. 从 `master` 运行 **Publish an owner-approved PyPI release**，提供该标签、原生里程碑编号并启用发布确认。
 6. 检查上传结果，核实 PyPI 项目 URL 和版本指向本仓库。在新环境中安装已发布版本并运行 `flayer check`，之后才能说明按包名安装已经可用。
 
@@ -112,9 +108,9 @@ python -m pytest tests/integration/test_distribution.py --no-cov
 - [PyPI 待创建项目的 publisher](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/)
 - [Cryptography 变更记录](https://cryptography.io/en/latest/changelog/)
 '''
-sourceHash = "sha256:208f86e47a58fd1bd84a6b4085316732cd0fd0016e97b37530c8fa6cb82d3070"
-reviewedTranslationHash = "sha256:a73ae142371875bf362de462dfd8ee4301f20219dde9df276138e0d2116c43cc"
+sourceHash = "sha256:6858085830c5b86cae8e34c6407131cefc82581a7dc843356a5575222169d741"
+reviewedTranslationHash = "sha256:543d0342c9ccc1198edb56f41dc0aa955c42571d3c6fe39f04881cf8168324ad"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:54Z"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]

@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/lifecycle.md"
 sourceHash = "sha256:bef8229cbf0d1e6f9dc22eb7da0e65e6702ff4cc0597c4ed8a2f336fb6f1c343"
-reviewedTranslationHash = "sha256:336a899075a918232c1d5114c45235678777830ae938b10b1094435dc567283d"
+reviewedTranslationHash = "sha256:2940a102a4951f80d9acf21e157e1794a16449ae2bc86b6b1054c4792d5a7f64"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:02:09Z"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # 所属资源的生命周期管理
@@ -32,7 +32,7 @@ body = '''
 
 ## 显式命令行
 
-所有帮助均可离线使用。命令使用已有认证的 `yc` 配置档；F-Layer 不读取、输出
+所有帮助均可离线使用。命令使用已有认证的 `yc` CLI 命名配置；F-Layer 不读取、输出
 或保存其凭据。
 
 ```bash
@@ -46,7 +46,7 @@ python -m flayer lifecycle recover --config plan.toml --state stack.json \
   --yc-profile sandbox --allow-mutation --scope-confirm example-folder --rollback
 ```
 
-以上是示例命令。创建、删除和恢复可能修改所选云账号；示例文件夹和配置档需要
+以上是示例命令。创建、删除和恢复可能修改所选云账号；示例文件夹和 CLI 命名配置需要
 替换。缺少变更许可或确认值不等于 `identity.scope_id` 时，在执行提供方操作前
 就会拒绝。顶层诊断命令 `status` 保持原有行为，部署资源查询使用
 `lifecycle status`。

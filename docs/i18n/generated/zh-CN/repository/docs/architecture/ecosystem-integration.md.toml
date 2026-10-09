@@ -1,15 +1,15 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/ecosystem-integration.md"
 sourceHash = "sha256:faca1fad3be7840fe77c508e3c532929b4c1d1b1d578db725b24dd0447419998"
-reviewedTranslationHash = "sha256:10d98051cc232d954d018271d64e82a338bccb9d9d59d5c38b8fa5db9ffd22ae"
+reviewedTranslationHash = "sha256:ea76cf34fb07c59c259b7aeac086be6b6c150a3bb0193b55abbe03ba6c6fa800"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:49:02Z"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # 生态系统集成
 
-`flayer.integrations` 为 1337、Fuzzy 工具和其他客户端提供与消费者无关的版本 1
+`flayer.integrations` 为 1337、Fuzzy 工具和其他客户端提供与使用方无关的版本 1
 观测契约。这是集成边界的 F-Layer 一侧。测试数据和离线参考流程展示包的行为，
 尚未验证真实 1337 或 MCP 集成。
 
@@ -100,7 +100,7 @@ MCP 应用是客户端。模型、解析后的消息、能力声明或适配器�
 2. 宿主根据独立选择的身份上下文解析请求；解析不执行提供方操作、不查询凭据、不写状态。
 3. 宿主通过已有 F-Layer API 独立取得观测。例如 `LifecycleEngine.Status()` 读取所属远端资源是否存在；健康检查和测量传输必须明确选择并限定。
 4. 相应适配器只投影允许的数据，不调用提供方、不执行生命周期方法、不写状态。
-5. 消费者对照原请求解析结果，并结合已认证的来源及宿主时效策略解释结果。
+5. 使用方对照原请求解析结果，并结合已认证的来源及宿主时效策略解释结果。
 
 ```python
 from flayer.core.contracts import StackIdentity
@@ -122,12 +122,12 @@ observed = ParseResult(SerializeResult(result), request)
 测试使用现有 status、health、benchmark、持久状态和 lifecycle status API，配合
 本地数据与模拟提供方。它验证解析和适配器不发送提供方调用，所属状态内容不变。
 契约测试覆盖各操作消息、错误归属、关联不符、格式错误及超限输入、隐私省略和
-变更名称拒绝。这证明 F-Layer 一侧的边界，不证明外部消费者实现兼容。
+变更名称拒绝。这证明 F-Layer 一侧的边界，不证明外部使用方实现兼容。
 
 ## 扩展边界
 
-传输托管、MCP 工具注册、消费者认证、防重放和时效策略、外部客户端符合性都
-在包之外。核心契约没有消费者名称，也没有推测性的编排、调度器或代理执行层。
+传输托管、MCP 工具注册、使用方认证、防重放和时效策略、外部客户端符合性都
+在包之外。核心契约没有使用方名称，也没有推测性的编排、调度器或代理执行层。
 版本 1 拒绝格式扩展，而非静默丢弃。新增不兼容字段或操作需要明确版本和兼容性
 决策。
 '''

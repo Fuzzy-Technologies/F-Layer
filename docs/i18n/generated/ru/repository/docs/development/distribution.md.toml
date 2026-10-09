@@ -5,57 +5,55 @@ body = '''
 
 F-Layer распространяется как Python-пакет `f-layer`. Он устанавливает команду `flayer` и одноимённый импортируемый пакет. Пользователи устанавливают wheel; клонирование репозитория нужно только для работы над кодом. Для установки release-2.0 образ контроллера Docker не требуется.
 
-## Установка опубликованного релиза
+## Установка релизного пакета
 
-Используйте Python 3.11 или новее. Для работы с облачным шлюзом запускайте контроллер в Linux или WSL: созданным закрытым файлам нужны права POSIX. CLI провайдера и VPN-клиент — отдельные приложения; их установка описана в руководстве пользователя. Установка Python-пакета не настраивает облачный аккаунт.
+Используйте Python 3.11 или новее. Запускайте контроллер облачного развёртывания
+в Linux или WSL: приватным файлам проекта нужны права POSIX. CLI провайдера и
+VPN-клиент — отдельные приложения, описанные в руководстве пользователя.
 
-Существующие [релизы GitHub](https://github.com/Fuzzy-Technologies/F-Layer/releases) содержат wheel. Например, следующая команда устанавливает опубликованный CLI **1.2.1** через pipx:
+Скачайте `f_layer-2.0.0-py3-none-any.whl` и `build-evidence.json` из
+[файлов релиза](https://github.com/Fuzzy-Technologies/F-Layer/releases).
+Проверьте хеш wheel и установите основной CLI в каталоге скачанных файлов:
 
 ```bash
-pipx install https://github.com/Fuzzy-Technologies/F-Layer/releases/download/v1.2.1/f_layer-1.2.1-py3-none-any.whl
+pipx install ./f_layer-2.0.0-py3-none-any.whl
 flayer --help
 flayer check
 ```
 
-Если [pipx](https://pipx.pypa.io/latest/how-to/install-pipx.html) ещё не установлен, сначала установите его. Выполните `pipx ensurepath` и откройте терминал заново, если команда `flayer` не найдена. pipx создаёт отдельное окружение для команды.
-
-Для приложения или окружения без pipx установите тот же wheel через pip внутри виртуального окружения:
+При необходимости сначала установите [pipx](https://pipx.pypa.io/latest/how-to/install-pipx.html).
+Выполните `pipx ensurepath` и откройте терминал заново, если команда `flayer`
+не найдена. pipx создаёт изолированное окружение. Для установки через pip:
 
 ```bash
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install https://github.com/Fuzzy-Technologies/F-Layer/releases/download/v1.2.1/f_layer-1.2.1-py3-none-any.whl
+python -m pip install ./f_layer-2.0.0-py3-none-any.whl
 python -m flayer check
 ```
 
-Версия 1.2.1 не включает VPN-сценарий release-2.0. Скачивайте wheel нужной версии; не переименовывайте предварительный wheel, выдавая его за релизный.
+## Установка дополнения VPN
 
-## Установка дополнения VPN в релизе 2.0
-
-Пакет release-2.0 добавляет набор зависимостей `vpn` для локального создания ключей. Он устанавливает `cryptography==50.0.2`; основному пакету по-прежнему не нужны обязательные сторонние библиотеки во время работы. Та же зависимость включена в набор разработки, чтобы тесты VPN выполнялись в обычном окружении разработчика.
-
-После публикации официального wheel 2.0.0 обычная установка для шлюза выглядит так:
+Дополнение `vpn` устанавливает `cryptography==50.0.2` для локального создания
+ключей. У основного пакета нет обязательных сторонних зависимостей времени
+исполнения. Та же библиотека входит в дополнение разработки для тестов VPN.
+Для развёртывания VPN установите пакет через pipx:
 
 ```bash
-pipx install 'f-layer[vpn] @ https://github.com/Fuzzy-Technologies/F-Layer/releases/download/v2.0.0/f_layer-2.0.0-py3-none-any.whl'
+pipx install './f_layer-2.0.0-py3-none-any.whl[vpn]'
 flayer check
 ```
 
-Для скачанного релиза или предварительного wheel CI используйте его фактическое имя:
+Или используйте pip внутри виртуального окружения:
 
 ```bash
 python -m pip install './f_layer-2.0.0-py3-none-any.whl[vpn]'
 ```
 
-Последнюю команду запускайте в виртуальном окружении. Разрешение зависимостей загружает библиотеки дополнения из настроенного индекса Python, а сам wheel F-Layer берётся из явно указанного локального файла или URL GitHub. Wheel не содержит SSH-ключей, учётных данных VPN и конфигурации проекта.
-
-После проверки прав на проект и публикации в PyPI тот же пакет можно установить по имени:
-
-```bash
-pipx install 'f-layer[vpn]==2.0.0'
-```
-
-Эта команда описывает целевой способ распространения. Она не подтверждает, что имя уже зарезервировано или версия 2.0.0 доступна в PyPI. До публикации используйте точный wheel из официального GitHub Release.
+Зависимости дополнения загружаются из настроенного индекса Python. Wheel F-Layer
+берётся из явно указанного локального файла. В wheel нет SSH-ключей, учётных
+данных VPN и конфигурации проекта. Публикация на PyPI и проверка установки после
+неё описаны ниже.
 
 ## Источник версии
 
@@ -79,13 +77,13 @@ Wheel содержит типизированный пакет `flayer`, мет�
 Релизный CI выполняет эти тесты на **тех самых проверенных файлах**, которые затем загружаются. Сначала он получает wheel зависимостей VPN, затем без сети устанавливает wheel F-Layer с дополнением `vpn` во второе чистое окружение. Проверка VPN создаёт ключи X25519 и RSA в памяти и проверяет согласованность зависимостей. Она никогда не обращается к облачному провайдеру. Повторить эту целевую проверку можно так:
 
 ```bash
-python -m pip download --only-binary=:all: --dest _build/vpn-wheels './_build/distribution/f_layer-1.2.1-py3-none-any.whl[vpn]'
+python -m pip download --only-binary=:all: --dest _build/vpn-wheels './_build/distribution/f_layer-2.0.0-py3-none-any.whl[vpn]'
 FLAYER_DISTRIBUTION_DIRECTORY=_build/distribution \
 FLAYER_DISTRIBUTION_WHEELHOUSE=_build/vpn-wheels \
 python -m pytest tests/integration/test_distribution.py --no-cov
 ```
 
-Используйте фактическую версию локально собранного wheel. Предварительная сборка ветки сохраняет текущую версию исходников до стабилизации релиза. Полные регрессионные проверки, документация и пакеты проверяются в CI. Если каталог wheel не указан явно, тесты собирают новые пакеты. Если каталог wheel зависимостей отсутствует, тест установки VPN сообщает о пропуске, а не утверждает, что этот сценарий проверен.
+Используйте фактическую версию локально собранного wheel. Полные регрессионные проверки, документация и пакеты проверяются в CI. Если каталог wheel не указан явно, тесты собирают новые пакеты. Если каталог wheel зависимостей отсутствует, тест установки VPN сообщает о пропуске, а не утверждает, что этот сценарий проверен.
 
 ## Настройка и публикация в PyPI
 
@@ -112,9 +110,9 @@ python -m pytest tests/integration/test_distribution.py --no-cov
 - [Ожидающие создания проекта publisher в PyPI](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/)
 - [История изменений Cryptography](https://cryptography.io/en/latest/changelog/)
 '''
-sourceHash = "sha256:208f86e47a58fd1bd84a6b4085316732cd0fd0016e97b37530c8fa6cb82d3070"
-reviewedTranslationHash = "sha256:35509b28f278becfcb4ece7fce5e39afdf686e11f115018c4a0f1df17a2d3e0c"
+sourceHash = "sha256:6858085830c5b86cae8e34c6407131cefc82581a7dc843356a5575222169d741"
+reviewedTranslationHash = "sha256:bdb7d8574ad88cb704b8a7f9e339dd212e8ac3a5fce882b0b0d92a48c9ff0b03"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:54Z"
+reviewedAt = "2026-10-09T15:33:02Z"
 reviewRoles = ["editorial", "technical"]

@@ -5,74 +5,54 @@ command and the import package of the same name. Users install a wheel; cloning
 this repository is only necessary when contributing code. A Docker controller
 image is not required for the release-2.0 installation path.
 
-## Install a published release
+## Install a release package
 
-Use Python 3.11 or newer. For the cloud gateway workflow, run the controller on
-Linux or in WSL: generated private files require POSIX permissions. The provider's
-CLI and a VPN client are separate applications, installed as described in the
-user guide. Installing the Python package does not configure a cloud account.
+Use Python 3.11 or newer. Run the cloud deployment controller on Linux or in WSL:
+private project files require POSIX permissions. The provider CLI and VPN client
+are separate applications described in the user guide.
 
-The existing [GitHub releases](https://github.com/Fuzzy-Technologies/F-Layer/releases)
-include wheels. For example, this installs the published **1.2.1** CLI with pipx:
+Download `f_layer-2.0.0-py3-none-any.whl` and `build-evidence.json` from the
+[release assets](https://github.com/Fuzzy-Technologies/F-Layer/releases).
+Verify the wheel hash, then install the core CLI from the download directory:
 
 ```bash
-pipx install https://github.com/Fuzzy-Technologies/F-Layer/releases/download/v1.2.1/f_layer-1.2.1-py3-none-any.whl
+pipx install ./f_layer-2.0.0-py3-none-any.whl
 flayer --help
 flayer check
 ```
 
-Install [pipx](https://pipx.pypa.io/latest/how-to/install-pipx.html) first if it is
-not available. Run `pipx ensurepath`, then reopen the terminal if `flayer` is not
-found. pipx creates an isolated environment for the command.
-
-For an application or an environment managed without pipx, install the same wheel
-with pip inside a virtual environment:
+Install [pipx](https://pipx.pypa.io/latest/how-to/install-pipx.html) first if needed.
+Run `pipx ensurepath` and reopen the terminal if `flayer` is not found. pipx creates
+an isolated environment for the command. To use pip instead:
 
 ```bash
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install https://github.com/Fuzzy-Technologies/F-Layer/releases/download/v1.2.1/f_layer-1.2.1-py3-none-any.whl
+python -m pip install ./f_layer-2.0.0-py3-none-any.whl
 python -m flayer check
 ```
 
-Version 1.2.1 does not include the release-2.0 VPN workflow. Download the wheel for
-the version you intend to use; do not rename a preview wheel to a release version.
+## Install the VPN extra
 
-## Install the VPN extra in release 2.0
-
-The release-2.0 package adds the `vpn` extra for local key generation. It installs
-`cryptography==50.0.2`; the core package still has no required third-party runtime
-dependencies. The same dependency is included in the development extra so tests
-exercise VPN code in the normal development environment.
-
-After the official 2.0.0 wheel is published, the normal gateway installation is:
+The `vpn` extra supplies `cryptography==50.0.2` for local key generation. The core
+package has no required third-party runtime dependencies. The development extra
+includes the same dependency for VPN tests. For VPN deployment, install with pipx:
 
 ```bash
-pipx install 'f-layer[vpn] @ https://github.com/Fuzzy-Technologies/F-Layer/releases/download/v2.0.0/f_layer-2.0.0-py3-none-any.whl'
+pipx install './f_layer-2.0.0-py3-none-any.whl[vpn]'
 flayer check
 ```
 
-For a downloaded release or CI preview wheel, use its actual filename:
+Or use pip inside a virtual environment:
 
 ```bash
 python -m pip install './f_layer-2.0.0-py3-none-any.whl[vpn]'
 ```
 
-Run the latter command in a virtual environment. The dependency resolver downloads
-the extra's dependencies from the configured Python index; the F-Layer wheel itself
-comes from the explicit local file or GitHub URL. No SSH key, VPN credential or
-project configuration is included in a wheel.
-
-The same package can be installed by name after ownership and publication on PyPI
-have been verified:
-
-```bash
-pipx install 'f-layer[vpn]==2.0.0'
-```
-
-This command describes the publication target. It is not evidence that the name
-has been reserved or that 2.0.0 is already available on PyPI. Until publication,
-use the exact wheel attached to the official GitHub release.
+The dependency resolver obtains the extra's libraries from the configured Python
+index. The F-Layer wheel comes from the explicit local file. Wheels contain no
+SSH keys, VPN credentials or project configuration. PyPI publication and its
+post-upload installation check are described below.
 
 ## Version ownership
 
@@ -112,14 +92,13 @@ X25519 and RSA keys in memory and checks dependency consistency. It never calls 
 cloud provider. Reproduce that focused check with:
 
 ```bash
-python -m pip download --only-binary=:all: --dest _build/vpn-wheels './_build/distribution/f_layer-1.2.1-py3-none-any.whl[vpn]'
+python -m pip download --only-binary=:all: --dest _build/vpn-wheels './_build/distribution/f_layer-2.0.0-py3-none-any.whl[vpn]'
 FLAYER_DISTRIBUTION_DIRECTORY=_build/distribution \
 FLAYER_DISTRIBUTION_WHEELHOUSE=_build/vpn-wheels \
 python -m pytest tests/integration/test_distribution.py --no-cov
 ```
 
-Use the actual version of your locally built wheel. A branch preview keeps the
-current source version until release stabilization. Full regression, documentation
+Use the actual version of your locally built wheel. Full regression, documentation
 and artifact gates run in CI. Without an explicitly supplied wheel directory, the
 tests build fresh distributions. Without a dependency wheelhouse, the VPN extra
 installation test reports a skip; it does not claim to have checked that path.

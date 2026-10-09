@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/secure-gateway.md"
 sourceHash = "sha256:5070d94048f2c94795a66213a8e5f9b83e02e7f283ff8bc7c979320ab7f9593a"
-reviewedTranslationHash = "sha256:d93af229097ce77feb566201cd3283fb7fbf1904c53cc594c8f33331f9f3d37e"
+reviewedTranslationHash = "sha256:d7a345ad4ce0ca1e22ca9ec9f115c5a2e67c7c3ff29318d486f3ef67698ad3ac"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:02:09Z"
+reviewedAt = "2026-10-09T15:52:52Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # 安全网关配置
@@ -21,10 +21,10 @@ SSH 应用网关。加密 TCP 转发仅允许精确列出的目标，不配置�
 | 边界       | 要求                                                    |
 | ---------- | ------------------------------------------------------- |
 | 配置格式   | 版本 1；拒绝未知字段和内嵌私有凭据。                    |
-| 放置位置   | 明确指定提供方、范围、所有者、可用区和镜像。            |
+| 部署位置   | 明确指定提供方、范围、所有者、可用区和镜像。            |
 | 子网       | 规范 RFC1918 IPv4 子网，前缀 `/16` 至 `/28`。           |
 | 管理访问   | 明确管理员公钥；1–16 个 `/24` 至 `/32` 来源 CIDR。      |
-| SSH 传输   | 独立无 sudo 账号；1–8 个精确 TCP 目标。                 |
+| SSH 传输   | 独立且无 sudo 权限的账号；1–8 个精确 TCP 目标。         |
 | 设备授权   | 1–16 台设备，公钥唯一；最多 32 个来源 CIDR。            |
 | 防火墙展开 | 最多 63 条入站规则及一条明确 IPv4 出站规则。            |
 | 资源大小   | 2–32 核、1–64 GiB RAM，独立归属的 10–256 GiB 启动磁盘。 |
@@ -65,7 +65,7 @@ plan_text = RenderPlan(
 
 导出的 `server-cloud-init.json` 以 `#cloud-config` 开头，后接同样符合 YAML
 的 JSON。它创建仅用密钥登录的锁定账号，安装 nftables 和自动更新，写入完整
-SSH 服务配置，禁止包转发，并在启用服务前检查 SSH 与防火墙语法。完全替换
+SSH 服务配置，禁止 IP 数据包转发，并在启用服务前检查 SSH 与防火墙语法。完全替换
 SSH 配置只适用于新建虚拟机，不是任意现有服务器的原地管理命令。
 
 初始化前隧道账号必须不存在。账号已存在、查询失败或创建失败时，在激活服务前

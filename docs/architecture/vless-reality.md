@@ -36,8 +36,11 @@ preflight error. Repeat this check when the target or network conditions change.
 `GenerateVlessMaterial()` creates one X25519 key pair and one UUID per device.
 `EncodeVlessMaterial()` and `DecodeVlessMaterial()` let the controller retain these
 credentials in its own sensitive artifact bundle before the cloud assigns an IP
-address. Reuse that material when rendering clients for the actual endpoint;
-regenerating it revokes existing client credentials.
+address. Reuse that material when rendering clients for the actual endpoint.
+Generating fresh material locally neither changes the deployed server nor revokes
+its current clients. The installer rejects different input for an existing
+deployment; this workflow does not yet support server-side credential rotation
+or revocation through configuration replacement.
 
 `PrepareVless()` produces these files:
 

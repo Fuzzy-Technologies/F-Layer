@@ -28,9 +28,9 @@ same candidate and resource evidence requirements as the manual path.
 
 Use the wheel and build evidence from the successful release-artifact CI run for
 the exact reviewed commit. Record the commit, workflow run, wheel filename,
-SHA-256 and Python version. A development wheel retains the current source
-version until release preparation; identify it by its hash and commit, not by
-renaming it to 2.0.0.
+SHA-256 and Python version. The release package version is `2.0.0`; identify
+each tested build by its hash and commit as well as its version. Preserve the
+artifact filename from the CI evidence.
 
 Use a dedicated Yandex Cloud catalogue with an explicit resource budget and
 permission to create and remove the test resources. The operator selects the
@@ -48,7 +48,7 @@ filename with the artifact actually downloaded:
 ```bash
 python3 -m venv flayer-acceptance-env
 . flayer-acceptance-env/bin/activate
-python -m pip install './f_layer-1.2.1-py3-none-any.whl[vpn]'
+python -m pip install './f_layer-2.0.0-py3-none-any.whl[vpn]'
 python -m pip check
 flayer --help
 flayer check --format json

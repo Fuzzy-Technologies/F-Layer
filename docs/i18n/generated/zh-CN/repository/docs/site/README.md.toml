@@ -19,7 +19,8 @@ python -m tools.locale_documentation validate --output _build/documentation-gate
 复制的验证器保留上游哈希、模式键和评审语义；内部标识符遵循项目风格。
 
 多语言封装构建器显示已批准的 RU/ZH 页面，不添加草稿提示；缺失或过期译文则回退到当前英文。它保留已安装 wheel 的导入保护及严格链接和锚点检查，补充每个路由的可达性验证，且绝不生成人工批准。翻译依据哈希使刷新权威注册表无法掩盖过期译文。详见[本地化规则](../i18n/README.md)。
-经所有者评审后，已验证的 v1.2.1 文档已发布到 Pages。[评审记录快照](../i18n/review-snapshot.md) 记录了该次验收和 AI 评审来源，不代表人工翻译评审，也不批准后续变更。
+[评审记录快照](../i18n/review-snapshot.md)记录当前翻译审核、历史发布验收和
+评审者来源。
 
 PR 和 `develop` 上传预览文件。只有获接受的 `master` 推送可以部署 Pages。路由为 `/F-Layer/en/`、`/F-Layer/ru/`、`/F-Layer/zh-CN/`。
 文档依赖与运行时元数据分离，存放于 `../requirements-api.txt`。
@@ -32,9 +33,9 @@ PR 和 `develop` 上传预览文件。只有获接受的 `master` 推送可以�
 
 Wheel 安装到新的受控构建目录中，独立于所选择的文档工具环境。环境中或以前安装的 F-Layer 不会影响 API 发现，安装软件包也不会修改该工具环境。在创建语言回退页面之前，严格验证的英文输出先组成新的发布目录树；恢复出来的相邻语言路由会被丢弃。
 '''
-sourceHash = "sha256:d216d469d4c0dca670ed737ac40bb903a12da9a4d65a3266d20131bfe6a8e6af"
-reviewedTranslationHash = "sha256:8f1f356fe5ddff3da58428e7b9246c78d75b448f76746a2aacbbf1c83faf00d5"
+sourceHash = "sha256:18008ecba94e5f69115644dbac3290b1119d11a1ee0f09eebb9c60472e41040f"
+reviewedTranslationHash = "sha256:82fef0404e3387a2976a62019e30a9c7d89e2aa033bebaea7a97f7491dae94ba"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:54Z"
+reviewedAt = "2026-10-09T15:33:02Z"
 reviewRoles = ["editorial", "technical"]

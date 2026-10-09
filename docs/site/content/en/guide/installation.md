@@ -18,39 +18,32 @@ python -m venv .venv
 | Windows PowerShell      | `.venv\Scripts\Activate.ps1` |
 | Windows Command Prompt  | `.venv\Scripts\activate.bat` |
 
-Install the wheel from the [v1.2.1 release](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.2.1):
+Download `f_layer-2.0.0-py3-none-any.whl` and `build-evidence.json` from the
+[release assets](https://github.com/Fuzzy-Technologies/F-Layer/releases).
+Verify the wheel SHA-256 against the build evidence. From the download directory,
+install F-Layer 2.0 with the `vpn` extra:
 
 ```bash
-python -m pip install https://github.com/Fuzzy-Technologies/F-Layer/releases/download/v1.2.1/f_layer-1.2.1-py3-none-any.whl
+python -m pip install "./f_layer-2.0.0-py3-none-any.whl[vpn]"
 flayer --help
 flayer check --format json
+flayer project --help
+flayer vpn --help
 ```
 
 Expected result: `"status": "ok"` and exit code `0`. `flayer` and
 `python -m flayer` accept the same arguments. Continue with the
-[SSH gateway walkthrough](first-deployment.md) for this stable version.
+[VPN Quick Start](index.md), or the [SSH gateway walkthrough](first-deployment.md)
+for restricted SSH forwarding.
 
-You can also download `f_layer-1.2.1-py3-none-any.whl` from the release assets
-and pass its local path to `python -m pip install`. The same release provides
-a source archive and build evidence with artifact hashes. PyPI publication
-is a separate release step; use the linked wheel until a PyPI release is
-announced. The upcoming 2.0 features are not included in the stable 1.2.1 package.
+The `vpn` extra supplies the cryptography library for local key generation.
+The release assets also include a source archive and build evidence with the
+source revision and artifact hashes. Keep that evidence with your installation.
 
-The cloud deployment walkthrough requires Linux or macOS because generated
-configuration files use POSIX owner and permission checks. Windows users can
-install the package and run local diagnostics; use a Linux environment for
-the deployment walkthrough.
-
-## Install the 2.0 candidate
-
-For AmneziaWG and VLESS Reality, use a reviewed 2.0 candidate wheel with the `vpn`
-extra, on Linux or WSL. The [Quick Start](index.md) shows the exact local wheel
-installation, project settings and deployment commands. Candidate artifacts come
-from the reviewed revision's [CI run](https://github.com/Fuzzy-Technologies/F-Layer/actions),
-not the v1.2.1 release download. Retain the artifact's filename and version.
-A candidate can still report the current development package version; verify
-its revision and the presence of `flayer project` and `flayer vpn` commands.
-PyPI and stable 2.0 publication are not claimed by this guide.
+Run the VPN deployment controller on Linux or a user-managed WSL Linux
+distribution with OpenSSH and the Yandex Cloud CLI. Private project files use
+POSIX ownership and permissions. Windows can run package diagnostics; use the
+WSL environment for deployment.
 
 ## Development checkout
 

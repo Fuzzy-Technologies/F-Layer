@@ -12,7 +12,7 @@ execute them on your computer.
 > Help me deploy a corporate VPN to establish a secure network with
 > F-Layer: https://github.com/Fuzzy-Technologies/F-Layer.
 > Read the AI operator guide linked from its README and use documentation matching
-> the selected release or explicitly approved candidate. Ask which cloud, region
+> F-Layer 2.0 and the installed package version. Ask which cloud, region
 > and client devices I use, then select a supported adapter. Install the verified
 > package and prepare a private project. Show the resources, access rules, cost
 > estimate and cleanup plan; wait for my approval before creating paid resources.
@@ -26,22 +26,14 @@ This guide does not override the assistant's permissions or the user's decisions
 
 ## 1. Select a compatible package and guide
 
-Record the package version, artifact source, source revision and matching
-documentation revision. Use official F-Layer release assets or an explicitly
-chosen CI candidate, and verify the artifact against its build evidence. Do not
-use a moving `develop` guide as proof of an older package's capabilities.
-
-| Package                            | Available path                                                                         |
-| ---------------------------------- | -------------------------------------------------------------------------------------- |
-| Published v1.2.1                   | SSH gateway and diagnostics; no `project` or `vpn` commands.                           |
-| Reviewed 2.0 development candidate | The VPN workflow on this page, with the `vpn` extra.                                   |
-| Future stable VPN release on PyPI  | Use only after official release notes and PyPI publication identify the exact version. |
-
-For now, follow [candidate installation](index.md#1-install-the-candidate).
-Do not silently opt the user into a candidate. If they require a stable VPN
-release and none is published, report that blocker. After verified PyPI
-publication, install the exact published `f-layer[vpn]` version in an isolated
-environment. Never substitute a similarly named package or guess a version.
+Install **F-Layer 2.0.0** with the `vpn` extra in an isolated environment using
+[the installation guide](installation.md). Obtain the exact package from the
+project's official release assets, verified PyPI listing or an explicitly selected
+CI build. Check that the
+package identity, source revision and documentation match, and verify a downloaded
+wheel against its build evidence. Record those values locally. Do not substitute
+a similarly named package or guess an artifact URL. If the selected artifact
+cannot be obtained or verified, report the installation blocker.
 
 Run these commands from the activated environment, outside a source checkout:
 

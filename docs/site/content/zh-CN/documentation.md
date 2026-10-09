@@ -21,7 +21,7 @@ F-Layer 采用 [Fuzzy Technologies 文档蓝图](https://github.com/Fuzzy-Techno
 
 每份译文记录稳定单元 ID、英文源文哈希及路径。批准需要具名的编辑审核
 和技术审核、UTC 时间戳及当前源文哈希。F-Layer 根据
-[ADR 0015](https://github.com/Fuzzy-Technologies/F-Layer/blob/v1.2.1/docs/adr/0015-accountable-ai-translation-review.md)
+[ADR 0015](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/adr/0015-accountable-ai-translation-review.md)
 明确允许 AI 审核。这些记录将审核者标记为 AI，并额外记录已审核译文的文本哈希；
 它们不代表人工审核。任一文本发生变化都需要重新审核，
 仅更新英文登记表不能恢复批准状态。
@@ -32,6 +32,6 @@ F-Layer 采用 [Fuzzy Technologies 文档蓝图](https://github.com/Fuzzy-Techno
 
 Pull request 和 `develop` 生成可下载的预览和证据制品。仅 `master` 分支的 `push` 事件可以部署经过验证的 Pages 制品。文档发布独立于包发布。
 
-公开路由为 `/F-Layer/en/`、`/F-Layer/ru/` 和 `/F-Layer/zh-CN/`。根路径打开英文参考。在稳定发布之前，不宣称拥有不可变版本文档。
+公开路由为 `/F-Layer/en/`、`/F-Layer/ru/` 和 `/F-Layer/zh-CN/`。根路径打开英文参考。
 
 [ADR 0004](../../../adr/0004-documentation-platform.md)记录已接受的生成器、审核、源码哈希、回退和发布边界。

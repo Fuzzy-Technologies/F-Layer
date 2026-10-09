@@ -109,10 +109,10 @@ not close planning items or invent human approvals to make publication pass.
 Use GitHub CLI with read access to the canonical repository for the preflight:
 
 ```bash
-python tools/release_validation.py --check-milestone 3
+python tools/release_validation.py --check-milestone 4
 ```
 
-This example checks release-1.2 against the checked-out package version. Replace
+This example checks release-2.0 against the checked-out package version. Replace
 the native milestone number for another release. The check reads GitHub's native
 state, validates repository/number/minor-version identity, and fails for open,
 incomplete, unavailable or malformed evidence. It does not build, publish or change

@@ -14,16 +14,15 @@ parity, cloud mutation consent, ownership and cleanup, headings, links and
 actual release availability. Russian prose now explains concrete settings and
 actions; Linux and Yandex Cloud directories use «каталог». The Russian Yandex
 CLI link opens the vendor's Russian instructions. Install precedes Quick Start,
-which leads with a concrete Yandex Cloud walkthrough. Installation uses the
-existing release wheel for v1.2.1 and an explicitly identified CI candidate wheel
-for the new VPN workflow; PyPI or stable 2.0 publication is not claimed.
+which leads with a concrete Yandex Cloud walkthrough. Installation uses the F-Layer 2.0.0 wheel with the `vpn` extra and its
+build evidence; the operator records the exact package and source identity.
 
 The API landing page and project identity page are now translated as well.
 The brand-image paths were subsequently corrected to the canonical asset
 location and re-reviewed; their exact later timestamps are in the registry.
 The API landing no longer repeats the obsolete pre-1.0 compatibility notice.
 Localized links stay in their language's API and engineering-reference routes.
-The new Quick Start covers candidate installation, private project settings,
+The Quick Start covers package installation, private project settings,
 authenticated guest provisioning, both client imports, DNS and routing checks,
 and cleanup. Independent AI reviewers checked Russian and Chinese terminology
 and protocol details. Generated API and engineering-reference translations use
@@ -34,6 +33,14 @@ The AI operator guide, README prompt and Quick Start entry points received
 editorial and technical self-review by AIna-Dev. This review checks version and
 provider honesty, bounded paid-resource consent, retained authorization,
 prerequisite handling, private state, real-client verification and cleanup.
+The owner-requested 2.0 preparation was re-reviewed across README, landing,
+installation, Quick Start, AI guidance and maintainer examples: old-version
+comparisons are removed, installation uses the 2.0.0 artifact, and the runtime
+version matches. These follow-up checks are AI self-reviews.
+The owner-requested 2.0 preparation was re-reviewed across README, landing,
+installation, Quick Start, AI guidance and maintainer examples: old-version
+comparisons are removed, installation uses the 2.0.0 artifact, and the runtime
+version matches. These follow-up checks are AI self-reviews.
 It is not an independent-agent live deployment; that evidence remains part of
 the release acceptance procedure.
 
@@ -43,14 +50,14 @@ the release acceptance procedure.
 | `page:architecture`           | `sha256:ec88468bbf2a50a96f2365f47035ffbf747d6be85bbedaa558eaf04364a19df7` |
 | `page:brand`                  | `sha256:7dc4a34669dc538db351ce211014c64ea31d79c00d540badb364bce3c4d620aa` |
 | `page:development`            | `sha256:3e13b58ec7a14f97c5d4f774a4727fe67aeaf9ba91a4720972768bd8154450a2` |
-| `page:documentation`          | `sha256:c80e615173c62b32beb8d6e363eedd39657c2c4357ebbe43518d4fbc5b76e4a0` |
-| `page:guide`                  | `sha256:e6fbeddc2c0746b1f2ca6c4e3e53a7b7d1efa54b7c461d8434a33a2e045ee96b` |
-| `page:guide.ai-operator`      | `sha256:1483f0271910ca315756d676319e737bcddc01efa0e78b630e028fb883daeb6a` |
+| `page:documentation`          | `sha256:b4d1f228b3280cba13b0dbf9900b3a7ccd8a433862551bbaaa97f155f2cab4cb` |
+| `page:guide`                  | `sha256:f633b1e2ddb1dfbed4fb5045b06ef9742733ef27d5fd48c12e4eadc9f0791997` |
+| `page:guide.ai-operator`      | `sha256:cd0c8a7df584c1dcad0672daf65a4d94b65297f405391e7fdf1efc23018038af` |
 | `page:guide.cli`              | `sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc` |
 | `page:guide.configuration`    | `sha256:49c1db435ada063f2181b0b9e69381f8a8a518ce3742b44de8e7b4ed1054abc1` |
 | `page:guide.first-deployment` | `sha256:485cfb018ec5d44ec29e9d14d7901cfc6f78ff790dee979ebaa42b5071c41094` |
-| `page:guide.installation`     | `sha256:a15b039e30245d5ac0e53d635972c360018ffffc9875715b15333aa3763bd590` |
-| `page:index`                  | `sha256:d107a7d1b3d988c56b609d8062d6b016d325160176185b2a8b55b640d8d0e77a` |
+| `page:guide.installation`     | `sha256:87fa7aad27ce6c92dd508ba53c736c30ae6c33768ddc9e6f5eae796bd4b877e1` |
+| `page:index`                  | `sha256:fa5be57c593750c35275892739b75cfd0d5c552612574e1c7f2adc8b003d8a87` |
 
 `docs/i18n/units.toml` records each translated text hash, named reviewer, reviewer
 type, role and UTC timestamp. A later edit requires a fresh review. The current

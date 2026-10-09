@@ -21,7 +21,7 @@ CLI 的冒烟测试和文档审核不能证明独立助手完成了真实流程�
 
 ## 选择候选版本与云资源范围
 
-使用对应精确已评审提交、且发行包 CI 成功的 wheel 和构建记录。记录提交、工作流运行、wheel 文件名、SHA-256 和 Python 版本。开发 wheel 在发布准备前保持当前源码版本；应以哈希和提交识别它，不要重命名为 2.0.0。
+使用对应精确已评审提交、且发行包 CI 成功的 wheel 和构建记录。记录提交、工作流运行、wheel 文件名、SHA-256 和 Python 版本。发行包版本为 `2.0.0`；除版本外，还应以哈希和提交识别每次测试的构建。保留 CI 报告中的产物文件名。
 
 使用专用 Yandex Cloud 目录，并明确资源预算及创建、删除测试资源的权限。操作者选择账户、命名 `yc` 配置、目录、可用区和兼容的 Ubuntu 24.04 amd64 镜像。本操作指南不授予账户访问权，也不授权自动化代理创建付费资源。云标识符与客户端凭据应保存在私有本地记录中；公开 issue 需要结果、版本和验证资料引用，不需要机密。
 
@@ -30,7 +30,7 @@ CLI 的冒烟测试和文档审核不能证明独立助手完成了真实流程�
 ```bash
 python3 -m venv flayer-acceptance-env
 . flayer-acceptance-env/bin/activate
-python -m pip install './f_layer-1.2.1-py3-none-any.whl[vpn]'
+python -m pip install './f_layer-2.0.0-py3-none-any.whl[vpn]'
 python -m pip check
 flayer --help
 flayer check --format json
@@ -113,9 +113,9 @@ Task 73 的验证记录必须包括候选版本身份、控制器与客户端版
 
 只有操作者接受实际结果后才能关闭 Task 73。关闭 `release-2.0` 前先完成其余原生里程碑项，之后再准备带版本的变更记录、稳定 master 发布和注释标签 `v2.0.0`。若已配置 PyPI 发布，还必须验证从已发布包索引进行安装。
 '''
-sourceHash = "sha256:b518b176621d64c8ebdc59bbf2e4b13956eb92a8783c7bc7b7275db34cd21707"
-reviewedTranslationHash = "sha256:06802b3e5b5e3ca0ca71eb157803dbd2e46acc762401c175d37b52dc2a18bc5a"
+sourceHash = "sha256:942aec855a524cf7011b886420811f28de44fc4cf4a158f34f65797ca525057d"
+reviewedTranslationHash = "sha256:c8b59495a2d77dbbb69f6d2055471d16cf5acf5a5a82ebb48bd49a83c177119a"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T13:06:57Z"
+reviewedAt = "2026-10-09T15:33:02Z"
 reviewRoles = ["editorial", "technical"]

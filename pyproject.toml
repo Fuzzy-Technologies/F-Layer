@@ -14,7 +14,6 @@ dependencies = []
 authors = [{ name = "Fuzzy Technologies" }]
 keywords = ["infrastructure", "cloud", "automation", "security", "yandex-cloud"]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
     "Programming Language :: Python :: 3 :: Only",

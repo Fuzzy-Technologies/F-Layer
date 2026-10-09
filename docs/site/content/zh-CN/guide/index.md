@@ -4,33 +4,26 @@
 或 **VLESS Reality** 连接设备。F-Layer 会创建云资源、安装两种服务，并为每台设备
 分别导出客户端配置。
 
-本教程需要包含 `flayer project` 和 `flayer vpn` 命令的 **2.0 开发候选版本**。
-已发布的 **v1.2.1** 支持 [SSH 网关部署](first-deployment.md)，但不包含这些 VPN
-命令。2.0 尚未发布为稳定版。
-
-## 1. 安装候选版本 {#1-install-the-candidate}
+## 1. 安装 F-Layer {#1-install-f-layer}
 
 如需委托能够访问终端的助手完成这些步骤，请复制 [AI 快速开始](ai-operator.md)
-中的任务。该指南涵盖版本选择、助手应询问的问题、付费资源批准以及实际连接验证。
+中的任务。该指南涵盖安装、助手应询问的问题、付费资源批准以及实际连接验证。
 下方命令供手动执行。
 
 使用 Linux 或 WSL，并准备 Python 3.11+、OpenSSH（`ssh` 和 `ssh-keygen`）以及
 [官方 Yandex Cloud CLI](https://yandex.cloud/en/docs/cli/quickstart)。
-从项目 CI 中下载已审查候选版本的 wheel 构建产物。按照[安装指南](installation.md)
-创建并激活虚拟环境，然后安装该 wheel 及其 `vpn` 可选依赖。将下面的路径替换为
-实际下载文件的路径，保留文件原有的版本号：
+下载 F-Layer 2.0.0 wheel，并按[安装指南](installation.md)核对哈希。
+创建并激活虚拟环境，然后安装 wheel 及其 `vpn` 可选依赖。
+将下面的路径替换为实际下载文件的路径：
 
 ```bash
-FLAYER_WHEEL=/absolute/path/to/downloaded-candidate.whl
+FLAYER_WHEEL=/absolute/path/to/f_layer-2.0.0-py3-none-any.whl
 python -m pip install "${FLAYER_WHEEL}[vpn]"
 flayer project --help
 flayer vpn --help
 ```
 
 `vpn` 可选依赖提供用于在本地生成密钥的密码学库，无需 Git 或 Docker。
-通过 v1.2.1 的发行版链接安装，得到的仍是 v1.2.1，而不是 2.0 候选版本；即使候选
-构建暂时使用相同的软件包版本号，两者也不同。请选择经过审查的代码版本所对应的
-构建产物。
 
 ## 2. 创建并配置项目 {#2-set-up-the-project}
 

@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "README.md"
-sourceHash = "sha256:c276b15c1aa833701347146e5d9792bcd66a4bcdda228f770fa424cfacdd15ba"
-reviewedTranslationHash = "sha256:6526c7aa82eef2977278def055a376206ca88ba2488eed100374485e27254239"
+sourceHash = "sha256:6215dd2bbeab4ba8d0d4413ebdbbc9a1e7e46c3beb17d522c1d1f05435eb7882"
+reviewedTranslationHash = "sha256:f1552e18e269018e58d4912b3e840befaedc0cf610d06d57970e162e3027c0f7"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T13:06:57Z"
+reviewedAt = "2026-10-09T14:41:45Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # F-Layer
@@ -45,7 +45,8 @@ F-Layer создаёт облачные ресурсы по конфигурац
 релизом и предварительной сборкой описаны в
 [инструкции для ИИ-оператора](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/site/content/ru/guide/ai-operator.md).
 
-> Помоги развернуть личный VPN через F-Layer: https://github.com/Fuzzy-Technologies/F-Layer.
+> Помоги развернуть корпоративный VPN для организации безопасной сети через
+> F-Layer: https://github.com/Fuzzy-Technologies/F-Layer.
 > Прочитай инструкцию для ИИ-оператора по ссылке из README и используй документацию
 > выбранного релиза или явно согласованной предварительной сборки. Уточни моё
 > облако, регион и клиентские устройства, затем выбери поддерживаемый адаптер.

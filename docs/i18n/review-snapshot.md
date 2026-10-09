@@ -45,7 +45,7 @@ the release acceptance procedure.
 | `page:development`            | `sha256:3e13b58ec7a14f97c5d4f774a4727fe67aeaf9ba91a4720972768bd8154450a2` |
 | `page:documentation`          | `sha256:c80e615173c62b32beb8d6e363eedd39657c2c4357ebbe43518d4fbc5b76e4a0` |
 | `page:guide`                  | `sha256:e6fbeddc2c0746b1f2ca6c4e3e53a7b7d1efa54b7c461d8434a33a2e045ee96b` |
-| `page:guide.ai-operator`      | `sha256:d8b806e174ad5886a36707d1fc95f14f5d157d760a3fa3f4ff3c0c3a4666178b` |
+| `page:guide.ai-operator`      | `sha256:1483f0271910ca315756d676319e737bcddc01efa0e78b630e028fb883daeb6a` |
 | `page:guide.cli`              | `sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc` |
 | `page:guide.configuration`    | `sha256:49c1db435ada063f2181b0b9e69381f8a8a518ce3742b44de8e7b4ed1054abc1` |
 | `page:guide.first-deployment` | `sha256:485cfb018ec5d44ec29e9d14d7901cfc6f78ff790dee979ebaa42b5071c41094` |

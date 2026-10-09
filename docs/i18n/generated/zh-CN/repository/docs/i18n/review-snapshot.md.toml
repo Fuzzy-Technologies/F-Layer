@@ -21,7 +21,7 @@ AI 操作指南、README 提示词和 Quick Start 入口由 AIna-Dev 完成编�
 | `page:development`            | `sha256:3e13b58ec7a14f97c5d4f774a4727fe67aeaf9ba91a4720972768bd8154450a2` |
 | `page:documentation`          | `sha256:c80e615173c62b32beb8d6e363eedd39657c2c4357ebbe43518d4fbc5b76e4a0` |
 | `page:guide`                  | `sha256:e6fbeddc2c0746b1f2ca6c4e3e53a7b7d1efa54b7c461d8434a33a2e045ee96b` |
-| `page:guide.ai-operator`      | `sha256:d8b806e174ad5886a36707d1fc95f14f5d157d760a3fa3f4ff3c0c3a4666178b` |
+| `page:guide.ai-operator`      | `sha256:1483f0271910ca315756d676319e737bcddc01efa0e78b630e028fb883daeb6a` |
 | `page:guide.cli`              | `sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc` |
 | `page:guide.configuration`    | `sha256:49c1db435ada063f2181b0b9e69381f8a8a518ce3742b44de8e7b4ed1054abc1` |
 | `page:guide.first-deployment` | `sha256:485cfb018ec5d44ec29e9d14d7901cfc6f78ff790dee979ebaa42b5071c41094` |
@@ -38,9 +38,9 @@ AI 操作指南、README 提示词和 Quick Start 入口由 AIna-Dev 完成编�
 
 [F-Layer v1.2.1](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.2.1) 在[注释标签及可复现发行包审计](https://github.com/Fuzzy-Technologies/F-Layer/actions/runs/37862618156)后发布。标签准确指向该 master 源提交；下载的 wheel、源码归档和构建记录均与已审计的哈希及大小一致。预发布 v1.2.0 保持不可变。这些记录证明本次发布通过验收，不代表未来翻译已经获批。
 '''
-sourceHash = "sha256:bb211f478616ebd0608cb7eca0ad1e54eb0d56e8d2c3030801c505a94d49becb"
-reviewedTranslationHash = "sha256:ebd337a9458cddc104c4a90fa5a2c699b592714e324497840fd6c0ded28d8bc0"
+sourceHash = "sha256:7285bca0001dc82dfb39cb6caf7db39b8d93696c8a65ab666b9c68d02d76aec6"
+reviewedTranslationHash = "sha256:cd0973f85c083a2aca8da5f0ffeda1de9d4583b50c7ce186f3b4bb3a52fd36fa"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T13:06:57Z"
+reviewedAt = "2026-10-09T14:41:45Z"
 reviewRoles = ["editorial", "technical"]

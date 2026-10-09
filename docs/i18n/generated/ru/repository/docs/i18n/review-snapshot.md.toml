@@ -21,7 +21,7 @@ body = '''
 | `page:development`            | `sha256:3e13b58ec7a14f97c5d4f774a4727fe67aeaf9ba91a4720972768bd8154450a2` |
 | `page:documentation`          | `sha256:c80e615173c62b32beb8d6e363eedd39657c2c4357ebbe43518d4fbc5b76e4a0` |
 | `page:guide`                  | `sha256:e6fbeddc2c0746b1f2ca6c4e3e53a7b7d1efa54b7c461d8434a33a2e045ee96b` |
-| `page:guide.ai-operator`      | `sha256:d8b806e174ad5886a36707d1fc95f14f5d157d760a3fa3f4ff3c0c3a4666178b` |
+| `page:guide.ai-operator`      | `sha256:1483f0271910ca315756d676319e737bcddc01efa0e78b630e028fb883daeb6a` |
 | `page:guide.cli`              | `sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc` |
 | `page:guide.configuration`    | `sha256:49c1db435ada063f2181b0b9e69381f8a8a518ce3742b44de8e7b4ed1054abc1` |
 | `page:guide.first-deployment` | `sha256:485cfb018ec5d44ec29e9d14d7901cfc6f78ff790dee979ebaa42b5071c41094` |
@@ -38,9 +38,9 @@ body = '''
 
 [F-Layer v1.2.1](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.2.1) опубликован после [проверки аннотированного тега и воспроизводимых пакетов](https://github.com/Fuzzy-Technologies/F-Layer/actions/runs/37862618156). Его тег указывает именно на этот коммит `master`; скачанные wheel, архив исходников и отчёт сборки совпали с проверенными хешами и размерами. Предварительная v1.2.0 остаётся неизменной. Эти записи подтверждают приёмку данной публикации, а не одобрение будущих переводов.
 '''
-sourceHash = "sha256:bb211f478616ebd0608cb7eca0ad1e54eb0d56e8d2c3030801c505a94d49becb"
-reviewedTranslationHash = "sha256:053ba81cd88515037fc516ea41e5b0e653e16e84acb961b0ea1c7b98f0925576"
+sourceHash = "sha256:7285bca0001dc82dfb39cb6caf7db39b8d93696c8a65ab666b9c68d02d76aec6"
+reviewedTranslationHash = "sha256:e14e4d6f1a4246497669bbff29afa91813091be152de44b1963d311f8453d9b0"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T13:06:57Z"
+reviewedAt = "2026-10-09T14:41:45Z"
 reviewRoles = ["editorial", "technical"]

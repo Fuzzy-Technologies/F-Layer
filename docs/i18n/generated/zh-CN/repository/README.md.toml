@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "README.md"
-sourceHash = "sha256:c276b15c1aa833701347146e5d9792bcd66a4bcdda228f770fa424cfacdd15ba"
-reviewedTranslationHash = "sha256:26b4d327df79cafa32b1480b13eaa8b4a498b591a32af25715293eb204440133"
+sourceHash = "sha256:6215dd2bbeab4ba8d0d4413ebdbbc9a1e7e46c3beb17d522c1d1f05435eb7882"
+reviewedTranslationHash = "sha256:8fa129fe7d8a3b9e33a5a1b758b15858ec8e8f2593a5a61302550431a096b1ce"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T13:06:57Z"
+reviewedAt = "2026-10-09T14:41:45Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # F-Layer
@@ -39,7 +39,8 @@ SSH 网关和 HTTP 检查，不包含新的 VPN 命令。2.0 稳定版尚未发�
 [AI 操作指南](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/site/content/zh-CN/guide/ai-operator.md)说明完整流程，
 并区分稳定发布版本与候选版本。
 
-> 请使用 F-Layer 帮我部署个人 VPN：https://github.com/Fuzzy-Technologies/F-Layer。
+> 请使用 F-Layer 帮我部署企业 VPN，以构建安全网络：
+> https://github.com/Fuzzy-Technologies/F-Layer。
 > 阅读 README 链接的 AI 操作指南，并使用与所选发布版本或明确批准的候选版本
 > 相匹配的文档。询问我使用的云平台、区域和客户端设备，然后选择受支持的适配器。
 > 安装经过验证的软件包，准备私有项目。展示资源、访问规则、费用估算和清理计划；

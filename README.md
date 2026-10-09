@@ -34,7 +34,8 @@ before creating paid resources. Sign-in and client setup may need your help.
 Read the [AI operator guide](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/site/content/en/guide/ai-operator.md) for the
 complete workflow and the distinction between a stable release and a candidate.
 
-> Help me deploy a personal VPN with F-Layer: https://github.com/Fuzzy-Technologies/F-Layer.
+> Help me deploy a corporate VPN to establish a secure network with
+> F-Layer: https://github.com/Fuzzy-Technologies/F-Layer.
 > Read the AI operator guide linked from its README and use documentation matching
 > the selected release or explicitly approved candidate. Ask which cloud, region
 > and client devices I use, then select a supported adapter. Install the verified

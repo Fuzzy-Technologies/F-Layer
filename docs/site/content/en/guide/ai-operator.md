@@ -9,7 +9,8 @@ execute them on your computer.
 
 ## Copy this task
 
-> Help me deploy a personal VPN with F-Layer: https://github.com/Fuzzy-Technologies/F-Layer.
+> Help me deploy a corporate VPN to establish a secure network with
+> F-Layer: https://github.com/Fuzzy-Technologies/F-Layer.
 > Read the AI operator guide linked from its README and use documentation matching
 > the selected release or explicitly approved candidate. Ask which cloud, region
 > and client devices I use, then select a supported adapter. Install the verified
@@ -171,7 +172,7 @@ from a successful HTTPS request.
 Report the exact artifact/revision, verified and unverified checks, running
 resources and continuing charges, private project location, and status/recovery/
 removal commands. Do not print keys, client URIs or unredacted logs. A successful
-personal VPN stays running if that was agreed; a disposable test follows its
+corporate VPN stays running if that was agreed; a disposable test follows its
 agreed cleanup deadline. Never label `not run` checks as passed.
 
 For authorized removal of this project's resources:

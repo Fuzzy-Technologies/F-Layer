@@ -19,7 +19,8 @@ profiles are planned. F-Layer is open source; cloud usage is billed by your prov
 
 ## Quick Start
 
-[Install the stable release and run your first check](guide/index.md).
+[Install the stable package](guide/installation.md), then follow the
+[Quick Start](guide/index.md) to deploy in Yandex Cloud.
 Once installed, this command works without cloud access:
 
 ```bash

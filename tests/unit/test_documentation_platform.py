@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -82,12 +83,15 @@ def test_CanonicalSourceDriftFails(locale_project: Path) -> None:
     assert any("canonical source drift" in item for item in report.diagnostics)
 
 
-def test_ApprovalWithoutHumanReviewFails(locale_project: Path) -> None:
-    """Automation cannot convert an untranslated unit into an approved translation."""
+def test_ApprovalWithoutRequiredReviewsFails(locale_project: Path) -> None:
+    """Approved translations fail validation when their required reviews are removed."""
 
     registry = locale_project / "docs/i18n/units.toml"
-    registry.write_text(registry.read_text().replace('state = "missing"',
-                                                   'state = "approved"', 1))
+    content = re.sub(
+        r"\n\[\[units\.translations\.ru\.reviews\]\].*?(?=\n\[|\Z)",
+        "", registry.read_text(), flags=re.DOTALL,
+    )
+    registry.write_text(content)
     report = ValidateLocales(locale_project)
 
     assert any("approved state lacks review roles" in item for item in report.diagnostics)

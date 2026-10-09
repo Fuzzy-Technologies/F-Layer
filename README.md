@@ -1,6 +1,6 @@
 # F-Layer
 
-![F-Layer with AIna in the Fuzzy Technologies engineering laboratory](docs/site/content/en/assets/brand/FTech-card-F-Layer.png)
+![F-Layer with AIna in the Fuzzy Technologies engineering laboratory](https://raw.githubusercontent.com/Fuzzy-Technologies/F-Layer/master/docs/site/content/en/assets/brand/FTech-card-F-Layer.png)
 
 **Deploy cloud servers, manage their resources and check availability from Python or the command line.**
 
@@ -16,20 +16,18 @@ Other clouds and VPN profiles are roadmap work. Cloud resources are billed by
 your provider; F-Layer is open source under Apache 2.0.
 
 [Documentation](https://fuzzy-technologies.github.io/F-Layer/) ·
-[Quick Start](docs/site/content/en/guide/index.md) ·
-[First deployment](docs/site/content/en/guide/first-deployment.md) ·
+[Quick Start](https://fuzzy-technologies.github.io/F-Layer/en/guide/) ·
+[First deployment](https://fuzzy-technologies.github.io/F-Layer/en/guide/first-deployment/) ·
 [API reference](https://fuzzy-technologies.github.io/F-Layer/en/api/) ·
-[Changelog](CHANGELOG.md) ·
+[Changelog](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/CHANGELOG.md) ·
 [Releases](https://github.com/Fuzzy-Technologies/F-Layer/releases)
 
-## Quick Start
+## Install
 
-Use Python 3.11 or newer. Install the stable release in a virtual environment:
+Use Python 3.11 or newer. Install the release wheel in a virtual environment;
+Git and Docker are not required:
 
 ```bash
-git clone https://github.com/Fuzzy-Technologies/F-Layer.git
-cd F-Layer
-git checkout v1.2.1
 python -m venv .venv
 ```
 
@@ -38,7 +36,7 @@ Activate it with `source .venv/bin/activate` on Linux/macOS,
 `.venv\Scripts\activate.bat` in Windows Command Prompt. Then run:
 
 ```bash
-python -m pip install .
+python -m pip install https://github.com/Fuzzy-Technologies/F-Layer/releases/download/v1.2.1/f_layer-1.2.1-py3-none-any.whl
 python -m flayer --help
 python -m flayer check --format json
 ```
@@ -47,8 +45,10 @@ Expected result: the local check reports `"status": "ok"` and exits with `0`.
 It checks Python and package availability without cloud credentials or network
 access. This is a working first check, not a server deployment.
 
-Next, follow the [Quick Start](docs/site/content/en/guide/index.md) to try an
-endpoint check, or the [gateway walkthrough](docs/site/content/en/guide/first-deployment.md)
+## Quick Start
+
+Next, follow the [Quick Start](https://fuzzy-technologies.github.io/F-Layer/en/guide/) to try an
+endpoint check, or the [gateway walkthrough](https://fuzzy-technologies.github.io/F-Layer/en/guide/first-deployment/)
 to prepare a server plan and deploy it with explicit provider access.
 
 ## What you can build
@@ -62,14 +62,14 @@ to prepare a server plan and deploy it with explicit provider access.
 - **Application integrations:** reuse the Python configuration, provider and
   lifecycle APIs in your own tools.
 
-See the [architecture](docs/architecture/README.md) for how these parts fit
+See the [architecture](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/architecture/README.md) for how these parts fit
 together. Stable releases are tagged on `master`; the changelog records their
 scope. `develop` also contains accepted work for later releases.
 
 ## Contributing
 
-Read [AGENTS.md](AGENTS.md) and [DEVELOPMENT_PROTOCOL.md](DEVELOPMENT_PROTOCOL.md).
+Read [AGENTS.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/AGENTS.md) and [DEVELOPMENT_PROTOCOL.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/DEVELOPMENT_PROTOCOL.md).
 Build the installed-wheel API documentation with
-`python tools/build_api_reference.py`; see [documentation setup](docs/site/README.md).
+`python tools/build_api_reference.py`; see [documentation setup](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/site/README.md).
 
-[Release workflow](docs/RELEASE_WORKFLOW.md) · [Apache License 2.0](LICENSE)
+[Release workflow](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/RELEASE_WORKFLOW.md) · [Apache License 2.0](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/LICENSE)

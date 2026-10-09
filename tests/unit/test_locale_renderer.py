@@ -119,13 +119,20 @@ def test_PreparedPagesRetainApprovedProvenanceAndFallbackNotices(locale_project:
     project = tomllib.loads((locale_project / "docs/i18n/project.toml").read_text())
     registry = tomllib.loads((locale_project / project["unitManifest"]).read_text())
     notices = tomllib.loads((locale_project / "docs/i18n/fallbacks.toml").read_text())
+    states = ValidateLocales(locale_project).states
+    states["page:api"]["ru"] = "missing"
+
+    for record in registry["units"]:
+        if record["id"] == "page:api":
+            record["translations"]["ru"] = {"state": "missing"}
+
     build_root = locale_project / "_build/api-reference"
     shutil.copytree(locale_project / "docs/site/content/en", build_root / "content/en")
     restored_locale = build_root / "content/ru"
     restored_locale.mkdir()
     (restored_locale / "stale-generated-page.md").write_text("Stale restored output")
     content_root, evidence = locale_renderer._PrepareLocale(
-        locale_project, build_root, "ru", project, registry, ValidateLocales(locale_project).states,
+        locale_project, build_root, "ru", project, registry, states,
         notices["ru"], "https://fuzzy-technologies.github.io/F-Layer",
     )
 

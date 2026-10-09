@@ -16,7 +16,7 @@ F-Layer 是开源软件；云资源费用由云提供方收取。
 
 ## 快速开始 {#quick-start}
 
-[安装稳定发行版并运行首次检查](guide/index.md)。安装后，以下命令无需云访问：
+[安装发行包](guide/installation.md)，然后按照[快速开始](guide/index.md)在 Yandex Cloud 部署。安装后，以下命令无需云访问：
 
 ```bash
 python -m flayer check --format json
@@ -39,7 +39,7 @@ python -m flayer check --format json
 
 - **集成到自己的应用**
 
-    查看 [Python API](../en/api/index.md)及配置、状态和提供方的[架构](architecture.md)。
+    查看 [Python API](api/index.md)及配置、状态和提供方的[架构](architecture.md)。
 
 - **扩展或参与开发**
 

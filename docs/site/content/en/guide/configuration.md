@@ -1,8 +1,10 @@
 # Configuration and provider access
 
-Configuration records intent and ownership. Authentication remains the
-provider adapter's responsibility; configuration loading does not read a
-credential file, resolve environment secrets, or contact a cloud account.
+The configuration names your project, selects a deployment profile and lists
+the resources to create. It also identifies which deployment owns those
+resources, so F-Layer can manage them later. Reading this file only validates
+its contents. To connect to Yandex Cloud, configure `yc` separately as shown
+below; do not put access tokens or private keys in the configuration.
 
 ## Explicit identity
 
@@ -25,11 +27,11 @@ kind = "instance"
 name = "example-gateway"
 ```
 
-These are synthetic identifiers. Substitute your own intended folder and
-ownership identity before provider calls. Core names use lowercase letters,
-digits and hyphens, starting with a letter; the opaque scope ID is validated
-separately. Unknown fields, duplicate logical IDs and unsupported schema
-versions fail closed.
+This is an example. Before using it, replace `scope_id` with your Yandex Cloud
+folder ID and choose your own project, stack and owner names. Names start with
+a letter and use lowercase letters, digits and hyphens. The cloud folder ID
+has its own validation rules. F-Layer rejects unknown fields, duplicate
+`logical_id` values and unsupported schema versions.
 
 Validate locally through the configuration API:
 
@@ -43,7 +45,7 @@ print(config.identity.project, config.profile)
 This basic model describes resource identities. The lifecycle deployment plan
 adds explicit dependencies and provider parameters; it is a separate loader.
 A gateway profile compiles its security settings into that plan. See
-[first deployment](first-deployment.md) for the second-wave path.
+[first deployment](first-deployment.md) for the complete process.
 
 ## Existing Yandex CLI authentication
 
@@ -90,7 +92,7 @@ source = "env"
 reference = "EXAMPLE_PROVIDER_AUTH"
 ```
 
-The foundation loader preserves that reference without resolving it. The
+The configuration loader saves the variable name without reading its value. The
 current Yandex adapter uses existing `yc` authentication instead; this entry
 does not configure that adapter or inject a token into its commands.
 

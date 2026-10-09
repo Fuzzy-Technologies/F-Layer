@@ -270,6 +270,47 @@ def test_GuestRefusesForeignAndChangedFiles(tmp_path: Path, monkeypatch: pytest.
     assert root.exists() and service.exists()
 
 
+@pytest.mark.parametrize("initial_active", [False, True])
+def test_OwnedRetryEnsuresServiceRunsWithoutReplacingCredentials(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, initial_active: bool,
+) -> None:
+    """An explicit deployment retry must restore an inactive verified service without rewriting it."""
+
+    request, config = guest._Request(PreparedDirectory(tmp_path))
+    root, service = GuestPaths(tmp_path, monkeypatch)
+    guest._Install(root, service, request, config)
+    snapshot = {path: (path.stat().st_ino, path.read_bytes()) for path in (*root.iterdir(), service)}
+    active = initial_active
+    commands: list[list[str]] = []
+
+    def RunCommand(arguments: list[str], **kwargs: object) -> None:
+        """Model service activation while rejecting a restart that would interrupt active clients."""
+
+        nonlocal active
+        commands.append(arguments)
+        assert arguments == ["systemctl", "enable", "--now", service.name], "Retry must only ensure the owned service is enabled and running"
+        active = True
+
+    def CheckHealth(*args: object) -> None:
+        """Reject the exact stopped-service state that previously made every retry fail."""
+
+        if not active:
+            raise guest.GuestError("Owned service is inactive")
+
+    def RejectDownload() -> bytes:
+        """Preserve the existing verified executable during an identical deployment retry."""
+
+        pytest.fail("An identical retry must not download or replace the existing executable")
+
+    monkeypatch.setattr(guest, "_Command", RunCommand)
+    monkeypatch.setattr(guest, "_Health", CheckHealth)
+    monkeypatch.setattr(guest, "_DownloadBinary", RejectDownload)
+    guest._Install(root, service, request, config)
+
+    assert active and commands, "Deployment retry must actively restore an inactive owned service"
+    assert snapshot == {path: (path.stat().st_ino, path.read_bytes()) for path in (*root.iterdir(), service)}, "Service recovery must preserve all installed credentials and ownership receipts"
+
+
 def test_ReplacementRequiresExplicitExpectedOldAuthorization(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """A changed input must not revoke existing credentials or touch the active service."""
 
@@ -541,20 +582,39 @@ def test_RealityTargetRequiresValidatedTlsAndHttp2(
             guest._TargetHealth(config)
 
 
-def test_UnusableRealityTargetPreventsGuestMutation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("existing", [False, True])
+def test_UnusableRealityTargetPreventsGuestMutation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, existing: bool,
+) -> None:
     """A reachable daemon alone must not mask an unusable TLS target during installation."""
 
     request, config = guest._Request(PreparedDirectory(tmp_path))
     root, service = GuestPaths(tmp_path, monkeypatch)
+
+    if existing:
+        guest._Install(root, service, request, config)
+
+    paths = (*root.iterdir(), service) if existing else ()
+    snapshot = {path: path.read_bytes() for path in paths}
 
     def FailPreflight(*args: object) -> None:
         """Model an unavailable or incompatible Reality target before managed writes."""
 
         raise guest.GuestError("Reality target preflight failed")
 
+    def RejectMutation(*args: object, **kwargs: object) -> None:
+        """Forbid activation or other guest commands after an unsuccessful target preflight."""
+
+        pytest.fail("An unusable Reality target must fail before guest service mutation")
+
     monkeypatch.setattr(guest, "_TargetHealth", FailPreflight)
+    monkeypatch.setattr(guest, "_Command", RejectMutation)
 
     with pytest.raises(guest.GuestError, match="preflight failed"):
         guest._Install(root, service, request, config)
 
-    assert not root.exists() and not service.exists()
+    if existing:
+        assert snapshot == {path: path.read_bytes() for path in (*root.iterdir(), service)}, "Failed retry preflight must preserve installed credentials and service files"
+
+    else:
+        assert not root.exists() and not service.exists()

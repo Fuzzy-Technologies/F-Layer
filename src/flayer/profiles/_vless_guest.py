@@ -300,6 +300,8 @@ def _Install(root: Path, service: Path, request: dict[str, Any], config: bytes) 
         if previous["files"]["service"] != _Digest(unit):
             raise GuestError("Owned service layout differs from this installer version")
 
+        _TargetHealth(config)
+        _Command(["systemctl", "enable", "--now", service.name])
         _Health(root, service, request["port"])
 
         return

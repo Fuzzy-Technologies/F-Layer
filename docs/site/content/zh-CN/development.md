@@ -34,4 +34,4 @@ Markdown 表格按每列最宽单元格补齐，方便阅读原文。使用 `pyt
 python tools/build_api_reference.py --serve
 ```
 
-预览在 `127.0.0.1:8000` 使用同一份已验证的安装包输出。发布和本地化详情见[文档规则](../en/documentation.md)。
+预览在 `127.0.0.1:8000` 使用同一份已验证的安装包输出。发布和本地化详情见[文档规则](documentation.md)。

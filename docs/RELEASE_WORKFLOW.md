@@ -89,7 +89,9 @@ release is finalized and tagged on master before the next candidate is promoted;
 release-only changes return to develop through a PR. The 1.2.0 scope addendum
 selects accepted documentation/security PRs #46, #48, #59, and #60 on released
 1.1.0. The premature stable classification of its artifact was withdrawn;
-RU/ZH-CN human-review acceptance remains required before stable publication.
+RU/ZH-CN review acceptance remains required before stable publication. The owner
+requested AIna verification; ADR 0015 records the explicit AI-review authority
+and its source/translation hash requirements.
 Later milestone runtime features stay in develop.
 Full regression gates run
 in CI, while local development checks the affected files.
@@ -130,6 +132,9 @@ Feature #8 and release-1.2 remained open. Its title was corrected and its releas
 classification changed to Pre-release. The existing tag, commit and audited assets
 remain immutable. After acceptance is completed, changed release code requires a
 new patch version and tag; never move v1.2.0 onto a different commit.
+
+The AIna slide stays in the README and documentation. Reserve its release-card
+placement under Digest for the final release-2.0 milestone; 1.2.x cards contain no slide.
 
 ## Implemented validation and release evidence
 

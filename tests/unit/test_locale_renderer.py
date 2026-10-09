@@ -242,6 +242,58 @@ def test_FallbackLinksPreserveLocalizedLabelsAndCanonicalAnchors(tmp_path: Path)
     ), "Locale routing must preserve labels, fragments, and existing generated fallback targets"
 
 
+@pytest.mark.parametrize("locale", ["ru", "zh-CN"])
+def test_PreparedAuthoredPagesRouteRepositoryGuidesWithinTheirLocale(
+    locale_project: Path, locale: str,
+) -> None:
+    """Root and nested authored overlays resolve their real source links into local generated pages."""
+
+    project = tomllib.loads((locale_project / "docs/i18n/project.toml").read_text())
+    registry = tomllib.loads((locale_project / project["unitManifest"]).read_text())
+    notices = tomllib.loads((locale_project / "docs/i18n/fallbacks.toml").read_text())
+    build_root = locale_project / "_build/api-reference"
+    shutil.copytree(locale_project / "docs/site/content/en", build_root / "content/en")
+    content_root, _ = locale_renderer._PrepareLocale(
+        locale_project, build_root, locale, project, registry, ValidateLocales(locale_project).states,
+        notices[locale], "https://fuzzy-technologies.github.io/F-Layer",
+    )
+    destinations = {
+        "architecture.md": ["repository/docs/architecture/reference.md",
+                            "repository/docs/architecture/README.md", "repository/docs/adr/README.md",
+                            "repository/docs/development/documentation-coverage.md"],
+        "development.md": ["repository/docs/development/PYTHON_CODE_STYLE.md"],
+        "documentation.md": ["repository/docs/development/documentation-coverage.md",
+                             "repository/docs/adr/0004-documentation-platform.md"],
+        "guide/index.md": ["../repository/docs/architecture/amneziawg.md",
+                           "../repository/docs/architecture/vless-reality.md",
+                           "../repository/docs/development/vpn-release-acceptance.md"],
+    }
+
+    for source, targets in destinations.items():
+        rendered = content_root / source
+        body = rendered.read_text()
+
+        for target in targets:
+            assert f"]({target})" in body, f"{locale}/{source} lost local destination {target}"
+            assert (rendered.parent / target).resolve().is_relative_to(content_root)
+
+
+def test_RepositoryOverlayLinksKeepQueryFragmentAndExplicitSourceFiles(tmp_path: Path) -> None:
+    """Mapping repository Markdown does not drop query/anchor data or confuse files with pages."""
+
+    root = tmp_path / "project"
+    source = root / "docs/site/content/ru/guide/index.md"
+    canonical = root / "docs/site/content/en"
+    body = ("[Схема](../../../../architecture/reference.md?view=compact#composition) "
+            "[Настройки](../../../../../pyproject.toml) "
+            "[Облако](https://yandex.cloud/ru/docs/cli/quickstart)")
+    mapped = locale_renderer.RewriteFallbackLinks(body, source, canonical, root)
+
+    assert "[Схема](../repository/docs/architecture/reference.md?view=compact#composition)" in mapped
+    assert "[Настройки](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/pyproject.toml)" in mapped
+    assert "[Облако](https://yandex.cloud/ru/docs/cli/quickstart)" in mapped
+
+
 def test_ApiLocaleInventoryIncludesCallableAndConditionalContracts(locale_project: Path) -> None:
     """Disposable API locale units match supported callable and conditional public anchors."""
 

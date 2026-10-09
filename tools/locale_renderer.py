@@ -13,9 +13,9 @@ import tomllib
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import unquote, urlsplit, urlunsplit
 
-from tools import documentation_gates, generated_localization
+from tools import documentation_coverage, documentation_gates, generated_localization
 from tools.locale_documentation import ValidateLocales
 from tools.markdown_tables import AlignMarkdown
 
@@ -114,8 +114,10 @@ def _PageRoute(relative_path: Path) -> str:
     return relative_path.with_suffix("").as_posix()
 
 
-def RewriteFallbackLinks(body: str, translation_path: Path, canonical_root: Path) -> str:
-    """Map real canonical source targets onto the generated locale's English fallback routes."""
+def RewriteFallbackLinks(
+    body: str, translation_path: Path, canonical_root: Path, project_root: Path | None = None,
+) -> str:
+    """Map actual authored and repository source targets onto the current locale's routes."""
 
     locale_root = translation_path
 
@@ -136,13 +138,29 @@ def RewriteFallbackLinks(body: str, translation_path: Path, canonical_root: Path
         if parsed.scheme or parsed.netloc or not parsed.path:
             return match.group(0)
 
-        resolved = (translation_path.parent / parsed.path).resolve()
+        resolved = (translation_path.parent / unquote(parsed.path)).resolve()
 
-        if not resolved.is_relative_to(canonical_root.resolve()):
+        if resolved.is_relative_to(canonical_root.resolve()):
+            destination = resolved.relative_to(canonical_root).as_posix()
+
+        elif resolved.is_relative_to(locale_root.resolve()):
+            destination = resolved.relative_to(locale_root).as_posix()
+
+        elif project_root and resolved.is_relative_to(project_root.resolve()):
+            if resolved.is_dir() and (resolved / "README.md").is_file():
+                resolved /= "README.md"
+
+            source_path = resolved.relative_to(project_root).as_posix()
+            destination = (documentation_coverage.MarkdownPage(source_path)
+                           if resolved.suffix == ".md"
+                           else documentation_coverage.SOURCE_URL + source_path)
+
+        else:
             return match.group(0)
 
-        local_path = posixpath.relpath(resolved.relative_to(canonical_root).as_posix(), source_parent)
-        rewritten = urlunsplit(("", "", local_path, parsed.query, parsed.fragment))
+        route = urlsplit(destination)
+        local_path = route.path if route.scheme else posixpath.relpath(route.path, source_parent)
+        rewritten = urlunsplit((route.scheme, route.netloc, local_path, parsed.query, parsed.fragment))
         start, end = match.span(1)
         original = match.group(0)
 
@@ -190,7 +208,7 @@ def _PrepareLocale(
             translation_path = project_root / record["translations"][locale]["path"]
             body = RewriteFallbackLinks(
                 translation_path.read_text(encoding="utf-8"), translation_path,
-                project_root / project["contentRoot"] / "en",
+                project_root / project["contentRoot"] / "en", project_root,
             )
 
         elif not record:

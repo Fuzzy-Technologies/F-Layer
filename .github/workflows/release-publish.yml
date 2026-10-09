@@ -57,6 +57,19 @@ jobs:
           FLAYER_RELEASE_OWNER: ${{ vars.FLAYER_RELEASE_OWNER }}
           FLAYER_PYPI_ENABLED: ${{ vars.FLAYER_PYPI_ENABLED }}
         run: python tools/release_validation.py --publication --tag "$FLAYER_RELEASE_TAG"
+      - name: Resolve VPN dependency wheels for an isolated installation
+        run: |
+          wheels=(_build/release/dist/*.whl)
+          test "${#wheels[@]}" -eq 1
+          python -m pip download --only-binary=:all: \
+            --dest "$RUNNER_TEMP/flayer-vpn-wheels" "${wheels[0]}[vpn]"
+      - name: Test the exact artifacts approved for publication
+        env:
+          FLAYER_DISTRIBUTION_DIRECTORY: _build/release/dist
+          FLAYER_DISTRIBUTION_WHEELHOUSE: ${{ runner.temp }}/flayer-vpn-wheels
+        run: |
+          export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
+          python -m pytest tests/integration/test_distribution.py --no-cov
       - name: Upload the validated distributions for this exact run
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:

@@ -83,6 +83,13 @@ def TranslationBanner(
 ) -> str:
     """Expose the actual computed review state and a link to current canonical English."""
 
+    if state == "approved":
+        return (
+            f'<aside hidden data-translation-state="approved" '
+            f'data-documentation-unit="{html.escape(unit_id)}" '
+            f'data-rendered-source-sha256="{rendered_source_hash}"></aside>\n\n'
+        )
+
     message = notices["states"][state]
 
     return (
@@ -278,9 +285,18 @@ def RenderLocaleSites(
         shutil.move(str(staged_root), site_root)
         VerifyRenderedLocale(build_root / "site", locale, pages)
 
-        result[locale] = {"strictBuild": "pass", "pages": pages,
-                          "humanReviewComplete": all(entry["state"] == "approved"
-                                                     for entry in pages.values())}
+        reviewed_records = [record["translations"][locale] for record in registry["units"]
+                            if record["translations"][locale].get("path")]
+        result[locale] = {
+            "strictBuild": "pass", "pages": pages,
+            "authoredTranslationReviewComplete": bool(reviewed_records) and all(
+                report.states[record["id"]][locale] == "approved" for record in registry["units"]
+                if record["translations"][locale].get("path")
+            ),
+            "humanReviewComplete": all(entry["state"] == "approved" for entry in pages.values())
+            and all(review.get("reviewerType", "human") == "human"
+                    for translation in reviewed_records for review in translation.get("reviews", ())),
+        }
 
     return result
 

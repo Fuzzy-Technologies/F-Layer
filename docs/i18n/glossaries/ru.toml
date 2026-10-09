@@ -6,7 +6,7 @@ id = "concept:infrastructure.provider"
 english = "provider"
 preferred = "провайдер"
 avoid = []
-note = "Draft terminology requires accountable human review."
+note = "Terminology checked against the English guides by AIna-Dev; see ADR 0015."
 references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
 
 [[terms]]
@@ -14,7 +14,7 @@ id = "concept:infrastructure.deployment-profile"
 english = "deployment profile"
 preferred = "профиль развёртывания"
 avoid = []
-note = "Draft terminology requires accountable human review."
+note = "Terminology checked against the English guides by AIna-Dev; see ADR 0015."
 references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
 
 [[terms]]
@@ -22,7 +22,7 @@ id = "concept:infrastructure.lifecycle"
 english = "lifecycle"
 preferred = "жизненный цикл"
 avoid = []
-note = "Draft terminology requires accountable human review."
+note = "Terminology checked against the English guides by AIna-Dev; see ADR 0015."
 references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
 
 [[terms]]
@@ -30,7 +30,7 @@ id = "concept:infrastructure.ownership"
 english = "ownership"
 preferred = "владение"
 avoid = []
-note = "Draft terminology requires accountable human review."
+note = "Terminology checked against the English guides by AIna-Dev; see ADR 0015."
 references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
 
 [[terms]]
@@ -38,7 +38,7 @@ id = "concept:infrastructure.state"
 english = "state"
 preferred = "состояние"
 avoid = []
-note = "Draft terminology requires accountable human review."
+note = "Terminology checked against the English guides by AIna-Dev; see ADR 0015."
 references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
 
 [[terms]]
@@ -46,7 +46,7 @@ id = "concept:infrastructure.scope"
 english = "scope"
 preferred = "область"
 avoid = []
-note = "Draft terminology requires accountable human review."
+note = "Terminology checked against the English guides by AIna-Dev; see ADR 0015."
 references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
 
 [[terms]]
@@ -54,5 +54,5 @@ id = "concept:infrastructure.generated-artifact"
 english = "generated artifact"
 preferred = "создаваемый артефакт"
 avoid = []
-note = "Draft terminology requires accountable human review."
+note = "Terminology checked against the English guides by AIna-Dev; see ADR 0015."
 references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]

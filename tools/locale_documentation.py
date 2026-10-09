@@ -644,6 +644,12 @@ def ValidateLocales(
 
     try:
         project_manifest = _LoadProjectManifest(project_manifest_path)
+        reviewer_types = project_manifest.get("reviewerTypes", ["human"])
+
+        if (not isinstance(reviewer_types, list) or not reviewer_types
+                or any(item not in {"human", "ai"} for item in reviewer_types)):
+            raise ValueError("reviewerTypes must explicitly select human and/or ai")
+
         target_locales = tuple(project_manifest["locales"][1:])
         unit_manifest_path = project_root / project_manifest["unitManifest"]
         unit_manifest = tomllib.loads(_ReadCanonicalText(unit_manifest_path))
@@ -844,8 +850,31 @@ def ValidateLocales(
 
             for review_index, review in enumerate(reviews):
                 review_label = f"{record_label}:{locale}:reviews[{review_index}]"
+
+                if not isinstance(review, dict):
+                    diagnostics.append(f"{review_label}: review must be a table")
+                    continue
+
                 role = review.get("role", "")
                 review_hash = review.get("reviewedSourceHash", "")
+                reviewer_type = review.get("reviewerType", "human")
+
+                if reviewer_type not in reviewer_types:
+                    diagnostics.append(f"{review_label}: reviewerType is not authorized by the project")
+
+                if reviewer_type == "ai":
+                    translation_hash = review.get("reviewedTranslationHash", "")
+                    actual_translation_hash = ""
+
+                    if resolved_translation.is_file():
+                        actual_translation_hash = "sha256:" + hashlib.sha256(
+                            _ReadCanonicalText(resolved_translation).encode("utf-8"),
+                        ).hexdigest()
+
+                    if (not HASH_FORMAT.fullmatch(translation_hash)
+                            or translation_hash != actual_translation_hash):
+                        mismatched_review_hash = True
+                        diagnostics.append(f"{review_label}: reviewedTranslationHash does not match")
 
                 if role in reviewed_roles:
                     diagnostics.append(f"{review_label}: duplicate review role {role}")
@@ -879,7 +908,7 @@ def ValidateLocales(
                         translation_path,
                         recorded_hash,
                         current_hash,
-                        "set state=stale and obtain new accountable human reviews",
+                        "set state=stale and obtain new accountable authorized reviews",
                     )
                 )
 

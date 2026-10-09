@@ -17,11 +17,11 @@
 6. 查看提供方观测，再单独运行端点诊断。
 7. 检查目标范围后，只通过匹配且具有所有权的计划和状态执行销毁。
 
-网关配置档编译是本地操作，不访问云、不生成私钥，也不证明客户机就绪。第一个传输是受限 SSH 本地转发，具有明确目标和逐设备授权。配置档不假定 A-VPN 产品、私有 NAS、固定国家或隐含账户。
+网关配置档编译是本地操作，不访问云、不生成私钥，也不证明虚拟机就绪。第一个传输是受限 SSH 本地转发，具有明确目标和逐设备授权。配置档不假定 A-VPN 产品、私有 NAS、固定国家或隐含账户。
 
 ## 在本地准备安全网关 {#prepare-a-secure-gateway-locally}
 
-将以下内容保存为操作员控制目录中的 `gateway.toml`。文件夹、区域、镜像、管理地址和公钥均为虚构值，请在部署前替换。选择兼容明确客户机契约的 Ubuntu 24.04 镜像和尽可能小的合适管理 CIDR。
+将以下内容保存为操作员控制目录中的 `gateway.toml`。文件夹、区域、镜像、管理地址和公钥均为虚构值，请在部署前替换。选择兼容明确虚拟机契约的 Ubuntu 24.04 镜像和尽可能小的合适管理 CIDR。
 
 ```toml
 schema_version = 1
@@ -62,7 +62,7 @@ public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHl5eXl5eXl5eXl5eXl5eXl5eXl5eX
 source_cidrs = ["198.51.100.42/32"]
 ```
 
-允许 UDP 端口不会安装 VPN。SSH 本地转发使用配置的 SSH 端口；删除未使用的服务项并尽可能缩小范围。生成的客户机配置禁用密码和 root SSH 登录、IPv4 转发和 IPv6，并限制入站访问。它不建立包路由或就绪证据。独立的非 sudo 传输账户只允许声明的本地转发目标和逐设备源 CIDR；管理账户转发保持禁用。
+允许 UDP 端口不会安装 VPN。SSH 本地转发使用配置的 SSH 端口；删除未使用的服务项并尽可能缩小范围。生成的虚拟机配置禁用密码和 root SSH 登录、IPv4 转发和 IPv6，并限制入站访问。它不建立包路由或就绪证据。独立的非 sudo 传输账户只允许声明的本地转发目标和逐设备源 CIDR；管理账户转发保持禁用。
 
 在 POSIX 控制台中本地生成并检查具有所有权的服务器制品包和生命周期计划：
 
@@ -106,15 +106,15 @@ python -m flayer lifecycle recover --config generated-artifacts/plan.toml --stat
 
 `status` 读取提供方观测。`create`、`recover` 和 `destroy` 同时要求 `--allow-mutation` 和与计划作用域 ID 精确相等的 `--scope-confirm`。它们必须使用相同的所有权身份和操作员控制的状态路径。顶层诊断 `status` 与生命周期 `status` 分离。
 
-创建成功证明提供方资源已建立，不证明 cloud-init 已完成或客户端能够连接。选择适合该部署的客户机就绪检查之后，才使用 `health` 检查明确端点。
+创建成功证明提供方资源已建立，不证明 cloud-init 已完成或客户端能够连接。选择适合该部署的虚拟机就绪检查之后，才使用 `health` 检查明确端点。
 
 ## 恢复和清理 {#recovery-and-cleanup}
 
-中断操作会在状态文件旁保留日志。超时的创建可能已在远程成功：恢复必须找到精确拥有的逻辑资源，而不是创建副本。无法确定的缺失资源会阻止恢复，等待操作员调查。
+中断操作会在状态文件旁保留日志。超时的创建可能已在远程成功：恢复必须找到所有权明确的逻辑资源，而不是创建副本。无法确定的缺失资源会阻止恢复，等待操作员调查。
 
 进程崩溃可能留下协作式操作锁。手动移除前，请确认旧进程已经终止并检查日志和状态；F-Layer 不会自动擦除可能仍在使用的锁。
 
-回滚只影响该操作创建的资源；操作前已存在且被接纳的精确拥有资源保持不变。显式清理使用：
+回滚只影响该操作创建的资源；操作前已存在且已接纳且所有权明确的资源保持不变。显式清理使用：
 
 ```bash
 python -m flayer lifecycle destroy --config generated-artifacts/plan.toml --state generated-artifacts/stack.json --yc-profile example --allow-mutation --scope-confirm example-folder --format json

@@ -68,8 +68,8 @@ def test_UnreviewedLocalesRemainHonest(locale_project: Path) -> None:
     report = ValidateLocales(locale_project)
 
     assert not report.diagnostics, "Canonical missing states and terminology must validate"
-    assert all(state in {"missing", "draft", "stale"} for states in report.states.values()
-               for state in states.values()), "Unreviewed locales must retain honest states"
+    assert all(state in {"missing", "approved"} for states in report.states.values()
+               for state in states.values()), "Authored review and missing fallback remain distinct"
 
 
 def test_CanonicalSourceDriftFails(locale_project: Path) -> None:

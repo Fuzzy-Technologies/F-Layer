@@ -29,7 +29,7 @@ Use Python 3.11 or newer. Install the stable release in a virtual environment:
 ```bash
 git clone https://github.com/Fuzzy-Technologies/F-Layer.git
 cd F-Layer
-git checkout v1.1.0
+git checkout v1.2.1
 python -m venv .venv
 ```
 

@@ -22,6 +22,7 @@ from .contracts import (
 )
 
 PROVIDER_ID = "yandex-cloud"
+MAX_CLI_LIST_LIMIT = 1000
 RESOURCE_COMMANDS: dict[ResourceKind, tuple[str, str]] = {
     ResourceKind.INSTANCE: ("compute", "instance"),
     ResourceKind.DISK: ("compute", "disk"),
@@ -178,14 +179,15 @@ class YandexCloudProvider:
         """Read one resource kind, rejecting malformed or possibly truncated inventory."""
 
         command = self._CommandForKind(kind)
+        limit = min(self._settings.inventory_limit, MAX_CLI_LIST_LIMIT)
         payload = self._ReadJson(
-            (*command, "list", "--limit", str(self._settings.inventory_limit)), "list"
+            (*command, "list", "--limit", str(limit)), "list"
         )
 
         if not isinstance(payload, list):
             raise ProviderError(ProviderErrorCode.INVALID_RESPONSE, "list")
 
-        if len(payload) >= self._settings.inventory_limit:
+        if len(payload) >= limit:
             raise ProviderError(ProviderErrorCode.INCOMPLETE_INVENTORY, "list")
 
         resources = tuple(self._NormalizeResource(item, kind, "list") for item in payload)

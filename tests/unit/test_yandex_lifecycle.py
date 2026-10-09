@@ -61,6 +61,11 @@ class RecordingRunner:
             return response
 
         if operation == "list":
+            if int(command[command.index("--limit") + 1]) > 1000:
+                return CommandResult(1, stderr=(
+                    "InvalidArgument: page_size: Value must be less than or equal to 1000"
+                ))
+
             values = [row for row in self.resources.values() if row["test_kind"] == command[2]]
 
             return CommandResult(0, json.dumps(values))

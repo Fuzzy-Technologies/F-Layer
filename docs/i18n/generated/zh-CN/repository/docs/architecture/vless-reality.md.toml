@@ -1,0 +1,132 @@
+schemaVersion = 1
+sourcePath = "docs/architecture/vless-reality.md"
+sourceHash = "sha256:16af6d39b2c76eb01d7cf8f5bf8de07173f1973e3efead9f900c658b548aef9a"
+reviewedTranslationHash = "sha256:5fc24ef92a82731276aed90f98696b0b9b641a4257df1db9fb137e78984099d8"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:08:58.251144+00:00"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# VLESS Reality 网关
+
+F-Layer 准备 Xray 服务器，并为每台设备生成独立的导入配置。
+VLESS 使用各设备自己的 UUID 进行认证。Reality 使用服务器的 X25519 密钥、
+选定的 TLS 服务器名称和短 ID 加密连接。此配置使用 TCP 和 `xtls-rprx-vision`。
+
+这是**应用程序代理**。生成的 Xray 客户端监听 `127.0.0.1:10808`；
+应用程序必须使用这个 SOCKS5 代理。仅将 VLESS 链接导入图形客户端，
+不会自动接管操作系统的流量。要代理整台设备的流量，请按客户端文档启用
+VPN/TUN 模式，并检查路由和 DNS 设置。
+
+## 服务器要求
+
+使用 amd64 或 arm64 架构的 Ubuntu 24.04。虚拟机需要 Python 3、systemd，
+能够通过 HTTPS 下载 GitHub 发布资产，并且能够访问选定的 Reality 目标。
+F-Layer 安装官方 **Xray 26.3.27 稳定版**，为每种架构固定各自的 SHA-256 摘要。
+它不会运行下载的 shell 安装脚本、使用未固定版本的容器或选择会变化的 `latest` 版本。
+
+部署使用的云安全组和虚拟机防火墙必须允许配置的客户端网络访问选定的 TCP 端口。
+VLESS 安装程序不会清空防火墙规则、扩大 SSH 入站范围或修改其他传输方式。
+
+明确设置 `target_host`、`target_port` 和 `server_name`。目标必须是可访问的
+TLS 1.3 服务器，其证书对 `server_name` 有效；请参考
+[Project X 的 Reality 目标选择说明](https://github.com/XTLS/REALITY#readme)。
+F-Layer 校验这些设置的语法。修改虚拟机服务前，安装程序会从该虚拟机检查目标：
+必须完成证书有效的 TLS 1.3 握手并协商使用 HTTP/2。握手失败会终止安装，
+并报告目标预检错误。目标或网络条件变化后，请重新检查。
+
+## 私密文件
+
+`GenerateVlessMaterial()` 生成一对 X25519 密钥，并为每台设备生成独立 UUID。
+`EncodeVlessMaterial()` 和 `DecodeVlessMaterial()` 让控制端在云平台分配 IP 地址前，
+就能把这些凭据保存在自己的敏感文件包中。为实际端点生成客户端配置时应复用这些
+凭据。在控制端重新生成密钥和 UUID 不会改变已部署的服务器，也不会撤销现有
+客户端的访问权限。安装程序会拒绝使用不同的输入替换现有部署。此流程尚不支持
+通过替换服务器配置来轮换或撤销凭据。
+
+`PrepareVless()` 生成以下文件：
+
+| 文件包 | 文件              | 用途                                       |
+| ------ | ----------------- | ------------------------------------------ |
+| 服务器 | `server.json`     | Reality 私钥和获准设备的 UUID              |
+| 服务器 | `deployment.json` | 归属信息、配置哈希、端口和固定版本         |
+| 服务器 | `install.py`      | 限定范围的安装、本机健康检查和所属文件删除 |
+| 设备   | `client.json`     | 单台设备的本地 SOCKS 客户端配置            |
+| 设备   | `import.txt`      | 单台设备的 VLESS Reality 导入 URI          |
+
+所有文件均标为敏感文件，通过已有的私密文件写入机制导出。
+设备文件包不含服务器私钥或其他设备的 UUID。控制端凭据快照保留在控制端。
+配置意图、cloud-init、云资源状态、诊断和日志均不携带这些凭据。
+
+安装程序通过另行认证的 SSH 连接运行。命令为 `sudo python3 install.py`、
+`sudo python3 install.py --check` 和 `sudo python3 install.py --remove`，
+所需私密文件放在脚本旁。CLI 负责在传输文件前验证虚拟机的 SSH 主机密钥。
+
+## 路由与客户端导入
+
+生成的客户端 JSON 支持两种 IPv4 策略：
+
+- `full`：代理使用该客户端的应用程序请求的所有 IPv4 目标；
+- `split`：仅代理配置的 IPv4 目标网段，拒绝不匹配的目标，
+  不会在列表之外悄悄改用直连。
+
+DNS 服务器必须明确指定 IPv4 地址。DNS 解析使用 IPv4 并遵循代理路由规则；
+`split` 配置的允许网段必须包含 DNS 服务器。服务器阻止私有地址、环回地址、
+链路本地地址、组播地址和 IPv6 目标，包括云元数据网络。
+因此，该传输方式用于访问互联网，不用于访问云虚拟机的内部网络。
+
+首个版本不提供 IPv6 路由。测试整台设备的隐私保护时，请在所选客户端的
+VPN/TUN 配置或设备系统中禁用 IPv6。SOCKS 配置无法阻止绕过代理的应用流量。
+
+导入 URI 包含设备 UUID、服务器地址和端口、Reality 公钥、短 ID、服务器名称、
+fingerprint、transport 和 flow。标准 VLESS 链接**不携带**本项目完整的路由与
+DNS 策略。导入 [v2rayN](https://github.com/2dust/v2rayN) 或
+[v2rayNG](https://github.com/2dust/v2rayNG) 后，需要自行配置这些设置，
+并选择所需的系统代理或 VPN 模式。生成的 `client.json` 保留了供 Xray 使用的
+完整 F-Layer 应用代理策略。
+
+要在本机检查原始 Xray 客户端，请使用固定版本的可执行文件运行
+`xray run -test -config client.json`，然后运行 `xray run -config client.json`。
+应用程序可使用 `socks5h://127.0.0.1:10808`；其中 `h` 表示在远端解析主机名。
+通过此代理发送 HTTPS 请求，并确认对外显示的源地址与已部署网关的地址一致。
+
+## 安装、更新与删除
+
+虚拟机安装程序只管理 `/opt/flayer/vless/<ownership-hash>` 及对应的
+`flayer-vless-<ownership-hash>.service`。它会：
+
+1. 验证私密输入文件的精确哈希和归属描述，然后检查目标的 TLS 证书、TLS 1.3 和 HTTP/2 支持；
+2. 在检查压缩包内容前验证固定的摘要；
+3. 仅提取普通的 `xray` 可执行文件，不按压缩包中的路径展开内容；
+4. 使用这个实际可执行文件验证生成的配置；
+5. 安装采用动态非特权用户的加固 systemd 服务，由 `LoadCredential` 传递仅 root 可读的配置；
+6. 确认配置语法、systemd 运行状态和本地 TCP 监听端口。
+
+每个部署使用独立锁，拒绝并发操作。对相同输入重复执行时，只检查运行中的服务，
+不替换凭据。如果已有部署收到内容不同的配置，会在修改文件或服务前拒绝操作。
+凭据轮换和撤销需要未来提供的显式授权机制，校验预期的旧配置；目前不支持静默替换
+正常运行的配置。首次安装失败时，会删除该次尝试创建的文件。
+
+首次安装期间强制终止进程或断电，可能留下不完整的执行记录。
+后续操作会停止，不会猜测哪些文件可删除或覆盖。重试前，应检查该部署，
+并恢复该部署原有的私密文件包；目前没有针对这种中断状态的自动恢复机制。
+删除操作会拒绝未知文件、符号链接、已更改的凭据以及不属于本部署的文件。
+空的归属锁文件会保留，以避免锁 inode 变更造成的竞争。
+
+## 验证与发布证据
+
+单元测试涵盖凭据隔离、导入字段、分流路由、错误设置、哈希校验、恶意压缩包条目、
+拒绝未授权替换、安装失败清理、拒绝私密文件链接以及安装程序入口。
+`FLAYER_XRAY_BINARY` 可启用专项测试，把生成的服务器和客户端配置交给经过
+摘要校验的实际 Xray 26.3.27 程序检查。
+
+这些检查验证配置与安装程序的行为，并不证明外部 VPN 连接已经成功。
+发布验收仍需获准的云部署、真实客户端连接、DNS 与路由检查，以及部署清理。
+
+## 上游参考资料
+
+- [固定的 Xray 版本](https://github.com/XTLS/Xray-core/releases/tag/v26.3.27)
+- [对应版本的 Reality 配置解析器](https://github.com/XTLS/Xray-core/blob/v26.3.27/infra/conf/transport_internet.go)
+- [VLESS 入站配置](https://xtls.github.io/en/config/inbounds/vless.html)
+- [VLESS 出站配置](https://xtls.github.io/en/config/outbounds/vless.html)
+'''

@@ -1,0 +1,131 @@
+schemaVersion = 1
+sourcePath = "docs/architecture/configuration-state.md"
+sourceHash = "sha256:0ddf3296f37c020cbf7512b06f0518c1ea9c371b47f3b2690c28156c84d17759"
+reviewedTranslationHash = "sha256:bb9d780dda83fb5508201e19982a82994b5a764ff483770c3178382c50c4e47d"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:42:11Z"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# 配置和状态
+
+F-Layer 核心将目标资源描述与定位所属资源所需的最小清单分开。这些契约位于
+`flayer.core`；云资源创建、生命周期编排和部署专用设置由独立组件实现。
+详见 [ADR 0001](../adr/0001-config-state-contracts.md)。
+
+## 模块边界
+
+| 组件                    | 负责                                         | 不包括                                 |
+| ----------------------- | -------------------------------------------- | -------------------------------------- |
+| `flayer.core.contracts` | 格式验证、部署身份、归属标签。               | 云认证和云 API 行为。                  |
+| `flayer.core.config`    | 目标资源、配置标识、凭据引用、TOML 读取。    | 读取凭据、区域默认值、特定提供方参数。 |
+| `flayer.core.state`     | 所属资源引用、严格 JSON 读取、本地原子保存。 | 提供方观测、授权、云删除、生成文件。   |
+| 提供方适配器            | 提供方设置、认证、云 API 转换、归属验证。    | 通用状态存储策略。                     |
+| 部署配置                | 组合提供方能力和专用设置。                   | 核心隐式选择提供方。                   |
+| 诊断                    | 在明确执行边界内进行观测和报告。             | 目标状态或资源管理授权。               |
+
+## 目标配置
+
+TOML 文件使用格式版本 `1`。文件缺失、TOML 无效、未知字段、不支持的版本或
+错误类型都会失败；不会替换为当前机器的设置或隐式云默认值。通用名称以字母
+开头，仅含小写英文字母、数字和连字符，最长 63 个字符。`scope_id` 和提供方
+资源 ID 是不含空白的可打印 ASCII 字符串，最长 256 个字符。
+
+```toml
+schema_version = 1
+profile = "secure-gateway"
+
+[identity]
+project = "example"
+stack = "demo"
+provider = "example-cloud"
+scope_id = "example-scope"
+owner_id = "example-owner"
+
+[[resources]]
+logical_id = "gateway"
+kind = "instance"
+name = "demo-gateway"
+
+[[credentials]]
+name = "cloud-auth"
+source = "env"
+reference = "EXAMPLE_AUTH"
+```
+
+`resources` 和 `credentials` 可以省略或为空。逻辑资源 ID 和凭据名称必须唯一。
+提供方及部署配置适配器验证各自的详细设置；版本 `1` 不允许这些核心表包含任意
+额外字段。
+
+`SecretReference` 接受 `env` 加大写环境变量名，或 `file` 加有界非空路径。
+加载配置时不读取变量值或文件内容。认证适配器负责解析及相对路径策略。配置
+只包含引用，不包含令牌值、密码或私钥正文。核心无法验证任意引用的内容；调用方
+必须保护凭据文件，并避免提交私有路径。
+
+```python
+from flayer.core.config import LoadConfig
+
+config = LoadConfig("./stack.toml")
+ownership_labels = config.identity.OwnershipLabels()
+```
+
+返回模型是冻结的 dataclass。直接构造对象时执行与解码相同的字段及唯一性检查。
+目标资源只有逻辑名称，不包含云平台分配的资源 ID。
+
+## 所属资源状态
+
+`StackState` 保存完整 `StackIdentity` 和
+`ResourceState(logical_id, kind, resource_id)` 元组。中断部署的快照可以只包含
+已经取得的资源，不推测缺失的引用。提供方 ID 在同种资源内唯一，逻辑 ID 在整个
+清单中唯一。
+
+```python
+from flayer.core.state import LoadState, ResourceState, SaveState, StackState
+
+state = StackState(
+    identity=config.identity,
+    resources=(ResourceState("gateway", "instance", "example-instance"),),
+)
+SaveState("./runtime/state.json", state, expected_identity=config.identity)
+loaded_state = LoadState("./runtime/state.json", expected_identity=config.identity)
+```
+
+JSON 格式仅有 `schema_version`、`identity` 和 `resources`。不保存凭据引用或
+值、完整配置、提供方响应、日志、健康报告、生成文件或公网端点。文件不存在返回
+`None`；损坏或归属不符的文件抛出 `StateError`。重复 JSON 字段会被拒绝。
+读写上限为 1 MiB。打开后的描述符必须指向普通文件；支持时采用非阻塞打开，
+防止验证后被替换为 FIFO 而挂起。初始大小和实际读取长度都受限，并发增长无法
+绕过限制。超大写入在替换目标前失败。
+
+每次读、写、删除都需要预期身份，全部五个字段必须匹配。`SaveState` 在替换前
+还会在写锁内验证已有快照。归属标签为 `managed-by=f-layer`、`flayer-project`、
+`flayer-stack` 和 `flayer-owner`。真实云操作前，适配器必须独立验证提供方范围
+及实时资源标签。状态文件本身不能授权修改基础设施。
+
+`RemoveState(path, expected_identity)` 只删除匹配的本地快照，并返回是否删除。
+文件不存在时保持幂等，不删除任何云资源。生命周期代码负责判断云清理后何时可以
+安全丢弃本地清单。
+
+## 保存与恢复
+
+使用操作系统用户拥有的可信目录。避免父目录符号链接和 `..` 路径组件。所有
+写入者都必须使用该状态 API。实现拒绝符号链接或非普通目标，支持时使用
+`O_NOFOLLOW`，但无法阻止恶意本地用户在其控制的存储中并发更改目录。
+
+写入独占获取相邻的 `.state.json.lock`，在同目录创建唯一临时文件，刷新并
+`fsync` 后原子替换目标。POSIX 临时文件仅所有者可访问。POSIX 还同步父目录；
+Windows 依赖 `os.replace` 和调用方目录 ACL。已有损坏或归属不符的快照会阻止
+保存和删除，并保留以供调查。
+
+替换前失败保留旧快照。替换后失败可能使完整的新快照已经可见，但目录持久性
+仍不明确。出现这种错误后应先读取检查状态，再重试生命周期操作。原子替换并不
+保证所有远程文件系统的持久性，也不是云事务。
+
+竞争或遗留写锁会立即导致 `StateError`。正常操作清理锁和待处理临时文件。
+进程崩溃后，确认没有活动写入者，检查最终状态和残留临时快照，再显式处理本地锁。
+API 不自动抢锁、不接管他人状态、不修复损坏，也不迁移未知格式版本。
+
+文件系统阻止清理临时文件或锁时，API 以 `StateError` 报告清理未完成，并保留
+底层异常链。残留文件需要同样的显式本地恢复。创建文本流失败时，会先关闭文件
+描述符再传播错误，避免保存失败泄漏描述符。
+'''

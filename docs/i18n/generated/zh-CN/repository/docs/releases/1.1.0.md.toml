@@ -1,0 +1,64 @@
+schemaVersion = 1
+sourcePath = "docs/releases/1.1.0.md"
+body = '''
+## 摘要
+
+F-Layer 1.1.0 让基础设施基线更易安装和操作：提供带类型信息的 Python 包、安装后的 `flayer` 命令，以及配置、诊断和首次部署所属网关的实用指南。发行包现在具有可重复构建及内容归属检查。本次发布增加功能而不破坏原有行为；验证使用隔离资源，并不证明真实云环境已经就绪。
+
+## 变更内容
+
+### 新增
+
+- 符合 PEP 561 的类型化发行包和 `flayer` 控制台命令；运行时、wheel 与源码归档使用同一个权威版本来源。
+- 重复构建的 wheel 和源码归档逐字节一致性、从源码归档重建 wheel 的一致性、归档归属检查、元数据和 RECORD 验证，以及构建记录。
+- CI 中的已审计发行包预览，以及独立保护、由所有者确认的手动 PyPI 工作流。本发布不会启用或执行 PyPI 上传。
+- 安装、云服务配置、CLI 结果以及首次网关部署指南，明确资源归属与修改授权。
+
+### 调整
+
+- 采用 FuzzyRoutines 风格的 FL 标志系列，改进文档导航。
+- 对齐 Markdown 表格列，使原文易读，并验证格式。
+- 在源码归档和生成文档中提供准确稳定标签的安装说明、已发布控制台行为及详细变更记录。
+
+### 安全
+
+- 仅包含项目拥有且受跟踪的重建输入，拒绝被替换的归档内容、可识别的凭据、不安全路径和非预期的根目录文件。
+- PyPI 发布保持显式启用，并与 GitHub Releases 分离；保留 1.0.0 的明确资源归属和限定范围云修改要求。
+
+## 验证
+
+- 准确的发布 PR 必须通过 Python 质量、严格文档和发行包 CI。本地检查针对修改过的打包、文档与审计文件。
+- 发布验证注释标签、源码和包版本、可复现发行包、源码归档重建一致性、成员归属及 wheel RECORD 哈希。
+- 本发布附带已审计发行包和构建记录，记录准确源提交及文件 SHA256。
+
+## 不兼容变更
+
+无。1.1.0 在 1.0.0 运行时接口基础上增加打包、文档和发布检查；现有 `python -m flayer` 命令继续受支持。
+
+## 从源码试用
+
+```bash
+git clone https://github.com/Fuzzy-Technologies/F-Layer.git
+cd F-Layer
+git checkout v1.1.0
+python -m pip install .
+flayer --help
+python -m flayer check --format json
+```
+
+需要 Python 3.11 或更新版本。隔离虚拟环境和明确限定作用范围的云配置，请参阅随包提供的用户指南。
+
+## 说明
+
+- 在带标签的 1.0.0 基础上加入 release-1.1 已接受的 PR #39、#40 和 #41。完整仓库文档覆盖、RU/ZH 草稿、生态系统接口、插件和静态站点部署配置仍属于后续里程碑。
+- 这些离线发布检查不声称已经验证真实云部署、客户机 SSH/隧道就绪、人工翻译批准或实际 PyPI 发布。
+- 从准确标签或附带的 wheel 安装；上传包索引是独立操作。
+- [详细变更记录](https://github.com/Fuzzy-Technologies/F-Layer/blob/v1.1.0/CHANGELOG.md)
+- [发布来源](https://github.com/Fuzzy-Technologies/F-Layer/milestone/2?closed=1)
+'''
+sourceHash = "sha256:72a663c0989798d0785551d0593a104db0de7b18761628e5181f726618626e08"
+reviewedTranslationHash = "sha256:c095730d39f79645dcfaabb140fa79fb6e165ab31aff70e81c8be69bf6b51ebd"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:54Z"
+reviewRoles = ["editorial", "technical"]

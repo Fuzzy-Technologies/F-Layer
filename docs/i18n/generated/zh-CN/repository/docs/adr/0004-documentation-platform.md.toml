@@ -1,0 +1,44 @@
+schemaVersion = 1
+sourcePath = "docs/adr/0004-documentation-platform.md"
+body = '''
+# ADR 0004：基于已安装软件包的静态文档平台
+
+- 状态：已接受
+- 日期：2026-10-04
+- 任务：[#33](https://github.com/Fuzzy-Technologies/F-Layer/issues/33)
+- 相关推广工作：[#27](https://github.com/Fuzzy-Technologies/F-Layer/issues/27)
+
+## 背景
+
+F-Layer 从第一轮实现开始就需要文档。FuzzyRoutines 已经提供 Fuzzy Technologies 的统一方案，涵盖规范 API 生成、品牌样式、多语言内容的源标识、真实的审核状态和安全发布。再维护一套文档技术栈会增加不必要的成本。
+
+## 决策
+
+采用 MkDocs Material、mkdocstrings-python 和 Griffe。从干净安装的 wheel 构建文档，禁用运行时导入，并独立防护这一限制。使用完全固定直接与传递依赖的文档锁定文件。以英文 Google 风格 docstring 为规范来源；使用 F-Layer 原创 SVG 品牌元素和受支持的 CSS、主题设置，实现深色、紫色与绿色的企业视觉风格。
+
+从已安装的 wheel 生成模块页面和公开符号清单，使独立的文档 PR 在初始包上仍然有效，并自动包含之后合入的模块。人工编写的英文单元保留纳入版本控制的审核元数据。临时生成的 API 单元使用统一方案的 `fuzzy-doc-unit-v1` 哈希和稳定 ID，RU/ZH 状态明确为 `missing`；生成的注册表不得声称翻译已获批准。
+
+复用统一方案的本地化验证器，在保持哈希和审核语义不变的前提下，让标识符遵守项目代码风格。英文为规范来源；在人工审核满足相同的源哈希和责任角色要求之前，俄文与简体中文路由回退到英文。自动化不得削弱审核和哈希规则。
+
+仅在事件类型为 `push` 且 `github.ref == refs/heads/master` 时部署 Pages。Workflow 不宣称仓库已受分支保护，也不负责设置分支保护。Pull request 和 `develop` 使用仓库只读权限，以严格模式构建临时产物。软件包发布仍由独立 workflow 负责。
+
+## 影响
+
+API 输出跟随已安装的软件包，而非重复维护的文字。源代码、本地链接、精确锚点、生成输出策略、源哈希和 wheel 来源都由确定性检查把关。文档及 API 清单可作为 CI 证据下载。语言回退会明确显示缺失工作，不把英文文本冒充为已经审核的翻译。
+
+本轮有意不实现生成 API 的翻译审核；未来的审核覆盖层必须使用纳入版本控制的元数据和相同验证器。类型化 stub 描述移植后的本地化验证器接口，但不改变验证语义。新的项目工具遵守 Python 代码风格契约。
+
+## 替代方案
+
+另建 pdoc 或 Sphinx 实现会重复已有技术栈。运行时内省可能执行服务商代码或要求凭据。手工编写的 API 页面可能在独立实现 PR 合入后失去同步。将生成 HTML 提交到 Git 会混合源文件和临时构建结果。
+
+## 兼容性与迁移
+
+此方案建立新的文档路由，不更改公开 Python API。持续更新的参考文档保留早期开发状态。只有存在稳定发布产物后，才添加稳定版本的文档路由。
+'''
+sourceHash = "sha256:32cdc7cdf1a057c170b088874723bc375154bf1bf945f5c7692c8703b7e5acd2"
+reviewedTranslationHash = "sha256:813ae80538d495b6a7fe9f58dd3594d8f9a2dbd57b132947b64da4339110edfb"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:48:24.891591+00:00"
+reviewRoles = ["editorial", "technical"]

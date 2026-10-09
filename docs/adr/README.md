@@ -23,20 +23,35 @@ Use [0000-template.md](0000-template.md) as the starting point.
 
 ## Accepted decisions
 
-| ADR                                                   | Decision                                                            |
-| ----------------------------------------------------- | ------------------------------------------------------------------- |
-| [ADR 0001](0001-config-state-contracts.md)            | Separate desired configuration from owned resource state            |
-| [ADR 0002](0002-read-only-provider-boundary.md)       | Establish a read-only provider boundary using explicit folder scope |
-| [ADR 0003](0003-safe-diagnostics.md)                  | Safe Diagnostics with Explicit Observation Boundaries               |
-| [ADR 0004](0004-documentation-platform.md)            | Static installed-package documentation platform                     |
-| [ADR 0005](0005-durable-owned-lifecycle.md)           | Durable owned resource lifecycle                                    |
-| [ADR 0006](0006-yandex-lifecycle.md)                  | Scoped Yandex lifecycle mutations and explicit boot disk ownership  |
-| [ADR 0007](0007-secure-gateway-profile.md)            | Explicit secure gateway profile and owned artifacts                 |
-| [ADR 0008](0008-reproducible-release-automation.md)   | Reproducible distributions and explicit owner publication           |
-| [ADR 0009](0009-distribution-version-source.md)       | One source for distribution and runtime versions                    |
-| [ADR 0010](0010-documentation-completeness.md)        | Explicit repository documentation completeness                      |
-| [ADR 0014](0014-scoped-releases-and-changelog.md)     | Milestone-scoped releases and human-readable changelogs             |
-| [ADR 0015](0015-accountable-ai-translation-review.md) | Explicit source-bound AI translation review                         |
+| ADR                                                     | Decision                                                            |
+| ------------------------------------------------------- | ------------------------------------------------------------------- |
+| [ADR 0001](0001-config-state-contracts.md)              | Separate desired configuration from owned resource state            |
+| [ADR 0002](0002-read-only-provider-boundary.md)         | Establish a read-only provider boundary using explicit folder scope |
+| [ADR 0003](0003-safe-diagnostics.md)                    | Safe Diagnostics with Explicit Observation Boundaries               |
+| [ADR 0004](0004-documentation-platform.md)              | Static installed-package documentation platform                     |
+| [ADR 0005](0005-durable-owned-lifecycle.md)             | Durable owned resource lifecycle                                    |
+| [ADR 0006](0006-yandex-lifecycle.md)                    | Scoped Yandex lifecycle mutations and explicit boot disk ownership  |
+| [ADR 0007](0007-secure-gateway-profile.md)              | Explicit secure gateway profile and owned artifacts                 |
+| [ADR 0008](0008-reproducible-release-automation.md)     | Reproducible distributions and explicit owner publication           |
+| [ADR 0009](0009-distribution-version-source.md)         | One source for distribution and runtime versions                    |
+| [ADR 0010](0010-documentation-completeness.md)          | Explicit repository documentation completeness                      |
+| [ADR 0011](0011-explicit-extension-discovery.md)        | Static extension discovery and explicit loading                     |
+| [ADR 0012](0012-consumer-neutral-evidence-contracts.md) | Consumer-neutral integration evidence contracts                     |
+| [ADR 0013](0013-static-site-profile.md)                 | Bounded static site deployment profile                              |
+| [ADR 0014](0014-scoped-releases-and-changelog.md)       | Milestone-scoped releases and human-readable changelogs             |
+| [ADR 0015](0015-accountable-ai-translation-review.md)   | Explicit source-bound AI translation review                         |
 
 Release history and the human-readable changelog follow
 [ADR 0014](0014-scoped-releases-and-changelog.md).
+
+## Proposed decisions
+
+These decisions accompany implementation under review. Their presence in this
+index does not change their acceptance status.
+
+| ADR                                                      | Decision                                                  |
+| -------------------------------------------------------- | --------------------------------------------------------- |
+| [ADR 0016](0016-vpn-provisioning-contracts.md)           | Transport-neutral VPN provisioning and private artifacts  |
+| [ADR 0017](0017-package-installation.md)                 | Package installation and the optional VPN dependency      |
+| [ADR 0018](0018-generated-documentation-translations.md) | Reviewed translations for generated documentation         |
+| [ADR 0019](0019-private-vpn-project-workflow.md)         | Private VPN projects and authenticated guest provisioning |

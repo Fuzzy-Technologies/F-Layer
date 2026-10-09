@@ -1,0 +1,276 @@
+schemaVersion = 1
+
+[[units]]
+id = "coverage:36b98249718bd16fae62c74038294d00ec87f7882c0179bd4c041f14f470cac7"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:44f4c04704030cc471cebfe3b5cd6d60259abb3be9b27e7766a8a0c2701e924b"
+body = "Текст лицензии входит в исходный код и метаданные пакета."
+reviewedTranslationHash = "sha256:bd3d6ac0c6cad4ce931137305658ad7362792cc09c7d70f7fad0cc3ec22fb1b7"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.100788+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:ad914cbd4c7a20cd7b1bf2f4f830b030351690a4a1e9a11c2cfe252c04c4bfa6"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:de86d0c787075befb69a9e366f2db2dc0383496912d377185be3b2b3b13db6eb"
+body = "Настройки сборки, пакета или документации доступны в исходном файле."
+reviewedTranslationHash = "sha256:1a0fd8e60b5d148d32c0681968796b2d0e4e826798c7c3f9b4f865fe47a272c7"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.100851+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:03228c3a3b43f3f814ecbab7f218028d09f789dc2ccfb56c4a80fc485fa6126d"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:b836e1724f5200cf0a62fbacd5bd28d3edf2972ef732d3023d72d4bccbe070ca"
+body = "Исходный код CI и выпуска релизов. Проверки описаны в руководствах по разработке и выпуску."
+reviewedTranslationHash = "sha256:8c91e21ffec245ac22dc26754e89db8492003e241c94e2c3082f06c386267eb8"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.100872+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:b92bb289aebed319b79f093eb81e2b20f7ae32adfe5b5d15f612a9aacd9ca5cf"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:a9cdf1a2c87ad77e418c47fb6128bf2ad5bbb3e5d8a6bdd95adb9259153d7291"
+body = "Markdown-файл репозитория включён в документацию и доступен через навигацию."
+reviewedTranslationHash = "sha256:e53ac4cdfaf1b5a1d62eb9839f49fc7e2c90255b6809f024d299455a5d9a916e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.100888+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:aeae221ab8ee780ebab0fdcd8e832ee45b90dc2eff781f37e8fbc4f8cd3785ea"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:3218ebe7596638471d90188de72f9493a6c3ce5d61e855e3f4605cae7ec9cab0"
+body = "Правила полноты документации"
+reviewedTranslationHash = "sha256:db2074c5717392b2a096b06e2616247f37a6dcd74daf545966f7a5f27ea2d911"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.100903+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:e7407ba023d7cbb2d1cf9ac640cf9940cadd21608fb181eb277275f3b9a1ce98"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:581317de45905083b162be032e8521d8b44b67e745a01ecf74e464c2a94619f6"
+body = "Символы пакета"
+reviewedTranslationHash = "sha256:77f4f8980890c882c43e4b924ed223c90ed9af0802cea7d68f14b55c7a65746a"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.100918+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:8881fc89a1e249594630730bf0469ed3892903412af85db5a4e95f9730e6cd2e"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:eb63093c805f37271218341240041fca33be34484a7be43b535a88d358d1840a"
+body = "Способ публикации"
+reviewedTranslationHash = "sha256:4bd2cf7172e2f5a64e54ad4956529f885753bed41ea6e9f5a0fcc16ec3f8f148"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.100932+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:5fa01e87f3ec934becf321dd157279070ad13fda1d44fff708075deb66ccd22b"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:f02f9eebf9dbf8e8762c0535a15fb07e4d0f04015d9d3b5fd5b79fcd1917329d"
+body = "Инструмент разработки или интерфейс проверки. Порядок использования описан в руководстве разработчика."
+reviewedTranslationHash = "sha256:622491a7012a87a07c30c22562a9277554127c2d2ac99031c07de100dc0b25fe"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.100945+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:75d68202e8ba67020124acceec1b6878383f27e35e758e56b1381ba72cf60c4b"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:c7879490de7c273b8f19552bef36de3a2423d45e716a50d5c685c593d55beb92"
+body = "Для каждого файла, отслеживаемого Git, указано, как он представлен в документации. Справочник API описывает поддерживаемые интерфейсы. Для внутренних функций, тестов, инструментов, настроек, ресурсов оформления и процессов CI приведены ссылки на исходный код и пояснения. Наличие файла в этом списке не означает, что он относится к публичному API или что его перевод проверен."
+reviewedTranslationHash = "sha256:1b6ec902c62405ab23ef900a0a13494beb2c14029cd81c4f6bfb53bb7bddaf1f"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.100962+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:ff6924ad5bae190228326db9ef6e672345664dd128328e87ed39730783afac69"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:5f168c27f6ce5d7b430dd4b9328270d3757095d7bf46fbf69d068d408409ff29"
+body = "Тест проверяет поведение программы и доступен в исходном коде; он не относится к публичному API."
+reviewedTranslationHash = "sha256:37206b20c78a8f8d62feac0404037073022b969942db1ff5dcde568843b85fae"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.100976+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:50009ce1da4d15e1c4a04024df691eed5f0d598e2c4c67092f205366d0adf99e"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:2931e0d5d960a3a71430b8f9530a507dabb8b8a0072fb4168daa850baf7f798d"
+body = "Файл"
+reviewedTranslationHash = "sha256:f242456b2273697924884957ca98ce331557c9b7238f413269e73e1504ddcff2"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.100990+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:92c5915b4e3b0c5bb1e97f1fbc4e6a0bc48793d6b778c4385f6b47fcd4c12b49"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:6f82d7d7341ced47eabc6eb1a1f52d5877f43a2c9473e3f4c50600d55bcd1423"
+body = "Настройки формы задачи GitHub. Их назначение описано в правилах работы с репозиторием."
+reviewedTranslationHash = "sha256:0560a5cff9df775f80ffb4cfaa694d4c91716b30efcb8be37173a41698ea7181"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101002+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:fd062ce67dc41f1603df83952d4bdc28c0cf7280fe8d17e1c1c054e15d520b30"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:b1372b834cdcdf30c8ba81e8bddaeea4d4ed45b47775d93ce6494d1a14adedd8"
+body = "Импортируемые имена, константы, поля и унаследованные методы описаны в соответствующем модуле или классе. Отдельные повторные ссылки на них не требуются."
+reviewedTranslationHash = "sha256:84c981c757b3847620b40ff72699e7dc584dd95e9742de3915553131a0ab2aef"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101017+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:61a84543b92debf20532aa49d54dab705f00f9b5bc07ad96e8c205d5c492a2d3"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:f0475243c2833f9194931fcd944a1b9f799081ccf2605471a8ebc765d969f1aa"
+body = "Публичные модули установленного пакета и поддерживаемые интерфейсы включены в справочник API."
+reviewedTranslationHash = "sha256:cdfc4ab6da6561ef8eea11af5113740818cab4012f4a6e3852b081815bc7dafd"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101029+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:734cc7b4e9bbff0a44e4b4bf4a3624a959f8651c747e11dc80d891245ca05313"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:0181a1d7f4c024218b808355c64a040e2076d80713b05424385b3b99ba30a2aa"
+body = "Настройки языка, глоссарий и сведения о проверке перевода использует валидатор документации."
+reviewedTranslationHash = "sha256:94bd8640a7edb29d006ea0ae22479c66b8ddda0712cd7cc39b564869cbb18f2f"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101042+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:fd653fb76c1b00c4f2db8d7666036fee45f78657c58ef4e0951497cb7268f9b0"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:19179e0e6e51075e8902730d7b63e71f623fdaa5f809bc1b38b8f6bb16a2f138"
+body = "Перевод отображается с фактическим состоянием проверки. Проверка человеком не подразумевается автоматически."
+reviewedTranslationHash = "sha256:987dc286825879178d51d4afe839088086d32251d679224067172cd3784ea8b6"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101054+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:1864e633b8b357a2f56d28f9a77f95c10189e68002b1c650fbd923eb6d2c486b"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:568d76888ec7031a353f6b8554940894dfdb82f7694bcb9609e9efb8e1d33457"
+body = "Маркер типизированного пакета PEP 561. Его назначение описано в правилах распространения."
+reviewedTranslationHash = "sha256:146f87961745a71a29c55d1a39df90d123b53ec9ced6f53e1e76c6531315eb6e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101066+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:4bc311bf5a4082ceece9b40b8ecf26f6917daae010ce4b11164e2412738e3b3b"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:c4eb4460f920149055259b164203947bbc655741105c2cfaf6585d1e747e373e"
+body = "Внутренняя функция, специальный метод или вложенное определение доступны в исходном коде."
+reviewedTranslationHash = "sha256:7406e006e081293e878c76418fecb757be1d0dbed3f446a7c77ca09148548e81"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101078+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:d27c8a555f605c6a929247556b6dc7ecef9a86ff3ab425ea8349aec44a1e8338"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:6e7bad0dcbf9329762fa0e13c7ff0d7c28fc80606af720a067e9180d80d8ae0d"
+body = "Публичный интерфейс имеет отдельный якорь в справочнике API."
+reviewedTranslationHash = "sha256:a756fd0a5d380834ba73821267fdb278d300c0072348c256186d85752e0e7013"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101089+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:f81ab834de5f84918dc040b884267c2b61cb1a52d46442de10e97f35a94d0500"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:bda54da4283919e85bb4d098f7c4a58ecc0dbac75ffbaa36e840831e1aa65ece"
+body = "Пояснение"
+reviewedTranslationHash = "sha256:80ed2c13959276b6706554136ea6682215e555f8486d5aa35709e9f5487e100f"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101102+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:e10d1f8f536e0d8e64b2f436f35c314044452ae6127551ceb0d4664afef6996c"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:35f15f3216c81661d82b28b9960c279502cc32fd002faa8299943b1debe04e22"
+body = "Полнота документации репозитория"
+reviewedTranslationHash = "sha256:3514b8981e7706d221756a32d7bf489461212b549159504caf72969f5a4b182c"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101114+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:ba0e4afa93400b805dfcc4b9e6aef549269946e2d1af5ababfc3a73c67912d89"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:176efebd3f1af08efb521f9feaa1d18e39751f2bafdc5d70080c1252f95f8d17"
+body = "Символ"
+reviewedTranslationHash = "sha256:bbfa955ec6bdc15569858d361e18509b274b32a301ce6b4b70a037c5ed926283"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101125+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:17a9e1bd1c696046ef837e629fee5c361fc3072f8795cf6e0257df8ba8d76f1d"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:884fcb06e8ba78d0311100cff95011af2ef7f2303040a2433992af1dfcc79e2c"
+body = "Файлы темы и фирменного оформления публикуются вместе с сайтом, без отдельных страниц API."
+reviewedTranslationHash = "sha256:774cd74de9686b907b3f5ef55372a535ef8fc4b2e92a6a3f7cc5f80e668d26c7"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101136+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:3da78608df6b0277a017886e278f18e66f7c1715b0bb7ab85daa3c8c22451c37"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:56c86d5ed7b2981896e55d3534e31d630dc55f7f630dc97c26a68cb0b3c3f694"
+body = "Пример настроек или данных обмена. Руководство объясняет его использование и содержит ссылку на исходный файл."
+reviewedTranslationHash = "sha256:fc4009e6995fce6a174ab84f639a15bf27b499f69c28fb3821028975825c3212"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:28:43.101149+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "coverage:9ea6a9c6d68868fd80b18a1eccc087ccb489cc92232898ca8220e8a8fab27047"
+sourcePath = "tools/documentation_coverage.py"
+sourceHash = "sha256:a994f36658a6cd4e0c8e4551f7c4d2947dc3defbb08840c98d103693777e3134"
+body = "Внутренний модуль пакета; его реализация не относится к поддерживаемому публичному API."
+reviewedTranslationHash = "sha256:52fbaac5d39edae03245b3515bc26781424abb66d80efa264840b124ddc1768e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:52:13.887296+00:00"
+reviewRoles = ["editorial", "technical"]

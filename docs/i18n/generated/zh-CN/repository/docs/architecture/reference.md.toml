@@ -1,0 +1,94 @@
+schemaVersion = 1
+sourcePath = "docs/architecture/reference.md"
+sourceHash = "sha256:b045a968d47e17ec97f0226738db9c0be054ce2c705657ffc086737a80e6d7ae"
+reviewedTranslationHash = "sha256:ede930f64cf01428c8ca83a5ffe36b5931d5a02c425a35ee876ae8206e4e2f03"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:06:40.547916+00:00"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# 已实现的架构概览
+
+本页说明源码中已实现的稳定契约。[API 自动分析](../development/documentation-coverage.md)
+提供准确的已安装模块列表；已接受的决策列在 [ADR 目录](../adr/README.md)中。
+后续扩展和集成需要声明各自的接口契约与设计决策。
+
+## 组件组合与依赖边界
+
+```mermaid
+flowchart TD
+    CLI["明确的 CLI 输入"] --> Config["配置与标识"]
+    Config --> Engine["生命周期引擎"]
+    Engine --> State["资源归属状态与操作日志"]
+    Engine --> Contract["提供商接口契约"]
+    Contract --> Adapter["Yandex 适配器"]
+    Profile["网关配置"] --> Plan["部署计划"]
+    Plan --> Engine
+    Profile --> Artifacts["归属明确的文件包"]
+    Adapter --> Runner["可注入的命令执行器"]
+    Diagnostics["受限诊断"] --> Reports["已脱敏的诊断报告"]
+```
+
+核心使用通用提供方接口，不负责转换具体云平台的命令。CLI 根据明确输入组合
+具体适配器；适配器负责云命令细节和作用范围验证。独立的命令执行接口使测试
+可以使用确定的模拟结果。这些接口不代表开发期间已获准修改真实基础设施。
+
+| 契约                           | 源码实现                                              | 架构说明                                    |
+| ------------------------------ | ----------------------------------------------------- | ------------------------------------------- |
+| 身份、配置与所属资源状态       | `flayer.core.contracts`, `config`, `state`            | [配置和状态](configuration-state.md)        |
+| 提供方只读结果                 | `flayer.providers.contracts`, `yandex`                | [提供方接口](provider-contract.md)          |
+| 持久化生命周期与变更接口       | `flayer.core.lifecycle`, `flayer.providers.lifecycle` | [生命周期](lifecycle.md)                    |
+| 指定范围内的 Yandex 创建与删除 | `flayer.providers.yandex_lifecycle`                   | [Yandex 生命周期](yandex-lifecycle.md)      |
+| 网关编译与所属文件包           | `flayer.profiles.gateway`, `artifacts`                | [安全网关](secure-gateway.md)               |
+| 有界健康检查、测量与报告       | `flayer.diagnostics`                                  | [诊断](diagnostics.md)                      |
+| 可执行入口                     | `flayer.__main__`                                     | [CLI 指南](../site/content/en/guide/cli.md) |
+
+## 资源归属与中断恢复
+
+```mermaid
+stateDiagram-v2
+    state "已制定计划" as Planned
+    state "已记入日志" as Journaled
+    state "已核对资源" as Observed
+    state "已保存状态" as Saved
+    state "已完成" as Complete
+    state "已中断" as Interrupted
+    state "回滚" as Rollback
+    [*] --> Planned
+    Planned --> Journaled: 已记录变更计划
+    Journaled --> Observed: 已核对提供商数据
+    Observed --> Saved: 已保存自有资源标识
+    Saved --> Complete: 已清除操作日志
+    Journaled --> Interrupted: 结果不确定或进程失败
+    Observed --> Interrupted: 持久状态不可用
+    Interrupted --> Journaled: 显式调用 recover
+    Interrupted --> Rollback: 显式执行回滚恢复
+    Rollback --> Complete: 已删除归属得到确认的资源
+    Complete --> [*]
+```
+
+操作日志与已提交的资源状态分开保存恢复信息。核对使用资源归属身份和资源 ID。
+云操作结果不明确时，需要进一步查询或显式恢复。删除和回滚仅作用于归属已经确认
+的资源，不依据宽泛的资源清单。失败时的精确行为由生命周期引擎和提供方适配器
+定义；图示用于导航，不能代替这些契约。
+
+## 文档与发行边界
+
+```mermaid
+flowchart TD
+    Source["Git 跟踪源码与覆盖规则"] --> Wheel["已构建并安装的 wheel"]
+    Source --> Files["仓库文件清单"]
+    Wheel --> Parity["包文件精确一致性"]
+    Parity --> AST["API 与定义的静态清单"]
+    Files --> Markdown["规范 Markdown 页面"]
+    AST --> HTML["严格校验的生成站点"]
+    Markdown --> HTML
+    HTML --> Gate["链接与锚点及页面可达性"]
+    Gate --> Evidence["临时站点与来源验证记录"]
+```
+
+导入保护阻止 API 渲染期间执行软件包代码。文档依赖单独锁定版本。纳入网站的
+Markdown 包括架构、ADR 和模板、政策、发布指南及工程参考。测试、工具、资源
+和工作流会明确分类，不会被误列为受支持的 API。文档发布是独立且受分支限制的
+流程，详见 [ADR 0004](../adr/0004-documentation-platform.md)。
+'''

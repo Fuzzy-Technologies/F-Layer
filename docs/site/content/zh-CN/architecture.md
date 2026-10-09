@@ -1,6 +1,6 @@
 # 架构 {#architecture}
 
-F-Layer 已实现配置和状态、通用提供方边界、持久生命周期及恢复、明确作用域的 Yandex 操作转换、安全网关制品和有界诊断。[已安装 API 参考](../en/api/index.md)列出此版本中的公开契约，包括可执行 CLI 模块。
+F-Layer 已实现配置和状态、通用提供方边界、持久生命周期及恢复、明确作用域的 Yandex 操作转换、安全网关制品和有界诊断。[已安装 API 参考](api/index.md)列出此版本中的公开契约，包括可执行 CLI 模块。
 
 | 边界       | 职责                                                 |
 | ---------- | ---------------------------------------------------- |
@@ -12,10 +12,10 @@ F-Layer 已实现配置和状态、通用提供方边界、持久生命周期及
 | 诊断       | 生成有界且删除敏感材料的健康和性能测量证据。         |
 | 生成的制品 | 强制所有权、来源和明确移除规则。                     |
 
-[已实现架构参考](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/architecture/reference.md)包含组合、恢复和文档图示。[架构目录](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/architecture/README.md)链接各稳定契约；[ADR 目录](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/adr/README.md)记录已接受决策和替代方案。未来扩展和集成行为需要自己的明确契约。
+[已实现架构参考](../../../architecture/reference.md)包含组合、恢复和文档图示。[架构目录](../../../architecture/README.md)链接各稳定契约；[ADR 目录](../../../adr/README.md)记录已接受决策和替代方案。未来扩展和集成行为需要自己的明确契约。
 
 ## 证据和范围 {#evidence-and-scope}
 
-[文档覆盖率](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/development/documentation-coverage.md)覆盖每个已跟踪文件，而不将测试、工具或私有辅助函数宣称为使用方 API。静态发现将整个已安装包与源码核对。发布前验证 API 锚点、全部规范 Markdown 路由及从英文入口页出发的可达性。
+[文档覆盖率](../../../development/documentation-coverage.md)覆盖每个已跟踪文件，而不将测试、工具或私有辅助函数宣称为使用方 API。静态发现将整个已安装包与源码核对。发布前验证 API 锚点、全部规范 Markdown 路由及从英文入口页出发的可达性。
 
 凭据和真实资源状态不会成为文档测试数据。

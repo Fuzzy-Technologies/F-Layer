@@ -1,6 +1,6 @@
 # Provider contract
 
-F-Layer providers translate cloud-specific authentication and resource observations into an explicit, provider-neutral boundary. The first implementation supports **read-only Yandex Cloud discovery**. Lifecycle creation, mutation, ownership adoption, rollback and destruction remain issue #20 work.
+F-Layer providers translate cloud-specific authentication and resource observations into an explicit, provider-neutral boundary. This interface supports **read-only Yandex Cloud discovery**. Creation, adoption, rollback and deletion use the separate [Yandex lifecycle adapter](yandex-lifecycle.md).
 
 ## Implemented interface
 
@@ -18,7 +18,7 @@ Import the generic boundary from `flayer.providers.contracts` and the first adap
 
 A `ResourceReference` binds provider ID, scope ID, resource kind and resource ID. A `ProviderResource` contains that reference, name, vendor status, optional zone, immutable ownership labels and public IPv4 endpoints. Unknown state is explicitly `UNKNOWN`. Raw provider JSON, instance metadata and credentials never become resource fields.
 
-Supported `ResourceKind` values are `INSTANCE`, `DISK`, `NETWORK`, `SUBNET`, `ADDRESS` and `SECURITY_GROUP`. Results are sorted by resource ID within each kind; full inventory follows enum order. Listing and lookup do not assert resource ownership. `HasLabels()` is a comparison helper requiring non-empty matching labels; future mutation authorization must define its complete policy separately.
+Supported `ResourceKind` values are `INSTANCE`, `DISK`, `NETWORK`, `SUBNET`, `ADDRESS` and `SECURITY_GROUP`. Results are sorted by resource ID within each kind; full inventory follows enum order. Listing and lookup do not assert resource ownership. `HasLabels()` is a comparison helper requiring non-empty matching labels; mutation authorization follows the separate lifecycle adapter's complete ownership policy.
 
 ## Explicit authentication and scope
 

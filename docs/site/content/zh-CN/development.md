@@ -14,7 +14,7 @@ python -m mypy
 python -m pytest
 ```
 
-源码、注释、文档字符串、测试和规范文档均使用英文。[Python 风格契约](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/development/PYTHON_CODE_STYLE.md)是权威规则。
+源码、注释、文档字符串、测试和规范文档均使用英文。[Python 风格契约](../../../development/PYTHON_CODE_STYLE.md)是权威规则。
 
 ## 基础设施安全 {#infrastructure-safety}
 

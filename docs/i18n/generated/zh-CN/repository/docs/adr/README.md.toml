@@ -1,0 +1,65 @@
+schemaVersion = 1
+sourcePath = "docs/adr/README.md"
+sourceHash = "sha256:293703c6a55b2bfb536b3d9f23b36dddc841060e17ae52f4f16220101eabecd6"
+reviewedTranslationHash = "sha256:de0c153a51e90884cf1c29a48ab02e6f654fae74a431df322b35b386f8eefebf"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:58:01.359333+00:00"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# 架构决策记录
+
+F-Layer 使用架构决策记录（ADR）保存对架构、公共契约、兼容性、安全边界、持久化、提供商接口或扩展设计产生实质影响的决策。
+
+## 命名
+
+```text
+0000-template.md
+0001-short-decision-name.md
+0002-another-decision.md
+```
+
+ADR 编号一经分配便保持不变。
+
+## 生命周期
+
+1. 在实现之前或同时记录背景和决策。
+2. 链接实现该决策的功能、任务及相关 PR。
+3. 描述影响和被否决的替代方案。
+4. 不得悄悄重写已接受的 ADR，使其代表另一项决策；必要时用新 ADR 取代。
+
+新记录从 [0000-template.md](0000-template.md) 开始。
+
+## 已接受的决策
+
+| ADR                                                     | 决策                                           |
+| ------------------------------------------------------- | ---------------------------------------------- |
+| [ADR 0001](0001-config-state-contracts.md)              | 将期望配置与归属受控资源的状态分离             |
+| [ADR 0002](0002-read-only-provider-boundary.md)         | 在明确云目录范围内建立只读提供商边界           |
+| [ADR 0003](0003-safe-diagnostics.md)                    | 具有明确观察边界的安全诊断                     |
+| [ADR 0004](0004-documentation-platform.md)              | 基于已安装包的静态文档平台                     |
+| [ADR 0005](0005-durable-owned-lifecycle.md)             | 可持久恢复、验证资源归属的生命周期             |
+| [ADR 0006](0006-yandex-lifecycle.md)                    | 限定范围的 Yandex 生命周期变更和明确启动盘归属 |
+| [ADR 0007](0007-secure-gateway-profile.md)              | 明确的安全网关方案及归属受控文件包             |
+| [ADR 0008](0008-reproducible-release-automation.md)     | 可复现的分发包及所有者显式发布                 |
+| [ADR 0009](0009-distribution-version-source.md)         | 分发版本与运行时版本使用同一来源               |
+| [ADR 0010](0010-documentation-completeness.md)          | 明确检查仓库文档的完整性                       |
+| [ADR 0011](0011-explicit-extension-discovery.md)        | 静态发现扩展并显式加载                         |
+| [ADR 0012](0012-consumer-neutral-evidence-contracts.md) | 不依赖调用方的集成证据契约                     |
+| [ADR 0013](0013-static-site-profile.md)                 | 受限的静态站点部署方案                         |
+| [ADR 0014](0014-scoped-releases-and-changelog.md)       | 按里程碑发布并编写易懂的变更日志               |
+| [ADR 0015](0015-accountable-ai-translation-review.md)   | 明确记录并绑定原文的 AI 翻译审核               |
+
+发布历史和便于用户阅读的 changelog 遵循 [ADR 0014](0014-scoped-releases-and-changelog.md)。
+
+## 提议中的决策
+
+这些决策对应正在审查的实现。出现在此索引中不代表它们已被接受。
+
+| ADR                                                      | 决策                                  |
+| -------------------------------------------------------- | ------------------------------------- |
+| [ADR 0016](0016-vpn-provisioning-contracts.md)           | 与传输协议无关的 VPN 部署及私有文件包 |
+| [ADR 0017](0017-package-installation.md)                 | 软件包安装与可选 VPN 依赖             |
+| [ADR 0018](0018-generated-documentation-translations.md) | 为生成文档提供经过审核的翻译          |
+| [ADR 0019](0019-private-vpn-project-workflow.md)         | 私有 VPN 项目与经过身份验证的来宾部署 |
+'''

@@ -1,0 +1,61 @@
+schemaVersion = 1
+sourcePath = "docs/development/validation.md"
+body = '''
+# 质量验证
+
+先安装固定版本的开发工具，然后在本地和 Python quality 工作流中使用同一命令：
+
+```bash
+python -m pip install -e ".[dev]"
+python tools/validate.py
+```
+
+封装脚本会定位自身所在的工作副本，因此从其他目录通过绝对路径调用也能正确工作。每个工具接收相对于该工作副本解析的 `PYTHONPATH=src:.`。其他 worktree 的可编辑安装不会在不知情的情况下替代被测包。
+脚本会清除环境中额外的 pytest 选项、插件注入和 mypy 源码覆盖设置；完整验证只加载必需的 pytest 覆盖率插件。
+
+## 必需检查
+
+完整检查按顺序执行，遇到第一个错误即停止：
+
+1. 使用 `compileall` 强制编译 `src`、`tests` 和 `tools`。
+2. 运行 Ruff 检查和严格的 mypy 类型检查。
+3. 使用 pytest 发现并运行所有测试层级，同时测量分支覆盖率。
+4. 要求语句与分支的综合覆盖率至少为 80%，并独立要求 `flayer` 的分支覆盖率至少为 80%。没有分支的包不承担分支覆盖要求；空白或无效的测量结果视为失败。
+5. 使用隔离解释器导入此工作副本中的包。
+6. 在禁用依赖下载和构建隔离的情况下，将包构建并安装到临时目录，然后导入已安装的包。
+7. 如果工作副本包含 `flayer/__main__.py`，运行 `python -m flayer --help`；没有 CLI 时明确报告。
+
+离线安装检查需要开发依赖中固定版本的 Hatchling 后端。工具缺失、非零退出码或阶段超时都会导致检查失败。每个子进程的时限为十分钟。无论成功还是失败，覆盖率报告和临时安装的包都会清理。
+
+包覆盖率门槛衡量的是生产包代码。仓库工具通过 compileall、mypy 和行为测试检查；该比例不代表工作流或文档的覆盖率。
+
+## 测试层级
+
+Pytest 会发现整个 `tests/` 下的测试，而不只发现单元测试。每个测试应放入对应层级目录；收集时会自动添加相应的严格标记。无法归类的路径会使测试收集失败。
+
+| 目录 / 标记   | 验证范围                   |
+| ------------- | -------------------------- |
+| `unit`        | 模块的独立行为与失败分支   |
+| `contract`    | 共享接口与持久化数据兼容性 |
+| `functional`  | 完整的本地工作流程         |
+| `integration` | 使用模拟实现的适配器组合   |
+| `e2e`         | 不修改云资源的完整本地场景 |
+
+开发期间可以运行特定层级，评审前再运行完整检查：
+
+```bash
+PYTHONPATH=src:. python -m pytest -m contract --no-cov
+python tools/validate.py
+```
+
+每个测试都有套接字保护，阻止 Python 套接字连接、外发数据报和 DNS 请求。应注入模拟的云客户端和传输实现。该夹具用于防止意外访问，并非操作系统沙箱：子进程和原生库仍需要确定性的模拟实现与仔细评审。
+测试不会授权真实云操作，也不会创建云资源。
+
+CI 与本地开发调用相同的完整验证脚本。此后修改受跟踪文件会使之前的结果失效，需要重新运行完整检查。
+'''
+sourceHash = "sha256:77f567e1e8aa145a5bf769cfdfdfa5e7397213e51e1bdff6cee31ee534483f1a"
+reviewedTranslationHash = "sha256:90bc68d14b72731a9d477657a30c3b3cca5a7d0522dad6e6ec0bc3bfe92ddae9"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:54Z"
+reviewRoles = ["editorial", "technical"]

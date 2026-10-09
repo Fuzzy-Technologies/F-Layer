@@ -1,0 +1,114 @@
+schemaVersion = 1
+sourcePath = "docs/architecture/yandex-lifecycle.md"
+sourceHash = "sha256:a3b974737f2187fad1ab332e2acbcf03da061c5b6859e66aff7f5a842c943b75"
+reviewedTranslationHash = "sha256:6fd9edc541db659a53eceb660149be42eb9fdb95d76154d7ffe73c578ccb5e38"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:43:53Z"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# Yandex 生命周期适配器
+
+`YandexLifecycleProvider` 在只读 Yandex 适配器上增加有严格边界的变更操作。
+对象创建、能力发现和 `ValidateSpec` 均离线执行。变更测试使用确定性命令替身，
+测试套件不进行真实云操作。
+
+## 请求与能力契约
+
+`ResourceSpec` 包含不可变逻辑 ID、资源类型、通用名称、命名参数和逻辑依赖。
+递归值有深度、大小及有符号 64 位整数范围限制。参数不出现在请求的对象表示中。
+
+变更子类除了清单和查询，还声明 `create_resource` 与 `delete_resource`。
+这些是已实现的操作，不代表当前账号权限。原有 `YandexCloudProvider` 仍仅声明
+读取操作。
+
+| 类型   | 必需参数                                                                                                                                           | 可选参数                                             | 有类型的依赖             |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------ |
+| 网络   | 无                                                                                                                                                 | 无                                                   | 无                       |
+| 子网   | `zone_id`, `ipv4_cidr`, `network_dependency`                                                                                                       | 无                                                   | 网络                     |
+| 安全组 | `network_dependency`, `rules`                                                                                                                      | 无                                                   | 网络                     |
+| 地址   | `zone_id`                                                                                                                                          | 无                                                   | 无                       |
+| 磁盘   | `zone_id`, `image_id`, `size_gib`                                                                                                                  | `type`：`network-ssd` 或 `network-hdd`               | 无                       |
+| 虚拟机 | `zone_id`, `cores`, `memory_gib`, `boot_disk_dependency`, `subnet_dependency`, `security_group_dependency`, `address_dependency`, `ssh_public_key` | `ssh_username`, `user_data_file`, `user_data_sha256` | 磁盘、子网、安全组和地址 |
+
+`dependencies` 必须与各类型依赖参数引用的不同逻辑 ID 完全一致。创建前按精确
+提供方 ID 刷新每个依赖，并检查类型、文件夹、归属和适用的可用区。创建虚拟机前，
+地址分配结果必须恰好包含一个公网 IPv4。
+
+允许 2–32 核、1–128 GiB 内存及 10–1024 GiB 启动磁盘。安全组接受 1–64 条
+唯一 IPv4 规则，明确指定 ingress/egress、TCP/UDP/any、严格 CIDR 及有效
+TCP/UDP 端口范围。此版本不支持任意描述、厂商扩展选项和 IPv6 规则。
+
+SSH 公钥必须是结构有效的 OpenSSH Ed25519 或 RSA 编码；RSA 模数为
+2048–16384 位。可选注释不传入 CLI 元数据。任何选项都不接受私钥内容。
+
+## 资源归属与恢复
+
+适配器附加 `managed-by`、`flayer-project`、`flayer-stack`、`flayer-owner`、
+`flayer-resource`、`flayer-spec` 和 `flayer-operation`。稳定配置摘要是由
+SHA256 派生的 40 字符标签；操作 ID 是核心日志的 32 字符小写十六进制随机标识。
+
+`FindResource` 匹配完整部署归属和逻辑 ID；多条匹配会被拒绝。配置摘要、名称
+或指定可用区不同会与创建冲突，不会静默更新或接管已偏移的配置。操作标识保留在
+规范化标签中，使引擎区分本次创建、既有及并发创建的资源。
+
+`CreateResource` 在验证和发现后最多执行一次创建命令。每次都明确传入文件夹、
+配置档和 JSON 输出，关闭浏览器认证，设置 `--retry 0`，在明确期限内无 shell
+执行。成功输出必须匹配范围、归属、操作和所需名称/可用区。
+
+请求发出后的任何失败都被视为结果不确定，包括超时、成功响应格式错误和传输
+失败。超时后一次清单缺失不能授权再次创建。核心持久日志控制显式恢复，不会
+盲目重新创建状态未决的孤立资源。
+
+只读预检失败明确标为尚未提交，使核心可以安全回滚此前创建的资源。不确定的变更
+错误还将继承的 `retryable` 建议改为 false；超时类别本身不允许盲目重试。
+
+`DeleteResource` 刷新精确保存的资源 ID，检查完整部署归属和逻辑 ID。回滚还传入
+预期操作标识，适配器在删除前再次验证。引用已不存在即视为已删除。发出删除后，
+一次查询必须确认资源不存在，否则清理仍不确定。名称本身不能授权删除。
+
+启动磁盘是独立资源。虚拟机使用现有所属磁盘，设置 `auto-delete=false`。引擎
+先删除虚拟机，再删除磁盘，使部分分配和中断清理可以被发现和恢复。
+
+## 不含秘密的初始化文件
+
+`user_data_file` 和 `user_data_sha256` 必须成对设置。文件须为普通文件，最终
+文件及父目录不能是符号链接，路径无跳转组件，SHA256 匹配，大小最多 256 KiB。
+POSIX 下必须属于调用用户且禁止组和其他用户访问。非普通文件在打开前被拒绝，
+避免 FIFO 阻塞准备。
+
+格式为 JSON 对象，可在前面加 `#cloud-config` 和换行。顶层字段仅允许
+`ssh_pwauth`、`disable_root`、`users`、`package_update`、`package_upgrade`、
+`packages`、`write_files` 和 `runcmd`。部署配置负责生成内容及加固策略。
+调用方必须提供无秘密内容；适配器并不识别任意脚本字符串中隐藏的秘密。
+
+适配器读取有界不可变快照，在访问云前验证摘要，并为
+`--metadata-from-file user-data=...` 写入私有临时副本。CLI 接收副本；状态、
+日志和脱敏异常不包含文件字节。临时准备失败确定为未提交；提交后清理失败则保留
+远端结果的不确定性。
+
+## 观测与限制
+
+规范化观测只保留既有公开资源契约，包括有限的已知提供方状态和有效资源名称。
+静态地址的可用区来自 `external_ipv4_address.zone_id`。
+
+资源存在不代表就绪。所属虚拟机可能仍在执行 cloud-init 或已经失败；网络服务及
+端到端隧道需要单独诊断。真实账号权限、当前 CLI 行为和客户机初始化，要在
+明确授权的隔离云检查后才能确认。
+
+云端没有按标签原子比较并删除的操作。协作式本地锁和操作归属降低并发回滚风险；
+具备标签修改权限的其他远端写入者不在此事务模型之内。
+
+## 官方 CLI 参考
+
+实现期间于 2026-10-04 对照官方 Yandex 文档核对了命令：
+
+- 网络：[创建](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/network/create)和[删除](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/network/delete)
+- 子网：[创建](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/subnet/create)和[删除](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/subnet/delete)
+- 安全组：[创建](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/security-group/create)和[删除](https://yandex.cloud/en/docs/vpc/cli-ref/security-group/delete)
+- 地址：[创建](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/address/create)和[删除](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/address/delete)
+- 磁盘：[创建](https://yandex.cloud/en/docs/cli/cli-ref/compute/cli-ref/disk/create)和[删除](https://yandex.cloud/en/docs/cli/cli-ref/compute/cli-ref/disk/delete)
+- 虚拟机：[创建](https://yandex.cloud/en/docs/cli/cli-ref/compute/cli-ref/instance/create)和[删除](https://yandex.cloud/en/docs/cli/cli-ref/compute/cli-ref/instance/delete)
+
+变更和启动磁盘归属决策见 [ADR 0006](../adr/0006-yandex-lifecycle.md)。
+'''

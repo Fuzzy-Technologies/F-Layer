@@ -1,0 +1,2652 @@
+schemaVersion = 1
+
+[[units]]
+id = "module:flayer"
+sourcePath = "src/flayer/__init__.py"
+sourceHash = "sha256:4d8983860dc38c649688de18e035d78541c1d503ede0e89a8aec0b7410366b49"
+body = "F-Layer 的公共基础软件包。"
+reviewedTranslationHash = "sha256:8688c0d068b0b915cc4110f4490c77228e938e51d34b448e60ce278736a99f3d"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.493954+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.__main__"
+sourcePath = "src/flayer/__main__.py"
+sourceHash = "sha256:5bf492b71864106eb7258edb159a900004c405a93d8dc2a1bf9299a3fac871ad"
+body = "用于诊断和显式管理栈资源的命令行接口，不会自动发现云资源。"
+reviewedTranslationHash = "sha256:9504c76adccca55c120b566f6a7b5fd7d95c95783c600d1b84d05b29600893d3"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.493991+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.__main__.DiagnosticArgumentParser"
+sourcePath = "src/flayer/__main__.py"
+sourceHash = "sha256:85b4634a580d9c27e329cb6c22f299aad0c26d52364c58e174ac915aa4ec8381"
+body = "不输出可能包含私有端点信息的无效参数原文。"
+reviewedTranslationHash = "sha256:16fb0de61e997c6204cb927bcbbdb8584f07f154a89fc14ec3118cf9e3b6d042"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494013+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.__main__.DiagnosticArgumentParser.error"
+sourcePath = "src/flayer/__main__.py"
+sourceHash = "sha256:777fa5807b5731b25a3af34e0ac783b1690233f48d74bda5f70b7ae06224bfc1"
+body = "保留 argparse 的退出约定，同时避免泄露不可信的参数文本。"
+reviewedTranslationHash = "sha256:4cb365380090489c7e3c4a9953dcb6b9193a721ef8e74914721750e3a4b3910d"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494033+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.__main__.Parser"
+sourcePath = "src/flayer/__main__.py"
+sourceHash = "sha256:7a99de4d42589ee62c79121c1e96cce67fe686058cdc79f4f5d890b0f76f3f53"
+body = "创建无需联网即可查看的帮助内容，并限定命令参数。"
+reviewedTranslationHash = "sha256:ec8396606edda59703839ee2e92ff65ba6d64fb742fad68f92938b011ec21244"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494051+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.__main__.Main"
+sourcePath = "src/flayer/__main__.py"
+sourceHash = "sha256:1e75f4dc59103bd61dc636472ffd9253bd0ec685ed3fe928f0fe83aebbb66383"
+body = "执行显式请求的诊断或已授权的资源管理操作，并返回结果。"
+reviewedTranslationHash = "sha256:35c5f8ca7c01fc8af9b637ef1f98fc5aab56475bc991bd2308e5647298838de8"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494069+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.core"
+sourcePath = "src/flayer/core/__init__.py"
+sourceHash = "sha256:053116700f54865d0ee9f49d6e56bcccf1a94e10710dd5d00f3de8e6883f54dc"
+body = "与云提供商无关的目标配置和栈资源状态模型。"
+reviewedTranslationHash = "sha256:1d18f9635332d280c3065938ee8925ba5821ee6ab885f513ff0fe2c140cf34d1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494088+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.core.config"
+sourcePath = "src/flayer/core/config.py"
+sourceHash = "sha256:fcf0bf5005d692d50fa9e0e4df4ff1360726bc9ba4ee2fa9ce3f93f734d2bd54"
+body = "严格加载 TOML 目标配置，不添加提供商默认值，也不包含秘密信息。"
+reviewedTranslationHash = "sha256:9a9159e85e8ce724f45b94b8624a5e6c71254a6618eba3847aab507992c3353b"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494106+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.config.ConfigError"
+sourcePath = "src/flayer/core/config.py"
+sourceHash = "sha256:760f063eda99356231314efe77669c20c9b527ea9e356edaa42cf223704c9c4c"
+body = "无法安全读取或解析目标配置。"
+reviewedTranslationHash = "sha256:0cc2411f652059edb5ecfc572b2b2c2f26141a1fcc4c2d7126c0cb1934959dda"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494124+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.config.SecretReference"
+sourcePath = "src/flayer/core/config.py"
+sourceHash = "sha256:3745e7efa8f6050a228701782933572cdb5af7e05f987d48664298e744e89ae1"
+body = "对凭据来源的命名引用；凭据由身份验证适配器读取。"
+reviewedTranslationHash = "sha256:758eeda42d9d32195b5243f526e7ceff9f3654062b54e8de0df7672df6a0f5a1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494141+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.config.DesiredResource"
+sourcePath = "src/flayer/core/config.py"
+sourceHash = "sha256:88752564cc51e76c2c3f8ad78bd48a29ea5066cc236ab743fcf090ed939c04a4"
+body = "云资源创建前的逻辑标识，不依赖特定提供商。"
+reviewedTranslationHash = "sha256:0b20332bd57b7c288b2a8d3a0aa5fbf3bb7f1c01cd01fc1ff9c1a4abc701726e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494159+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.config.DesiredConfig"
+sourcePath = "src/flayer/core/config.py"
+sourceHash = "sha256:1727f1f23e6d6826720e1080c5cb470c3368796ba9e8ce1d2898ea5be509cb24"
+body = "经过校验的不可变目标配置，不包含已观测的云资源标识或凭据。"
+reviewedTranslationHash = "sha256:04f9da907576a283829bb5febe98c4b4fd4aa86e489160ffab1736f3d49e46f9"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494177+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.config.ParseConfig"
+sourcePath = "src/flayer/core/config.py"
+sourceHash = "sha256:ee5d8dfedb05a50a8230c19f6674d3a30f4779386639d0767ef15f8a3440a623"
+body = "校验已解析的 TOML，拒绝未知字段和未知模式版本。"
+reviewedTranslationHash = "sha256:b90dc892db51976a402a10ddd39d47c8d050b3eabe0bb7871013a0525704a36c"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494195+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.config.LoadConfig"
+sourcePath = "src/flayer/core/config.py"
+sourceHash = "sha256:d09e053e4e8b998d9ca6aa9af720f99130d96c7eab3fd02bc90f1e7a9664060a"
+body = "从明确指定的路径加载 TOML，不使用隐式本地默认值或环境变量覆盖。"
+reviewedTranslationHash = "sha256:98c76cf9ae39b106a4732f3ea2b5183dfe65d6c167793fb3ea270c1b3d455ed5"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494212+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.core.contracts"
+sourcePath = "src/flayer/core/contracts.py"
+sourceHash = "sha256:f45180d7731d68cc61227e2e9a18de5a5e585bc5b432fb090b0ed3d030befc98"
+body = "经校验的标识，用于关联部署计划与持久保存的资源归属信息。"
+reviewedTranslationHash = "sha256:0a8560014dbe8c86a1551b5a924cba7f05a5ee0314eeb98d0003ff075087ebcf"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494229+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.contracts.ContractError"
+sourcePath = "src/flayer/core/contracts.py"
+sourceHash = "sha256:7237352e064c18ed9584c1bcfb0d76f1df3dd38963ba71f76c7c4d48d7f9b92f"
+body = "输入不符合版本化的核心契约，尚未执行任何外部操作。"
+reviewedTranslationHash = "sha256:a4ed28fb9fb2e05100a2ee68f9dcd18ff35caeec2180dbb10dd7ef51d91b823c"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494246+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.contracts.ValidateName"
+sourcePath = "src/flayer/core/contracts.py"
+sourceHash = "sha256:5533cc804e2bb85899096d4d0480fd96e4467f6a2e2a9c978784a2643cee377a"
+body = "检查名称的可移植性和长度限制，不强制转换错误的输入类型。"
+reviewedTranslationHash = "sha256:d5f386b7a694299a2021822e183a3ff67526f4c2cfae37393094655142bc2bcd"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494263+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.contracts.ValidateIdentifier"
+sourcePath = "src/flayer/core/contracts.py"
+sourceHash = "sha256:7639b3ecf9553943bb17e41a3027c9d23b49a9a5786ddfe1a18349282756ccea"
+body = "将提供商标识视为不透明字符串，拒绝空白字符和控制字符。"
+reviewedTranslationHash = "sha256:9c1d9866209fc7d34d5de9fe532afeff6aee3597d1a9f9b57e1625804ac21cbf"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494280+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.contracts.ValidateSchemaVersion"
+sourcePath = "src/flayer/core/contracts.py"
+sourceHash = "sha256:fb7820c6bf0726abb0012b48042ed8f26e925c50df06137efc89d0f4a6c76bfe"
+body = "拒绝未知模式版本，以及冒充整数的布尔值。"
+reviewedTranslationHash = "sha256:50a5d4657998a90a34e3d2fe9f70d8cd1ee652aa633ac5e27d07a9de6f22ae16"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494297+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.contracts.ValidateFields"
+sourcePath = "src/flayer/core/contracts.py"
+sourceHash = "sha256:c7f3187e3275558c39b4ebb671024506aabc03f275b5f84a2e5d224374674ddd"
+body = "拒绝缺失的必填字段和未知字段，避免悄悄接受配置拼写错误。"
+reviewedTranslationHash = "sha256:0c6ea6d53523a9df677fed961e6b82a8b4a14add70c1df7d08ef2be8fc25a138"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494314+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.contracts.RequireTable"
+sourcePath = "src/flayer/core/contracts.py"
+sourceHash = "sha256:3aed57fc4e86185134da025be1d4de34e1d50082fdfa82357b4a11b61dcffde6"
+body = "检查解码后的不可信输入是否为键均为字符串的表。"
+reviewedTranslationHash = "sha256:d250101a436392b632ad7e527a57b8b8acd68bcc0cde0348ef4790bf1f313b2d"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494355+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.contracts.StackIdentity"
+sourcePath = "src/flayer/core/contracts.py"
+sourceHash = "sha256:447ba78cb703d57515bf11de5a356c9e20e814d7ddac16cd131873011977871c"
+body = "精确定义一个提供商范围内单个受管栈的资源归属。"
+reviewedTranslationHash = "sha256:d0e72793869f04e72c4d7fae7e47584f96be913b09434e504a1d9856694e892c"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494376+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.contracts.StackIdentity.OwnershipLabels"
+sourcePath = "src/flayer/core/contracts.py"
+sourceHash = "sha256:92d8974e2680f5d71a1f191785fd5090424b0890167a503532689d30d7a7569e"
+body = "返回提供商适配器需要附加并校验的明确标签。"
+reviewedTranslationHash = "sha256:8e7c36060fec11d12f32d313eb2db989362d6e2b9c3f060a020f2a22b53a5b29"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494394+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.contracts.ParseIdentity"
+sourcePath = "src/flayer/core/contracts.py"
+sourceHash = "sha256:9a3d5c7d9ed7d2579d926f44943da1fa45bbb2a86e3797599bcd8fe762483441"
+body = "解析完整的标识信息，不为缺失的归属字段填入默认值。"
+reviewedTranslationHash = "sha256:1df54380b05692ad9f9761842cb1e1a3e5b831a703eb45def402f4e62341c79d"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494517+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.core.lifecycle"
+sourcePath = "src/flayer/core/lifecycle.py"
+sourceHash = "sha256:b8de5466248a0c00a42c9db419243e68a451303f176db333fa712be348377151"
+body = "编排栈资源部署，持久记录操作进度，并在恢复条件不明确时停止。"
+reviewedTranslationHash = "sha256:88488637d68793676060d27504cf5c0a56f0a79a3ea6fb8b7e5b7b8db17c8810"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494544+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.lifecycle.LifecycleError"
+sourcePath = "src/flayer/core/lifecycle.py"
+sourceHash = "sha256:382a04e7c3737ac955f0fb249298f7de379c213fa52f70d9600be559e8f8b787"
+body = "操作被阻止，或需要显式恢复已中断的操作。"
+reviewedTranslationHash = "sha256:2875423de18d871e98a8882faddf9deaa7ea211ad855c15aa17e2cfca1a21ac6"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494563+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.lifecycle.CoreKind"
+sourcePath = "src/flayer/core/lifecycle.py"
+sourceHash = "sha256:60561c4ac8aa5516eb464943f0e4ec1a071ce7e3a554dc45e04e08e22d0c204f"
+body = "将提供商枚举名称转换为状态契约使用的连字符格式。"
+reviewedTranslationHash = "sha256:09d06d368e1f9f636ba1eb65ff08dfe8f4a7ee8932c66a31e29273a1b8f41c83"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494580+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.lifecycle.ProviderKind"
+sourcePath = "src/flayer/core/lifecycle.py"
+sourceHash = "sha256:2af33335a6f24827c12dafad98a249fe1e805f1ebd6598c743bbbbd32bf6161b"
+body = "仅接受资源生命周期契约明确支持的通用资源类型。"
+reviewedTranslationHash = "sha256:aceade5cc08a97841538bbab92585684140ee80b47c19de188d954c7435ac16f"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494598+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.lifecycle.DeploymentPlan"
+sourcePath = "src/flayer/core/lifecycle.py"
+sourceHash = "sha256:d4d4e757012d124e6afb3248550c1bd249f51d9add4e375832f65fc2a2e6f66d"
+body = "不可变的目标资源集合，具有确定的依赖顺序。"
+reviewedTranslationHash = "sha256:5d8b8b34205eb8d7f2442e71439a041849e1fc614f6b269f049ee9339ca43def"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494615+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.lifecycle.DeploymentPlan.OrderedResources"
+sourcePath = "src/flayer/core/lifecycle.py"
+sourceHash = "sha256:c5314448aac8c492cc2d03b10197512542c4fe523f660c348d95e91945fa9c16"
+body = "返回稳定的拓扑顺序，或拒绝循环依赖。"
+reviewedTranslationHash = "sha256:e16ab69e2c9c58d95e037881258bf59e7f1b5073ec517bb172459251c4fe3f05"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494632+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.lifecycle.DeploymentPlan.Fingerprint"
+sourcePath = "src/flayer/core/lifecycle.py"
+sourceHash = "sha256:d8a342b8116212433c3591b7da6f7be6d7a8be8208ce2541f97dc18015bb6dec"
+body = "将恢复操作绑定到确切的目标计划，而不把目标参数写入状态文件。"
+reviewedTranslationHash = "sha256:e8b61aac38986ea682da61d763d83ea437e3eb803f521ea1846ae9947a63272b"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494649+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.lifecycle.LoadDeploymentPlan"
+sourcePath = "src/flayer/core/lifecycle.py"
+sourceHash = "sha256:9855756264ae214deb8cd81ca2c5fad48dd8223b92e9bb2667cf8222f4f55909"
+body = "加载明确指定的版本 1 生命周期 TOML 计划，不解析凭据内容。"
+reviewedTranslationHash = "sha256:6eaeb333f073530599282555f558ec2c93b08f42a16d98880a127c62e1b36830"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494666+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.lifecycle.LifecycleObservation"
+sourcePath = "src/flayer/core/lifecycle.py"
+sourceHash = "sha256:4bc166a12abf8a516dad7eb8cdc9b13b3fc9d91eda65179d6098159cc0e20b0b"
+body = "汇总单个逻辑资源的本地归属记录及云端存在情况，不包含敏感数据。"
+reviewedTranslationHash = "sha256:04483bbf90028da14bfaf3342d29077d025fa812345ffdf8292d76aa02d80483"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494684+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.lifecycle.LifecycleReport"
+sourcePath = "src/flayer/core/lifecycle.py"
+sourceHash = "sha256:2d706ca6ce61ec875ff3bbe532eafe3ac69b1e417324e709adda396b15ad5c8b"
+body = "如实记录操作结果，不包含提供商命令、错误或参数的原始内容。"
+reviewedTranslationHash = "sha256:351b3cab5f82e63ebddc5c206bec003b747e1f15cb5c5e409d51740edf45180a"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494702+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.lifecycle.LifecycleReport.ExitCode"
+sourcePath = "src/flayer/core/lifecycle.py"
+sourceHash = "sha256:437018a5a1cf75331982b36cfba4f1f4c3569d6c13be89e5ad65f5e256c98d27"
+body = "操作失败或等待恢复时返回非零退出码。"
+reviewedTranslationHash = "sha256:acc10a270633933062b96e9a7208a24963f5a7f1a113e748d42647464d0c28cf"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494719+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.lifecycle.LifecycleEngine"
+sourcePath = "src/flayer/core/lifecycle.py"
+sourceHash = "sha256:49d4e0ae88e040665432ca7e1b67d0d4c6c20b80ce1220195eb731e36b137ae5"
+body = "将明确限定范围的提供商与持久化的栈资源状态管理相结合。"
+reviewedTranslationHash = "sha256:26d77c32f56e74267424bac460725e3782ae1a6b9be722d28097c1197b769119"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494735+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.lifecycle.LifecycleEngine.Status"
+sourcePath = "src/flayer/core/lifecycle.py"
+sourceHash = "sha256:82041fbcedb2ba8c5ccb32d5223add4e68b645922582f2f577dea4a8f9cde4e1"
+body = "查询栈所属资源在云端的实际存在情况，不修改状态或创建资源。"
+reviewedTranslationHash = "sha256:1d36334e82158c408b2815539b64a8e843014f3f1699cd3e6722561942d6d994"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494752+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.lifecycle.LifecycleEngine.Create"
+sourcePath = "src/flayer/core/lifecycle.py"
+sourceHash = "sha256:fb52542fa6c0f05b1d3b5c9efecd72c18f499c4b00a9bf9f3f80073942ee9671"
+body = "创建缺失的栈资源，回滚时仅删除本次操作创建的资源。"
+reviewedTranslationHash = "sha256:247b992c313ff3c47538694dd145450d17c4beed77db24027cb0b8e205c2bc90"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494769+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.lifecycle.LifecycleEngine.Destroy"
+sourcePath = "src/flayer/core/lifecycle.py"
+sourceHash = "sha256:95e465ca00a0f0eec96f9d7559fdf34c5243f9538fc5f6fc7dd2d656de7b2e15"
+body = "按依赖关系的逆序删除已记录且归属完全匹配的资源。"
+reviewedTranslationHash = "sha256:318b37939ce633185cf0412212fdae0c1fd2445e039e7fcb10c3dd5ce4088ec9"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494786+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.lifecycle.LifecycleEngine.Recover"
+sourcePath = "src/flayer/core/lifecycle.py"
+sourceHash = "sha256:5cd9e34b702fde4eeff3af851100bcbe5b84d79214c7b1fa6c5a54bcbd36993f"
+body = "显式恢复已记录的操作；上次创建结果不明确时，绝不重复创建。"
+reviewedTranslationHash = "sha256:c47a49b93b8aa805c69a03483f68bdcaea06efc13f0bdd37e7532c2574ab7420"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494802+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.lifecycle.LifecycleEngine.__init__"
+sourcePath = "src/flayer/core/lifecycle.py"
+sourceHash = "sha256:543a676c7185360b86d63fe80d38a3eb6b8ddaec124a90f865401404f815bfec"
+body = "拒绝无法准确表示目标管理范围的提供商或路径。"
+reviewedTranslationHash = "sha256:d4dec74f2d3253354f41bd0a82ff7458fed42084544e6173ac2eda826124cd05"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494819+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.core.state"
+sourcePath = "src/flayer/core/state.py"
+sourceHash = "sha256:b7da05325148bf76cbc731227d0e84e950635d79825fb13c4a7f326415c506d1"
+body = "栈资源的最小状态快照，采用严格读取校验和本地原子写入。"
+reviewedTranslationHash = "sha256:c0a4eed26016a282e55106895224b9333588daf4c6760474b9721b9d01556f5f"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494836+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.state.StateError"
+sourcePath = "src/flayer/core/state.py"
+sourceHash = "sha256:a5abbc49c063f260b898427d2ec0090e0d512b55017ad0301b8b5fa201425bd5"
+body = "状态格式错误、归属不匹配、正被占用，或无法安全持久保存。"
+reviewedTranslationHash = "sha256:c0850e5d74499b0c43252432e89932aedc01f00b854beeb0c53cf416d1f4655d"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494853+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.state.ResourceState"
+sourcePath = "src/flayer/core/state.py"
+sourceHash = "sha256:1899d1c3dfa8e46fa1bf916edbb1b4b37d508f98e355388ba469a8411bb2695e"
+body = "定位受管栈中某个提供商资源所需的最少信息。"
+reviewedTranslationHash = "sha256:3f4c1f12f5e597de927afff21c5c70a9ed0beabea0eead0073a4895fc0ff3af9"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494870+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.state.StackState"
+sourcePath = "src/flayer/core/state.py"
+sourceHash = "sha256:9ab9c636ad66209d39aed7a4d74acaf9e89a99b6165fc2a12ae8c89864ce282e"
+body = "不可变的资源清单，绑定完整的栈归属标识。"
+reviewedTranslationHash = "sha256:5a860302762c9e13dd3a961c34c3c344601b2b6cc1a9e7d5fe61f9d7804ba523"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494886+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.state.ParseState"
+sourcePath = "src/flayer/core/state.py"
+sourceHash = "sha256:bea40521bfe2cc3d0fbcd91459e3820b2ec75745fa0c8d6826903c43e7f0c146"
+body = "解析版本化快照，并要求调用者明确提供预期的归属信息。"
+reviewedTranslationHash = "sha256:61f501f321b056b650fd574a057690c85ea954da10c03dbc16c8cc185b8dc6d8"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494903+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.state.LoadState"
+sourcePath = "src/flayer/core/state.py"
+sourceHash = "sha256:5f95c3857111f316cd86b9244c514802e65c6483d7695d8a53772707ddfc9b29"
+body = "返回归属严格匹配的快照；仅在文件不存在时返回 None。"
+reviewedTranslationHash = "sha256:164c0527e8b672fc12d57fb6f2066457fe4f80b57e3c2942140e339b034cbdd8"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494921+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.state.SaveState"
+sourcePath = "src/flayer/core/state.py"
+sourceHash = "sha256:e2bf4fa4a5eccf7f4d2b2e87325a06e8dcb8b5fa03311b61772a5764927f8a21"
+body = "以原子方式保存栈状态，绝不覆盖归属其他栈或格式错误的现有快照。"
+reviewedTranslationHash = "sha256:910b53b36e82c45ce68913f24b5557c465bc2bd87be8ec8ad79ec5e771dfbd73"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494938+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.core.state.RemoveState"
+sourcePath = "src/flayer/core/state.py"
+sourceHash = "sha256:9889354df1c7a992b54598627462d44aad6ee21849deed7a26ab78886eea2718"
+body = "仅删除归属匹配的本地快照，不删除基础设施资源。"
+reviewedTranslationHash = "sha256:973bf9cbf5df86ffaf0ebc6729240ac40fa10401ddb41021cefdedf0b1e08014"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494955+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.diagnostics"
+sourcePath = "src/flayer/diagnostics/__init__.py"
+sourceHash = "sha256:1579fe646a21db354d6d9b6fbb67b4d528560d21bed8ff06c456060e5d736c63"
+body = "安全的诊断接口，明确限定提供商及待检查的端点。"
+reviewedTranslationHash = "sha256:01ab1f3ec80098ee042c97d7588f268558ce663255b2b6b365888116241a79fb"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494972+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.diagnostics.benchmark"
+sourcePath = "src/flayer/diagnostics/benchmark.py"
+sourceHash = "sha256:d61c91985b607dc067c4c9506dda9fc67f4f6fb417301b83a7db848a6dcf7ff9"
+body = "针对明确获准测试的端点执行有限制的 HTTP 测量。"
+reviewedTranslationHash = "sha256:6e78f01bc5bb32eb0bb9eca77b76e2c70e1f572cdf657ac43c3ff1d178bc1f90"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.494988+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.benchmark.BenchmarkLimits"
+sourcePath = "src/flayer/diagnostics/benchmark.py"
+sourceHash = "sha256:50dfed1902e2f76fd236084a33d030280c746de1ab064598fc559748b8103e6c"
+body = "对每次请求的截止时间、请求数量和响应大小设置硬性限制。"
+reviewedTranslationHash = "sha256:ceef502796beb6723a4ddbb12602e0165e53ccfd26f1b2ba11978f767a8683e7"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495005+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.benchmark.EndpointMeasurement"
+sourcePath = "src/flayer/diagnostics/benchmark.py"
+sourceHash = "sha256:f4cc95e4d8e0b2a59b36231fb23d7bb5722215c333bb78bfec39c9da13622ea9"
+body = "测量指标不包含响应正文、凭据或目标标识。"
+reviewedTranslationHash = "sha256:20c96ede3374e24fe66722e9dc46ff08fbcde3569bc0c2920f47f5fa631502ae"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495022+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.benchmark.EndpointTransport"
+sourcePath = "src/flayer/diagnostics/benchmark.py"
+sourceHash = "sha256:4ac68a90fb4863adca15b9c835753966589231adefeca09ec133ae29b8108878"
+body = "测量实现遵守给定限制，不输出原始数据。"
+reviewedTranslationHash = "sha256:1e15fd2bcd74967e558372c492110eac88f9e7a771c47d7ac31c5a551ce6d782"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495039+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.benchmark.EndpointTransport.__call__"
+sourcePath = "src/flayer/diagnostics/benchmark.py"
+sourceHash = "sha256:5555040024b0644a3efd19bf67b761c37a452d3b8d853217e3a6748d6d02e9b2"
+body = "返回一次受限 HTTP 测量结果，不暴露响应正文。"
+reviewedTranslationHash = "sha256:216cad79061c1c21e8e6d09770e64defbb8850bc70ff549fa419ccd11705daa1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495056+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.benchmark.ValidateEndpoint"
+sourcePath = "src/flayer/diagnostics/benchmark.py"
+sourceHash = "sha256:22e39193671253605afcdcd6f0a08f9c79f409b0fa9edeb067eef0d911c0c52a"
+body = "接受明确指定的 HTTP(S) URL，不允许凭据、查询字符串或片段。"
+reviewedTranslationHash = "sha256:cdfb113fc6f0bbd4f701d18e2ff9ee7e21d7d20b345bcf66ae20639065814dbf"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495073+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.benchmark.HttpMeasurement"
+sourcePath = "src/flayer/diagnostics/benchmark.py"
+sourceHash = "sha256:24df0977c2b6e30ff321370bad64611afdcc76dc6b1f84a5433597d74498dc5c"
+body = "读取受限大小的响应并验证 TLS，不跟随重定向，也不自动查找代理。"
+reviewedTranslationHash = "sha256:1c5ec4057cc3ca118b43bd0e3c66caa291b76400a35b7a8840589f313612e036"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495090+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.benchmark.EndpointWorker"
+sourcePath = "src/flayer/diagnostics/benchmark.py"
+sourceHash = "sha256:0e3802eef18ffd93cb38ebbf8a275c5db18111d6d99ec9be10ad6904133e4f17"
+body = "隔离网络操作，让 DNS、TLS、连接和响应读取共享同一个硬性截止时间。"
+reviewedTranslationHash = "sha256:256e1371c286cd200bc9b49aecb14145cc2394d2ebd99ccee5002f4c196b16a8"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495107+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.benchmark.MeasureEndpoint"
+sourcePath = "src/flayer/diagnostics/benchmark.py"
+sourceHash = "sha256:f51b8dd96e8a4d4ea190740dad97b64fc0c3b1ef46a70cae4f0a6dccf3a20087"
+body = "到达截止时间后终止隔离的网络操作，包括卡住的 DNS 解析。"
+reviewedTranslationHash = "sha256:79170f62facd81cd19786d811b1268bd721d7b946ddf71a1f15b7ef0c0ebfa4b"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495123+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.benchmark.SafeMeasurement"
+sourcePath = "src/flayer/diagnostics/benchmark.py"
+sourceHash = "sha256:f1a6ccb008390223e1d0ff3e76d25ce33a85cbe2f76ba812626c600234dba957"
+body = "拒绝适配器返回的无效指标，并抑制所有非结构化异常输出。"
+reviewedTranslationHash = "sha256:5d7eab8800ceb0751147a1d5dfadaad715c2bb4db063e308b0ccc04e5ce39632"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495140+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.benchmark.ProbeEndpoint"
+sourcePath = "src/flayer/diagnostics/benchmark.py"
+sourceHash = "sha256:993a7eaf7290d90cbaf503743d53788fd3dacf59cc806cbafe533c8818491c46"
+body = "检查指定端点的 HTTP 可达性，不把该结果当作来宾系统安全加固验证。"
+reviewedTranslationHash = "sha256:9bd82b17194f00ca77e45be0cc2e5470a5a2f99a1dbfcf1f13645baa52e2c3e8"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495157+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.benchmark.RunBenchmark"
+sourcePath = "src/flayer/diagnostics/benchmark.py"
+sourceHash = "sha256:09921624fa7fefdc00d843b1b7aac658149e2c6ce6dd4d12a0c32dc0447be461"
+body = "对固定次数的受限下载进行测量，不据此推断上传速度或隧道速度。"
+reviewedTranslationHash = "sha256:d79aee05fd03db011b4dc65165eb4874768b119f7f7990e47ad66933943f6d98"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495174+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.diagnostics.contracts"
+sourcePath = "src/flayer/diagnostics/contracts.py"
+sourceHash = "sha256:a5726cdacd5a9fa3bca28f69ce671f3bd201cdb0c7f094ac2e4efb0583f12bca"
+body = "与提供商无关的诊断结果及安全输出约定。"
+reviewedTranslationHash = "sha256:b42fef9eb0de4174f44803ebf82e4919704a3e5ba6dec0d18fddeacb51af6198"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495191+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.contracts.DiagnosticStatus"
+sourcePath = "src/flayer/diagnostics/contracts.py"
+sourceHash = "sha256:f2a5e991a2e3505a5f04f30c10723361de7b3196c46f2b4d1d0ca9a3ba321c6e"
+body = "稳定的状态值区分失败、过期的验证结果和不支持的功能。"
+reviewedTranslationHash = "sha256:7e12426c27fc2fc8abccb2e95b0dd34c2f7762c577e40fbeba39e75b01436169"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495208+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.contracts.Redact"
+sourcePath = "src/flayer/diagnostics/contracts.py"
+sourceHash = "sha256:068f1eec4a60a387c94d3d8c4a4455f1f7fbb7928d58559d46a237300d2d1061"
+body = "输出前递归遮蔽凭据字段和文本中常见的敏感内容。"
+reviewedTranslationHash = "sha256:bfd7aae3fc58e426335c0fc8d04a3888fd19564eba1c581ab199f846fadfe491"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495225+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.contracts.CheckResult"
+sourcePath = "src/flayer/diagnostics/contracts.py"
+sourceHash = "sha256:b68935ae63fee3fbda5bcac16e602a47471533a3077c9abf69cbe157f17f624c"
+body = "一次诊断观察的结果，其详细信息在序列化时经过敏感数据清理。"
+reviewedTranslationHash = "sha256:a486d0d6f6972fde88ff8a1afe33686508f20790a88a02fd46217e5ab4d14e8a"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495242+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.contracts.CheckResult.AsDict"
+sourcePath = "src/flayer/diagnostics/contracts.py"
+sourceHash = "sha256:6824ead7e40358ff55f42424fc8695027d91d883f1e13853634cd41429eb6c90"
+body = "返回稳定且兼容 JSON 的字段，不包含任意的提供商原始输出。"
+reviewedTranslationHash = "sha256:4c4a07c2a91e52a7b25fc40f5b7715578ce847c501510afab17f0e9b0ec5a224"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495259+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.contracts.DiagnosticReport"
+sourcePath = "src/flayer/diagnostics/contracts.py"
+sourceHash = "sha256:6c60000edf1f5b452a78e730561e3ac71983fa9cdd743765c258f524feed3934"
+body = "版本化诊断报告，其汇总状态不会掩盖失败的检查。"
+reviewedTranslationHash = "sha256:18b092f63b22e699d238e5041e1b7aed6a8e2c388c3e3f7eb47fff235602d258"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495276+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.contracts.DiagnosticReport.Status"
+sourcePath = "src/flayer/diagnostics/contracts.py"
+sourceHash = "sha256:83bb84c9479fba34f51b382f226cfd889d1b410ac9f54e1542c467793c9cb7f1"
+body = "返回严重程度最高的结果；空报告按不支持处理。"
+reviewedTranslationHash = "sha256:bad067bfa16f875279d9eb5466f853ff20b61c55e4963cc0178c800ec1d6e9a0"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495293+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.contracts.DiagnosticReport.ExitCode"
+sourcePath = "src/flayer/diagnostics/contracts.py"
+sourceHash = "sha256:44d94ef35be5f4d230609b29dd70ae3347a20e8b4ae2ab7e69defc1cb0b0773a"
+body = "仅当所有请求的检查均成功时返回零。"
+reviewedTranslationHash = "sha256:65dcde08201ae1a4fdbcd4f9f2c0b9453f1b5092bfa6080b8f42cf23a977dfe2"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495310+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.contracts.DiagnosticReport.AsDict"
+sourcePath = "src/flayer/diagnostics/contracts.py"
+sourceHash = "sha256:9d875d4248a712ef2e41cafab39d6fe60ff649540a7ea24a0e0ca0e9d7d6a18a"
+body = "按确定顺序输出报告模式和已清理的观察结果。"
+reviewedTranslationHash = "sha256:c8d1bbdd04aaafdb3f8f61eec4b91571bd4bf993ed041c25e4e28dc8f1d30434"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495326+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.diagnostics.health"
+sourcePath = "src/flayer/diagnostics/health.py"
+sourceHash = "sha256:0065daedbe3306cf4cfd6fa2b615b4f65f2904bca2adc01777fefc8516268300"
+body = "可注入的健康检查和结果时效校验，不假定拥有云访问权限。"
+reviewedTranslationHash = "sha256:8b68d659ea00e8d0f87276c247ea17b0760030f30ffb53d6ef89b9da47b02920"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495343+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.health.HealthProbe"
+sourcePath = "src/flayer/diagnostics/health.py"
+sourceHash = "sha256:73fef99d46cc85f0dd29e4841f5319853ab3e27ae7c593de48521eb80ccef680"
+body = "适配器提供只读观察结果，结果本身不授予操作权限。"
+reviewedTranslationHash = "sha256:b693e0d4f46669c4bd86f7a2f1488faaaf448a2151acbd23953c28d3bdfd26db"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495360+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.health.HealthProbe.__call__"
+sourcePath = "src/flayer/diagnostics/health.py"
+sourceHash = "sha256:e419517cf521b1e6e3c66d694f89157832d995abac691345f4e3c2bcbd91b50f"
+body = "在适配器规定的范围内执行探测，返回一个结构化观察结果。"
+reviewedTranslationHash = "sha256:9fea87fceae89b2a55aedeec78588b78d1a0adf94cdd63e89fd249ff59eea3a1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495376+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.health.RuntimeChecks"
+sourcePath = "src/flayer/diagnostics/health.py"
+sourceHash = "sha256:d1138c17341ea93f776dc7dd5a6147261507c85a2143f28a2bb8b2007333ed89"
+body = "仅检查受支持的 Python 运行环境，不推断远程基础设施的健康状况。"
+reviewedTranslationHash = "sha256:25f2cc4b1afdc399b090ae661afc6dbc4b9ba74f7e8fa72ff8004838cf5be518"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495393+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.health.RunChecks"
+sourcePath = "src/flayer/diagnostics/health.py"
+sourceHash = "sha256:dfcf2e9f80b91d79f023aeb6c6e4e398c2173405234683c409e63be38a471a41"
+body = "收集注入的检查结果，并在探测失败时抑制原始异常文本。"
+reviewedTranslationHash = "sha256:852fd956e1817468be1c3fdf7a548831b02c827604ec9f357cd751ab6b516e12"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495454+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.health.ProviderStatus"
+sourcePath = "src/flayer/diagnostics/health.py"
+sourceHash = "sha256:e0072c6111c0a35c75a19f3e73b210af5dc3dc83f71e1b1ddd3019320037fc3a"
+body = "解读调用者提供的通用提供商观察结果，不发现资源。"
+reviewedTranslationHash = "sha256:5c517ae1575b85162983bfeff7bafec1195c043597101b850b07126f67293808"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495474+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.health.EvaluateHealthReport"
+sourcePath = "src/flayer/diagnostics/health.py"
+sourceHash = "sha256:594f1ab4c6647c193eda7489aeb32b25699fdc7bd40caead16fee031eee340d8"
+body = "校验版本化健康报告，区分结果过期与健康检查失败。"
+reviewedTranslationHash = "sha256:408e97ae1bd6186c8d0729e0186213191f43b49a42067060c640f8a42b7645fc"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495491+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.diagnostics.reporting"
+sourcePath = "src/flayer/diagnostics/reporting.py"
+sourceHash = "sha256:877b58407962e1ac56ce013b42d4dba77eca555f5ba5b70d442ad44ca7ebfdbb"
+body = "为已清理的诊断报告提供稳定 JSON 格式和简洁文本表示。"
+reviewedTranslationHash = "sha256:9b15257aa7f82e52449623f72272a6f2aa6ce8099b206dd7772b63e17f4afadc"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495520+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.reporting.RenderJson"
+sourcePath = "src/flayer/diagnostics/reporting.py"
+sourceHash = "sha256:17ee0fa4bd5b549575f65fdcb1065b31e95c8207a5a13e834a51db388c7373bf"
+body = "仅序列化版本化的公共报告，并固定 JSON 键的顺序。"
+reviewedTranslationHash = "sha256:efe7c56b206ee11106ee6cefad3e0b31df7d234630275f1b5a6d58cc7c645d83"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495536+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.diagnostics.reporting.RenderText"
+sourcePath = "src/flayer/diagnostics/reporting.py"
+sourceHash = "sha256:e9f640e52f11bc5270ae7a3fc0f4a518af43dad76c1fae72b53868325130a573"
+body = "每项检查输出一行安全摘要，不包含原始详细信息。"
+reviewedTranslationHash = "sha256:61a31b9629cc9ab05cbc54c384173235bafe5af88482ab799e2ea05fdf0795f5"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495553+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.extensions"
+sourcePath = "src/flayer/extensions/__init__.py"
+sourceHash = "sha256:f92fd15e0dfadf3748c13a09d9d78599e34e787b535d3fd16e90b28198a398a5"
+body = "提供类型化扩展契约、静态元数据发现和显式加载能力。"
+reviewedTranslationHash = "sha256:d532f370313f3844fdcf067056b2eb886f6f92ffa7e67756e831a3a733624ab4"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495570+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.extensions.builtins"
+sourcePath = "src/flayer/extensions/builtins.py"
+sourceHash = "sha256:c3aedfee14ddf335624f79a5f6e15d93377bba804bd4e5eca44db078a9b0d032"
+body = "为现有 Yandex Cloud 提供商和安全网关提供可用的扩展适配器。"
+reviewedTranslationHash = "sha256:04e2fedc823882035a7cfd3b0f4e697d7950c139ed3ec20f3a7c7bb82df6ab32"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495587+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.builtins.BuiltinDescriptors"
+sourcePath = "src/flayer/extensions/builtins.py"
+sourceHash = "sha256:a6dd4b6af9f8f8b521ea96438a66cc1509114f151f58e78708057dc53a99dd72"
+body = "返回静态描述符，不导入提供商或部署配置的实现。"
+reviewedTranslationHash = "sha256:fe1b0355e04715a09f23c634d04ccbbb31e5a84e3f2e1327c8b69a8140373fc2"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495604+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.builtins.YandexReadOnlyExtension"
+sourcePath = "src/flayer/extensions/builtins.py"
+sourceHash = "sha256:1f0c744a894e49fb97fc7047e0b6d3be29d38502eadc5b3f5dc89d4086ce799f"
+body = "使用外部 CLI 配置文件引用，构造现有的 Yandex Cloud 只读适配器。"
+reviewedTranslationHash = "sha256:d6a8bb29d56b535ae039dc3679a5ea290b34ae2ac82fab0681b41e8c806a0d36"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495620+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.builtins.YandexReadOnlyExtension.Descriptor"
+sourcePath = "src/flayer/extensions/builtins.py"
+sourceHash = "sha256:4f593f269be418a1ceed00ad2f6206dadd0aa7cefe584f9d07baed26ce03561b"
+body = "返回注册表查找使用的不可变内置扩展标识。"
+reviewedTranslationHash = "sha256:1ef2d61a29783bafd16a37a92ef8e09e626dbdde2e6da75c7d9347d2af35394e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495638+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.builtins.YandexReadOnlyExtension.CreateProvider"
+sourcePath = "src/flayer/extensions/builtins.py"
+sourceHash = "sha256:e03b5865de565b489919e7dee19813b5d7b82f8e40114f6e23f9c0f6fc1e505e"
+body = "构造实际适配器，不执行 CLI 命令或读取凭据。"
+reviewedTranslationHash = "sha256:2a8418aff23decd426c3eeeb8e99cc023ef5db683c2a3bc6d73df7dd1e020980"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495655+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.builtins.YandexLifecycleExtension"
+sourcePath = "src/flayer/extensions/builtins.py"
+sourceHash = "sha256:44782ff11bd32ce51c6a455b60802005f444346da8946ee789206ec0ef844b16"
+body = "单独启用现有的资源变更契约，并严格限定范围与归属。"
+reviewedTranslationHash = "sha256:2b7f708d8fd730407e83da4855230bdcfd2b0806e59770f980641058bd7ea47f"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495673+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.builtins.YandexLifecycleExtension.Descriptor"
+sourcePath = "src/flayer/extensions/builtins.py"
+sourceHash = "sha256:51d826ed0eafe6a1ac7edde3bf33d570b149d35ecfe8e7884a92899b7c9e5d9e"
+body = "返回独立标识，明确声明支持构造生命周期适配器。"
+reviewedTranslationHash = "sha256:3ce50eea4e286e8a05c542b69c4465a292bbb59027cd5df78911dc26bbcdb162"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495690+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.builtins.YandexLifecycleExtension.CreateLifecycleProvider"
+sourcePath = "src/flayer/extensions/builtins.py"
+sourceHash = "sha256:0a336fde1b74d849683f3c04cb4038e0ccdfd98fc7dfb96b48a8dad02deaba08"
+body = "构造实际生命周期适配器，不执行提供商操作。"
+reviewedTranslationHash = "sha256:094209022c2c6926fe8f773ec38a5782fa0443a0de9ff907c97c71a0ba056b5a"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495707+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.builtins.SecureGatewayExtension"
+sourcePath = "src/flayer/extensions/builtins.py"
+sourceHash = "sha256:b858c9ac8f33b17886539132160f7f81f72eb958e1b8be6eaafcb49e9a08bbb5"
+body = "通过新增的扩展接口编译实际使用的严格网关模式。"
+reviewedTranslationHash = "sha256:e8bb27be9161038310148bb2e7a2527c0187ad6564085ab0069e0d0e1eefbcf1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495724+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.builtins.SecureGatewayExtension.Descriptor"
+sourcePath = "src/flayer/extensions/builtins.py"
+sourceHash = "sha256:39739e9c9a3e5ea05923501487fda4b4cbbd64422bbb89e3ba351dcd017e958f"
+body = "返回内置部署配置的不可变标识。"
+reviewedTranslationHash = "sha256:55ef9572a67054c73125e48512d504d9886feb9155bbe21f181e5b387df247d5"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495741+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.builtins.SecureGatewayExtension.CompileProfile"
+sourcePath = "src/flayer/extensions/builtins.py"
+sourceHash = "sha256:dbfe6e9da767ea7cb9292f7c021d6eaf303a2a30661af299e1a9c2db53bbe696"
+body = "在构造实际网关计划之前拒绝标识不一致的配置。"
+reviewedTranslationHash = "sha256:f87446f926c5438a9a3855397ca82a0fd6f102e2a001b3af62a1d3b3c1487bfa"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495758+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.builtins.LoadBuiltin"
+sourcePath = "src/flayer/extensions/builtins.py"
+sourceHash = "sha256:9fcb1d713c936457d03189358752e0d4e286a2d62198cc27ec537662650c77e5"
+body = "仅加载确切已知的内置描述符，拒绝虚构的内置目标。"
+reviewedTranslationHash = "sha256:0e5fefe140444275a0c5654557db3d1b87a1001a5f5c36ab69a749656816d164"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495775+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.extensions.contracts"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:a202c7e5bca0c89b22e9bdae95e794d885c44342cb77f4f54d7fb71dc290d11f"
+body = "类型化、版本化的扩展标识，以及不含凭据的受限上下文。"
+reviewedTranslationHash = "sha256:0eca2d674c93d7703395b52c49b42b12ee41e87a1284bfb64a0c9dc88d2a34cd"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495792+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.contracts.ExtensionError"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:e50d3f90685ae8325dbc631b741967dc0bea7130cf9d94495189ea29604893e5"
+body = "扩展违反发现、标识、兼容性或加载规则。"
+reviewedTranslationHash = "sha256:40b8d72d542d006997ae9002382d2fb9594937268148aec5f4b59063f1436a6d"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495809+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.contracts.ExtensionKind"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:c1a853c94248fd4c5ca21212f89c30134a7984ee4f3dfc2c533503ec83d9c5ef"
+body = "两个已实现的扩展契约，其 ABI 版本编码在入口点组名中。"
+reviewedTranslationHash = "sha256:945e74d6fe3485b5104ec598622a9b701f302f1a1dea622bbfb24d4e3fe0ee88"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495826+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.contracts.ExtensionDescriptor"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:fb967e073f9d929fd81909936ebdc6592e12aa1e370eeb6346b2c25e9c300eac"
+body = "扩展的静态标识；外部元数据快照不能证明软件包的真实性。"
+reviewedTranslationHash = "sha256:819aac6a0a1690ab973301a060b954accbc6e0bffeac2a1128c7c26c28b209cd"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495843+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.contracts.ProviderContext"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:520e8a721799c9eda09dbe1f43a6b6a63b69bbf079243a4bc7dc2de40599f705"
+body = "明确的管理范围、外部 CLI 身份验证引用和执行限制。"
+reviewedTranslationHash = "sha256:24fc949a9ff01ced99b2e91bc34979a8b70345ecd20e858c1106dcf209f097f1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495860+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.contracts.ProfileContext"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:2fe9d3cd580045180d89110cb64ec60f5e0b9524d629b8361e6e43162fa0a6e2"
+body = "精确的栈归属上下文；部署配置和生成文件保持分离。"
+reviewedTranslationHash = "sha256:d703a460fef6d80ffbad654903c7460c7893fd9aa302a0d8b227c756b4247e57"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495877+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.contracts.ProviderExtension"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:1d5f37021e58b0db8cef585b3ebba226b6f208f4af4a38cfb0ffcd1eb236cdcb"
+body = "现有只读提供商契约的工厂，无需强制支持资源变更。"
+reviewedTranslationHash = "sha256:5b2bf0a5a91a5b6acdabfad1fd41551fbe7e7c00a6bd82becb239ced03259af5"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495894+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.contracts.ProviderExtension.Descriptor"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:10a010aad7656c067b09b1fcbd5e95fcdaca37f5c5ca14af632389df244b3dca"
+body = "返回工厂加载前已注册的准确静态标识。"
+reviewedTranslationHash = "sha256:00df098c007beab59e8c0d11276cd84b37c41b30dc29e201937035df46aab9f1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495911+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.contracts.ProviderExtension.CreateProvider"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:40f2ee9064cd8790cb8651635ec7ffdba9bb6f899cc6e9cbc8e1c52bd0ff3cc0"
+body = "构造限定范围的只读适配器，不探测或更改基础设施。"
+reviewedTranslationHash = "sha256:15b3dc36b1e95840870522c99ea8ed740315a7bad8582326157db07855cabcbc"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495928+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.contracts.LifecycleProviderExtension"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:fd763aba0e2ddd55bd96128d94afd92433d0100b4ca4b7f0e0bc070f975f042d"
+body = "用于现有栈资源生命周期契约的可选独立工厂。"
+reviewedTranslationHash = "sha256:a7fddb4d0849a09ef2a68f15c729a0ca81958d53bf88e17c8f9ad06189d5714d"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495945+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.contracts.LifecycleProviderExtension.CreateLifecycleProvider"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:93f157e2fd20db676ea2eefab7bbb4fbada4fee7b4de3c95fa7a2b970447425d"
+body = "构造支持资源变更的适配器，但不执行提供商操作。"
+reviewedTranslationHash = "sha256:695e3bcbac96de57fdbd7dfc9a9c1415ba18db52b8537e7c28a234c744074bce"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495962+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.contracts.CompiledProfile"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:159b9c70af777ab8e8eb259051bbfe96fd92faebcdca139e3dc723caefc7ec52"
+body = "经过校验的部署配置适配器，保留现有文件生成与生命周期管理的职责边界。"
+reviewedTranslationHash = "sha256:aa748ba395cb81cb0e99ff34a3e6274658b23eb8f81884c32068273a569e0d14"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495980+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.contracts.CompiledProfile.Identity"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:45a8742443beefaf71e265b8c5cd2a7bfbc3bc8d2bca2626b1385f2661e1bcfa"
+body = "返回编译部署配置时已校验的准确标识。"
+reviewedTranslationHash = "sha256:2a770f824444f3a32f6ede4bfc82b029d2f22a56627853c38b971948c3b00050"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.495997+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.contracts.CompiledProfile.BuildServerBundle"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:5f83452f7806339a1e92909a2dff5510f632b8e24127db2360f9e607c23be08e"
+body = "在内存中生成栈所属的服务器初始化内容，不写入文件或部署。"
+reviewedTranslationHash = "sha256:a062c1a259954428bbbbee83513446c8aa64493fa5628ffbf6db4427c76ded33"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496013+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.contracts.CompiledProfile.RenderPlan"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:4331843c9d713697c2cf5c3c0e83353a1fd1ba88907b0a286df97b88a4d12396"
+body = "核对确切的服务器初始化文件及其归属后，生成生命周期 TOML 计划。"
+reviewedTranslationHash = "sha256:915da67008daaad4688181e358ac333e343abf74120f909961137acd7ee8f212"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496093+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.contracts.ProfileExtension"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:e44604ee5b330183597bc36fe009798e0ee76df7d58f43659f4ebe5b6d0c9cc4"
+body = "根据自身严格的版本化模式，编译明确提供的部署配置。"
+reviewedTranslationHash = "sha256:73c77182e4c5e00cd9e9d44e878d3a34e00f515955bf16973bf7d95fc4ba8c52"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496114+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.contracts.ProfileExtension.Descriptor"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:241af87af874086d6ec313e372f9e8ec5afbc2417e329772cd56fb2121d8db4e"
+body = "返回工厂加载前已注册的准确静态标识。"
+reviewedTranslationHash = "sha256:00df098c007beab59e8c0d11276cd84b37c41b30dc29e201937035df46aab9f1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496131+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.contracts.ProfileExtension.CompileProfile"
+sourcePath = "src/flayer/extensions/contracts.py"
+sourceHash = "sha256:acff596325d41577aef52cb682a80d8d87a59cfd7d5eb5c2029dfee262df32b1"
+body = "校验配置和准确的栈归属，不访问基础设施。"
+reviewedTranslationHash = "sha256:475c85dcc7ae4574e844d555b6156c09cd3c2724cbd0dae64c95317afa979e2a"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496148+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.extensions.discovery"
+sourcePath = "src/flayer/extensions/discovery.py"
+sourceHash = "sha256:d6809e9cbe7b91dba3cfe1beee1f2757bd2199ddf3fc175e1826fdde77d514e6"
+body = "仅从调用者明确选定的已安装软件包元数据中进行有限的静态发现。"
+reviewedTranslationHash = "sha256:54a08ca1b42185168a6126f9d0f28fa0ce3157cf33bce1bf7637815bec5327b5"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496165+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.discovery.ReadMetadataFile"
+sourcePath = "src/flayer/extensions/discovery.py"
+sourceHash = "sha256:bfc15fe263fd476c3f0513be44966d3faa7c95d19bcc072a6a90548a00ce4f35"
+body = "读取一个大小受限、无硬链接的普通文件，不跟随路径末端的符号链接。"
+reviewedTranslationHash = "sha256:607e1ae6618f7c2750037eeaf40e214cee2ea94e996851306eed5b08308e68d5"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496182+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.discovery.ReadMetadataSnapshot"
+sourcePath = "src/flayer/extensions/discovery.py"
+sourceHash = "sha256:32b301764b7bb7bb87757a139f0d3144eb6f0bc232461c283584df1b77d46fda"
+body = "仅固定选定 dist-info 目录中三个明确指定的元数据文件内容。"
+reviewedTranslationHash = "sha256:3e7672430300b06587017c34785206811b182d79262c367085d25c43702745c9"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496199+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.discovery.DiscoverExtensions"
+sourcePath = "src/flayer/extensions/discovery.py"
+sourceHash = "sha256:ae517cecff6be88c7acfaffd6c4848b11cccdfea5ef553ae5a3e21b48143031c"
+body = "解析选定的元数据，不导入代码、不调用模块查找器，也不搜索路径。"
+reviewedTranslationHash = "sha256:f1f51d7774206fd094f9b871081e3b9d7df5ba055001a0a9f91b425875def93d"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496216+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.extensions.registry"
+sourcePath = "src/flayer/extensions/registry.py"
+sourceHash = "sha256:172e9f0d58c86724ba15068e5d0a67256e9a7afb0d05cf5eb8909f8966215e78"
+body = "显式扩展注册表，按请求加载归属已确认且元数据已固定的扩展源代码。"
+reviewedTranslationHash = "sha256:f5ef883fcc07a4857a86c2d99f159f648fd3de3582233a694c1293cd7665267a"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496233+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.registry.ExtensionRegistry"
+sourcePath = "src/flayer/extensions/registry.py"
+sourceHash = "sha256:c1a0a38b8869d321f67b09cc2670879a92b05d6d8b4d4e5ee856395af3db58e2"
+body = "有界且显式配置的注册表；创建和查找均不会导入外部代码。"
+reviewedTranslationHash = "sha256:9f8124302bd21121732c169af8e7276c92bdaa24ad67af0bc08fc6e65fe859de"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496250+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.registry.ExtensionRegistry.Descriptors"
+sourcePath = "src/flayer/extensions/registry.py"
+sourceHash = "sha256:86f5cbd7a23d00bc050a4b6776f8f4822b7a9875b3e27e8d9466e41ed5d2c5ac"
+body = "按类型和标识的确定顺序返回不可变描述符。"
+reviewedTranslationHash = "sha256:cbedb3d5dc02ec73f57dcfc47f0c4df0a807d01384a1d25caeb301ccbfe17570"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496267+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.registry.ExtensionRegistry.Get"
+sourcePath = "src/flayer/extensions/registry.py"
+sourceHash = "sha256:e76fddd0e04fa10d2657c3a7b619cc2dc5be085a8b747d56a04726982ed05f58"
+body = "选择一个已注册的扩展标识，不导入代码或探测能力。"
+reviewedTranslationHash = "sha256:39a7a0788712219a8d70b6d9774242ed2e204989cc4686ea65f6ab6a4b750a10"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496285+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.registry.ExtensionRegistry.Load"
+sourcePath = "src/flayer/extensions/registry.py"
+sourceHash = "sha256:72c9d8f3981c7bf13c47639b143b0a52397d6adae01038221c754bfb88de2c80"
+body = "加载确切注册的工厂；加载外部代码需要精确匹配已固定的描述符。"
+reviewedTranslationHash = "sha256:3e5ec31558c8aa220f361be7f8d599a432b20ca0e910718e5f9bb2b861aafd09"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496302+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.extensions.registry.ExtensionRegistry.__init__"
+sourcePath = "src/flayer/extensions/registry.py"
+sourceHash = "sha256:1cc07a467af92d5bba8cca62f121a2760df9eea879893d139de125d90de4fb19"
+body = "在公开任何注册表条目之前完成全部注册校验。"
+reviewedTranslationHash = "sha256:f4f417fe23279034243d295739cf9352f8f7adb50c6daf09e083fe59568ea67c"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496318+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.integrations"
+sourcePath = "src/flayer/integrations/__init__.py"
+sourceHash = "sha256:47c1190099ff3fce01059b732a5e1961aa29703925a295e164bcc0b7533e7858"
+body = "与使用方无关的观察结果契约，不提供传输、调度或授权能力。"
+reviewedTranslationHash = "sha256:5b5a8114d7c359bb2e5f1a31d9975f63459c644b7541197700b8eb82c3fc7215"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496336+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.integrations.adapters"
+sourcePath = "src/flayer/integrations/adapters.py"
+sourceHash = "sha256:00d4ec8f50a639e912f420d8cad669645d087e0d68717c45d8a0aaa5ed89f825"
+body = "以只读方式将调用者选定的可信模型转换为最少必要的观察记录。"
+reviewedTranslationHash = "sha256:835da8cb08fc3a6ba78cc6560e4a69e6e81e079bfe76e45f1d3979ca95f2b2b5"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496353+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.adapters.AdaptDiagnostics"
+sourcePath = "src/flayer/integrations/adapters.py"
+sourceHash = "sha256:d832dc5a310dda7290fd38a65539f37fff10a47937727a01faab9faa57847531"
+body = "将选定的 status、health 或 benchmark 结果绑定到请求，并去除任意源文本。"
+reviewedTranslationHash = "sha256:0b24c5e47e2d126d37cf42415b45a5cbff4118daf5b8a8b676af5b14fd559bc4"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496370+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.adapters.AdaptState"
+sourcePath = "src/flayer/integrations/adapters.py"
+sourceHash = "sha256:105b397520a71fe9ff037c0dc9076721d986a8e98e0cedca8bcefc1b1eab7702"
+body = "汇总已记录的归属信息，不导出资源定位信息，也不宣称云端资源已就绪。"
+reviewedTranslationHash = "sha256:713798f2ea9e8474e0e0a0fd153456229becf07689ae397a1a83627cc28592ff"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496387+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.adapters.AdaptLifecycle"
+sourcePath = "src/flayer/integrations/adapters.py"
+sourceHash = "sha256:f3a0fc31f148605badc518478f517294dac55980e301611c25bad60d1215672a"
+body = "在调用者限定的范围内汇总已有生命周期记录，不执行远程验证。"
+reviewedTranslationHash = "sha256:22422d8be88e98ddc1c59ca441bb296c49f052566bb81ccde42ed85dd482bb99"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496404+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.integrations.contracts"
+sourcePath = "src/flayer/integrations/contracts.py"
+sourceHash = "sha256:c07d1142abd2ff9049a16a7d0545e28f0ef1e3cac358bf401af91ae4d35d8067"
+body = "与使用方无关的不可变消息，仅包含明确允许的集成验证记录。"
+reviewedTranslationHash = "sha256:c0d33e6124a4c190e8bd7152c41e72cadd404cb798a3022920451db46929b7ea"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496453+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.contracts.IntegrationError"
+sourcePath = "src/flayer/integrations/contracts.py"
+sourceHash = "sha256:8dab941595059ad7b6cdbef4c43823c4719aa77372f628de5a2ced8c10a2a959"
+body = "消息违反受限的结果记录契约，错误不会暴露输入内容。"
+reviewedTranslationHash = "sha256:9278b3ef0548da8d6ff6b44a585f9a88d1a3c49feaeed9606782295ee5744265"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496470+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.contracts.IntegrationOperation"
+sourcePath = "src/flayer/integrations/contracts.py"
+sourceHash = "sha256:e7496510d3efaff36718ea1144d632960e4d4f24763e16618265ab22c4ec56ca"
+body = "受支持的观察操作不会授予基础设施执行权限。"
+reviewedTranslationHash = "sha256:132f069b235172681ca869c401206b9dea1ce05d7ab87b5e9a32da1676b373ae"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496487+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.contracts.RequireIdentity"
+sourcePath = "src/flayer/integrations/contracts.py"
+sourceHash = "sha256:c95f3e47f01f4239960fec99b6f1c29fb4ad01100a33abf4747dffb88c7f1c73"
+body = "要求所有归属字段和提供商范围与独立持有的上下文完全匹配。"
+reviewedTranslationHash = "sha256:773f38d8f782b909d3aa271cbcbc25f84cc345e9299683ff1e51b8249f3163a7"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496504+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.contracts.ValidateCount"
+sourcePath = "src/flayer/integrations/contracts.py"
+sourceHash = "sha256:a4e1c0d7a165feece2f86b1bc39d7a935adbf44354ff8ba759ad22ba3544e549"
+body = "校验资源数和观察次数的范围，拒绝类型强制转换。"
+reviewedTranslationHash = "sha256:a6df6c0376d82ddf9c7e34a0966c238fd372f396d594eaaaa845aba1af27d51e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496521+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.contracts.IntegrationRequest"
+sourcePath = "src/flayer/integrations/contracts.py"
+sourceHash = "sha256:f1d83732f010675d86e93671251e89fbdb1d539b641c85dabfdc82cfa24d7bd3"
+body = "观察请求绑定准确的范围、所有者和关联标识，本身不授予权限。"
+reviewedTranslationHash = "sha256:8403bcbc4faad251df3987e7a1959c25e3a2c8e1a8f3d3047729498f4bb732b5"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496538+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.contracts.Metric"
+sourcePath = "src/flayer/integrations/contracts.py"
+sourceHash = "sha256:cc8745169dfdb685eb06fadae96cda91dcedaa414661932b53bf63ee98d9b066"
+body = "一个明确允许且范围受限的测量值，不可包含字符串或原始数据。"
+reviewedTranslationHash = "sha256:8b5fe46c4e1d94b61d180e5a4acf296ac89c1296f3ad275353a0f2872e1015d5"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496555+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.contracts.CheckEvidence"
+sourcePath = "src/flayer/integrations/contracts.py"
+sourceHash = "sha256:5c33f261cec8bcfba4bbe274c8f74dc5150d2ad7ac8a386858dbf59043f34b6b"
+body = "诊断结果及测量值，不包含私有名称、任意文本或详细信息。"
+reviewedTranslationHash = "sha256:3bc65e0783c1063f5c369f0ac03d8e5cb4b1020f3a0acddf5fea62041b0b6b70"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496576+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.contracts.DiagnosticEvidence"
+sourcePath = "src/flayer/integrations/contracts.py"
+sourceHash = "sha256:357b11c76b4257386931c15fb0a6b1a19df08ace507eeb2ff6aad7ab581827f9"
+body = "有序的诊断检查保留如实汇总的结果，不携带外部文本。"
+reviewedTranslationHash = "sha256:c963427dd0cfe8905f5f5f7631fe3e5db748543b2d6261fe421416cbe3817fde"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496593+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.contracts.DiagnosticEvidence.Status"
+sourcePath = "src/flayer/integrations/contracts.py"
+sourceHash = "sha256:1f696b71b82691fc3ef1956f5e0e5e59f29762da814ee6216300e4eb6472f451"
+body = "采用既定的严重程度规则，空记录按不支持处理。"
+reviewedTranslationHash = "sha256:556d5d13587634171437c6db51b1d08a5c2934217bf37bd17d472910d994aa03"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496610+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.contracts.StateEvidence"
+sourcePath = "src/flayer/integrations/contracts.py"
+sourceHash = "sha256:36ccb992eccc4cec63a5a5512bd3b947dbd652562f10e78a1e8496e4724c3ed3"
+body = "本地栈状态中的资源数量不代表资源在云端存在或处于健康状态。"
+reviewedTranslationHash = "sha256:bb90a8e1998afd79244c3076a14e5f39f93367ef4ab6ff19a29a103a0d421edb"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496627+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.contracts.ResourceCount"
+sourcePath = "src/flayer/integrations/contracts.py"
+sourceHash = "sha256:35183eef7010154b71c7de468823ad093cd3fac4ae10a40a64734745196919d3"
+body = "单个稳定生命周期观察类别的资源数量，不含资源定位信息。"
+reviewedTranslationHash = "sha256:277d718f1a93ecf1a4600436942d73de1050ab1e46c126d9686e53894b4c3853"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496644+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.contracts.LifecycleEvidence"
+sourcePath = "src/flayer/integrations/contracts.py"
+sourceHash = "sha256:c5c4d81754d8ad12e3ac5de00e4e62e97ad0f2a0ca220240257b26c502733c64"
+body = "历史生命周期结果和恢复需求不授予资源变更权限。"
+reviewedTranslationHash = "sha256:4bf396a2a6318f9813bc7cce25197afc8e2abee6e88312c44636a0bd7d89b3d7"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496660+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.contracts.IntegrationResult"
+sourcePath = "src/flayer/integrations/contracts.py"
+sourceHash = "sha256:fb409fec5f632eaa2b4328ad2fb72c1d7580a60433ea60ce261abda61b966e1a"
+body = "明确允许的验证记录，绑定准确的原始已校验观察请求。"
+reviewedTranslationHash = "sha256:7148a4c40e81613df86892641729fe4aa603472e93cbda5918cc798f1adb5db6"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496677+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.integrations.wire"
+sourcePath = "src/flayer/integrations/wire.py"
+sourceHash = "sha256:285eb5fba1cc9970feeac280c484c06d23d47a08e848cc8281ad3d27f195fe71"
+body = "受限且严格的 JSON 编解码器仅校验数据表示，不执行调度或授权。"
+reviewedTranslationHash = "sha256:7ef05209c173fc7c524d205a3376ccbdb2573acdc4459c23f3ae91331e022d70"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496694+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.wire.ParseRequest"
+sourcePath = "src/flayer/integrations/wire.py"
+sourceHash = "sha256:f8a10b3f0081bff2e023da67cd82cd93e48597107003379ba8fb058227ac342e"
+body = "校验不可信的只读请求，不执行操作或权限检查。"
+reviewedTranslationHash = "sha256:d53482ee6f8ce3332f6b6d596e8b69e1bf61c926412ef694cef99c1d42594298"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496711+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.wire.ParseResult"
+sourcePath = "src/flayer/integrations/wire.py"
+sourceHash = "sha256:47ddf615838188f9cabb8319824c61f739aad01d5898e844f03146c4fefba7cf"
+body = "将不可信的结果表示绑定到其请求，但不证明结果真实性。"
+reviewedTranslationHash = "sha256:8023c415bbc363ca570da434d1bda73c5c3d771a25aab6be26ec9623f0df07de"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496728+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.wire.SerializeRequest"
+sourcePath = "src/flayer/integrations/wire.py"
+sourceHash = "sha256:9c756c76073ca43af663c2bc737d7e07f5b34edc3cae6e6d626df32ab1d71fd3"
+body = "序列化已校验的观察请求，不解析目标或凭据。"
+reviewedTranslationHash = "sha256:c54ca1fb0d6a19ec75f9057256bced473413b0da0fa05e12c54278755a4ecd05"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496745+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.integrations.wire.SerializeResult"
+sourcePath = "src/flayer/integrations/wire.py"
+sourceHash = "sha256:0932f0aff17eae03e37be607b8589f08a2591f97424727ad263c4b41af3c214f"
+body = "仅序列化明确允许的验证记录，绝不包含源对象或适配器原始数据。"
+reviewedTranslationHash = "sha256:9163c49214e19e208a2c5855255ba2ec94b62b4196ec462d9cac118b2f669748"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496762+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.profiles"
+sourcePath = "src/flayer/profiles/__init__.py"
+sourceHash = "sha256:63dd28bb5501cf6d71985b51433c58209c18239daab14bfd13fb20dc4690dd56"
+body = "显式部署配置和具有明确栈归属的生成文件。"
+reviewedTranslationHash = "sha256:bdb195f6fa65589ef057ebe5e955a8cce6817b3bd568c79210cc65a25538fbd7"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496779+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.profiles.artifacts"
+sourcePath = "src/flayer/profiles/artifacts.py"
+sourceHash = "sha256:5f1fe8bac4b25307840baab76f36f9a541f0a1d1afbedf271b8d3402bb455bfc"
+body = "大小受限的文件包，具有排他的栈归属和可校验的本地清理流程。"
+reviewedTranslationHash = "sha256:74fb5fd11ef1c41e0810df4dfd3edeae7b8434671a7b98df0363482b6fb2dded"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496795+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.artifacts.ArtifactError"
+sourcePath = "src/flayer/profiles/artifacts.py"
+sourceHash = "sha256:331b293f846d333993606cf98e105cd5888244b4d55f7511f5c38c2e012913ba"
+body = "文件无效、归属其他栈、已被修改、正被占用，或无法安全保存。"
+reviewedTranslationHash = "sha256:a9464b1c102147aaaa8411d29f227bd0f562fc70c1ea73cb5bb7ef5c47cba913"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496812+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.artifacts.Artifact"
+sourcePath = "src/flayer/profiles/artifacts.py"
+sourceHash = "sha256:f7e04759b1973b6a94497790d168c4fc1c2d215a72104b48840dfbaca7a5da2a"
+body = "仅保存在内存中的生成内容；repr 绝不包含敏感数据。"
+reviewedTranslationHash = "sha256:33755ac5c5bf0876ca23f78d64237ed7622aaf1f71e833a9c9f36adbee582f53"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496829+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.artifacts.ArtifactBundle"
+sourcePath = "src/flayer/profiles/artifacts.py"
+sourceHash = "sha256:46a7136500591ee87d8aa22da92d24ca6d3cfd1b066ec97c9cc3ccdc65a0b060"
+body = "具名文件集合，绑定一个栈的完整归属标识，与提供商状态独立。"
+reviewedTranslationHash = "sha256:bbfed600114e5d2c75ed4d1b75679ee315087b021e66bfaa2bb65ec5d91f29dd"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496846+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.artifacts.BuildDeviceBundle"
+sourcePath = "src/flayer/profiles/artifacts.py"
+sourceHash = "sha256:9f3e0d948ea75857993e32a569c11142bf0fbd138a5e5b20f997b0f43b038d6a"
+body = "封装外部提供的传输配置文件，不生成或校验凭据。"
+reviewedTranslationHash = "sha256:d1894b87818d6d7dd266fb49203c337269aec7a1900c421b3f907170eadfe855"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496863+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.artifacts.ReadArtifactFile"
+sourcePath = "src/flayer/profiles/artifacts.py"
+sourceHash = "sha256:1b7374fffdec2eec964a1ca5ea7ab7a3677ce9a9c925a2bef29f113f9e571352"
+body = "仅读取访问权限受限的文件；错误信息不会泄露文件路径或字节内容。"
+reviewedTranslationHash = "sha256:ef67ce56d4e33ac4863ed08b1b78a9ce6fc6247a133ffb7616726c69139a6bea"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496879+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.artifacts.WriteArtifactBundle"
+sourcePath = "src/flayer/profiles/artifacts.py"
+sourceHash = "sha256:e6460c333920fd4426fe26a6f39d2d6400f26592e93b79a4ae5dc227ccaa8405"
+body = "以独占方式发布新文件包，最后写入清单，回滚时仅删除本次创建的文件。"
+reviewedTranslationHash = "sha256:400703efecb2eab419d2209b21e71976c9872e59f329ca621d9ecff521540abf"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496896+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.artifacts.ReadOwnedArtifactFile"
+sourcePath = "src/flayer/profiles/artifacts.py"
+sourceHash = "sha256:656362b856dbfb83246cbe87862b2b41dc97fb606ad44b24f2235e38ce5f2c19"
+body = "通过完整且未改变的文件包归属清单授权读取某个确切文件。"
+reviewedTranslationHash = "sha256:4ab66f5c794e808bfbd4a44f3794a351a000745094c1587077c5ecd1ef3bb46e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496913+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.artifacts.RemoveArtifactBundle"
+sourcePath = "src/flayer/profiles/artifacts.py"
+sourceHash = "sha256:262cd930e3287359e57702cb507a8feb54534f5826a130158d513376f0f0ebbf"
+body = "删除归属匹配且未修改的文件；可进一步要求内容与调用者预期完全一致。"
+reviewedTranslationHash = "sha256:b8c2eb10f63aad0956995b6448d18e93fb4dffda249451a0102fc5437b23c79a"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496930+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.profiles.gateway"
+sourcePath = "src/flayer/profiles/gateway.py"
+sourceHash = "sha256:70053917988b6ae538ebf36f0c0c43ba2eee44679c27e974921e6a802d5cb319"
+body = "编译明确指定的 IPv4 网关，限制通过 SSH 转发的应用 TCP 流量。"
+reviewedTranslationHash = "sha256:e134dc372938e28acc6e0d37c9b92a9f7a01dffa0d7d800d7689cacab968d2ca"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496949+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.gateway.GatewayError"
+sourcePath = "src/flayer/profiles/gateway.py"
+sourceHash = "sha256:58fa087c8a1d0fbddcbb84cd9a318e7d468cba089615b5152cfc561d2368f95a"
+body = "部署配置或已准备的初始化文件不符合契约。"
+reviewedTranslationHash = "sha256:19001e302b97e55335dd6fb345bfc293f2713888b3c38a4e0f0e12bf8d4cdc99"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496967+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.gateway.GatewayTarget"
+sourcePath = "src/flayer/profiles/gateway.py"
+sourceHash = "sha256:f06a4dd1a972e3bdf06ccd1f0b98b36a83f3b0f2f763d033b2e320fbee4c22c7"
+body = "通过 SSH 网关可达的一个确切 TCP 目标地址。"
+reviewedTranslationHash = "sha256:f526c0e9d017cac7644bf7dc7c7ec22a20d7b2c6914932e456158c35e67bdbf0"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.496984+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.gateway.GatewayDevice"
+sourcePath = "src/flayer/profiles/gateway.py"
+sourceHash = "sha256:aadfc675b449eeca1fe36ba9bf7523a78666b495560a245b7667382e84c47812"
+body = "单台设备的公钥及明确允许连接的来源网络范围。"
+reviewedTranslationHash = "sha256:f83569c8fe95a5b46fb129cc3e46a2cdeb2ce70fa111a1a685c7ea8e7624017f"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497001+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.gateway.GatewayTransport"
+sourcePath = "src/flayer/profiles/gateway.py"
+sourceHash = "sha256:9f1d93af63b7757a6007597062f31619a35d1b85c4c24413e857a42ee94d8c15"
+body = "受限的 SSH 本地端口转发，设备密钥单独声明。"
+reviewedTranslationHash = "sha256:c1e97cc1240f50a9bbdc448acff26eb6fe50d77aa84815de6e09645f68b333a7"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497018+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.gateway.GatewayPort"
+sourcePath = "src/flayer/profiles/gateway.py"
+sourceHash = "sha256:fb1cdc6d1527bae85c9a209338443e7f486e8afa69190df61a2e1df252902e48"
+body = "一条明确允许服务流量的规则；放行规则本身不会启动监听服务。"
+reviewedTranslationHash = "sha256:34cef29ec4e9ac01b0ad3950117390522938a2b77da09c90ecb5817d8936b0dc"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497035+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.gateway.GatewayProfile"
+sourcePath = "src/flayer/profiles/gateway.py"
+sourceHash = "sha256:4b861030c4411ec2fca96ae9619169e3322237745c0b4f416715addafed4be4e"
+body = "明确的云端部署位置，以及通过 cloud-init 配置 Ubuntu 24.04 安全设置的要求。"
+reviewedTranslationHash = "sha256:c9be49ac72a413130191526632f374e07877bd3e2b5b1e39a25aedec113df39b"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497053+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.gateway.ParseGatewayProfile"
+sourcePath = "src/flayer/profiles/gateway.py"
+sourceHash = "sha256:58bebce58d63bca3e737c905130bad862dce2f9832ca106c2f9a57956fbd2349"
+body = "拒绝未知设置、秘密字段和未声明模式版本的部署配置表。"
+reviewedTranslationHash = "sha256:c9a3b038e70f1d7a6a127c3addbe9e2efc8eba898fc92ff6c5bc130a56d9814a"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497071+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.gateway.LoadGatewayProfile"
+sourcePath = "src/flayer/profiles/gateway.py"
+sourceHash = "sha256:c800420f1f03f3253bec63e0e53d4c41f19dbc3bf07cc2e2b1fd42dc3536f7b4"
+body = "读取明确指定且大小受限的部署配置，不查询凭据或环境默认值。"
+reviewedTranslationHash = "sha256:97e2643a9b84ddb9804c15a4d678a4885e9be3e31152973bad67e6b64096a7a0"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497096+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.gateway.GatewayPlan"
+sourcePath = "src/flayer/profiles/gateway.py"
+sourceHash = "sha256:84dd2d5c38fb9aadeb80824a2b92f0e554647b3e1be46060412277868ae089f5"
+body = "不可变的部署配置输入；序列化后的生命周期计划绑定确切的导出文件。"
+reviewedTranslationHash = "sha256:b3e6edaf05cb0da380c34ee342e628d8c61857057acce339138d8d1bed62df18"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497460+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.gateway.CompileGateway"
+sourcePath = "src/flayer/profiles/gateway.py"
+sourceHash = "sha256:271b45a4be0153846a1fffa17fa3826d481c7584880aa4af2dfac9a5658b379a"
+body = "编译已校验的部署配置，不执行文件系统或提供商操作。"
+reviewedTranslationHash = "sha256:402b40181e8e49bcefb8c6e6e68249416fe8731ef35e6472fde9045064f065cc"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497492+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.gateway.BuildServerBundle"
+sourcePath = "src/flayer/profiles/gateway.py"
+sourceHash = "sha256:13e5b5e87dea8cde06a5341ab1ff2d23ceef4ba86e2d9ef9e663b1d050338471"
+body = "生成初始化内容，不解析秘密信息、不上传，也不宣称服务器已就绪。"
+reviewedTranslationHash = "sha256:d67d3dcfb4879cde2f51cdc3b969a014cb76a5eae417e2f6a06f5195ecb5df10"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497619+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.gateway.BuildSshDeviceBundle"
+sourcePath = "src/flayer/profiles/gateway.py"
+sourceHash = "sha256:50b2085c2f4b8eeff4b734ca2fe5ebe4741e90af47567b5b1f7764969cf9bee9"
+body = "根据调用者提供的密钥及可信主机密钥引用，生成可用的本地 TCP 转发配置。"
+reviewedTranslationHash = "sha256:69bd1760c004506b25afed9a621048217cee2b395629f211f4dbdfa4c9aed9c1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497643+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.gateway.RenderPlan"
+sourcePath = "src/flayer/profiles/gateway.py"
+sourceHash = "sha256:2c032cabbb5f3970d9b0ef64d9449ab73e5e1c87fc7a4db663dbe7a023e154e4"
+body = "将确切生成的内容绑定到生命周期 TOML 计划，不导入尚未实现的编排机制。"
+reviewedTranslationHash = "sha256:1754172e1716df7d6bec260a1f17239b351ea86e1c7ce07bdba378cd1e6f57e2"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497662+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.profiles.static_site"
+sourcePath = "src/flayer/profiles/static_site.py"
+sourceHash = "sha256:22c181230747d8069152389e1b22e0385ff56878d7db4fec7461e71669923b8c"
+body = "为明确选定的全新 Ubuntu 来宾系统准备受限的静态 HTTP 页面。"
+reviewedTranslationHash = "sha256:9e834ea98ab18f984434df082357f64bc2c3aead64b1056833e7207fdb7564ec"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497682+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.static_site.StaticSiteError"
+sourcePath = "src/flayer/profiles/static_site.py"
+sourceHash = "sha256:e0902f3272a199acada73851e8574d613948c5f9465bd8e3bac86dc0bebad69c"
+body = "静态站点不符合受限的部署配置或已准备文件的契约。"
+reviewedTranslationHash = "sha256:fc580dd62b0f957a8b51bd5ffaabc6b3216c56918b59bbe9a3990b018eb6af0e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497700+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.static_site.StaticSiteProfile"
+sourcePath = "src/flayer/profiles/static_site.py"
+sourceHash = "sha256:47a0330fb050950dfbf2ec311858ee3198b1fff9b302089a0203a91852a14895"
+body = "明确指定 Yandex Cloud 部署位置和一个内容经过转义的静态页面；SSH 访问权限单独配置。"
+reviewedTranslationHash = "sha256:06451272f6d43704931421c3e504fe1fff0397000c5c2f78f501048b0649bd99"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497720+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.static_site.ParseStaticSiteProfile"
+sourcePath = "src/flayer/profiles/static_site.py"
+sourceHash = "sha256:1752e6302eaec4c75656619e66add602221a77eb1f2ed1423eb0f682c909425f"
+body = "解析严格定义的具体部署配置，不接受命令或私密凭据。"
+reviewedTranslationHash = "sha256:b49fd2cc2a01c0b1dcd835ae587327abd739f0e0c3d729f782d8b934fb16bb66"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497738+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.static_site.LoadStaticSiteProfile"
+sourcePath = "src/flayer/profiles/static_site.py"
+sourceHash = "sha256:d9e87763f292bd694e38b78256f9204508895c962949bc88589fc0c6da1c91ab"
+body = "读取大小受限的普通 UTF-8 TOML 文件，不跟随符号链接，也不会阻塞在特殊文件上。"
+reviewedTranslationHash = "sha256:5e73f23158c993e7c8835b924f279850524ca115bc0ce5106b4789c1b98b319b"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497755+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.static_site.StaticSitePlan"
+sourcePath = "src/flayer/profiles/static_site.py"
+sourceHash = "sha256:910309602aa5d60bad59ec3300bf37f90e70330cb27e796e94c1a00f205d56d8"
+body = "不可变的目标部署配置；序列化计划绑定栈所属的确切初始化内容。"
+reviewedTranslationHash = "sha256:2c3d6d60ccb8df0611523be267dc9c341278714ad6bd676ab5772b064a4ddf26"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497773+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.static_site.CompileStaticSite"
+sourcePath = "src/flayer/profiles/static_site.py"
+sourceHash = "sha256:20dd1dd64d96681244d34f481a20a0df9fc15e0b08d0e798bce3893eed6407b4"
+body = "校验组合后的名称，不调用存储、生命周期操作或提供商变更。"
+reviewedTranslationHash = "sha256:5a1ff04606d0b42a999a663fa0b340620b60ab3c0b83de088c93f94f7048bcee"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497791+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.static_site.BuildStaticSiteBundle"
+sourcePath = "src/flayer/profiles/static_site.py"
+sourceHash = "sha256:f3e06d2b21f29f442d1e7c51a3471d046092200570a4a01ddc6cec1f7982faf7"
+body = "生成不含凭据的公开初始化内容，不宣称来宾系统已就绪。"
+reviewedTranslationHash = "sha256:febf00d1d73d769dde6e4183891e81ac2f37319218251061bd4bb8417775a921"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497808+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.static_site.RenderStaticSitePlan"
+sourcePath = "src/flayer/profiles/static_site.py"
+sourceHash = "sha256:cf80f87ef03eca8196980b0742b35a63e2d41256628002726fa63ab8cccee4a6"
+body = "将现有的六类资源生命周期契约绑定到已校验且归属明确的初始化内容。"
+reviewedTranslationHash = "sha256:95b3daccd969ddd695bd01e690ed00eb123332370e21b42730d4bc10ef5d9958"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497825+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.static_site.StaticSitePreparation"
+sourcePath = "src/flayer/profiles/static_site.py"
+sourceHash = "sha256:7f72bfa6c3bc5984d57992f4e506e33a1e5a45813928ce63be25a1e47e4ef5b1"
+body = "已准备计划的本地文件包引用；部署及就绪状态仍未验证。"
+reviewedTranslationHash = "sha256:c66b26a7ae976156c12eb29c93271c1533f4bce1926a6f68b276cd75a9ca0415"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497843+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.static_site.StaticSitePreparation.PlanFile"
+sourcePath = "src/flayer/profiles/static_site.py"
+sourceHash = "sha256:227838552e317daaca7e9254d674163acd7f21aac85e87585a5f1c23407f9eb3"
+body = "在具有独立归属的私有计划文件包中定位已准备的 TOML 文件。"
+reviewedTranslationHash = "sha256:4873754f1cf3d46bfa2b2ff028412c437a4c94c10f9a65e36ccfb705f8aee384"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497860+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.static_site.PrepareStaticSite"
+sourcePath = "src/flayer/profiles/static_site.py"
+sourceHash = "sha256:03276488a7d740e2252bbf8ea45c10af91c34e0bb0808e912fdda37e837b64a3"
+body = "发布归属明确的独占文件包；发布失败后保留已校验的计划。"
+reviewedTranslationHash = "sha256:3762b2cfde1ff765d0518ae355b9cd710dbddd99aee272d915ba2a15984f87b3"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497877+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.static_site.Main"
+sourcePath = "src/flayer/profiles/static_site.py"
+sourceHash = "sha256:dc1506f971c46902e38811e87ac04d4df8d271236ff2f27ce21a28ceac214a1b"
+body = "仅准备受限的本地文件，绝不构造或调用云提供商。"
+reviewedTranslationHash = "sha256:da46bc372f0ef5aa2eb51742f2f5447ba2894ff946582c134c9e549c459cf546"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497895+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.providers"
+sourcePath = "src/flayer/providers/__init__.py"
+sourceHash = "sha256:f4c9a672105934ed4b789192a905bc4fe9bd9ec3aa36e07d73c23cbe56f4609e"
+body = "提供商契约与适配器，不隐式访问基础设施。"
+reviewedTranslationHash = "sha256:720331a22e0abe7291933476217021249672e2ee4510ad75cb5c9f63a71ec5c9"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497912+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.providers.contracts"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:a020e931e65c3fe21e1ef82888742547fdeb5df6d21b5636c3cd95f43b1e9496"
+body = "与提供商无关、范围受限且只读的基础设施发现契约。"
+reviewedTranslationHash = "sha256:c6fcb7ec329cdc2a8f8f430abf2e0cf7c45c8b624a1011797752e8c8887fcae3"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497929+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.ResourceKind"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:ba77a19811fd697ce5e19403f217bdb74587620c75c6cadaf8eff3de3f132599"
+body = "资源发现契约支持的基础设施资源类型。"
+reviewedTranslationHash = "sha256:4133270a8a774580d4ff61aa6d70b2e55bc6b7e9bc562d459fc3a876965683b2"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497947+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.ProviderCapability"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:d0d439a4025e84d262b01d33072a0367c67935579a11e90fc04a3baa210900a8"
+body = "提供商声明已实现的操作，与实际权限相互独立。"
+reviewedTranslationHash = "sha256:02b5ec4ee6bf4884be5394507d1e7cd552ad2f9fbb528ed63d67720b9ba007f7"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497965+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.ProviderErrorCode"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:ab551dcfe3925a250252b46b13334dd5316c10eae4c09eb47c77963dd40aed6a"
+body = "稳定的错误类别，绝不包含厂商输出或凭据。"
+reviewedTranslationHash = "sha256:d7da4843937a09fb1be041b7d1f3f962cf5e988794309b3087e5e547be1c44ba"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497982+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.ProviderError"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:60181c7eeefda040bd97614e5dcb4a5d93b2bad284c259a6377672f7751d2045"
+body = "经过清理的提供商错误，包含稳定错误码和重试建议。"
+reviewedTranslationHash = "sha256:0b2c66e8a0a015a65e29b26eb6cd1f7eabadaaff3aab80701865d648765f0df3"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.497999+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.ValidateIdentifier"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:5b9eeaee683fafd804167d5f55ec2a6756d0fe3d91b091b081da523b237e5f2b"
+body = "拒绝不安全的标识，不将被拒绝的值写入错误信息。"
+reviewedTranslationHash = "sha256:fc9de164a1f07bd64fa3ebb3cb100e07999504f5de137108425822bb2de0962e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498017+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.ProviderIdentity"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:7626b41b96ba08074a1f443de6bf0c3c17a4eb3ca552cd25cf0a4898986af659"
+body = "非秘密的提供商标识和明确的管理范围标识；凭据保留在外部。"
+reviewedTranslationHash = "sha256:c55535a1448ba0dad2aecb240f2fef10d6ab04165eea95caf2a025abc6620697"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498094+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.ResourceReference"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:e55dd0bbc7d52d647edd715aed86190030ee168166bbfe9293e5f3c14307b221"
+body = "绑定单个提供商、单个范围和单个资源类型的资源键。"
+reviewedTranslationHash = "sha256:7f46d7573d98e149260633ce5c968e5448332a26b9445794d9de136c3ed24da0"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498115+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.ProviderResource"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:5d0cbb9bb303a1e95a7bad988cd332a9e967663c63e55d9d6ab541de0fecd43a"
+body = "规范化的资源观察结果，不含厂商原始响应或虚拟机元数据。"
+reviewedTranslationHash = "sha256:83a511b809453382874e153c0e6e14d32d4d32331260987dc4465eabf690a601"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498133+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.ProviderResource.HasLabels"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:8210f8c28efb82b089b124a42fd8099e4cc6cc0dc069d658abe9264b9241c279"
+body = "检查全部必需标签，不将资源名称视为归属证明。"
+reviewedTranslationHash = "sha256:9573d2b2a9c10258d30934a6672d20e3d7945cbd3ccad93c0a2899d7d1b5bd10"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498151+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.ProviderStatus"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:902f5ce5abc30f7f6b19160e0a9716428fe9c1405f63f4bcd252726514e16a38"
+body = "经过清理的探测结果，区分身份验证状态未知与探测失败。"
+reviewedTranslationHash = "sha256:19cb4e04f0826274f369e94945ea41a3916b5edc8f91657858982b7a5a0d9a37"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498169+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.CloudProvider"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:afdc6671360dd0ed7ed2adb48539758af608feb2167a4b5ec04157011115a5d0"
+body = "供诊断及后续编排使用的只读提供商接口。"
+reviewedTranslationHash = "sha256:1f168ae730ccbd0175cf757f0629d4c8d94e2a0ecf1e406498ff15df1848e43f"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498186+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.CloudProvider.Identity"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:581ae446407cd011bc74eb061ea68275b8b1100ab31ee6b260d62e2ffe9e9423"
+body = "返回提供商标识和明确的发现范围。"
+reviewedTranslationHash = "sha256:739f1044ef51949a99a6d0e2c390a548cd16b3d98143096504e28eae736e128a"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498203+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.CloudProvider.Capabilities"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:b2c38800fd4582339bc75019ba22baf9681adf5b2323e5c79282738768894d97"
+body = "声明已实现的操作，不保证云账户具有相应权限。"
+reviewedTranslationHash = "sha256:b7a0365de48cb5fcf2efe8500b9da32e31584d030423efa684671ddca148d78d"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498220+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.CloudProvider.CheckAvailability"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:4259ca6b68fcf28b93e1713076d14d3b157a5fc7118451d9d19a5626be71c8a9"
+body = "检查本地提供商适配器，不访问基础设施。"
+reviewedTranslationHash = "sha256:56903ce446ed8e1a307f57f321cc37fbc977c3cc8f6a3beda76264b1090cfc2b"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498241+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.CloudProvider.CheckAuthentication"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:ba09498cb51cc8c9e1892f4b716a01de67773d0a20a1a9c12c1ab693b5c353dd"
+body = "检查所选范围内的读取权限，不暴露凭据。"
+reviewedTranslationHash = "sha256:caa3c9fec6c2ee2849f26690b9c79476d168d202034d71625d0d8ec31b672fed"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498258+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.CloudProvider.ListResources"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:14686e5436cc783a0dcaa4c91fd0c66c1edcc6a525203a96946e3bb80f23f34c"
+body = "列出提供商明确范围内某一类型的全部资源。"
+reviewedTranslationHash = "sha256:1b6eaf0abc7eefff579ec1dabb8894c27776466998930bd49f9ef2dc723fe769"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498275+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.CloudProvider.GetResource"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:0811853619ddebdf846e75a7b35f9ba8b22897a799044ed4a4e19f6c11b89458"
+body = "读取单个资源，并拒绝范围之外的引用或响应。"
+reviewedTranslationHash = "sha256:f6c6fc80bf837e99696a940c859c0ec4f22c9987bb2c815e353b4fb58f030d12"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498293+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.CloudProvider.DiscoverInventory"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:a25240ebdef12dee99a1844dbf5b99e916b1a2cb2d7ca97593c2dcb580e431e0"
+body = "返回所有受支持类型的完整资源清单；否则失败，不把部分清单当作成功结果。"
+reviewedTranslationHash = "sha256:84ab9d9091c90d062b6e9ac2401809edfd53ac769dce20e6694cdb72f26d1c92"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498310+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.contracts.ProviderError.__init__"
+sourcePath = "src/flayer/providers/contracts.py"
+sourceHash = "sha256:66c6a69e7b16e37baf3b92c9a4039e875047926a4ff8a87fb0a8aae80d7f66a4"
+body = "构造错误时不保留外部命令输出或原始异常。"
+reviewedTranslationHash = "sha256:b8247d8819abfc4c619456ecaf390671a63f129510c416369c324f299a31ff53"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498327+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.providers.lifecycle"
+sourcePath = "src/flayer/providers/lifecycle.py"
+sourceHash = "sha256:4ba330ce30732eb11e54de7963afaf9871e38939919067b075fd681094b03215"
+body = "不可变的生命周期请求，以及显式绑定资源归属的变更契约。"
+reviewedTranslationHash = "sha256:cb2edc3d0370ab070fbc41098f14236087b08e6d1f8bf3e41c907432da646c9c"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498345+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.lifecycle.ResourceSpec"
+sourcePath = "src/flayer/providers/lifecycle.py"
+sourceHash = "sha256:a2f4919d625962bc817371f247979b75dc4cdfafb57bdc74e8cb5aa2ed6558e4"
+body = "带有不可变选项和明确依赖关系的目标逻辑资源。"
+reviewedTranslationHash = "sha256:4203167bd545e385881df9d3e97d06fa76dcd87135ebf501f253df596718b7f7"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498362+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.lifecycle.ResourceSpec.OwnershipLabels"
+sourcePath = "src/flayer/providers/lifecycle.py"
+sourceHash = "sha256:41dd7c452d6ea3e883a4f06316f52408474792a4a10796cbd8b8f2b93e2db5df"
+body = "将单个逻辑资源绑定到完整的栈归属标识。"
+reviewedTranslationHash = "sha256:c05730d51f88dc9940f800f0bd83a49fcf9054d9c2bcea05183f9507ad7c3ed0"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498380+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.lifecycle.MutationError"
+sourcePath = "src/flayer/providers/lifecycle.py"
+sourceHash = "sha256:6e6ddafa4b2d389131e6bfa4b2ed4d5767e160d94951b5015235effe2057650b"
+body = "经过清理的资源变更错误，明确区分云端结果尚不确定的情况。"
+reviewedTranslationHash = "sha256:719ed62995337ac4f8a52fad80cf0acc80a7aa9e484972842214605bb405ff28"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498396+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.lifecycle.LifecycleProvider"
+sourcePath = "src/flayer/providers/lifecycle.py"
+sourceHash = "sha256:fbafbd42987f4a65a2ecb59f51f6eec9014267e62d01b324256d401a7cc3e7e4"
+body = "资源变更接口，具有准确范围、稳定的状态核对和归属校验后的删除能力。"
+reviewedTranslationHash = "sha256:da828e8a9582386b25bb14dfb69e8338beb293b1352b8a488ef81a8920b2f658"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498438+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.lifecycle.LifecycleProvider.Identity"
+sourcePath = "src/flayer/providers/lifecycle.py"
+sourceHash = "sha256:5c1b4d852e45cc3f403853c43c7f934ed74771fd323c7a2a140eba82449ff67e"
+body = "返回所有观察和命令使用的提供商及明确范围。"
+reviewedTranslationHash = "sha256:17280d16fedb70d0a0c9f3a70ce4387801cf7f2e05008e61bb01fa9de65f2a93"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498465+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.lifecycle.LifecycleProvider.Capabilities"
+sourcePath = "src/flayer/providers/lifecycle.py"
+sourceHash = "sha256:8fc1590e30135d2e2ecfa15321ccefb368a93f13aead275e4f0f94da22701a0d"
+body = "声明已实现的资源变更操作，与账户权限无关。"
+reviewedTranslationHash = "sha256:2fbb437783c0fcec4cdcfec2538767353813c92c478336532192560a1ca3a13d"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498488+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.lifecycle.LifecycleProvider.ValidateSpec"
+sourcePath = "src/flayer/providers/lifecycle.py"
+sourceHash = "sha256:7a240d0968e2786ccbf42f66108111798e02245d1aceb83bac5c5eb13def02a9"
+body = "拒绝不受支持的资源选项，不访问基础设施。"
+reviewedTranslationHash = "sha256:7a23e8b0b7cdcf8d0579ead2934c0dd7bc37a0c1b228851dcb7fd77561b7ab63"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498505+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.lifecycle.LifecycleProvider.FindResource"
+sourcePath = "src/flayer/providers/lifecycle.py"
+sourceHash = "sha256:5a7bcf8b3737020f292a1a08431e2c55ae534fa3c1fbdf9bcfb6debbfedec580"
+body = "查找归属标签完全匹配的唯一资源，否则拒绝有歧义的清单。"
+reviewedTranslationHash = "sha256:32bb180aa48662f3e8022035756c155e949c40827a773b1c34a37192c5f44a33"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498523+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.lifecycle.LifecycleProvider.GetResource"
+sourcePath = "src/flayer/providers/lifecycle.py"
+sourceHash = "sha256:a970111e9239ab311664cc6e890efbbeb7a697450e6e776d340bff3f1180a49e"
+body = "读取确切资源引用，校验范围并清理错误内容。"
+reviewedTranslationHash = "sha256:b52603f718e6aadd711a6a1e6ca47a8389d4e1ae32c3391f4334116da6426df0"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498540+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.lifecycle.LifecycleProvider.CreateResource"
+sourcePath = "src/flayer/providers/lifecycle.py"
+sourceHash = "sha256:bb4433a65fcf89cc24c08bc905344e9243bff7337a06005908957361c4b7bccd"
+body = "根据已校验且归属匹配的依赖仅创建一次；结果不确定时绝不重试创建。"
+reviewedTranslationHash = "sha256:050f770c74b81ef92daa3707b65748d9c36b8cd6ae90a6cf6edcb5de40e734f9"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498557+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.lifecycle.LifecycleProvider.DeleteResource"
+sourcePath = "src/flayer/providers/lifecycle.py"
+sourceHash = "sha256:ca72f77ea8a4b4e8dc7892032b9bd43469dd2ca911099f1a02abdc3b04f9eb15"
+body = "按 ID 删除前立即重新读取并核对准确范围和完整归属。"
+reviewedTranslationHash = "sha256:8814fef6e03b383c31b0db0abeab31ea8068cc86b2ccf6fdc9e107bbb45f5d6c"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498577+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.lifecycle.MutationError.__init__"
+sourcePath = "src/flayer/providers/lifecycle.py"
+sourceHash = "sha256:473a6c9258151479f1c7b0dfb998e059042e34c77901e661d458c378d670505b"
+body = "仅保留稳定的错误类别，以及请求是否可能已提交。"
+reviewedTranslationHash = "sha256:813ba1b5b441703fd221b66b5b95a3fecf3d949d2ced08e02002dc9b651de8b3"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498594+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.providers.yandex"
+sourcePath = "src/flayer/providers/yandex.py"
+sourceHash = "sha256:14dfa39f005cc01d370ce9a774761c8f0bfbc17dc3939fc533dde91505c2e290"
+body = "只读 Yandex Cloud CLI 适配器，限制命令执行并清理错误信息。"
+reviewedTranslationHash = "sha256:aa467b8dca33f3b42aed6d731b60657e39562db1446f72d9dabcaf9f6ecc7cb6"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498611+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex.YandexCloudSettings"
+sourcePath = "src/flayer/providers/yandex.py"
+sourceHash = "sha256:ef5e7ba89764db011f043049fadc210a0af6451b9d2af62b531738bdc0d268ba"
+body = "明确的 Yandex Cloud 文件夹和 CLI 配置文件设置，不保存令牌或秘密密钥。"
+reviewedTranslationHash = "sha256:1edf0079482c82917de882edf43b0080cc9131fc48affd25af7debbe8260dabd"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498629+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex.CommandResult"
+sourcePath = "src/flayer/providers/yandex.py"
+sourceHash = "sha256:7685a58efbc5da1f7550921c6d04b6e3ddff2caf9fa7462f36216f451f350f04"
+body = "临时命令结果，其表示形式省略可能包含秘密信息的输出。"
+reviewedTranslationHash = "sha256:256448679f06168065079ad64b13d1ab4701487763f78bc4a348ce97667a93a0"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498646+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex.CommandRunner"
+sourcePath = "src/flayer/providers/yandex.py"
+sourceHash = "sha256:8f8d5582be768202898bb0c20b369e909e684ba541375077ab75a25fd80cc180"
+body = "可注入的执行接口，用于确定性测试及替代传输方式。"
+reviewedTranslationHash = "sha256:6b6f43e86cc4a86dff7e3d73a6297d0508409e7e7a053a1d4495a71c2965f8cd"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498665+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex.CommandRunner.Run"
+sourcePath = "src/flayer/providers/yandex.py"
+sourceHash = "sha256:ebc5523360438b1625389f8a9684c52eed356b49ae1457c3753e14e087de08c7"
+body = "执行一个参数向量，不改变其顺序或作用范围。"
+reviewedTranslationHash = "sha256:a9bed38be1f10b80b8395abc801b48f66e0eeb90a0ac529e7a23a66c14d57846"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498682+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex.SubprocessCommandRunner"
+sourcePath = "src/flayer/providers/yandex.py"
+sourceHash = "sha256:82cc4b02db43f5aec0150819e16dfed2cec099e7869532f944c2cd7569400f07"
+body = "直接运行已配置的 CLI，不使用 shell 或交互式标准输入。"
+reviewedTranslationHash = "sha256:afe1f5c56e8764fc4b948f192baa64fee49194c108fcc86bf9f794bcb3383d6b"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498698+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex.SubprocessCommandRunner.Run"
+sourcePath = "src/flayer/providers/yandex.py"
+sourceHash = "sha256:64a479472d19948c1a91273dff9c5f9ddcdcfd1cef71bc74170547c44a870afe"
+body = "临时捕获输出，并对每条命令执行超时限制。"
+reviewedTranslationHash = "sha256:d8dd808a3b1a88fc544cff3aa3ff853741934ff01340d8ce98122fb85bb4fe7b"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498716+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex.YandexCloudProvider"
+sourcePath = "src/flayer/providers/yandex.py"
+sourceHash = "sha256:41593d3fb5feee0b7086bf1e78a12c1d35a7685dd9d6ca582e72c0a1e5273f3e"
+body = "规范化单个云文件夹内的 CLI 资源清单，不提供云资源变更方法。"
+reviewedTranslationHash = "sha256:03ba8d18ad082c7b7e9d65b39a925b8a9025041819da9a7f08d366ba9c09d276"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498733+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex.YandexCloudProvider.Identity"
+sourcePath = "src/flayer/providers/yandex.py"
+sourceHash = "sha256:77e15d59c5c2fd63dbd89160e10acefd33c21c722018b2c5cc500c273b0d7941"
+body = "返回用于校验所有资源及引用的非秘密标识。"
+reviewedTranslationHash = "sha256:206e35f240016772ccef4047df3669bb196dcbebadb32fe5f547f8696f96c5e5"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498749+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex.YandexCloudProvider.Capabilities"
+sourcePath = "src/flayer/providers/yandex.py"
+sourceHash = "sha256:c1c1fca96da0f87cb6ceadcc34bcd949e82cd6a0c7929a8c27877776cb45ccd7"
+body = "声明已实现的读取操作，不推断其支持生命周期管理。"
+reviewedTranslationHash = "sha256:a6ac7909e8ee1ecae530a44e0c96dadebd199ceff4a5de40bf5b76b683715a81"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498766+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex.YandexCloudProvider.CheckAvailability"
+sourcePath = "src/flayer/providers/yandex.py"
+sourceHash = "sha256:1513eeab4d552ff1e7184b7bf02b1f58769a41729f301e5f06eade1746643266"
+body = "在本地检查 CLI 能否运行，不读取令牌、配置文件或基础设施。"
+reviewedTranslationHash = "sha256:d3deeb371a00a9da564f3911f8d1954798292a49386f83e4cca135da14f4007a"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498783+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex.YandexCloudProvider.CheckAuthentication"
+sourcePath = "src/flayer/providers/yandex.py"
+sourceHash = "sha256:509b53267a35c66182c34f3157f020992d67eb0f0c9310175be843a0997ea325"
+body = "使用 CLI 已有凭据验证对所选云文件夹的访问权限。"
+reviewedTranslationHash = "sha256:0736e66a66090453e7901b9ccb2a0cb5f49d18f35c298d8ba292bb823fef6f65"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498800+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex.YandexCloudProvider.ListResources"
+sourcePath = "src/flayer/providers/yandex.py"
+sourceHash = "sha256:0173fb333d96494d62dd9fa0ecddb84c5eab64af345f60f3fcf7bc206aa2fbe7"
+body = "读取某一类型的资源，拒绝格式错误或可能被截断的清单。"
+reviewedTranslationHash = "sha256:efdc199a66a641b221718428d011579226601b87cdb12b4add23a77f5cafb6b1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498817+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex.YandexCloudProvider.GetResource"
+sourcePath = "src/flayer/providers/yandex.py"
+sourceHash = "sha256:97107ce422c19d0c6a2b1e6e1d54e72715e819e9fe47262153dc7e919127c4a6"
+body = "按 ID 读取资源并重新校验返回范围，因为提供商的 ID 查询是全局的。"
+reviewedTranslationHash = "sha256:b291c69841f39b8645ae5f42837b6f8558411563f2b6eb763d1513bdbd144547"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498835+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex.YandexCloudProvider.DiscoverInventory"
+sourcePath = "src/flayer/providers/yandex.py"
+sourceHash = "sha256:0542137a9e50cee263d365a52e4500305582b9b82c00d3c8c4a19d8d812cc417"
+body = "返回顺序确定的完整资源清单，绝不以部分结果宣称成功。"
+reviewedTranslationHash = "sha256:2886e5a1765832c0d383a8f4f745a4fc8848d41af458438c8a4572215555423e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498851+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex.YandexCloudProvider.__init__"
+sourcePath = "src/flayer/providers/yandex.py"
+sourceHash = "sha256:8deb393e405fecb86a2480471f27a5a4333ecfca9d46d27a133a446dc89306e0"
+body = "构造提供商对象，不执行命令或读取凭据文件。"
+reviewedTranslationHash = "sha256:256e00178ec8d497a5407866979edd956e230d140fa822d219d72807cf566330"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498870+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.providers.yandex_lifecycle"
+sourcePath = "src/flayer/providers/yandex_lifecycle.py"
+sourceHash = "sha256:aa87f41b1b63181ece975dc0f8175d8144e943ab8c5ce9942b5df825eb49bac6"
+body = "受限的 Yandex Cloud 资源变更操作，明确校验归属，并支持恢复结果不确定的操作。"
+reviewedTranslationHash = "sha256:21096924b2c2b0a127b998618f3f103256a85d9e498eaedc3a03533a36499c0c"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498887+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex_lifecycle.YandexLifecycleProvider"
+sourcePath = "src/flayer/providers/yandex_lifecycle.py"
+sourceHash = "sha256:df5b495ebdc98b4455475910f7fd602b51da2963bd20183aa125c6b2344c1f9b"
+body = "使用现有只读观察能力，创建和删除明确支持的六类资源。"
+reviewedTranslationHash = "sha256:a48bc808374af3bc559bcba3c30dcc81801bb1b19b81602e345aeda244dec3ad"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498905+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex_lifecycle.YandexLifecycleProvider.Capabilities"
+sourcePath = "src/flayer/providers/yandex_lifecycle.py"
+sourceHash = "sha256:b605b4f9bcf4010454921afd6668f5f5998b74ce0c9bd62d1c3fd40037ce7007"
+body = "声明已实现的资源变更操作，不保证凭据或账户权限可用。"
+reviewedTranslationHash = "sha256:ccf3bc067f6f13c663e8e7e9f9b1e1ca8d080bc855644b479f3b8056208e95d2"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498921+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex_lifecycle.YandexLifecycleProvider.ValidateSpec"
+sourcePath = "src/flayer/providers/yandex_lifecycle.py"
+sourceHash = "sha256:83428b24655d011446230d24feb61c63965cbedf265fab7319d28a6fda8ea88b"
+body = "校验全部受支持的选项和依赖关系，不访问云服务。"
+reviewedTranslationHash = "sha256:82de139abfd9806e9d8a74d57ca445671d01f2031d0dd115c63831e3d249d2e9"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498938+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex_lifecycle.YandexLifecycleProvider.GetResource"
+sourcePath = "src/flayer/providers/yandex_lifecycle.py"
+sourceHash = "sha256:487cc54c27bad3e1f30988db3b21a0f37bb4fb224993dad9da172fe7ddf10dca"
+body = "使用限定范围的基础适配器，并限制生命周期观察结果中的字段。"
+reviewedTranslationHash = "sha256:efbcdb6dc46fceed2792c9d8139965193443c513405deedafebd48742068dc62"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498955+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex_lifecycle.YandexLifecycleProvider.FindResource"
+sourcePath = "src/flayer/providers/yandex_lifecycle.py"
+sourceHash = "sha256:358b0346deb86231fe954ddb48a118640d30b29768a3720cba54f9700ef9523e"
+body = "核对准确的逻辑归属；重复资源和目标内容变化均视为冲突。"
+reviewedTranslationHash = "sha256:ecde2396fd104328806d5c69995f3712db62e7e19a9f92c2d803808b40560b4e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498973+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex_lifecycle.YandexLifecycleProvider.CreateResource"
+sourcePath = "src/flayer/providers/yandex_lifecycle.py"
+sourceHash = "sha256:b0599420f6569b50296e1229d067613c475d48dc356d024021068d45846b407d"
+body = "使用稳定的归属标签和单独管理的显式启动盘，仅创建资源一次。"
+reviewedTranslationHash = "sha256:8a74fdbb80830e102791226a3405f0a443ba0521b2540865da2e8420c22bd314"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.498990+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.providers.yandex_lifecycle.YandexLifecycleProvider.DeleteResource"
+sourcePath = "src/flayer/providers/yandex_lifecycle.py"
+sourceHash = "sha256:150b200b662d05002af9d9631bb7e571b46de855edea55ba18f5da6bd6fd8225"
+body = "按确切 ID 删除前核对归属，删除后再确认一次资源已不存在。"
+reviewedTranslationHash = "sha256:164189c0e69b02a881dc042c3470970a3b067ebbb2cd45022f776529c1f9e330"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:39:22.499008+00:00"
+reviewRoles = ["editorial", "technical"]

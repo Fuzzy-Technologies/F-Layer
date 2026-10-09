@@ -1,0 +1,36 @@
+schemaVersion = 1
+sourcePath = "docs/adr/0018-generated-documentation-translations.md"
+sourceHash = "sha256:50ff9419c0b253f7885f80bbb830a000ce1ce77deebfc69ba6c1f49cb6774f57"
+reviewedTranslationHash = "sha256:7abaa359320e32307717f9d4f2137678c86106fb93a84a06c13131668dd48995"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:06:40.548601+00:00"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# ADR 0018：为生成文档提供经过审核的翻译
+
+## 状态
+
+提议。相关：[任务 #75](https://github.com/Fuzzy-Technologies/F-Layer/issues/75)。
+
+## 背景
+
+人工编写的指南已有翻译，但生成的 API 页面、仓库指南和覆盖清单仍显示英文。仅翻译导航标签不会翻译正文。2.0 发布文档必须覆盖所有面向读者的说明，同时完整保留可调用对象名称、命令、路径和原始源码列表。
+
+## 决策
+
+- 发现每个被渲染的仓库 Markdown 文档，以及 API 渲染器纳入的公共模块 docstring、公共定义和构造函数 docstring。
+- 将翻译存放在 `docs/i18n/generated/<locale>/` 的 TOML 目录中。每次审核绑定现有 `fuzzy-doc-unit-v1` 规范哈希及译文的准确哈希。必须具备编辑和技术审核、审核者身份与类型、含时区的日期，以及 ADR 0015 规定的项目审核权限。
+- 保留所有 Markdown 标题、规范锚点、可执行代码块及源码链接目标。翻译 Mermaid 节点标签、状态名称和转换说明，同时精确保留标识符、连接关系及方向。译文保持已有的语言页面地址。
+- 使用静态 Griffe 扩展，仅替换文档对象。wheel、Python 标识符、签名、原始源码显示和导入保护保持不变。只有模块全部已呈现说明都经过审核，模块才算完成翻译。
+- 根据实际 Git 跟踪文件和定义清单，使用经过审核的本地化消息呈现清单说明。明确分类仅提供源码的代码，其字节不算作等待翻译的说明文字。
+- 缺失或改变的内容继续如实显示缺失或过期状态，并记录到构建证据中。包版本达到 2.0 及以上时，文档构建器拒绝不完整翻译；稳定化阶段也可显式传入 `--require-complete-translations` 启用相同检查。
+
+## 影响
+
+新增文档或修改 API 描述后，必须在发布 2.0 前审核对应翻译。AI 审核始终明确归属于 AI，不得变成人工批准声明。严格渲染、准确链接、静态发现、仓库覆盖和已安装 wheel 一致性仍须独立检查。
+
+## 备选方案
+
+把英文复制到语言文件会掩盖未翻译内容；翻译源码文件会改变正在记录的代码。两者均被拒绝。
+'''

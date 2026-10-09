@@ -1,0 +1,43 @@
+schemaVersion = 1
+sourcePath = "docs/i18n/review-snapshot.md"
+body = '''
+# 多语言评审记录
+
+## 当前编写页面的评审
+
+AIna-Dev 于 2026-10-09 将全部 **11 个英文编写页面** 与俄文和简体中文译文逐一核对。后续页面修改各自的准确评审时间记录在注册表中。共覆盖 22 份译文及 44 条编辑和技术 AI 评审记录，不声称存在人工批准。评审授权及原文和译文哈希规则见 [ADR 0015](../adr/0015-accountable-ai-translation-review.md)。
+
+评审核对语义、自然的工程术语、命令与代码一致性、云资源修改授权、资源归属与清理、标题、链接及实际发布可用性。俄文内容现已解释具体设置和操作；Linux 与 Yandex Cloud 的目录统一使用 «каталог»。俄文 Yandex CLI 链接打开供应商的俄文说明。安装章节位于 Quick Start 之前，Quick Start 以具体的 Yandex Cloud 操作流程开始。v1.2.1 使用现有发行版的 wheel 安装；新的 VPN 流程则使用明确选定的 CI 候选构建 wheel。不宣称已经在 PyPI 发布，也不宣称稳定版 2.0 已经发布。
+
+API 首页与项目介绍页面也已翻译。随后，品牌图片路径已修正为权威资源位置并重新评审；这些后续评审的准确时间记录在注册表中。API 首页不再重复 1.0 之前的过时兼容性说明。本地化链接保留在对应语言的 API 和工程参考页面中。新版 Quick Start 涵盖候选构建安装、私有项目设置、通过经过身份验证的连接配置虚拟机系统、两种客户端配置的导入、DNS 与路由检查以及清理。独立的 AI 评审者检查了俄文和中文术语以及协议细节。生成 API 和工程参考的译文使用单独的、与原文绑定的翻译目录；本次编写页面评审不会批准这些目录中不存在的内容。
+
+| 原文单元                      | 已评审原文哈希                                                            |
+| ----------------------------- | ------------------------------------------------------------------------- |
+| `page:api`                    | `sha256:5d6a97e054991df75bd7d964df247aa0e77b3fa70251866f4f8ec19f1cd24728` |
+| `page:architecture`           | `sha256:ec88468bbf2a50a96f2365f47035ffbf747d6be85bbedaa558eaf04364a19df7` |
+| `page:brand`                  | `sha256:7dc4a34669dc538db351ce211014c64ea31d79c00d540badb364bce3c4d620aa` |
+| `page:development`            | `sha256:3e13b58ec7a14f97c5d4f774a4727fe67aeaf9ba91a4720972768bd8154450a2` |
+| `page:documentation`          | `sha256:c80e615173c62b32beb8d6e363eedd39657c2c4357ebbe43518d4fbc5b76e4a0` |
+| `page:guide`                  | `sha256:8e1b32a624f4d39409c93707ce1aa798b12c2b600cd4f3e9ced78710e27e9881` |
+| `page:guide.cli`              | `sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc` |
+| `page:guide.configuration`    | `sha256:49c1db435ada063f2181b0b9e69381f8a8a518ce3742b44de8e7b4ed1054abc1` |
+| `page:guide.first-deployment` | `sha256:485cfb018ec5d44ec29e9d14d7901cfc6f78ff790dee979ebaa42b5071c41094` |
+| `page:guide.installation`     | `sha256:a15b039e30245d5ac0e53d635972c360018ffffc9875715b15333aa3763bd590` |
+| `page:index`                  | `sha256:d107a7d1b3d988c56b609d8062d6b016d325160176185b2a8b55b640d8d0e77a` |
+
+`docs/i18n/units.toml` 记录每份译文的哈希、评审者姓名、类型、角色及 UTC 时间。后续编辑需要重新评审。当前分支的评审不证明该分支已经部署到 Pages。
+
+## v1.2.1 发布的历史验收
+
+所有者已接受 PR #66 和 #67，最终 master 源提交为 `d61cf946ade8d7d018f69351e24a3a0ca51d1079`。[严格多语言构建与实际 Pages 部署](https://github.com/Fuzzy-Technologies/F-Layer/actions/runs/37861711338) 均通过，包括受跟踪文件覆盖、已安装 wheel 一致性、渲染链接与锚点，以及每种语言的九个已批准编写页面。已在线核实 `/F-Layer/en/`、`/F-Layer/ru/`、`/F-Layer/zh-CN/` 路由，包括无草稿字样的语言名称、公司幻灯片和 Quick Start。已批准页面将评审来源保留为隐藏元数据；缺少翻译的生成参考仍回退到英文。
+
+[Task #27](https://github.com/Fuzzy-Technologies/F-Layer/issues/27#issuecomment-6071386490) 和 [Feature #8](https://github.com/Fuzzy-Technologies/F-Layer/issues/8#issuecomment-6071392694) 在发布验收后记录完成状态。该 Feature 的三个原生子任务全部完成。原生 [release-1.2 里程碑](https://github.com/Fuzzy-Technologies/F-Layer/milestone/3) 在稳定发布前已关闭，未完成项为零。
+
+[F-Layer v1.2.1](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.2.1) 在[注释标签及可复现发行包审计](https://github.com/Fuzzy-Technologies/F-Layer/actions/runs/37862618156)后发布。标签准确指向该 master 源提交；下载的 wheel、源码归档和构建记录均与已审计的哈希及大小一致。预发布 v1.2.0 保持不可变。这些记录证明本次发布通过验收，不代表未来翻译已经获批。
+'''
+sourceHash = "sha256:070027fd84359d06bbd88ab75ede358c7d0a71fd4cf8650b485bc5e3e098318c"
+reviewedTranslationHash = "sha256:8cd52f9a810ebb9dfbe81d0c9f405ada4ec5ebcc01a0b4bd9ca7d89161b2d3d1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:13:40Z"
+reviewRoles = ["editorial", "technical"]

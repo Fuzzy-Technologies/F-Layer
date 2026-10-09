@@ -1,38 +1,54 @@
 # Multilingual review evidence
 
-AIna-Dev reviewed all nine authored English pages against both Russian and
-Simplified Chinese translations, as requested by the project owner. These are
-18 reviewed translations with editorial and technical AI records (36 role
-records), recorded at `2026-10-08T23:30:06Z`. No human approvals are claimed.
-[ADR 0015](../adr/0015-accountable-ai-translation-review.md) explains the authority.
+## Current authored-page review
 
-## Reviewed scope
+AIna-Dev reviewed all **11 authored English pages** against their Russian and
+Simplified Chinese translations on 2026-10-09. Subsequent page edits have their
+own exact review timestamps in the registry. This covers 22 translations
+and 44 editorial/technical AI review records. No human approvals are claimed.
+The authority and source/translation hash contract are recorded in
+[ADR 0015](../adr/0015-accountable-ai-translation-review.md).
 
-The review checked meaning, glossary terms, cloud mutation consent, ownership,
-recovery and cleanup instructions, command/code parity, paths, anchors and links.
-Corrections clarify Russian device-artifact ownership and Chinese virtual-machine
-terminology; examples consistently select v1.2.1. The registry binds each record
-to its English source hash and reviewed translated text hash. Later edits require
-fresh actual review. Generated APIs and other absent translations remain English.
+The review checks meaning, natural engineering terminology, command and code
+parity, cloud mutation consent, ownership and cleanup, headings, links and
+actual release availability. Russian prose now explains concrete settings and
+actions; Linux and Yandex Cloud directories use «каталог». The Russian Yandex
+CLI link opens the vendor's Russian instructions. Install precedes Quick Start,
+which leads with a concrete Yandex Cloud walkthrough. Installation uses the
+existing release wheel for v1.2.1 and an explicitly identified CI candidate wheel
+for the new VPN workflow; PyPI or stable 2.0 publication is not claimed.
 
-| Canonical unit                                                              | Russian                                            | Simplified Chinese                                       | Reviewed canonical hash                                                   |
-| --------------------------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------- |
-| [page:architecture](../site/content/en/architecture.md)                     | [RU](../site/content/ru/architecture.md)           | [ZH-CN](../site/content/zh-CN/architecture.md)           | `sha256:ec88468bbf2a50a96f2365f47035ffbf747d6be85bbedaa558eaf04364a19df7` |
-| [page:development](../site/content/en/development.md)                       | [RU](../site/content/ru/development.md)            | [ZH-CN](../site/content/zh-CN/development.md)            | `sha256:3e13b58ec7a14f97c5d4f774a4727fe67aeaf9ba91a4720972768bd8154450a2` |
-| [page:documentation](../site/content/en/documentation.md)                   | [RU](../site/content/ru/documentation.md)          | [ZH-CN](../site/content/zh-CN/documentation.md)          | `sha256:5fedb80b0a5fcde074364bb7a85ec394267dfcdbd6b6b1fda57a1b9f38edc0f6` |
-| [page:guide](../site/content/en/guide/index.md)                             | [RU](../site/content/ru/guide/index.md)            | [ZH-CN](../site/content/zh-CN/guide/index.md)            | `sha256:02548935927c0f08f5635b47561943471bd1358758b81d1107a3da7628c2a368` |
-| [page:guide.cli](../site/content/en/guide/cli.md)                           | [RU](../site/content/ru/guide/cli.md)              | [ZH-CN](../site/content/zh-CN/guide/cli.md)              | `sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc` |
-| [page:guide.configuration](../site/content/en/guide/configuration.md)       | [RU](../site/content/ru/guide/configuration.md)    | [ZH-CN](../site/content/zh-CN/guide/configuration.md)    | `sha256:072347586a80864d7df609f36662c002da9a27380ffc0884595c045fcdc0f6c9` |
-| [page:guide.first-deployment](../site/content/en/guide/first-deployment.md) | [RU](../site/content/ru/guide/first-deployment.md) | [ZH-CN](../site/content/zh-CN/guide/first-deployment.md) | `sha256:6d25dab7598389367b6d943f45d9c60ff77f4d5bb2b5dcd8646d18faa6f50798` |
-| [page:guide.installation](../site/content/en/guide/installation.md)         | [RU](../site/content/ru/guide/installation.md)     | [ZH-CN](../site/content/zh-CN/guide/installation.md)     | `sha256:f8d72455e17cc9fd8a93b9463cf078041bf8f826fb064f8530d1d9a1712b698d` |
-| [page:index](../site/content/en/index.md)                                   | [RU](../site/content/ru/index.md)                  | [ZH-CN](../site/content/zh-CN/index.md)                  | `sha256:d976cde3058d4243de5ff36e9cc77fdf352abac825af9d4839e298f8a9d5ae1f` |
+The API landing page and project identity page are now translated as well.
+The brand-image paths were subsequently corrected to the canonical asset
+location and re-reviewed; their exact later timestamps are in the registry.
+The API landing no longer repeats the obsolete pre-1.0 compatibility notice.
+Localized links stay in their language's API and engineering-reference routes.
+The new Quick Start covers candidate installation, private project settings,
+authenticated guest provisioning, both client imports, DNS and routing checks,
+and cleanup. Independent AI reviewers checked Russian and Chinese terminology
+and protocol details. Generated API and engineering-reference translations use
+separate source-bound catalogs; this authored review does not approve content
+absent from those catalogs.
 
-`docs/i18n/units.toml` contains the exact localized hashes, reviewer type, identity,
-roles and timestamps. The project manifest explicitly opts into AI review;
-projects without this setting remain human-only. This is translation review,
-not independent human certification.
+| Canonical unit                | Reviewed canonical hash                                                   |
+| ----------------------------- | ------------------------------------------------------------------------- |
+| `page:api`                    | `sha256:5d6a97e054991df75bd7d964df247aa0e77b3fa70251866f4f8ec19f1cd24728` |
+| `page:architecture`           | `sha256:ec88468bbf2a50a96f2365f47035ffbf747d6be85bbedaa558eaf04364a19df7` |
+| `page:brand`                  | `sha256:7dc4a34669dc538db351ce211014c64ea31d79c00d540badb364bce3c4d620aa` |
+| `page:development`            | `sha256:3e13b58ec7a14f97c5d4f774a4727fe67aeaf9ba91a4720972768bd8154450a2` |
+| `page:documentation`          | `sha256:c80e615173c62b32beb8d6e363eedd39657c2c4357ebbe43518d4fbc5b76e4a0` |
+| `page:guide`                  | `sha256:8e1b32a624f4d39409c93707ce1aa798b12c2b600cd4f3e9ced78710e27e9881` |
+| `page:guide.cli`              | `sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc` |
+| `page:guide.configuration`    | `sha256:49c1db435ada063f2181b0b9e69381f8a8a518ce3742b44de8e7b4ed1054abc1` |
+| `page:guide.first-deployment` | `sha256:485cfb018ec5d44ec29e9d14d7901cfc6f78ff790dee979ebaa42b5071c41094` |
+| `page:guide.installation`     | `sha256:a15b039e30245d5ac0e53d635972c360018ffffc9875715b15333aa3763bd590` |
+| `page:index`                  | `sha256:d107a7d1b3d988c56b609d8062d6b016d325160176185b2a8b55b640d8d0e77a` |
 
-## Completed publication acceptance
+`docs/i18n/units.toml` records each translated text hash, named reviewer, reviewer
+type, role and UTC timestamp. A later edit requires a fresh review. The current
+branch review is not evidence that its Pages deployment has already happened.
+
+## Historical v1.2.1 publication acceptance
 
 The owner accepted PRs #66 and #67. Their final master source is
 `d61cf946ade8d7d018f69351e24a3a0ca51d1079`. Its

@@ -30,7 +30,7 @@ explicit manifest decision rather than silent exclusion.
 
 Canonical authored routes remain unchanged. Other repository Markdown receives
 an `en/repository/<repository-path>/` route. The hidden `.github/` source
-folder is rendered as `repository/github/` so MkDocs includes its PR template. Generated copies resolve Markdown
+directory is rendered as `repository/github/` so MkDocs includes its PR template. Generated copies resolve Markdown
 links to rendered pages and nonpage references to their exact `develop` sources.
 The builder never rewrites owner-controlled policy files.
 
@@ -49,7 +49,8 @@ anchors. Callable protocol methods (`__call__`) are included. Definitions inside
 scope and are inventoried without execution. Private helpers,
 other special methods, and nested function definitions appear in the definition inventory
 as source-only. Constructors remain represented by their class signature and
-source; dataclass hooks are implementation methods. Imported aliases, constants,
+source; their docstrings are included in translation review when the renderer merges
+them into class documentation. Dataclass hooks are implementation methods. Imported aliases, constants,
 fields, and inherited methods are represented by their defining module or class;
 the gate does not require duplicate anchors or pretend that tests are a public API.
 
@@ -81,3 +82,19 @@ python tools/validate.py
 These gates check structural completeness and provenance. They cannot prove that
 prose explains every behavior, that docstrings are semantically correct, or that
 a translation has received a human review. No such approval is generated.
+
+## Translation completeness
+
+Repository pages, module introductions, public API descriptions, rendered
+constructor descriptions, and inventory prose each have discovered translation
+units under [ADR 0018](../adr/0018-generated-documentation-translations.md).
+TOML catalogs in `docs/i18n/generated/` are localization inputs, not additional
+canonical Markdown pages. Their reviews bind both source and translated bytes.
+API source listings, commands, filenames, and symbol identities remain unchanged.
+
+The locale renderer preserves routes and canonical heading anchors, records every
+actual missing or stale unit, and never treats English fallback as a translation.
+For package versions 2.0 and later, any incomplete rendered narrative prevents a
+successful documentation build. The optional `--require-complete-translations`
+flag applies that same gate to earlier stabilization versions. Existing tracked-file,
+API-anchor, import-guard, link, reachability, and wheel-parity gates remain in force.

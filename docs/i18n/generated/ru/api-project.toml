@@ -1,0 +1,309 @@
+schemaVersion = 1
+
+[[units]]
+id = "module:flayer.guest"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:0caa53198e6fa3b369c325f0e98341bd50135248d22e3c4a6d6da0c79b3fe186"
+body = "SSH-транспорт с обязательной проверкой закреплённого ключа сервера для закрытой установки VPN и проверки служб."
+reviewedTranslationHash = "sha256:5ba04f7df113196d62d39ffd5ff664b6e090d3a2182d9edfd73c7822d9dfdf38"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.487647+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.GuestResult"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:c464998bde7323cbb25987c97fedbd2c68f31dec7d8d9494cc85271f275e1c11"
+body = "Временный вывод подпроцесса, исключённый из представления объекта и сообщений об ошибках."
+reviewedTranslationHash = "sha256:88a20960c205e7acab0180c7058c8c299210fc41c3be909c115ecd84135ef373"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.487837+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.GuestRunner"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:e3f6fe6a0b25b783b800fae4e69f8d3b61ceab15b810fc7713601e237490d94d"
+body = "Подключаемый механизм запуска подпроцессов для воспроизводимых тестов без SSH-соединений."
+reviewedTranslationHash = "sha256:01c80bb6c0ea1aec62e480648ff06c115a0adb0f903266186ea20806e58a172b"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.487861+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.GuestRunner.Run"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:d26a0f16a3f10ba92ac7650eed8898e1903481ab844e96580f93410ce9a2aad8"
+body = "Запускает команду с ограничениями, закрытым стандартным вводом и перехватом вывода."
+reviewedTranslationHash = "sha256:b8c0a3639ecc08c821544f7929b9d9587d3557a09d9eb6e1f58fb690b1db6c76"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.487880+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.SubprocessGuestRunner"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:3d1c8abee721652e19205440a5401254440bc25e809b4eb7e4ca9c76348760e0"
+body = "Запускает OpenSSH без локальной оболочки и без наследования стандартного ввода."
+reviewedTranslationHash = "sha256:4b8fc172f29e98a7e05a4e0965e16c8bfec09a27711c8034f77b44fda78b0c36"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.487897+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.SubprocessGuestRunner.Run"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:92c4e8314e86c60c9a7c1663d9bc1e7ee8ff0d174ae47ca42073a9e7dc4c2c82"
+body = "Не включает диагностический текст SSH или гостевой системы в сообщения об исключениях для пользователя."
+reviewedTranslationHash = "sha256:374d3a37024c6f679b16663c804a4b33867070769b888dfa61bcd97c5aaf4268"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.487914+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.PrivatePath"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:5b9dfa9a8ddacef1fb9b398b48256e7e27de0e9791a67b70b0d05181819d20f8"
+body = "Проверяет, что доступ к файлам и каталогам POSIX имеет только их владелец — вызывающий пользователь; отклоняет символические и жёсткие ссылки."
+reviewedTranslationHash = "sha256:3d87e2c711d442db6663a15b1e44fd7f86c8bd5c1cde38700456600348120286"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.487930+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.ReadPrivate"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:22569f480bd43efd6252e1e0245aeed4e95cdeeb39e4152c48c51bd59e5d285f"
+body = "Читает один закрытый файл ограниченного размера и обнаруживает подмену или изменение во время чтения."
+reviewedTranslationHash = "sha256:1e5fed1d14543bf1b5c541a6233ea6439bb9ede8fca2f095c5b8a74c8123d045"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.487944+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.WritePrivate"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:317e035fc99501a1af5cc8b038beb0c7cdba9d5910117c88e77b12854b78aaaa"
+body = "Создаёт закрытый файл проекта только при его отсутствии, не перезаписывая существующие объекты."
+reviewedTranslationHash = "sha256:dd6aff3e56f9f89349d95f051537e06d8fbdea80dd14955311c50a2f26a0ac48"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.487959+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.SshGuestProvisioner"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:52a97afd8e73f82842139324368b8e24fd6e3d2d664795d5053ca4908fb125a2"
+body = "Подключается только к явно указанному IPv4-адресу с независимо закреплённым ключом сервера Ed25519."
+reviewedTranslationHash = "sha256:479262d574cdcd7cbde10b2c8cfb35222461a07bc1aeaa53d23e3596a268ed44"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.487974+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.SshGuestProvisioner.Install"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:dd3f975f66e9c8a207569524200c43621a6b56410f96aa2f716e77355337b806"
+body = "Передаёт на доверенную гостевую систему только проверенные закрытые серверные файлы и запускает установщики."
+reviewedTranslationHash = "sha256:828a3876a40472bc1c9110b4f690e4d428033eaae1595175cc2d00385679b62e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.487990+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.SshGuestProvisioner.ServiceStatus"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:f786891e07336eb1ba2b40db4b6da5f196055bf175b86ffeda8d5e6a858c21f2"
+body = "Проверяет активность служб без записи на гостевой системе; подключение VPN-клиента эта проверка не подтверждает."
+reviewedTranslationHash = "sha256:de4cca0304deca570db16a1df0a6150f99e47905c7b573696a3176caa5e08448"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.488005+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.SshGuestProvisioner.__init__"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:ec682592d445b33b7d7ecc6a091c5b937639124d88a67d333507a920e8063d54"
+body = "Проверяет пути к закрытому ключу и файлу с доверенным ключом сервера до формирования аргументов SSH."
+reviewedTranslationHash = "sha256:5f4459471756bda8d68089f6c6294de288b4fdd4b3db166dc0cd6ce97c1f60d8"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.488021+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.vpn_project"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:53a8c83febe68dc9569906abc10a8d9b957a4b4f5be964e374815f5b602ccdc5"
+body = "Закрытые локальные VPN-проекты, объединяющие управление ресурсами Yandex Cloud и установку на доверенную гостевую систему."
+reviewedTranslationHash = "sha256:60035d697932e68b0e0cfc7696e753073ccfa1f1f2cf7adbb5f51e54326162a1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.488036+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.CloudPlacement"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:9a9c778a47295f5d64b7e1081f60cfdda9420c282fc198d834218bb1c51733a6"
+body = "Публичные настройки размещения и строго ограниченный административный доступ к одной гостевой Ubuntu."
+reviewedTranslationHash = "sha256:8d1d8c867d242acfce29e92904727300c730404c4f830e691d958648008779ba"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.488113+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.VpnProject"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:7db99930a2302c2376c426b711992122a549e40a0789d3031293c58782788f78"
+body = "Проверенные публичные настройки проекта с явными ссылками на закрытое локальное хранилище."
+reviewedTranslationHash = "sha256:64005de575d0ce0887b3c2f082ea8ef55c8f5b20f05f436449c276acdf7cdd98"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.488134+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.VpnProject.Fingerprint"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:c5c0dcaeeb2dd0798e6b7d2a90284c0ae62e5a24cd4c17392a9dff3efd2354fe"
+body = "Связывает подготовленные данные со всеми публичными настройками проекта без сохранения секретов."
+reviewedTranslationHash = "sha256:bb121ffcbcfee767924b9feef1a5939c42d0031317a9b4d8e336db3012eaa506"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.488150+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.VpnProject.Artifacts"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:ae4a3a651cd0376996df2cdccf278dfcda25117394c9abe504d92349948204ab"
+body = "Находит существующее закрытое хранилище файлов с проверяемой принадлежностью внутри проекта."
+reviewedTranslationHash = "sha256:64ce330bdfcbc94482a71e3a307e41bbcd3da0366f5d7fd4f276f98c2ef79449"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.488165+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.VpnProjectReport"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:ef45a0eb32edd24e9f2ff903d5d76bc9f1d42294867a30ed7b98e270ea73ba0d"
+body = "Очищенные результаты управления ресурсами и проверки гостевой системы без данных VPN и вывода провайдера."
+reviewedTranslationHash = "sha256:525919f0127aef3ad90f116b16436514ee3b43dd631d24d1dc197fe110aeef6e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.488181+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.VpnProjectReport.ExitCode"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:73b0e2612a53abf2598b68a417e3bc49c23669a2e1a091aa56c4930719fce2f7"
+body = "Считает незавершённые облачные или гостевые операции неуспешными и не заявляет о наличии соединения."
+reviewedTranslationHash = "sha256:29b7fef9d3d4495eab285b84b493e2bf79f3f95c1108d45f0d9062ab6ddb453f"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.488196+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.InitializeVpnProject"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:a5d7bfb52e30edbd58d93257854f1395542c799496e9cfa273d12ef57d8cd637"
+body = "Создаёт новый закрытый проект и административный ключ без доступа к облаку; существующий проект не перезаписывает."
+reviewedTranslationHash = "sha256:dc916fd4ba011daf15f408df188c0ba7e84950ffff214c72ffa988eb5d19e4e1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.488211+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.LoadVpnProject"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:01ad5e1da22aa4d2e96b8a1c0412f44fb45dd9d8e142049cb55172ce05b84f14"
+body = "Читает явно указанные редактируемые публичные настройки TOML и административный открытый ключ из закрытого хранилища."
+reviewedTranslationHash = "sha256:85d5183fb0e8eb13a69870b7b88ad699e823201f356358bf3ac678d2e2a8cb38"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.488225+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.PrepareVpnProject"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:418b1acb9b2d7062571164568feae2003c6d1f4f721e2b8c984d8c7dcfbbf1d0"
+body = "Локально готовит закрытые данные и проверяет оба генератора конфигураций, не экспортируя вымышленные адреса серверов."
+reviewedTranslationHash = "sha256:1981adbac4a701f7c6cbf921e1820c475134d7c62d388851f93592d0fca04187"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.488239+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.CompileVpnProject"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:507e20bed85a8908f53ddd014aa3e7e2848dcd1c01d64144520b1627ec8e08fa"
+body = "Компилирует шесть ресурсов своего стека, связывая план только с проверенным несекретным загрузочным файлом."
+reviewedTranslationHash = "sha256:86be01612117af24e21064c4044799648a723afd74e23e201b2642f68889c3ea"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.488333+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.VpnYandexProvider"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:33199eb5cf3754fafeafd914ff7461e0702f4cc7d72afc09fa1a915ebed7a803"
+body = "Добавляет к существующему адаптеру жизненного цикла один аутентифицированный канал чтения открытого ключа сервера."
+reviewedTranslationHash = "sha256:25a2fb2791674ed49db22a452fc3008c9ae958490551f21654c71cd2b9fb8134"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.488354+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.VpnYandexProvider.ReadHostKey"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:d8877ced902b68e0fd413acacabf4f80e9bc72116fff5c46086327360bbed152"
+body = "Извлекает одну точную метку загрузки, не журналируя остальное содержимое последовательной консоли."
+reviewedTranslationHash = "sha256:cf251cf228d5d89b3cd75b82a309b682b7ff44f97ca9e4a3a270722c676083d2"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.488371+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.RunVpnProject"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:f79b32890a8bf62c1e3cbebe1ccce4279ee32ba6a84cb916cb13723fcd692e29"
+body = "Объединяет явное разрешение облачных операций, надёжное состояние ресурсов, аутентифицированную установку и экспорт клиентских файлов."
+reviewedTranslationHash = "sha256:2c0d58d8fc153bc386028d72b95417875bd2376babba6aa645af8a3be6667915"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.488388+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.ValidateSshPathSyntax"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:e38b036badacac6ff6cafeec797b08e177c7712e7f33e9f277092685ffc9c95e"
+body = "Отклоняет подстановки OpenSSH в путях до разрешения любых операций с проектом или гостевой системой."
+reviewedTranslationHash = "sha256:abfc323d81372edde46c2b16aa6fc72f64c9aec2cfece444495e8e407ee6ba10"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:02:40.344626+00:00"
+reviewRoles = ["editorial", "technical"]

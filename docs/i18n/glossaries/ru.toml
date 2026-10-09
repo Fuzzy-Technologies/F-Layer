@@ -28,7 +28,7 @@ references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guid
 [[terms]]
 id = "concept:infrastructure.ownership"
 english = "ownership"
-preferred = "владение"
+preferred = "принадлежность ресурсов"
 avoid = []
 note = "Terminology checked against the English guides by AIna-Dev; see ADR 0015."
 references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
@@ -44,7 +44,7 @@ references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guid
 [[terms]]
 id = "concept:infrastructure.scope"
 english = "scope"
-preferred = "область"
+preferred = "область действия"
 avoid = []
 note = "Terminology checked against the English guides by AIna-Dev; see ADR 0015."
 references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]
@@ -52,7 +52,7 @@ references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guid
 [[terms]]
 id = "concept:infrastructure.generated-artifact"
 english = "generated artifact"
-preferred = "создаваемый артефакт"
+preferred = "создаваемый файл"
 avoid = []
 note = "Terminology checked against the English guides by AIna-Dev; see ADR 0015."
 references = ["docs/site/content/en/architecture.md", "docs/site/content/en/guide/first-deployment.md"]

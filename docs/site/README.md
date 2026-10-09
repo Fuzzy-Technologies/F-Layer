@@ -1,7 +1,7 @@
 # Documentation platform
 
 F-Layer follows the Fuzzy Technologies MkDocs Material documentation blueprint.
-English source lives in `content/en/`; localization hashes, draft/review states, and
+English source lives in `content/en/`; localization hashes, review states, and
 glossaries live in `../i18n/`. Python API contracts remain in package docstrings.
 
 ```bash
@@ -23,15 +23,19 @@ owned build root, the build fails before publishing and requests an external
 verified environment.
 
 Generated API symbols use the same blueprint source-hash scheme in a disposable
-registry, with `missing` RU/ZH states. They never receive synthetic reviews.
+registry. Actual translations and review records determine their locale states;
+generating a registry never creates a translation or a review.
 The copied validator retains the upstream hash, schema keys, and review semantics; internal identifiers follow house style.
 
-The multilingual wrapper renders tracked RU/ZH drafts with visible review-state
-banners and current English fallbacks for missing/stale pages. It preserves the
+The multilingual wrapper renders approved RU/ZH pages without draft notices
+and uses current English fallbacks for missing or outdated translations. It preserves the
 installed-wheel import guard and strict links/anchors, adds per-route reachability
 evidence, and never creates human approvals. Translation basis hashes prevent a
-canonical registry refresh from hiding stale drafts. See [the rollout contract](../i18n/README.md).
-Human language review and actual Pages publication remain outstanding.
+canonical registry refresh from hiding outdated translations. See [the rollout contract](../i18n/README.md).
+The reviewed v1.2.1 documentation was published to Pages after owner review.
+[The review snapshot](../i18n/review-snapshot.md) records that acceptance and
+the AI reviewer provenance; it does not claim human translation review or
+approval of later changes.
 
 PRs and `develop` upload preview artifacts. Only an approved `master` push
 can deploy Pages. Routes: `/F-Layer/en/`, `/F-Layer/ru/`, `/F-Layer/zh-CN/`.

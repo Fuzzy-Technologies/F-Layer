@@ -1,0 +1,25 @@
+schemaVersion = 1
+sourcePath = "CONTRIBUTING.md"
+body = '''
+# Участие в разработке F-Layer
+
+В F-Layer принят процесс разработки Fuzzy Technologies.
+
+Прежде чем начать:
+
+1. прочитайте [AGENTS.md](AGENTS.md) и [DEVELOPMENT_PROTOCOL.md](DEVELOPMENT_PROTOCOL.md);
+2. создайте отдельную ветку `feature/*` или `fix/*` от `develop`;
+3. свяжите реализацию с задачей GitHub типа Task;
+4. добавьте проверки и результаты тестирования, соответствующие изменённому компоненту;
+5. откройте pull request в `develop`, используя шаблон репозитория.
+
+Не добавляйте в коммиты учётные данные, идентификаторы частной инфраструктуры, локальные абсолютные пути и секреты конкретного окружения.
+
+Если изменение затрагивает архитектуру, вместе с реализацией необходимо подготовить соответствующий ADR.
+'''
+sourceHash = "sha256:6ed6ef2e96c72b3b3f99111269657f529467c1e0e26b2e9885f9387b27479173"
+reviewedTranslationHash = "sha256:10f9d1a52d0e5fa23022723a21f2dfabfc5cdd60ffa9e2133f6b5cea0cd30ee7"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:54Z"
+reviewRoles = ["editorial", "technical"]

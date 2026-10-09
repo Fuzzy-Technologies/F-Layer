@@ -1,0 +1,309 @@
+schemaVersion = 1
+
+[[units]]
+id = "module:flayer.guest"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:0caa53198e6fa3b369c325f0e98341bd50135248d22e3c4a6d6da0c79b3fe186"
+body = "严格校验已固定主机密钥的 SSH 传输，用于私密 VPN 安装和服务状态检查。"
+reviewedTranslationHash = "sha256:25ededb34b8989e831768c8a873286de4a340a2af9669d95cdd55e3a9c566f97"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489144+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.GuestResult"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:c464998bde7323cbb25987c97fedbd2c68f31dec7d8d9494cc85271f275e1c11"
+body = "临时的子进程输出，不包含在对象表示或错误信息中。"
+reviewedTranslationHash = "sha256:3cb4dcf04c57afd363887102e3bac81d2732d91adbc52ba59f191d13a7dfc1c2"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489171+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.GuestRunner"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:e3f6fe6a0b25b783b800fae4e69f8d3b61ceab15b810fc7713601e237490d94d"
+body = "可注入的子进程执行接口，用于无需 SSH 连接的确定性测试。"
+reviewedTranslationHash = "sha256:07bf416e686c4f4c2f351bb15b7e07d0c3c7f1b73f432ff64343f1b198e9de1a"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489188+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.GuestRunner.Run"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:d26a0f16a3f10ba92ac7650eed8898e1903481ab844e96580f93410ce9a2aad8"
+body = "执行受限的参数向量，私密传入标准输入并捕获输出。"
+reviewedTranslationHash = "sha256:51718b94116f7cee80476dc0ac34de077580936736b45ed03990ec54f4977c49"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489210+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.SubprocessGuestRunner"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:3d1c8abee721652e19205440a5401254440bc25e809b4eb7e4ca9c76348760e0"
+body = "运行 OpenSSH，不使用本地 shell，也不继承标准输入。"
+reviewedTranslationHash = "sha256:a5fd8c6856c3182481908031887344c2bd657bfca71ab87e036627dec26178e8"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489317+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.SubprocessGuestRunner.Run"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:92c4e8314e86c60c9a7c1663d9bc1e7ee8ff0d174ae47ca42073a9e7dc4c2c82"
+body = "不将来宾系统或 SSH 的诊断文本写入用户可见的异常消息。"
+reviewedTranslationHash = "sha256:8fcbe01261701ae65b1a439392427ae75872fbfbad06f40a710d9de8c302f6fa"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489334+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.PrivatePath"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:5b9dfa9a8ddacef1fb9b398b48256e7e27de0e9791a67b70b0d05181819d20f8"
+body = "要求 POSIX 对象归调用者所有且访问权限受限，不允许符号链接或具有硬链接的文件。"
+reviewedTranslationHash = "sha256:1e8d5594f587332ed810f4a85c757cd9c95ff7c666bc5b1c4cad37f706005ae6"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489348+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.ReadPrivate"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:22569f480bd43efd6252e1e0245aeed4e95cdeeb39e4152c48c51bd59e5d285f"
+body = "读取一个大小受限的私有文件，并检测读取期间的替换或原地修改。"
+reviewedTranslationHash = "sha256:75cc45f6738ab4f71ade7329218ebb02b9b0b3f477d7db53e0fc43fc37c0c805"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489359+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.WritePrivate"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:317e035fc99501a1af5cc8b038beb0c7cdba9d5910117c88e77b12854b78aaaa"
+body = "以独占方式创建私有项目文件，不覆盖现有对象。"
+reviewedTranslationHash = "sha256:42130186168416a734e11f9dcbde0d16521f8932415c980ed7ef9f88281e8dc1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489371+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.SshGuestProvisioner"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:52a97afd8e73f82842139324368b8e24fd6e3d2d664795d5053ca4908fb125a2"
+body = "仅连接明确指定的 IPv4 端点，并验证独立固定的 Ed25519 主机密钥。"
+reviewedTranslationHash = "sha256:c5ec6f551cba59ace97befe25ac5f0e73a1161220be124a72d008ad9b99ff680"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489383+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.SshGuestProvisioner.Install"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:dd3f975f66e9c8a207569524200c43621a6b56410f96aa2f716e77355337b806"
+body = "仅将经过校验的敏感服务器文件传送至可信来宾系统，并运行安装程序。"
+reviewedTranslationHash = "sha256:18140046ca289a8f019ce7976d56e25c12cc2044e13e674573ef48aad9ab3b50"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489396+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.SshGuestProvisioner.ServiceStatus"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:f786891e07336eb1ba2b40db4b6da5f196055bf175b86ffeda8d5e6a858c21f2"
+body = "只观察服务是否运行，不写入来宾系统，也不宣称客户端已连通。"
+reviewedTranslationHash = "sha256:58b74b148a44d7a0c956c28defb48f25e7be2c97945f8e961dcc3ac579cf9a1e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489408+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.SshGuestProvisioner.__init__"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:ec682592d445b33b7d7ecc6a091c5b937639124d88a67d333507a920e8063d54"
+body = "构造任何 SSH 参数之前，先校验私钥和信任文件路径。"
+reviewedTranslationHash = "sha256:c11d36852c56307c8d0547b0431bf5085d924df25ac3c5c84657c2833532ba52"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489448+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.vpn_project"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:53a8c83febe68dc9569906abc10a8d9b957a4b4f5be964e374815f5b602ccdc5"
+body = "私有本地 VPN 项目，整合 Yandex Cloud 栈资源管理和可信来宾系统部署。"
+reviewedTranslationHash = "sha256:617d08770cadca2656573f805393db0fe1d43126aa9c7a86f5a6baa7887504e4"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489462+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.CloudPlacement"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:9a9c778a47295f5d64b7e1081f60cfdda9420c282fc198d834218bb1c51733a6"
+body = "单台 Ubuntu 来宾的公开部署位置，以及严格限定的管理员入站访问。"
+reviewedTranslationHash = "sha256:3a9f31c513708341070ddbb6de3ec1c7768d8d822bccd7201267f76372109743"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489475+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.VpnProject"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:7db99930a2302c2376c426b711992122a549e40a0789d3031293c58782788f78"
+body = "经校验的公开项目配置，明确引用私有本地存储位置。"
+reviewedTranslationHash = "sha256:ab1e57503cebb3ad5256d0efd80d7a50e7ab06e6c61a5935bd2390aff00f0358"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489487+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.VpnProject.Fingerprint"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:c5c0dcaeeb2dd0798e6b7d2a90284c0ae62e5a24cd4c17392a9dff3efd2354fe"
+body = "将准备好的材料绑定到全部公开项目设置，不持久记录秘密内容。"
+reviewedTranslationHash = "sha256:1774bbb5c5eaec1c50d29fede9701e06fb414a3b129d108e86d77a7b5644e260"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489499+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.VpnProject.Artifacts"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:ae4a3a651cd0376996df2cdccf278dfcda25117394c9abe504d92349948204ab"
+body = "定位项目内现有的私有文件存储，并保留归属约束。"
+reviewedTranslationHash = "sha256:82fda2516b3ccb9c797b049f5c8b96b32216d3e21a20ce2323dba1a707bc7424"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489511+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.VpnProjectReport"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:ef45a0eb32edd24e9f2ff903d5d76bc9f1d42294867a30ed7b98e270ea73ba0d"
+body = "经过清理的生命周期及来宾观察结果，不包含传输凭据材料或提供商输出。"
+reviewedTranslationHash = "sha256:6f30a95a7932b449b314b45b4790cb86391634a960a05a7f6cae792486bd01f0"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489523+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.VpnProjectReport.ExitCode"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:73b0e2612a53abf2598b68a417e3bc49c23669a2e1a091aa56c4930719fce2f7"
+body = "将未完成的云端或来宾操作视为不成功，不宣称连接已建立。"
+reviewedTranslationHash = "sha256:93293292a022b9d4b6bbd0eac164311ebc6c525d9bc502098390698904fb2e46"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489535+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.InitializeVpnProject"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:a5d7bfb52e30edbd58d93257854f1395542c799496e9cfa273d12ef57d8cd637"
+body = "以独占方式创建私有项目和管理密钥，不访问云服务。"
+reviewedTranslationHash = "sha256:d37d6fbc5081d38f2e269a291776d9b4d30d2a47f219b113019f1db4f145fef1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489547+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.LoadVpnProject"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:01ad5e1da22aa4d2e96b8a1c0412f44fb45dd9d8e142049cb55172ce05b84f14"
+body = "从私有存储读取明确指定且可编辑的公开 TOML 配置和管理公钥。"
+reviewedTranslationHash = "sha256:491953ebc9ea4b9569038ba1542ff03e90d0f2e4530fc8c8442cb767bd2ab745"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489559+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.PrepareVpnProject"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:418b1acb9b2d7062571164568feae2003c6d1f4f721e2b8c984d8c7dcfbbf1d0"
+body = "在本地准备私密材料并校验两种配置生成器，不导出虚构的服务器端点。"
+reviewedTranslationHash = "sha256:dea560a6e397d2bf6c5e03ed9360502bdf0ae52f8e0727fc8e1ce670526f3f0e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489602+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.CompileVpnProject"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:507e20bed85a8908f53ddd014aa3e7e2848dcd1c01d64144520b1627ec8e08fa"
+body = "编译六个归属明确的资源，并仅绑定已校验且不含秘密的引导文件。"
+reviewedTranslationHash = "sha256:816db31373e3d56d3e3a1b318c941579a5f42db07d10cb120ac185bf3a72fd51"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489623+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.VpnYandexProvider"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:33199eb5cf3754fafeafd914ff7461e0702f4cc7d72afc09fa1a915ebed7a803"
+body = "为现有生命周期适配器增加一个经过身份验证、只读的主机公钥获取通道。"
+reviewedTranslationHash = "sha256:1dd417d1b783c09601ecc642976743a5a64d276efd521af29e67ae5f10b6aecd"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489643+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.VpnYandexProvider.ReadHostKey"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:d8877ced902b68e0fd413acacabf4f80e9bc72116fff5c46086327360bbed152"
+body = "提取一个确切的引导标记，不记录串口控制台的其他内容。"
+reviewedTranslationHash = "sha256:28dbb66f64fe7172c7d74dddcdff526aa104ab6bf3ad987732ad6e4ebde284df"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489662+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.RunVpnProject"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:f79b32890a8bf62c1e3cbebe1ccce4279ee32ba6a84cb916cb13723fcd692e29"
+body = "整合明确的云操作许可、持久资源状态、经过身份验证的来宾安装和客户端文件导出。"
+reviewedTranslationHash = "sha256:04bd903e5aa4223dd0a341d458493347328fccd7c2e0a16e580ed0addf900df8"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:01:48.489683+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.guest.ValidateSshPathSyntax"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:e38b036badacac6ff6cafeec797b08e177c7712e7f33e9f277092685ffc9c95e"
+body = "在授权任何项目或来宾操作之前，拒绝路径中的 OpenSSH 替换语法。"
+reviewedTranslationHash = "sha256:7d3527e26ae2848b4029060f6b772899f46c2f9f80ce296db2c4c7465f2e8e7f"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T08:02:40.345159+00:00"
+reviewRoles = ["editorial", "technical"]

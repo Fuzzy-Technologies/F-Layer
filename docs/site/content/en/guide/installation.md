@@ -1,19 +1,16 @@
-# Install from source
+# Install
 
-F-Layer requires **Python 3.11 or newer** and Git. The `f-layer` distribution
-contains the `flayer` Python package. A published PyPI release is not assumed:
-install the checked-out source so its documentation and behavior match.
+F-Layer is a Python package. You need **Python 3.11 or newer**; Git and Docker
+are not required to use a release. The distribution is named `f-layer`; its
+Python module and command are named `flayer`.
 
-## Clone and install
+## Install the release package
+
+Create an isolated Python environment:
 
 ```bash
-git clone https://github.com/Fuzzy-Technologies/F-Layer.git
-cd F-Layer
-git checkout v1.2.1
 python -m venv .venv
 ```
-
-Activate the environment for your console:
 
 | Console                 | Activation                   |
 | ----------------------- | ---------------------------- |
@@ -21,44 +18,62 @@ Activate the environment for your console:
 | Windows PowerShell      | `.venv\Scripts\Activate.ps1` |
 | Windows Command Prompt  | `.venv\Scripts\activate.bat` |
 
-Install and check the current package:
+Install the wheel from the [v1.2.1 release](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.2.1):
 
 ```bash
-python -m pip install .
-python -m flayer --help
-python -m flayer check --format json
+python -m pip install https://github.com/Fuzzy-Technologies/F-Layer/releases/download/v1.2.1/f_layer-1.2.1-py3-none-any.whl
+flayer --help
+flayer check --format json
 ```
 
-`check` examines local runtime/package availability. It does not authenticate a
-cloud account, infer a folder, create infrastructure, or prove guest readiness.
-A successful diagnostic exits with `0`.
+Expected result: `"status": "ok"` and exit code `0`. `flayer` and
+`python -m flayer` accept the same arguments. Continue with the
+[SSH gateway walkthrough](first-deployment.md) for this stable version.
 
-Both `python -m flayer` and the installed `flayer` console command accept the
-same arguments in 1.2.1. Reinstall after switching source revisions.
+You can also download `f_layer-1.2.1-py3-none-any.whl` from the release assets
+and pass its local path to `python -m pip install`. The same release provides
+a source archive and build evidence with artifact hashes. PyPI publication
+is a separate release step; use the linked wheel until a PyPI release is
+announced. The upcoming 2.0 features are not included in the stable 1.2.1 package.
+
+The cloud deployment walkthrough requires Linux or macOS because generated
+configuration files use POSIX owner and permission checks. Windows users can
+install the package and run local diagnostics; use a Linux environment for
+the deployment walkthrough.
+
+## Install the 2.0 candidate
+
+For AmneziaWG and VLESS Reality, use a reviewed 2.0 candidate wheel with the `vpn`
+extra, on Linux or WSL. The [Quick Start](index.md) shows the exact local wheel
+installation, project settings and deployment commands. Candidate artifacts come
+from the reviewed revision's [CI run](https://github.com/Fuzzy-Technologies/F-Layer/actions),
+not the v1.2.1 release download. Retain the artifact's filename and version.
+A candidate can still report the current development package version; verify
+its revision and the presence of `flayer project` and `flayer vpn` commands.
+PyPI and stable 2.0 publication are not claimed by this guide.
 
 ## Development checkout
 
-For contributors, install editable source and the pinned validation tools:
+Only contributors need Git. To work on the integration branch:
 
 ```bash
+git clone --branch develop https://github.com/Fuzzy-Technologies/F-Layer.git
+cd F-Layer
 python -m pip install -e ".[dev]"
-python tools/validate.py
 ```
 
-The canonical runner compiles, lints, type-checks, runs all test stages, verifies
-separate line/branch coverage floors, and installs a wheel in isolation. Tests
-use synthetic resources and deny unrequested network access. See the
-[development workflow](../development.md) for the documentation build.
+Run the tests relevant to your change during development. CI runs the complete
+validation gate when the pull request opens. See the
+[development workflow](../development.md) for tests and documentation builds.
 
 ## Installation issues
 
-| Symptom                                              | Next step                                                                                      |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `No module named flayer`                             | Activate the same environment used for `python -m pip install .`; reinstall from the checkout. |
-| `python` is unavailable                              | Use the platform's Python 3.11+ launcher consistently, for example `python3` or `py -3.11`.    |
-| `flayer` is unavailable but the module command works | Activate the installation environment and reinstall 1.2.1; use `python -m flayer` meanwhile.   |
-| Windows activation is blocked                        | Use `.venv\Scripts\python.exe` directly for installation and commands.                         |
+| Symptom                       | Next step                                                                     |
+| ----------------------------- | ----------------------------------------------------------------------------- |
+| `No module named flayer`      | Activate the environment used for installation and reinstall the wheel there. |
+| `python` is unavailable       | Use a Python 3.11+ launcher such as `python3` or `py -3.11` consistently.     |
+| `flayer` is unavailable       | Activate the installation environment or use `python -m flayer`.              |
+| Windows activation is blocked | Use `.venv\Scripts\python.exe` directly for installation and commands.        |
 
-Reinstall after changing branches so the installed package matches the source
-revision. Keep generated environments, credentials, and runtime state outside
-tracked source.
+Keep credentials, generated client configurations and deployment state outside
+the source repository.

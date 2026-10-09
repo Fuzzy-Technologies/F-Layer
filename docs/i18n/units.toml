@@ -114,17 +114,17 @@ basedOnSourceHash = "sha256:7dc4a34669dc538db351ce211014c64ea31d79c00d540badb364
 role = "editorial"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:31:37Z"
+reviewedAt = "2026-10-09T07:39:27Z"
 reviewedSourceHash = "sha256:7dc4a34669dc538db351ce211014c64ea31d79c00d540badb364bce3c4d620aa"
-reviewedTranslationHash = "sha256:f34d23a72f23b0225447b494ef2e6a29b8b2237b8df8043c97c763b9db107613"
+reviewedTranslationHash = "sha256:3fde46cfac0791646991bf9d5fff6596f1933a9d73ffc46725e601c89979bcf9"
 
 [[units.translations.ru.reviews]]
 role = "technical"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:31:37Z"
+reviewedAt = "2026-10-09T07:39:27Z"
 reviewedSourceHash = "sha256:7dc4a34669dc538db351ce211014c64ea31d79c00d540badb364bce3c4d620aa"
-reviewedTranslationHash = "sha256:f34d23a72f23b0225447b494ef2e6a29b8b2237b8df8043c97c763b9db107613"
+reviewedTranslationHash = "sha256:3fde46cfac0791646991bf9d5fff6596f1933a9d73ffc46725e601c89979bcf9"
 
 [units.translations.zh-CN]
 state = "approved"
@@ -135,17 +135,17 @@ basedOnSourceHash = "sha256:7dc4a34669dc538db351ce211014c64ea31d79c00d540badb364
 role = "editorial"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:31:37Z"
+reviewedAt = "2026-10-09T07:39:27Z"
 reviewedSourceHash = "sha256:7dc4a34669dc538db351ce211014c64ea31d79c00d540badb364bce3c4d620aa"
-reviewedTranslationHash = "sha256:2aa7297dd73316822375b811144a5266c04596aa71ea3bb376f165dbd2d0b15f"
+reviewedTranslationHash = "sha256:a636063919681dc694ff45c4af4f608a5358f14bf86853749d89146f8baeaa49"
 
 [[units.translations.zh-CN.reviews]]
 role = "technical"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:31:37Z"
+reviewedAt = "2026-10-09T07:39:27Z"
 reviewedSourceHash = "sha256:7dc4a34669dc538db351ce211014c64ea31d79c00d540badb364bce3c4d620aa"
-reviewedTranslationHash = "sha256:2aa7297dd73316822375b811144a5266c04596aa71ea3bb376f165dbd2d0b15f"
+reviewedTranslationHash = "sha256:a636063919681dc694ff45c4af4f608a5358f14bf86853749d89146f8baeaa49"
 
 [[units]]
 id = "page:development"

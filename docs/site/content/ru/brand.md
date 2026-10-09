@@ -5,14 +5,14 @@
 `assets/brand/FTech-card-F-Layer.png`. На компьютерах и телефонах оно
 масштабируется с сохранением пропорций.
 
-![F-Layer и АИна в инженерной лаборатории Fuzzy Technologies](assets/brand/FTech-card-F-Layer.png){ .fl-project-art }
+![F-Layer и АИна в инженерной лаборатории Fuzzy Technologies](../en/assets/brand/FTech-card-F-Layer.png){ .fl-project-art }
 
 Логотип выполнен в стиле FuzzyRoutines: скруглённая тёмная рамка, светлая первая
 буква и переход от голубого через фиолетовый к розовому. Горизонтальный логотип
 расположен в левом верхнем углу документации. Квадратный знак **FL** используется
 как значок вкладки браузера. Подпись логотипа: **Infrastructure · Automation · Security**.
 
-![Горизонтальный логотип F-Layer](assets/brand/flayer-horizontal.svg){ .fl-brand-lockup }
+![Горизонтальный логотип F-Layer](../en/assets/brand/flayer-horizontal.svg){ .fl-brand-lockup }
 
 SVG-логотипы, CSS и исходный слайд хранятся в репозитории. Сгенерированные
 страницы сайта и растровые превью векторных изображений в Git не добавляются.

@@ -17,6 +17,8 @@ which leads with a concrete Yandex Cloud walkthrough. Installation uses the
 existing release wheel; future PyPI or 2.0 publication is not claimed.
 
 The API landing page and project identity page are now translated as well.
+The brand-image paths were subsequently corrected to the canonical asset
+location and re-reviewed; their exact later timestamps are in the registry.
 The API landing no longer repeats the obsolete pre-1.0 compatibility notice.
 Localized links stay in their language's API route. Missing generated API and
 engineering-reference translations remain separately visible; this authored

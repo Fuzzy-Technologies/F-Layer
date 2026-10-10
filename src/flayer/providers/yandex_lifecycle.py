@@ -50,7 +50,9 @@ OPTIONAL_PARAMETERS: dict[ResourceKind, frozenset[str]] = {
     ResourceKind.SECURITY_GROUP: frozenset(),
     ResourceKind.ADDRESS: frozenset(),
     ResourceKind.DISK: frozenset({"type"}),
-    ResourceKind.INSTANCE: frozenset({"ssh_username", "user_data_file", "user_data_sha256"}),
+    ResourceKind.INSTANCE: frozenset({
+        "ssh_username", "user_data_file", "user_data_sha256", "platform_id", "core_fraction",
+    }),
 }
 DEPENDENCY_KINDS = {
     "network_dependency": ResourceKind.NETWORK,
@@ -85,6 +87,44 @@ def _Integer(value: JsonValue, minimum: int, maximum: int) -> int:
         raise ValueError("Lifecycle numeric option exceeds its bounds")
 
     return value
+
+
+def ValidateComputeShape(options: Mapping[str, JsonValue]) -> None:
+    """Validate the supported Intel shapes without consulting a cloud account."""
+
+    cores = _Integer(options["cores"], 2, 32)
+    memory = _Integer(options["memory_gib"], 1, 128)
+
+    if "platform_id" not in options and "core_fraction" not in options:
+        return
+
+    if "platform_id" not in options or "core_fraction" not in options:
+        raise ValueError("Specify platform_id and core_fraction together")
+
+    platform = _String(options["platform_id"])
+    fractions = {"standard-v1": (5, 20, 100), "standard-v2": (5, 20, 50, 100),
+                 "standard-v3": (20, 50, 100)}
+    fraction = _Integer(options["core_fraction"], 1, 100)
+
+    if platform not in fractions or fraction not in fractions[platform]:
+        raise ValueError("Unsupported platform_id/core_fraction combination")
+
+    if _String(options.get("zone_id", "")).startswith("kz1-") and platform != "standard-v3":
+        raise ValueError("Kazakhstan deployments require platform_id standard-v3")
+
+    if fraction == 100:
+        valid_cores = (*range(2, 17, 2), 20, 24, 28, 32)
+        ratios = tuple(float(value) for value in range(1, 9 if platform == "standard-v1" else 17))
+
+    else:
+        valid_cores = (2, 4)
+        ratios = tuple(value / 2 for value in range(1, 5 if fraction == 5 else 9))
+
+        if platform == "standard-v2" and fraction == 5:
+            ratios = (0.25, *ratios)
+
+    if cores not in valid_cores or memory / cores not in ratios:
+        raise ValueError("Unsupported vCPU/RAM combination for the selected platform and core_fraction")
 
 
 def _PublicKey(value: JsonValue) -> str:
@@ -273,8 +313,7 @@ class YandexLifecycleProvider(YandexCloudProvider):
                     raise ValueError("Unsupported boot disk type")
 
             elif spec.kind == ResourceKind.INSTANCE:
-                _Integer(options["cores"], 2, 32)
-                _Integer(options["memory_gib"], 1, 128)
+                ValidateComputeShape(options)
                 _PublicKey(options["ssh_public_key"])
 
                 if USERNAME_PATTERN.fullmatch(_String(options.get("ssh_username", "yc-user"))) is None:
@@ -539,6 +578,10 @@ class YandexLifecycleProvider(YandexCloudProvider):
                 "--use-boot-disk", f"disk-id={disk.reference.resource_id},auto-delete=false",
                 "--network-interface", interface, "--metadata", f"ssh-keys={username}:{public_key}",
             ))
+
+            if "platform_id" in options:
+                arguments.extend(("--platform", _String(options["platform_id"]),
+                                  "--core-fraction", str(options["core_fraction"])))
 
         return tuple(arguments)
 

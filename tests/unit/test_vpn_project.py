@@ -39,6 +39,7 @@ from flayer.vpn_project import (
     PrepareVpnProject,
     RunVpnProject,
     VpnProject,
+    VpnResources,
     VpnYandexProvider,
     _HostTrust,
     _OwnedEndpoints,
@@ -47,6 +48,15 @@ from flayer.vpn_project import (
 
 PUBLIC_KEY = "ssh-ed25519 " + base64.b64encode(struct.pack(">I", 11) + b"ssh-ed25519" + struct.pack(">I", 32) + b"p" * 32).decode("ascii")
 OTHER_KEY = "ssh-ed25519 " + base64.b64encode(struct.pack(">I", 11) + b"ssh-ed25519" + struct.pack(">I", 32) + b"q" * 32).decode("ascii")
+SIZING_TOML = '''
+[resources]
+platform_id = "standard-v3"
+cores = 2
+core_fraction = 50
+memory_gib = 2
+disk_size_gib = 10
+disk_type = "network-hdd"
+'''
 
 
 def Project(tmp_path: Path) -> VpnProject:
@@ -57,6 +67,125 @@ def Project(tmp_path: Path) -> VpnProject:
     config.write_text(config.read_text().replace("replace-with-folder-id", "example-folder").replace("replace-with-ubuntu-2404-amd64-image-id", "example-image"))
 
     return LoadVpnProject(directory)
+
+
+def SizedProject(tmp_path: Path) -> VpnProject:
+    """Configure the economical Intel shape through the actual public TOML loader."""
+
+    project = Project(tmp_path)
+    config = project.root / "project.toml"
+    config.write_text(config.read_text() + SIZING_TOML)
+
+    return LoadVpnProject(project.root)
+
+
+def test_LegacySizingPreservesFingerprintAndPlan(tmp_path: Path) -> None:
+    """Keep the fingerprint captured from develop 4d75acc and its implicit resource plan."""
+
+    project = Project(tmp_path)
+    fixed_key_project = replace(project, ssh_public_key=PUBLIC_KEY)
+
+    assert fixed_key_project.Fingerprint() == "2fef1d60f4a576029e9066c73ea2bbfd43397197a8f0de52a196bc0a342a21e5", "Legacy prepared credentials would become unusable"
+    assert project.resources is None
+    PrepareVpnProject(project)
+    plan = CompileVpnProject(project)
+    disk, instance = (dict(item.parameters) for item in plan.resources[-2:])
+
+    assert disk == {"zone_id": "ru-central1-a", "image_id": "example-image", "size_gib": 20}
+    assert (instance["cores"], instance["memory_gib"]) == (2, 2)
+    assert "platform_id" not in instance and "core_fraction" not in instance, "Legacy resource ownership digest changed"
+
+
+@pytest.mark.parametrize("disk_type,disk_size,cores,memory,fraction", [
+    ("network-hdd", 10, 2, 2, 50), ("network-ssd", 80, 4, 8, 100),
+])
+def test_PublicSizingCompilesIntoOwnedProviderResources(
+    tmp_path: Path, disk_type: str, disk_size: int, cores: int, memory: int, fraction: int,
+) -> None:
+    """Propagate all public sizing settings into validated independent disk and VM resources."""
+
+    project = SizedProject(tmp_path)
+    project = replace(project, resources=VpnResources("standard-v3", cores, fraction, memory, disk_size, disk_type))
+    PrepareVpnProject(project)
+    plan = CompileVpnProject(project)
+    cloud = FakeCloud(project)
+
+    for spec in plan.resources:
+        cloud.ValidateSpec(spec)
+
+    disk, instance = (dict(item.parameters) for item in plan.resources[-2:])
+
+    assert (disk["size_gib"], disk["type"]) == (disk_size, disk_type), "Requested disk was replaced by the preset"
+    assert (instance["cores"], instance["memory_gib"], instance["platform_id"], instance["core_fraction"]) == (cores, memory, "standard-v3", fraction), "Requested compute shape was lost"
+
+
+@pytest.mark.parametrize("field,value", [
+    ("cores", "true"), ("cores", "3"), ("cores", "8"), ("cores", "0"),
+    ("memory_gib", "1.5"), ("memory_gib", "0"), ("memory_gib", "129"),
+    ("core_fraction", "5"), ("core_fraction", "51"), ("core_fraction", '"50"'),
+    ("disk_size_gib", "9"), ("disk_size_gib", "1025"), ("disk_size_gib", "false"),
+    ("disk_type", '"local-ssd"'), ("platform_id", '"standard-v3 --preemptible"'),
+])
+def test_InvalidSizingFailsDuringLoadWithoutArtifacts(tmp_path: Path, field: str, value: str) -> None:
+    """Reject malformed requests before prepare can generate transport credentials."""
+
+    project = SizedProject(tmp_path)
+    config = project.root / "project.toml"
+    lines = config.read_text().splitlines()
+    config.write_text("\n".join(f"{field} = {value}" if line.startswith(field + " =") else line for line in lines))
+
+    with pytest.raises(VpnError):
+        LoadVpnProject(project.root)
+
+    assert not tuple(project.Artifacts.iterdir()), "Invalid sizing produced owned artifacts"
+
+
+@pytest.mark.parametrize("change", ["missing", "unknown", "not-table", "region"])
+def test_SizingSchemaAndRegionFailClosed(tmp_path: Path, change: str) -> None:
+    """Reject incomplete blocks, unknown keys and unsupported Kazakhstan platform choices."""
+
+    project = SizedProject(tmp_path)
+    config = project.root / "project.toml"
+    text = config.read_text()
+
+    if change == "missing":
+        text = text.replace('disk_type = "network-hdd"\n', "")
+
+    elif change == "unknown":
+        text += "preemptible = true\n"
+
+    elif change == "not-table":
+        text = 'resources = "small"\n' + text.replace(SIZING_TOML, "")
+
+    else:
+        text = text.replace('zone_id = "ru-central1-a"', 'zone_id = "kz1-a"').replace('platform_id = "standard-v3"', 'platform_id = "standard-v2"')
+
+    config.write_text(text)
+
+    with pytest.raises(VpnError):
+        LoadVpnProject(project.root)
+
+
+@pytest.mark.parametrize("action", ["prepare", "deploy", "status", "recover", "destroy"])
+@pytest.mark.parametrize("change", [{"cores": 4}, {"memory_gib": 4}, {"platform_id": "standard-v2"},
+                                    {"core_fraction": 20}, {"disk_size_gib": 20}, {"disk_type": "network-ssd"}, None])
+def test_PreparedSizingCannotChangeBeforeAnyCloudAccess(tmp_path: Path, action: str, change: dict[str, Any] | None, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Bind every sizing field, including removal of the block, across all lifecycle commands."""
+
+    project = SizedProject(tmp_path)
+    PrepareVpnProject(project)
+    assert project.resources is not None
+    altered = replace(project, resources=None if change is None else replace(project.resources, **change))
+
+    def RejectCloud(*args: Any, **kwargs: Any) -> None:
+        """Fail if a mismatched project reaches even provider construction."""
+
+        pytest.fail("Changed sizing accessed the cloud")
+
+    monkeypatch.setattr("flayer.vpn_project.VpnYandexProvider", RejectCloud)
+
+    with pytest.raises(VpnError, match="changed after preparation|does not match"):
+        RunVpnProject(altered, action, allow_mutation=True, scope_confirm="example-folder")
 
 
 class FakeCloud(VpnYandexProvider):
@@ -227,10 +356,11 @@ def test_PreparationIsIdempotentAndKeepsClientKeysOutOfBootstrap(tmp_path: Path)
     assert "PasswordAuthentication no" in ssh_configuration and "KbdInteractiveAuthentication no" in ssh_configuration
 
 
-def test_RealOrchestrationCreatesExportsObservesAndDestroys(tmp_path: Path) -> None:
+@pytest.mark.parametrize("explicit_sizing", [False, True])
+def test_RealOrchestrationCreatesExportsObservesAndDestroys(tmp_path: Path, explicit_sizing: bool) -> None:
     """Exercise the complete controller flow with real durable state and isolated cloud/guest fakes."""
 
-    project = Project(tmp_path)
+    project = SizedProject(tmp_path) if explicit_sizing else Project(tmp_path)
     cloud = FakeCloud(project)
     deployed = Run(project, "deploy", cloud)
 

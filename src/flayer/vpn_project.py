@@ -65,7 +65,7 @@ from flayer.profiles.vpn import (
 from flayer.providers.contracts import ProviderResource, ResourceKind, ResourceReference
 from flayer.providers.lifecycle import JsonValue, ResourceSpec
 from flayer.providers.yandex import YandexCloudSettings
-from flayer.providers.yandex_lifecycle import YandexLifecycleProvider
+from flayer.providers.yandex_lifecycle import ValidateComputeShape, YandexLifecycleProvider
 
 ADMIN_USERNAME = "flayer-admin"
 MAX_SERIAL_BYTES = 1024 * 1024
@@ -86,6 +86,16 @@ zone_id = "ru-central1-a"
 image_id = "replace-with-ubuntu-2404-amd64-image-id"
 subnet_cidr = "10.42.0.0/24"
 management_cidrs = ["198.51.100.42/32"] # Replace with your current public IPv4 address.
+
+# Optional explicit sizing: uncomment the entire block before prepare.
+# Confirm regional availability and image minimum disk size first.
+# [resources]
+# platform_id = "standard-v3"
+# cores = 2
+# core_fraction = 50
+# memory_gib = 2
+# disk_size_gib = 10
+# disk_type = "network-hdd"
 
 [routes]
 mode = "full"
@@ -172,6 +182,36 @@ def _PublicKey(content: bytes) -> str:
 
 
 @dataclass(frozen=True, slots=True)
+class VpnResources:
+    """Explicit initial server sizing; absence preserves the legacy project contract."""
+
+    platform_id: str
+    cores: int
+    core_fraction: int
+    memory_gib: int
+    disk_size_gib: int
+    disk_type: str
+
+    def __post_init__(self) -> None:
+        """Reject unsupported resource requests before key generation or cloud access."""
+
+        try:
+            ValidateComputeShape({
+                "platform_id": self.platform_id, "cores": self.cores,
+                "core_fraction": self.core_fraction, "memory_gib": self.memory_gib,
+            })
+
+            if type(self.disk_size_gib) is not int or not 10 <= self.disk_size_gib <= 1024:
+                raise ValueError("disk_size_gib must be an integer between 10 and 1024")
+
+            if self.disk_type not in ("network-hdd", "network-ssd"):
+                raise ValueError("disk_type must be network-hdd or network-ssd")
+
+        except ValueError as error:
+            raise VpnError(str(error)) from None
+
+
+@dataclass(frozen=True, slots=True)
 class VpnProject:
     """Validated public project intent with explicit private local storage references."""
 
@@ -181,15 +221,19 @@ class VpnProject:
     amneziawg: AmneziaWgSettings
     vless: VlessRealitySettings
     ssh_public_key: str = field(repr=False)
+    resources: VpnResources | None = None
 
     def Fingerprint(self) -> str:
         """Bind prepared material to all public project settings without persisting secrets."""
 
-        payload = {
+        payload: dict[str, object] = {
             "vpn": asdict(self.vpn), "cloud": asdict(self.cloud),
             "amneziawg": asdict(self.amneziawg), "vless": asdict(self.vless),
             "ssh_public_key": self.ssh_public_key,
         }
+
+        if self.resources is not None:
+            payload["resources"] = asdict(self.resources)
 
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
 
@@ -277,7 +321,7 @@ def LoadVpnProject(directory: str | Path) -> VpnProject:
         data = tomllib.loads(ReadPrivate(root / "project.toml").decode("utf-8"))
         ValidateFields(data, frozenset({
             "schema_version", "identity", "cloud", "routes", "devices", "amneziawg", "vless",
-        }), frozenset(), "VPN project")
+        }), frozenset({"resources"}), "VPN project")
         ValidateSchemaVersion(data["schema_version"])
         cloud = _Table(data, "cloud", frozenset({"yc_profile", "zone_id", "image_id", "subnet_cidr", "management_cidrs"}))
         awg = _Table(data, "amneziawg", frozenset({"port", "tunnel_cidr"}))
@@ -313,6 +357,21 @@ def LoadVpnProject(directory: str | Path) -> VpnProject:
             cast(str, cloud["yc_profile"]), cast(str, cloud["zone_id"]), cast(str, cloud["image_id"]),
             cast(str, cloud["subnet_cidr"]), tuple(cloud["management_cidrs"]),
         )
+        resources = None
+
+        if "resources" in data:
+            sizing = _Table(data, "resources", frozenset({
+                "platform_id", "cores", "core_fraction", "memory_gib", "disk_size_gib", "disk_type",
+            }))
+            resources = VpnResources(
+                cast(str, sizing["platform_id"]), cast(int, sizing["cores"]),
+                cast(int, sizing["core_fraction"]), cast(int, sizing["memory_gib"]),
+                cast(int, sizing["disk_size_gib"]), cast(str, sizing["disk_type"]),
+            )
+
+            if placement.zone_id.startswith("kz1-") and resources.platform_id != "standard-v3":
+                raise VpnError("Kazakhstan VPN deployments require platform_id standard-v3")
+
         settings = AmneziaWgSettings(awg["tunnel_cidr"])
 
         if ipaddress.IPv4Network(settings.tunnel_cidr).overlaps(ipaddress.IPv4Network(placement.subnet_cidr)):
@@ -320,7 +379,7 @@ def LoadVpnProject(directory: str | Path) -> VpnProject:
 
         return VpnProject(
             root, vpn, placement, settings, VlessRealitySettings(vless["target_host"], vless["server_name"]),
-            _PublicKey(ReadPrivate(root / "admin-key.pub")),
+            _PublicKey(ReadPrivate(root / "admin-key.pub")), resources,
         )
 
     except (ValueError, RecursionError) as error:
@@ -526,13 +585,22 @@ def CompileVpnProject(project: VpnProject) -> DeploymentPlan:
     rules.append({"direction": "egress", "protocol": "any", "cidr": "0.0.0.0/0"})
     Add("firewall", ResourceKind.SECURITY_GROUP, ("network",), {"network_dependency": "network", "rules": rules})
     Add("address", ResourceKind.ADDRESS, (), {"zone_id": project.cloud.zone_id})
-    Add("boot-disk", ResourceKind.DISK, (), {"zone_id": project.cloud.zone_id, "image_id": project.cloud.image_id, "size_gib": 20})
-    Add("instance", ResourceKind.INSTANCE, ("subnet", "firewall", "address", "boot-disk"), {
+    disk: dict[str, object] = {"zone_id": project.cloud.zone_id, "image_id": project.cloud.image_id, "size_gib": 20}
+    instance: dict[str, object] = {
         "zone_id": project.cloud.zone_id, "cores": 2, "memory_gib": 2, "boot_disk_dependency": "boot-disk",
         "subnet_dependency": "subnet", "security_group_dependency": "firewall", "address_dependency": "address",
         "ssh_public_key": project.ssh_public_key, "ssh_username": ADMIN_USERNAME, "user_data_file": str(path),
         "user_data_sha256": hashlib.sha256(actual).hexdigest(),
-    })
+    }
+
+    if project.resources is not None:
+        sizing = project.resources
+        disk.update(size_gib=sizing.disk_size_gib, type=sizing.disk_type)
+        instance.update(cores=sizing.cores, memory_gib=sizing.memory_gib,
+                        platform_id=sizing.platform_id, core_fraction=sizing.core_fraction)
+
+    Add("boot-disk", ResourceKind.DISK, (), disk)
+    Add("instance", ResourceKind.INSTANCE, ("subnet", "firewall", "address", "boot-disk"), instance)
 
     return DeploymentPlan(project.vpn.identity, tuple(resources))
 

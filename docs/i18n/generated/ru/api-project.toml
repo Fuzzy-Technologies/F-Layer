@@ -168,12 +168,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.VpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:7db99930a2302c2376c426b711992122a549e40a0789d3031293c58782788f78"
+sourceHash = "sha256:32e33303eedcc2567f27e7d99dadfa2f28902549b5600a8c0ecad76af7b1ed32"
 body = "Проверенные публичные настройки проекта с явными ссылками на закрытое локальное хранилище."
 reviewedTranslationHash = "sha256:64005de575d0ce0887b3c2f082ea8ef55c8f5b20f05f436449c276acdf7cdd98"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.488134+00:00"
+reviewedAt = "2026-10-10T18:28:30Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]

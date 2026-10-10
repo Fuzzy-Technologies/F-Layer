@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/yandex-lifecycle.md"
-sourceHash = "sha256:a3b974737f2187fad1ab332e2acbcf03da061c5b6859e66aff7f5a842c943b75"
-reviewedTranslationHash = "sha256:f6b05cf83ffabfe6dd06f187bfaf7ec24cc6381a4589973224ef9880cb52d1cc"
+sourceHash = "sha256:22e7de72b114d7a706d35dc29f5a9c854bd683f8c64a11dae7068fb7f54be504"
+reviewedTranslationHash = "sha256:c129ef43fd5a04e356dbba221a797ac02e4982540924078fa0d38fb9a82a7a93"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
+reviewedAt = "2026-10-10T20:56:54Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # Yandex 生命周期适配器
@@ -42,6 +42,12 @@ TCP/UDP 端口范围。此版本不支持任意描述、厂商扩展选项和 IP
 SSH 公钥必须是结构有效的 OpenSSH Ed25519 或 RSA 编码；RSA 模数为
 2048–16384 位。可选注释不传入 CLI 元数据。任何选项都不接受私钥内容。
 
+不带端口的 `any` 规则会转换为 `yc` 参数 `from-port=0,to-port=65535`，
+因为 CLI 即使对该协议也要求明确选择端口。这仅改变命令参数，不改变配置、
+期望状态摘要或归属标签；TCP/UDP 保留配置中的范围。使用 Yandex CLI 1.40.0
+和不可达的本地端点，已重现原有缺少端口的错误，并确认修正后的规则通过解析。
+此过程未访问云端。这是解析器验证，不是云端部署验收。
+
 ## 资源归属与恢复
 
 适配器附加 `managed-by`、`flayer-project`、`flayer-stack`、`flayer-owner`、
@@ -62,6 +68,12 @@ CLI 命名配置和 JSON 输出，关闭浏览器认证，设置 `--retry 0`，�
 
 只读预检失败明确标为尚未提交，使核心可以安全回滚此前创建的资源。不确定的变更
 错误还将继承的 `retryable` 建议改为 false；超时类别本身不允许盲目重试。
+
+升级适配器不会清除已有日志中的不确定状态。旧日志没有保存原始 CLI 拒绝
+信息或权威的操作结果。请保留项目、状态快照和日志；在继续变更前检查待处理
+资源及原始私有 CLI 日志。仅凭资源列表为空，不能授权重新提交、编辑日志或
+创建替代项目。当前 `recover` 只有找到准确匹配归属的待处理资源才能继续；
+尚未实现根据已记录拒绝结果自动恢复。
 
 `DeleteResource` 刷新精确保存的资源 ID，检查完整部署归属和逻辑 ID。回滚还传入
 预期操作标识，适配器在删除前再次验证。引用已不存在即视为已删除。发出删除后，

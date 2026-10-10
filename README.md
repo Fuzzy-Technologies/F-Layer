@@ -33,6 +33,25 @@ you pay the cloud provider for resources and traffic.
 
 ## Quick Start
 
+### Deploy with an AI assistant
+
+Give an assistant with terminal access this task:
+
+> Deploy my self-hosted VPN using F-Layer: https://github.com/Fuzzy-Technologies/F-Layer.
+> Read its AI operator guide and use documentation matching the installed package.
+> Ask for my cloud, region and devices. Install a verified package, prepare a
+> private project and show the resources, access rules, costs and cleanup plan.
+> Obtain my approval before creating paid resources. Deploy through F-Layer's
+> public CLI, help import the client profiles, and verify actual traffic.
+> Keep secrets local and report what passed, what remains untested and how to
+> remove the deployment.
+
+The [AI operator guide](https://fuzzy-technologies.github.io/F-Layer/en/guide/ai-operator/)
+covers the full workflow. The assistant supplies your choices and runs F-Layer;
+F-Layer supplies the configuration, deployment lifecycle and client artifacts.
+
+### Deploy manually
+
 **Outcome:** a server in your Yandex Cloud folder and private connection files
 you can import on your devices. Finish by checking real traffic through each protocol.
 
@@ -43,7 +62,7 @@ permissions in your chosen folder. Use an Ubuntu 24.04 **amd64** server image.
 Git and Docker are not required to run the package. Windows can run local
 package diagnostics; VPN deployment runs inside Linux/WSL.
 
-### 1. Install and check
+#### 1. Install and check
 
 Create and activate a virtual environment in Linux/WSL:
 
@@ -84,7 +103,7 @@ flayer check --format json
 Expected: `"status": "ok"` and exit code `0`. This checks the local installation;
 it does not contact the cloud or test VPN connectivity.
 
-### 2. Create your project
+#### 2. Create your project
 
 ```bash
 flayer project init ~/flayer-vpn
@@ -119,7 +138,7 @@ See [configuration](https://fuzzy-technologies.github.io/F-Layer/en/guide/config
 for supported combinations. Keep the project outside Git and shared folders;
 in WSL, use its Linux filesystem rather than `/mnt/c`.
 
-### 3. Prepare and deploy
+#### 3. Prepare and deploy
 
 `prepare` generates local keys and artifacts without cloud calls. After this
 step, keep the configuration unchanged and retain the project directory.
@@ -140,7 +159,7 @@ Expected: owned cloud resources, both server services reported as
 `services-active`, and per-device files under `~/flayer-vpn/artifacts/`.
 Server status alone does not prove that a client can access the Internet.
 
-### 4. Connect a device
+#### 4. Connect a device
 
 The client guide uses **AmneziaVPN 5.0.3.0 on Android**. For the template's
 `laptop` device, find these files inside your project:
@@ -178,23 +197,6 @@ remain on disk. Disconnecting a client does not remove billable cloud resources.
 projects are immutable; in-place resizing, device addition/revocation and key
 rotation are not available through the VPN CLI. Changing these settings requires
 a new project and the documented lifecycle for the old deployment.
-
-## Deploy with an AI assistant
-
-Give an assistant with terminal access this task:
-
-> Deploy my self-hosted VPN using F-Layer: https://github.com/Fuzzy-Technologies/F-Layer.
-> Read its AI operator guide and use documentation matching the installed package.
-> Ask for my cloud, region and devices. Install a verified package, prepare a
-> private project and show the resources, access rules, costs and cleanup plan.
-> Obtain my approval before creating paid resources. Deploy through F-Layer's
-> public CLI, help import the client profiles, and verify actual traffic.
-> Keep secrets local and report what passed, what remains untested and how to
-> remove the deployment.
-
-The [AI operator guide](https://fuzzy-technologies.github.io/F-Layer/en/guide/ai-operator/)
-covers the full workflow. The assistant supplies your choices and runs F-Layer;
-F-Layer supplies the configuration, deployment lifecycle and client artifacts.
 
 ## Explore further
 

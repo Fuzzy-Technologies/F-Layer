@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/vless-reality.md"
-sourceHash = "sha256:7217d9787ae1c1413d1adc34897f29d080acfebcf5d2fe303b6d8028b918afde"
-reviewedTranslationHash = "sha256:6a17295f447ec01aa1617e17edf32a5c43da34f694d6cad8bb9617bf912bb7bd"
+sourceHash = "sha256:26f09c7dab74f2040a6079edf5459dd49a692d6bd489bc4404d6e7abac30f0ae"
+reviewedTranslationHash = "sha256:a2a51bd3115747c5a1ffb9626c9bbb97c09079fb2228782396389b06326563c9"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-10T00:16:02.343621+00:00"
+reviewedAt = "2026-10-10T00:19:13.689033+00:00"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # VLESS Reality 网关
@@ -22,7 +22,7 @@ VPN/TUN 模式，并检查路由和 DNS 设置。
 
 使用 amd64 或 arm64 架构的 Ubuntu 24.04。虚拟机需要 Python 3、systemd，
 能够通过 HTTPS 下载 GitHub 发布资产，并且能够访问选定的 Reality 目标。
-F-Layer 安装官方 **Xray 26.3.27 稳定版**，为每种架构固定各自的 SHA-256 摘要。
+F-Layer 安装官方 **Xray 26.9.30 版本（上游标记为预发布）**，为每种架构固定各自的 SHA-256 摘要。
 它不会运行下载的 shell 安装脚本、使用未固定版本的容器或选择会变化的 `latest` 版本。
 
 部署使用的云安全组和虚拟机防火墙必须允许配置的客户端网络访问选定的 TCP 端口。
@@ -34,6 +34,18 @@ TLS 1.3 服务器，其证书对 `server_name` 有效；请参考
 F-Layer 校验这些设置的语法。修改虚拟机服务前，安装程序会从该虚拟机检查目标：
 必须完成证书有效的 TLS 1.3 握手并协商使用 HTTP/2。握手失败会终止安装，
 并报告目标预检错误。目标或网络条件变化后，请重新检查。
+
+固定版本将 Reality 的 TLS 记录缓冲区从 8192 字节增大至 17 KiB，修复了
+[上游问题 #6356](https://github.com/XTLS/Xray-core/issues/6356)。
+amd64 和 arm64 压缩包的 SHA-256 均依据官方发布资产及 `.dgst` 文件固定。
+选择此上游预发布版本是为了解决兼容性问题；仍须对确切的候选构建进行实机验收。
+
+TLS 1.3/HTTP2 预检仅验证目标的 TLS 属性，不验证经过身份认证的 Reality 连接。
+`services-active` 仅表示本机服务正常运行。CLI 的 JSON 字段 `connectivity_status`
+（文本输出为 `connectivity`）保持为 `not-verified`，命令不会据此将流量测试标为通过。
+请通过导出的客户端使用远程 DNS（`socks5h`）发送 HTTPS 请求，核对出口地址，
+并验证 Android 的实际流量。更换目标或 Xray 版本后须重新检查；
+仅替换示例目标不能证明连接已就绪。
 
 ## 私密文件
 
@@ -120,7 +132,7 @@ DNS 策略。导入 [v2rayN](https://github.com/2dust/v2rayN) 或
 单元测试涵盖凭据隔离、导入字段、分流路由、错误设置、哈希校验、恶意压缩包条目、
 拒绝未授权替换、安装失败清理、拒绝私密文件链接以及安装程序入口。
 `FLAYER_XRAY_BINARY` 可启用专项测试，把生成的服务器和客户端配置交给经过
-摘要校验的实际 Xray 26.3.27 程序检查。
+摘要校验的实际 Xray 26.9.30 程序检查。
 CI 还使用静态 DNS 应答和仅监听环回地址的测试端点验证实际路由行为：
 允许公共双栈域名和 IPv4 目标，继续阻止私有地址、元数据地址及 IPv6 目标。
 这些路由测试不验证 Reality 握手或外部 DNS 服务。
@@ -130,8 +142,8 @@ CI 还使用静态 DNS 应答和仅监听环回地址的测试端点验证实际
 
 ## 上游参考资料
 
-- [固定的 Xray 版本](https://github.com/XTLS/Xray-core/releases/tag/v26.3.27)
-- [对应版本的 Reality 配置解析器](https://github.com/XTLS/Xray-core/blob/v26.3.27/infra/conf/transport_internet.go)
+- [固定的 Xray 版本](https://github.com/XTLS/Xray-core/releases/tag/v26.9.30)
+- [对应版本的 Reality 配置解析器](https://github.com/XTLS/Xray-core/blob/v26.9.30/infra/conf/transport_internet.go)
 - [VLESS 入站配置](https://xtls.github.io/en/config/inbounds/vless.html)
 - [VLESS 出站配置](https://xtls.github.io/en/config/outbounds/vless.html)
 '''

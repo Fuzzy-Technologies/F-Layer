@@ -234,6 +234,7 @@ def test_RealOrchestrationCreatesExportsObservesAndDestroys(tmp_path: Path) -> N
     deployed = Run(project, "deploy", cloud)
 
     assert deployed.status == "complete" and deployed.guest_status == "services-active"
+    assert deployed.connectivity_status == "not-verified"
     assert len(cloud.created) == 6 and len(FakeGuest.instances[-1].installations) == 1
     assert PUBLIC_KEY.encode() in FakeGuest.instances[-1].trust
     assert deployed.client_exports == ("artifacts/device-laptop-amneziawg", "artifacts/device-laptop-vless-reality")
@@ -247,6 +248,7 @@ def test_RealOrchestrationCreatesExportsObservesAndDestroys(tmp_path: Path) -> N
     observed = Run(project, "status", cloud)
 
     assert observed.status == "complete" and not FakeGuest.instances[-1].installations
+    assert observed.connectivity_status == "not-verified"
     destroyed = Run(project, "destroy", cloud)
 
     assert destroyed.status == "complete" and not cloud.resources

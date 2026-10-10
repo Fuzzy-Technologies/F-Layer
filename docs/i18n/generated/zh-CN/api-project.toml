@@ -201,12 +201,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.VpnProjectReport"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:ef45a0eb32edd24e9f2ff903d5d76bc9f1d42294867a30ed7b98e270ea73ba0d"
+sourceHash = "sha256:1b3e9135233b373da1de90f80dd768637e76713d1804ffc7b91d137fc21729e7"
 body = "经过脱敏的生命周期及来宾系统观测结果，不包含传输凭据材料或提供方原始输出。"
 reviewedTranslationHash = "sha256:f95b2d695087856cee1ed7b7617bc0587aeb39c7f42decf249cb30c5fffbf950"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
+reviewedAt = "2026-10-10T00:23:17.700958+00:00"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]

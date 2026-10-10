@@ -22,10 +22,10 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
-XRAY_VERSION = "26.3.27"
+XRAY_VERSION = "26.9.30"
 ARCHIVES = {
-    "x86_64": ("Xray-linux-64.zip", "23cd9af937744d97776ee35ecad4972cf4b2109d1e0fe6be9930467608f7c8ae"),
-    "aarch64": ("Xray-linux-arm64-v8a.zip", "4d30283ae614e3057f730f67cd088a42be6fdf91f8639d82cb69e48cde80413c"),
+    "x86_64": ("Xray-linux-64.zip", "f851110beaff16e78d643f0ccfd9524b4a44dfd59bae3e34bb52bba378f7690e"),
+    "aarch64": ("Xray-linux-arm64-v8a.zip", "9886f077f9fd8e6713b84c377c1c7db4e53b9bfa8c276a5bd12561139522b473"),
 }
 _ROOT_UID = 0
 BASE = Path("/opt/flayer/vless")

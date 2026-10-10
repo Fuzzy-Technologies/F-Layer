@@ -201,12 +201,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.VpnProjectReport"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:ef45a0eb32edd24e9f2ff903d5d76bc9f1d42294867a30ed7b98e270ea73ba0d"
+sourceHash = "sha256:1b3e9135233b373da1de90f80dd768637e76713d1804ffc7b91d137fc21729e7"
 body = "Очищенные результаты управления ресурсами и проверки гостевой системы без данных VPN и вывода провайдера."
 reviewedTranslationHash = "sha256:525919f0127aef3ad90f116b16436514ee3b43dd631d24d1dc197fe110aeef6e"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.488181+00:00"
+reviewedAt = "2026-10-10T00:23:17.699567+00:00"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]

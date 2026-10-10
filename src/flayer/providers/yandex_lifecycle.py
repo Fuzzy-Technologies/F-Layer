@@ -588,6 +588,24 @@ class YandexLifecycleProvider(YandexCloudProvider):
 
         return tuple(arguments)
 
+    def _CommandFailure(
+        self, arguments: tuple[str, ...], result: CommandResult, operation: str,
+    ) -> ProviderError:
+        """Recognize only proven local parser refusals, never generic RPC error categories."""
+
+        if result.return_code == 1 and not result.stdout.strip() and operation == "create":
+            message = result.stderr.strip()
+            unknown_flag = re.fullmatch(r"ERROR: execute command: unknown flag: (--[a-z][a-z0-9-]*)", message)
+            rule_rejection = (
+                arguments[:3] == ("vpc", "security-group", "create")
+                and message == "ERROR: execute command: run command: for rule spec port or [from/to]-port fields is required"
+            )
+
+            if rule_rejection or (unknown_flag is not None and unknown_flag[1] in arguments):
+                return MutationError(ProviderErrorCode.UNSUPPORTED, operation, False)
+
+        return super()._CommandFailure(arguments, result, operation)
+
     def _MutationRun(self, arguments: tuple[str, ...], operation: str) -> CommandResult:
         """Never retry a dispatched mutation or retain raw runner exceptions in the error."""
 
@@ -599,6 +617,9 @@ class YandexLifecycleProvider(YandexCloudProvider):
 
         except ProviderError as error:
             code = error.code
+
+            if isinstance(error, MutationError):
+                outcome_unknown = error.outcome_unknown
 
         except Exception:
             code = ProviderErrorCode.COMMAND_FAILED

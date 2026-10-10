@@ -211,6 +211,7 @@ class VpnProjectReport:
     client_exports: tuple[str, ...] = ()
     recovery_required: bool = False
     details: str = ""
+    connectivity_status: str = "not-verified"
 
     def ExitCode(self) -> int:
         """Treat incomplete cloud or guest operations as unsuccessful without claiming connectivity."""
@@ -723,4 +724,4 @@ def RunVpnProject(
                 exports.append(str(directory.relative_to(project.root)))
 
     return VpnProjectReport(action, "complete", "complete", "services-active", tuple(exports),
-                            details="Guest services are active; client import and end-to-end traffic still need verification")
+                            details="Guest services are active; authenticated client traffic, DNS and Internet access are not verified")

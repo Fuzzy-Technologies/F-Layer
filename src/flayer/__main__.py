@@ -172,7 +172,8 @@ def _VpnProject(args: argparse.Namespace) -> int:
         return 2
 
     print(json.dumps(asdict(report), sort_keys=True) if args.format == "json" else
-          f"VPN {report.action}: {report.status}; cloud={report.cloud_status}; guest={report.guest_status}. {report.details}")
+          f"VPN {report.action}: {report.status}; cloud={report.cloud_status}; guest={report.guest_status}; "
+          f"connectivity={report.connectivity_status}. {report.details}")
 
     for export in report.client_exports if args.format == "text" else ():
         print(f"Client files: {export}")

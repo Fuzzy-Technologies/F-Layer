@@ -28,7 +28,7 @@ from flayer.profiles.vpn import (
 VLESS_TRANSPORT = "vless-reality"
 VLESS_FLOW = "xtls-rprx-vision"
 VLESS_CAPABILITIES = VpnCapabilities(VLESS_TRANSPORT, "application-proxy", ("full", "split"))
-XRAY_VERSION = "26.3.27"
+XRAY_VERSION = "26.9.30"
 _HOST = re.compile(r"[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?\Z")
 
 

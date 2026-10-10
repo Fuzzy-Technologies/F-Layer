@@ -56,6 +56,14 @@ its current clients. The installer rejects different input for an existing
 deployment; this workflow does not yet support server-side credential rotation
 or revocation through configuration replacement.
 
+Installer generation canonicalizes CRLF to LF, so Windows checkouts and Linux
+packages produce the same bytes. Project retries accept a legacy CRLF `install.py`
+only after validating its original ownership and manifest and comparing its
+LF-normalized content with the current installer. Retained files, manifests, and
+credentials are not rewritten. Other files and actual installer changes still
+require exact content; newline compatibility cannot repair an uncertain cloud
+operation journal.
+
 `PrepareVless()` produces these files:
 
 | Bundle | File              | Purpose                                             |

@@ -55,6 +55,18 @@ disk_type = "network-hdd"
     assert (project / "artifacts" / "server-gateway-vless-reality" / "install.py").is_file()
     assert not (project / "state.json").exists(), "Offline installed preparation must not create cloud state"
     assert not tuple((project / "artifacts").glob("device-*")), "Unallocated example endpoints must never become client exports"
+    before = {path: path.read_bytes() for path in project.rglob("*") if path.is_file()}
+    _Run([str(python), "-c", (
+        "from importlib.resources import files\n"
+        "resource = files('flayer.profiles').joinpath('_vless_guest.py')\n"
+        "resource.write_bytes(resource.read_bytes().replace(b'\\r\\n', b'\\n').replace(b'\\n', b'\\r\\n'))\n"
+    )], tmp_path)
+    repeated = json.loads(_Run(
+        [str(console), "vpn", "prepare", "--project", str(project), "--format", "json"], tmp_path,
+    ))
+
+    assert repeated["status"] == "complete", "A CRLF packaged resource prevented installed project reuse"
+    assert before == {path: path.read_bytes() for path in project.rglob("*") if path.is_file()}, "Cross-package retry modified retained project artifacts"
     plan = json.loads(_Run([str(python), "-c", (
         "import json, sys\n"
         "from flayer.vpn_project import LoadVpnProject, CompileVpnProject\n"

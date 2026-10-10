@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/vless-reality.md"
-sourceHash = "sha256:52e5dc9f470e9719f1b6157fecdb111bbf05babdbb348f908f20d2db4fca309b"
-reviewedTranslationHash = "sha256:96dc0c9d2ab79284c9ed16f295c87d73d4464c2b96685c2203cf468b38088f49"
+sourceHash = "sha256:743512d8204b247514440bcf552de4a55792bbdc40d918ffd9b73f4bedd0e85a"
+reviewedTranslationHash = "sha256:be0decc7603d25d1c474243882817e3199814a984caac58f81a223c4a2591e71"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-10T00:27:09Z"
+reviewedAt = "2026-10-10T21:44:34Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # VLESS Reality 网关
@@ -55,6 +55,12 @@ TLS 1.3/HTTP2 预检仅验证目标的 TLS 属性，不验证经过身份认证�
 凭据。在控制端重新生成密钥和 UUID 不会改变已部署的服务器，也不会撤销现有
 客户端的访问权限。安装程序会拒绝使用不同的输入替换现有部署。此流程尚不支持
 通过替换服务器配置来轮换或撤销凭据。
+
+生成安装程序时会将 CRLF 统一为 LF，因此 Windows 检出和 Linux 软件包生成相同的字节。
+重试项目时，只有先验证原始所有权和清单，再确认转换为 LF 后的内容与当前安装程序
+完全相同，才会接受旧版使用 CRLF 的 `install.py`。不会重写已保存的文件、清单或凭据。
+其他文件以及安装程序的实际内容变更仍须精确匹配；换行符兼容处理不能修复结果
+不确定的云操作日志。
 
 `PrepareVless()` 生成以下文件：
 

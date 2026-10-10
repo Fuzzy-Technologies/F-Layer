@@ -38,9 +38,20 @@ The adapter attaches `managed-by`, `flayer-project`, `flayer-stack`, `flayer-own
 
 `CreateResource` executes at most one create command after validation and discovery. Every create command carries an explicit folder/profile, JSON output, disabled browser authentication and `--retry 0`, and executes without a shell under the configured deadline. Successful output must match scope, ownership, operation and requested name/zone.
 
-Every dispatched failure is uncertain, including a timeout, malformed successful output or transport failure. A single inventory absence after timeout does not authorize another create. The core's durable journal controls explicit recovery and never blindly recreates an unresolved orphan.
+By default, a dispatched failure is uncertain, including a timeout, malformed successful output or transport failure. A single inventory absence after timeout does not authorize another create. The core's durable journal controls explicit recovery and never blindly recreates an unresolved orphan.
 
 Read-only preflight failures are explicitly classified as not submitted, so the core can roll back earlier creations safely. Uncertain mutation errors also override the inherited `retryable` recommendation to false; their timeout category does not permit a blind retry.
+
+Local CLI parser rejection is a bounded exception. With exit code 1 and empty
+stdout, the adapter recognizes only the exact missing-port security-group error
+and an exact unknown-flag error naming an argument in this create command. These
+pre-RPC signatures were reproduced with `yc` 1.40.0 against an unreachable
+loopback endpoint. They return `outcome_unknown=False`, allowing the existing
+core rollback to remove only this operation's verified creations. A successful
+`rolled-back` result permits a later explicit deployment attempt; incomplete
+rollback retains its journal for `recover --rollback`. Raw CLI output is discarded.
+Quota/RPC errors, unmatched text, nonempty stdout, timeouts, and lost responses
+remain uncertain; no substring or inventory-absence heuristic authorizes retry.
 
 Upgrading the adapter does not clear an existing uncertain journal. Older journals
 do not retain the original CLI rejection or an authoritative operation result.

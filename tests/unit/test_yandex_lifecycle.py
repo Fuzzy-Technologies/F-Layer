@@ -15,6 +15,8 @@ from unittest.mock import Mock
 import pytest
 
 from flayer.core.contracts import StackIdentity
+from flayer.core.lifecycle import DeploymentPlan, LifecycleEngine
+from flayer.core.state import LoadState
 from flayer.providers.contracts import (
     ProviderCapability,
     ProviderError,
@@ -30,6 +32,7 @@ ZONE = "example-zone"
 OPERATION_ID = "a" * 32
 KEY_BYTES = b"\x00\x00\x00\x0bssh-ed25519\x00\x00\x00\x20" + b"x" * 32
 PUBLIC_KEY = "ssh-ed25519 " + base64.b64encode(KEY_BYTES).decode("ascii")
+RULE_REJECTION = "ERROR: execute command: run command: for rule spec port or [from/to]-port fields is required\n"
 
 
 class RecordingRunner:
@@ -279,6 +282,88 @@ def test_IdempotentOwnedDiscoveryPreventsSecondCreate() -> None:
 
     assert first == second, "Idempotent creation changed a stable resource reference"
     assert sum(command[3] == "create" for command in runner.calls) == 1, "Resource was duplicated"
+
+
+@pytest.mark.parametrize("stderr", [RULE_REJECTION, "ERROR: execute command: unknown flag: --rule\n"])
+@pytest.mark.parametrize("preexisting", [False, True])
+@pytest.mark.parametrize("cleanup_failure", [False, True])
+def test_LocalCliRejectionRollsBackOwnedProgressAndAllowsExplicitRetry(
+    tmp_path: Path, stderr: str, preexisting: bool, cleanup_failure: bool,
+) -> None:
+    """A proven pre-RPC failure must not strand paid resources behind uncertain intent."""
+
+    class RejectingRunner(RecordingRunner):
+        """Refuse one local security-rule parse without allocating its resource."""
+
+        rejection: str | None = stderr
+
+        def Run(self, command: tuple[str, ...], timeout: float) -> CommandResult:
+            """Keep all successful operations real to the fake cloud's ownership contract."""
+
+            if command[1:4] == ("vpc", "security-group", "create") and self.rejection is not None:
+                self.calls.append(command)
+
+                return CommandResult(1, stderr=self.rejection)
+
+            return super().Run(command, timeout)
+
+    runner = RejectingRunner()
+    provider = YandexLifecycleProvider(YandexCloudSettings("test-folder"), runner)
+    original = provider.CreateResource(Specs()[0], IDENTITY, {}, "b" * 32) if preexisting else None
+
+    if cleanup_failure:
+        runner.overrides["delete"] = subprocess.TimeoutExpired("synthetic-secret-command", 45)
+
+    state_path = tmp_path / "state.json"
+    engine = LifecycleEngine(DeploymentPlan(IDENTITY, Specs()), provider, state_path)
+    report = engine.Create()
+
+    if cleanup_failure:
+        assert report.status == "rollback-incomplete" and report.recovery_required, "Interrupted cleanup lost its recovery intent"
+        runner.overrides.clear()
+        report = engine.Recover(rollback=True)
+
+    state = LoadState(state_path, IDENTITY)
+
+    assert report.status == "rolled-back" and not report.recovery_required, "Local parser failure poisoned the journal"
+    assert state is not None and len(state.resources) == int(preexisting), "Rollback did not preserve exactly the preexisting resources"
+    assert not state_path.with_name(".state.json.operation.json").exists(), "Completed rollback retained a pending create"
+    assert len(runner.resources) == int(preexisting), "Failed deployment left newly allocated resources"
+
+    if original is not None:
+        assert provider.GetResource(original.reference) == original, "Rollback touched a preexisting resource"
+
+    runner.rejection = None
+
+    assert engine.Create().status == "complete", "Explicit retry after rollback remained blocked"
+    assert len(runner.resources) == 6, "Retry duplicated or omitted a resource"
+
+
+@pytest.mark.parametrize("stdout,stderr,kind,unknown", [
+    ("", RULE_REJECTION, "security-group", False),
+    ("", RULE_REJECTION.replace("\n", "\r\n"), "security-group", False),
+    ("", "ERROR: execute command: unknown flag: --rule\n", "security-group", False),
+    ("", RULE_REJECTION, "network", True),
+    ("accepted", RULE_REJECTION, "security-group", True),
+    ("", "rpc error: code = InvalidArgument desc = " + RULE_REJECTION, "security-group", True),
+    ("", RULE_REJECTION + "operation accepted\n", "security-group", True),
+    ("", "ERROR: execute command: unknown flag: --not-in-command\n", "security-group", True),
+    ("", "ResourceExhausted: quota exceeded", "security-group", True),
+])
+def test_RejectionClassificationRequiresExactLocalEvidence(
+    stdout: str, stderr: str, kind: str, unknown: bool,
+) -> None:
+    """Do not turn output fragments, RPC failures, or incompatible commands into rejection proof."""
+
+    provider, runner = Provider()
+    runner.overrides["create"] = CommandResult(1, stdout=stdout, stderr=stderr)
+
+    with pytest.raises(MutationError) as caught:
+        provider._MutationRun(("vpc", kind, "create", "--rule", "fixture"), "create")
+
+    assert caught.value.outcome_unknown is unknown, "Mutation outcome classification lost its proof boundary"
+    assert len(runner.calls) == 1, "Failed mutation was automatically retried"
+    assert stderr.strip() not in "".join(traceback.format_exception(caught.value)), "Raw CLI output leaked"
 
 
 @pytest.mark.parametrize("variation", ["duplicate", "digest", "name", "status", "zone"])

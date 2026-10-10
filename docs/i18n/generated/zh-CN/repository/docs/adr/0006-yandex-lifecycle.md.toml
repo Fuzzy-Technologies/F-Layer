@@ -1,5 +1,11 @@
 schemaVersion = 1
 sourcePath = "docs/adr/0006-yandex-lifecycle.md"
+sourceHash = "sha256:85ac02dbc23885ba5ab4f8cf4aa9c666053eccfc2821495eae93c6b7b316f4ae"
+reviewedTranslationHash = "sha256:5cf3d91742f2f85865336fe23bcfbc8fc44b3bb537c21dbc1542ea76f10b02a9"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-10T21:53:38Z"
+reviewRoles = ["editorial", "technical"]
 body = '''
 # ADR 0006：限定 Yandex 生命周期操作范围并明确启动磁盘归属
 
@@ -22,7 +28,7 @@ Yandex 虚拟机 CLI 可以隐式创建启动磁盘。但这种复合操作不�
 3. 支持由六种资源组成的有限图：网络、子网、安全组、静态 IPv4 地址、磁盘和虚拟机。依赖必须绑定到经过归属验证的精确资源引用，而不是名称或任意 CLI 选项。
 4. 将启动磁盘创建为独立的带标签资源。通过 `--use-boot-disk` 连接，并设置 `auto-delete=false`；由核心日志按依赖逆序清理。不得使用 `--create-boot-disk`。
 5. 附加完整资源栈归属、逻辑资源 ID、长度受限的期望规格摘要，以及持久化操作随机值。稳定发现检查规格摘要；回滚还必须在按精确 ID 删除前立即检查操作随机值。
-6. 将所有已经发出的修改请求失败视为 `MutationError(outcome_unknown=True)`。仅保留安全的稳定错误码。不得自动重试修改，也不得因为之后某一次资源清单中未找到对象，就认定失败的创建从未被接受。
+6. 默认将已发出修改命令的失败视为 `MutationError(outcome_unknown=True)`。任务 #95 的修订仅在退出码为 1 且 stdout 为空时识别两种精确的 RPC 前解析拒绝：安全组规则缺少端口，以及创建参数向量中存在的未知选项。仅凭这些限定证据返回 `outcome_unknown=False`，允许现有核心回滚执行。仅保留安全的稳定错误码。不得自动重试修改，也不得根据一般配额/RPC 错误或一次资源清单缺失认定请求未提交。
 7. 在观测和创建响应中验证准确目录和归属。仅在新的精确 ID 查找后删除，再通过一次有界查找确认缺失。无法确认的删除仍视为结果不确定。
 8. 仅接受调用方明确声明、不含秘密的 cloud-init JSON 文件，以及配对的 SHA256 摘要。访问云之前拒绝不安全文件或摘要不一致。通过 `--metadata-from-file` 传递私有临时副本，执行后删除，不在状态和错误消息中保存文件内容。
 
@@ -53,9 +59,3 @@ Yandex 虚拟机 CLI 可以隐式创建启动磁盘。但这种复合操作不�
 - [Yandex 虚拟机创建 CLI](https://yandex.cloud/en/docs/cli/cli-ref/compute/cli-ref/instance/create)
 - [Yandex 磁盘创建 CLI](https://yandex.cloud/en/docs/cli/cli-ref/compute/cli-ref/disk/create)
 '''
-sourceHash = "sha256:5eb3b038bc7dfd0ee87b545ee183e9ea04c5fe6123a0e4b7c3c228492a31bcf0"
-reviewedTranslationHash = "sha256:4410ff7c58290b9d9c81f5744aa623bff4bdfba82762ca75e40a2a66675e736c"
-reviewer = "AIna-Dev"
-reviewerType = "ai"
-reviewedAt = "2026-10-09T07:48:24.891591+00:00"
-reviewRoles = ["editorial", "technical"]

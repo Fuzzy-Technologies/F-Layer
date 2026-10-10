@@ -37,7 +37,15 @@ def test_InstalledVpnConsoleCreatesAndPreparesPrivateProject(
     configuration = project / "project.toml"
     configuration.write_text(configuration.read_text().replace(
         "replace-with-folder-id", "example-folder"
-    ).replace("replace-with-ubuntu-2404-amd64-image-id", "example-image"))
+    ).replace("replace-with-ubuntu-2404-amd64-image-id", "example-image") + '''
+[resources]
+platform_id = "standard-v3"
+cores = 2
+core_fraction = 50
+memory_gib = 2
+disk_size_gib = 10
+disk_type = "network-hdd"
+''')
     result = json.loads(_Run(
         [str(console), "vpn", "prepare", "--project", str(project), "--format", "json"], tmp_path,
     ))
@@ -47,3 +55,13 @@ def test_InstalledVpnConsoleCreatesAndPreparesPrivateProject(
     assert (project / "artifacts" / "server-gateway-vless-reality" / "install.py").is_file()
     assert not (project / "state.json").exists(), "Offline installed preparation must not create cloud state"
     assert not tuple((project / "artifacts").glob("device-*")), "Unallocated example endpoints must never become client exports"
+    plan = json.loads(_Run([str(python), "-c", (
+        "import json, sys\n"
+        "from flayer.vpn_project import LoadVpnProject, CompileVpnProject\n"
+        "project = LoadVpnProject(sys.argv[1])\n"
+        "print(json.dumps({item.logical_id: dict(item.parameters) "
+        "for item in CompileVpnProject(project).resources}))\n"
+    ), str(project)], tmp_path))
+
+    assert (plan["instance"]["platform_id"], plan["instance"]["core_fraction"]) == ("standard-v3", 50), "Installed wheel lost explicit compute sizing"
+    assert (plan["boot-disk"]["size_gib"], plan["boot-disk"]["type"]) == (10, "network-hdd"), "Installed wheel lost HDD sizing"

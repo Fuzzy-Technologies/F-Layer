@@ -1,0 +1,23 @@
+schemaVersion = 1
+
+[[units]]
+id = "symbol:flayer.providers.yandex_lifecycle.ValidateComputeShape"
+sourcePath = "src/flayer/providers/yandex_lifecycle.py"
+sourceHash = "sha256:121a6ba29c7f03b8bc3063a6ea3a5611075ee91c119c5c66b9d269691a6e45e1"
+body = "在不访问云账户的情况下校验受支持的 Intel 资源配置。"
+reviewedTranslationHash = "sha256:ab91a368880ca20171eeef470ca8ae899035b4cccb731921cf90eda0c5aaa8b9"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-10T18:28:30Z"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.vpn_project.VpnResources"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:0a871598e32b8e6bd5d1ffb0fa7593da73d54a953efbd9c2b934cc75c240aa93"
+body = "显式的新服务器资源设置；省略时保留旧项目契约。"
+reviewedTranslationHash = "sha256:f13fcda7911487f53bbce051156ba621d2b959a56b3909601e3292de205024f6"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-10T18:28:30Z"
+reviewRoles = ["editorial", "technical"]

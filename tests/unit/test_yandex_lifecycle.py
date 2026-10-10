@@ -886,3 +886,99 @@ def test_UnexpectedReadTransportErrorsAreAlwaysSanitized(phase: str) -> None:
 
     if phase == "delete-after":
         assert isinstance(caught.value, MutationError) and caught.value.outcome_unknown is True, "Post-delete transport failure lost uncertainty"
+
+
+@pytest.mark.parametrize("platform,fraction,cores,memory", [
+    ("standard-v1", 5, 2, 1), ("standard-v1", 100, 32, 128),
+    ("standard-v2", 5, 4, 1), ("standard-v2", 50, 4, 16),
+    ("standard-v3", 20, 2, 1), ("standard-v3", 50, 2, 2),
+    ("standard-v3", 100, 8, 32),
+])
+def test_ExplicitComputeShapeReachesVendorArguments(platform: str, fraction: int, cores: int, memory: int) -> None:
+    """Transmit valid bounded Intel shapes without relying on ambient yc defaults."""
+
+    provider, runner = Provider()
+    resources = CreateDependencies(provider)
+    spec = Specs()[-1]
+
+    for key, value in {"platform_id": platform, "core_fraction": fraction, "cores": cores, "memory_gib": memory}.items():
+        spec = ReplaceOption(spec, key, value)
+
+    provider.CreateResource(spec, IDENTITY, {key: resources[key] for key in spec.dependencies}, OPERATION_ID)  # type: ignore[arg-type]
+    command = next(item for item in runner.calls if item[2:4] == ("instance", "create"))
+
+    for flag, value in {"--platform": platform, "--core-fraction": str(fraction), "--cores": str(cores), "--memory": str(memory)}.items():
+        assert command[command.index(flag) + 1] == value, "Requested compute setting did not reach yc"
+
+
+@pytest.mark.parametrize("changes", [
+    {"platform_id": "standard-v3"}, {"core_fraction": 50},
+    {"platform_id": "standard-v1", "core_fraction": 50},
+    {"platform_id": "standard-v3", "core_fraction": 5},
+    {"platform_id": "standard-v3", "core_fraction": True},
+    {"platform_id": "standard-v3", "core_fraction": 50, "cores": 8},
+    {"platform_id": "standard-v3", "core_fraction": 100, "cores": 18},
+    {"platform_id": "standard-v3", "core_fraction": 100, "memory_gib": 3},
+    {"platform_id": "standard-v3", "core_fraction": 50, "memory_gib": 10},
+    {"platform_id": "standard-v1", "core_fraction": 100, "memory_gib": 18},
+    {"platform_id": "standard-v2", "core_fraction": 50, "zone_id": "kz1-a"},
+    {"platform_id": "standard-v3; echo secret", "core_fraction": 50},
+])
+def test_InvalidComputeCombinationsRejectBeforeCloudAccess(changes: dict[str, object]) -> None:
+    """Refuse incomplete, impossible and injected shape options before even a read call."""
+
+    provider, runner = Provider()
+    spec = Specs()[-1]
+
+    for key, value in changes.items():
+        spec = ReplaceOption(spec, key, value)
+
+    with pytest.raises(MutationError) as caught:
+        provider.CreateResource(spec, IDENTITY, {}, OPERATION_ID)
+
+    assert caught.value.outcome_unknown is False, "Invalid shape was marked as dispatched"
+    assert not runner.calls, "Invalid compute shape reached the provider transport"
+
+
+def test_PublicProjectSizingFlowsThroughRealCompilerAndYandexAdapter(tmp_path: Path) -> None:
+    """Exercise TOML to actual yc argv through the public compiler and a recording transport."""
+
+    from flayer.vpn_project import (
+        CompileVpnProject,
+        InitializeVpnProject,
+        LoadVpnProject,
+        PrepareVpnProject,
+    )
+
+    directory = InitializeVpnProject(tmp_path / "customer")
+    path = directory / "project.toml"
+    path.write_text(path.read_text().replace("replace-with-folder-id", "test-folder").replace(
+        "replace-with-ubuntu-2404-amd64-image-id", "example-image"
+    ).replace('zone_id = "ru-central1-a"', 'zone_id = "example-zone"') + '''
+[resources]
+platform_id = "standard-v3"
+cores = 2
+core_fraction = 50
+memory_gib = 2
+disk_size_gib = 10
+disk_type = "network-hdd"
+''')
+    project = LoadVpnProject(directory)
+    PrepareVpnProject(project)
+    provider, runner = Provider()
+    resources = {}
+
+    for spec in CompileVpnProject(project).resources:
+        resources[spec.logical_id] = provider.CreateResource(
+            spec, project.vpn.identity, {key: resources[key] for key in spec.dependencies}, OPERATION_ID,
+        )
+
+    command = next(item for item in runner.calls if item[2:4] == ("instance", "create"))
+    disk = next(item for item in runner.calls if item[2:4] == ("disk", "create"))
+
+    assert command[command.index("--platform") + 1] == "standard-v3"
+    assert command[command.index("--core-fraction") + 1] == "50"
+    assert command[command.index("--cores") + 1] == "2"
+    assert command[command.index("--memory") + 1] == "2"
+    assert disk[disk.index("--size") + 1] == "10"
+    assert disk[disk.index("--type") + 1] == "network-hdd"

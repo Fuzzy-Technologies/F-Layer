@@ -70,6 +70,15 @@ flayer vpn status --project ~/flayer-vpn
 并以此验证 SSH 连接。部署报告中的 `services-active` 表示服务器进程正在运行；
 客户端连接仍需按下一节验证。
 
+在执行 `deploy`、`status`、`recover` 或 `destroy` 前，F-Layer 会检查
+`cloud.yc_profile` 指定的配置能否读取 `identity.scope_id` 指定的文件夹。
+预检失败时不会开始云资源生命周期操作，已有状态和日志保持不变。
+出现 `authentication` 时，通过官方本地登录流程重新认证该配置；
+出现 `permission_denied` 时，检查文件夹访问权限。仅有 `timeout` 不能证明
+凭据已过期，也不能证明 API 服务中断。请将凭据保密，并按照
+[AI 操作指南的排障步骤](ai-operator.md#5-deploy-and-observe)检查。
+此预检不验证写权限，也不保证整个运行期间都能访问云服务。
+
 ## 4. 连接 Android 设备 {#4-connect-a-device}
 
 参考客户端为 **Android 版 AmneziaVPN 5.0.3.0**。请使用对应设备的文件；

@@ -1,109 +1,201 @@
 schemaVersion = 1
 sourcePath = "README.md"
-sourceHash = "sha256:f1d8504c7ee9e69402ef869bac4fd33554842e4ec29eaadb1c220c399ac80a56"
-reviewedTranslationHash = "sha256:f31ac1fcd863c1466782e1a33f694c940ff9ff683100c444b5dd0a36b16d9b9b"
+sourceHash = "sha256:af6142a4a9fa61b1aea1810a21a6f9bb83781bbf56fd80d4f52123dd3bbf3508"
+reviewedTranslationHash = "sha256:9d2012e76a977de4a6357fb8509f0065f0b9085217c5f3a8e591370256c398e5"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-10T00:27:09Z"
+reviewedAt = "2026-10-10T20:40:38Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # F-Layer
 
 ![Fuzzy Technologies 工程实验室中的 F-Layer 与 AIna](https://raw.githubusercontent.com/Fuzzy-Technologies/F-Layer/master/docs/site/content/en/assets/brand/FTech-card-F-Layer.png)
 
-**通过 Python 或命令行部署云服务器、管理资源并检查可用性。**
+**通过一份配置管理您的云基础设施。**
 
-F-Layer 根据部署配置创建云资源，并在本地记录所创建的资源。
-这些记录用于检查部署、恢复中断的操作，以及删除属于当前部署的资源。
-它可以自动化服务环境，也可以为应用程序提供可复用的基础设施管理能力，
-无需为每个场景维护独立的部署脚本。
+F-Layer 是一个开源基础设施自动化平台，面向需要可重复部署的工程师、小型团队和应用程序。
+描述环境后，即可通过同一套 CLI 或 Python API 创建资源、检查状态，并删除属于该部署的资源。
 
-**F-Layer 2.0** 在 Yandex Cloud 部署运行 **AmneziaWG 3.1** 和
-**VLESS Reality** 的企业 VPN，并为每台设备生成独立的连接设置。
-安装软件包、创建私有项目、填写云平台设置，然后通过 CLI 部署。
-此外还支持安全 SSH 网关和 HTTP 检查。其他云平台需要相应的适配器。
-云资源费用由云服务商收取；F-Layer 源代码采用 Apache 2.0 许可证开放。
+**F-Layer 2.0** 的主要使用场景是在 **Yandex Cloud** 上自建 VPN：
+一台服务器同时运行 **AmneziaWG 3.1** 和 **VLESS Reality**，为每台设备生成独立的连接文件。
+云账户、服务器和密钥由您掌控；资源和流量费用由您向云服务商支付。
 
-[文档](https://fuzzy-technologies.github.io/F-Layer/zh-CN/) ·
-[快速入门](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/) ·
-[首次部署](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/first-deployment/) ·
-[API 参考](https://fuzzy-technologies.github.io/F-Layer/zh-CN/api/) ·
-[更新日志](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/CHANGELOG.md) ·
+[文档](https://fuzzy-technologies.github.io/F-Layer/) ·
+[English](https://fuzzy-technologies.github.io/F-Layer/en/) ·
+[Русский](https://fuzzy-technologies.github.io/F-Layer/ru/) ·
+[简体中文](https://fuzzy-technologies.github.io/F-Layer/zh-CN/) ·
 [发布版本](https://github.com/Fuzzy-Technologies/F-Layer/releases)
 
-## 使用 AI 助手部署
+## 您将获得什么
 
-如果您的助手能够访问终端，请将下方任务交给它。助手会准备环境和配置、询问
-尚未确定的设置，并在创建付费资源前征求批准。登录和客户端设置可能需要您参与。
-[AI 操作指南](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/site/content/zh-CN/guide/ai-operator.md)说明完整的安装、部署和验证流程。
-
-> 请使用 F-Layer 帮我部署企业 VPN，为组织构建安全网络：
-> https://github.com/Fuzzy-Technologies/F-Layer。
-> 阅读 README 链接的 AI 操作指南，并使用与所安装的 F-Layer 2.0 软件包相匹配的文档。
-> 询问我使用的云平台、区域和客户端设备，然后选择受支持的适配器。
-> 安装经过验证的软件包，准备私有项目。列出要创建的资源、访问规则、费用估算和清理计划；
-> 创建付费资源前等待我的批准。通过 F-Layer 部署，帮助连接设备并验证流量。
-> 将密钥等敏感信息保存在本地。最后说明实际结果、后续费用和删除方法。
-
-如果希望自行运行命令，请使用
-[手动快速入门](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/site/content/zh-CN/guide/index.md)。
-
-## 安装
-
-需要 Python 3.11 或更新版本。在虚拟环境中安装发布的 wheel 文件；
-不需要 Git 或 Docker：
-
-```bash
-python -m venv .venv
-```
-
-在 Linux/macOS 中运行 `source .venv/bin/activate` 激活环境；
-PowerShell 使用 `.venv\Scripts\Activate.ps1`，Windows 命令提示符使用
-`.venv\Scripts\activate.bat`。从
-[发布文件](https://github.com/Fuzzy-Technologies/F-Layer/releases)下载
-`f_layer-2.0.0-py3-none-any.whl` 和 `build-evidence.json`，核对 wheel 的 SHA-256
-与构建报告一致，然后在下载目录中运行：
-
-```bash
-python -m pip install "./f_layer-2.0.0-py3-none-any.whl[vpn]"
-python -m flayer --help
-python -m flayer check --format json
-```
-
-预期结果：本地检查输出 `"status": "ok"`，退出码为 `0`。
-它检查 Python 和软件包是否可用，不需要云凭据或网络访问。
-这只是安装后的首次检查，并不会部署服务器。
+- **自主掌控的 VPN：**创建虚拟机、网络、防火墙、公网 IP 和磁盘，安装两种服务，
+  并生成私密的客户端配置以及用于 VLESS 的 AmneziaVPN 二维码。
+- **可配置的资源：**在 `project.toml` 中选择 CPU、内存、平台、CPU 保证性能比例、
+  磁盘大小以及 HDD/SSD 类型。
+- **统一的部署生命周期：**借助保留的本地状态检查部署、恢复中断的云操作，并删除自己的资源。
+- **VPN 之外的功能：**准备受限 SSH 网关、执行 HTTP 可用性和耗时检查，或将基础设施 API 集成到应用中。
 
 ## 快速入门
 
-按照[快速入门](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/)
-创建私有项目，在 Yandex Cloud 部署，并导入生成的客户端设置。
-指南涵盖两种协议、DNS 和路由检查，以及云资源删除。对于受限的 SSH 转发，
-请阅读 [SSH 网关指南](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/first-deployment/)。
+**最终结果：**在您的 Yandex Cloud 文件夹中运行一台服务器，并获得可导入设备的私密连接文件。
+最后，请通过两种协议分别检查实际流量。
 
-Android 指南采用 AmneziaVPN 5.0.3.0：AmneziaWG 导入 `amneziawg.conf`，
-VLESS 导入私密的 `amnezia.vpn` 或带编号的原生二维码文件。
-须检查 VPN/TUN、DNS、IPv6 和真实 HTTPS 流量；“已连接”不能代替流量验证。
+**准备条件：**Linux 或用户自行管理的 WSL Linux 发行版、Python 3.11+、
+OpenSSH（`ssh` 和 `ssh-keygen`），以及已登录且对所选文件夹拥有相应权限的
+[Yandex Cloud CLI](https://yandex.cloud/en/docs/cli/quickstart) 配置。
+服务器使用 Ubuntu 24.04 **amd64** 镜像。运行软件包不需要 Git 或 Docker。
+Windows 可运行本地软件包诊断；VPN 部署应在 Linux/WSL 内执行。
 
-## 可以实现什么
+### 1. 安装并检查
 
-- **受管云环境：**使用同一份配置和状态文件创建、检查、恢复、删除所属部署的资源。
-- **企业 VPN 服务器：**同时部署 AmneziaWG 和 VLESS Reality，
-  分别生成各设备的客户端文件，并明确清理所属云资源。
-- **访问受控的 SSH 网关：**准备服务器配置，并为各设备生成 SSH 本地端口转发配置，仅允许连接明确指定的目标。
-- **运行检查：**检查 HTTP 端点，在指定限制内测量响应和传输耗时，并输出可供自动化使用的 JSON 报告。
-- **应用程序集成：**在自己的工具中复用 Python 配置、云提供方和资源生命周期 API。
+在 Linux/WSL 中创建并激活虚拟环境：
 
-[架构文档](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/architecture/README.md)
-说明了这些部分的协作方式。稳定版本在 `master` 上打标签，更新日志记录发布范围。
-`develop` 还包含已接受、计划进入后续版本的工作。
+```bash
+python3 -m venv ~/.venvs/flayer
+source ~/.venvs/flayer/bin/activate
+```
 
-## 参与开发
+**发布状态：**2.0 正在准备发布。下方 PyPI 命令仅适用于 **2.0.0 发布之后**；
+在此之前，请按下文安装经过验证的候选 wheel。
 
-请阅读 [AGENTS.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/AGENTS.md)
-和 [DEVELOPMENT_PROTOCOL.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/DEVELOPMENT_PROTOCOL.md)。
-运行 `python tools/build_api_reference.py`，从已安装的 wheel 构建 API 文档；
-详见[文档环境设置](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/site/README.md)。
+```bash
+python -m pip install "f-layer[vpn]==2.0.0"
+```
 
-[发布流程](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/RELEASE_WORKFLOW.md) · [Apache License 2.0](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/LICENSE)
+<details markdown="1">
+<summary>正式发布前安装候选 wheel</summary>
+
+在 [GitHub Actions](https://github.com/Fuzzy-Technologies/F-Layer/actions/workflows/release-validation.yml)
+中，为所需提交选择成功的 **Release artifact validation** 运行。
+下载并解压 `flayer-release-preview` 和 `flayer-release-evidence`。
+核对提交以及 wheel 的 SHA-256 是否与 `build-evidence.json` 一致，然后在 wheel 所在目录运行：
+
+```bash
+python -m pip install "./f_layer-2.0.0-py3-none-any.whl[vpn]"
+```
+
+此命令只在本地安装所选构建，不会发布版本。
+
+</details>
+
+```bash
+flayer --help
+flayer check --format json
+```
+
+预期输出为 `"status": "ok"`，退出码为 `0`。
+此检查只验证本地安装，不访问云平台，也不验证 VPN 连通性。
+
+### 2. 创建项目
+
+```bash
+flayer project init ~/flayer-vpn
+```
+
+在准备项目之前编辑 `~/flayer-vpn/project.toml`：
+
+- 将 `identity.scope_id` 设置为云文件夹 ID，并选择项目、部署栈和所有者名称。
+- 将 `cloud.yc_profile`、`zone_id` 和 `image_id` 设置为实际配置、可用区和镜像。
+  选择不与其他网络重叠的子网。
+- 将 `cloud.management_cidrs` 设置为管理员公网 IPv4，并使用 `/32` 掩码。
+- 在 `devices` 中列出设备及其唯一隧道地址；模板包含 `laptop`。
+  在 `[routes]` 中选择全量或分流 IPv4 路由。
+- 将 `vless.target_host` 和 `server_name` 设置为可访问且具有匹配证书的 TLS 1.3 / HTTP/2
+  目标，替换示例主机名。
+
+如需明确指定服务器资源，请取消模板中整个 `[resources]` 配置块的注释：
+
+```toml
+[resources]
+platform_id = "standard-v3"
+cores = 2
+core_fraction = 50
+memory_gib = 2
+disk_size_gib = 10
+disk_type = "network-hdd"
+```
+
+确认区域可用性和镜像的最小磁盘要求。省略此配置块时，保留默认的 2 vCPU、2 GiB 内存和
+20 GiB SSD 配置。支持的组合见[配置指南](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/configuration/)。
+将项目保存在 Git 和共享目录之外；在 WSL 中使用 Linux 文件系统，而不是 `/mnt/c`。
+
+### 3. 准备并部署
+
+`prepare` 在本地生成密钥和产物，不调用云平台。
+此步骤完成后，请保持配置不变并保留项目目录。
+
+```bash
+flayer vpn prepare --project ~/flayer-vpn
+```
+
+检查所选资源及费用。**下一条命令会创建付费云资源。**
+将 `YOUR_FOLDER_ID` 替换为相同的 `identity.scope_id`：
+
+```bash
+flayer vpn deploy --project ~/flayer-vpn --allow-mutation --scope-confirm YOUR_FOLDER_ID
+flayer vpn status --project ~/flayer-vpn
+```
+
+预期结果：属于当前部署的云资源、两种服务器服务的 `services-active` 状态，
+以及位于 `~/flayer-vpn/artifacts/` 的各设备文件。
+服务器状态本身不能证明客户端能够访问互联网。
+
+### 4. 连接设备
+
+客户端指南使用 **Android 上的 AmneziaVPN 5.0.3.0**。
+对于模板中的 `laptop` 设备，请在项目内查找以下文件：
+
+- **AmneziaWG：**导入 `artifacts/device-laptop-amneziawg/amneziawg.conf`。
+- **VLESS Reality：**导入 `artifacts/device-laptop-vless-reality/amnezia.vpn`，
+  或在另一块屏幕上打开该目录中的 `amnezia-qr-01.svg`，用 AmneziaVPN 内置扫描器扫描。
+  如果有多个编号二维码文件，请在同一次导入会话中全部扫描。
+
+每次只连接一种协议。通过主机名打开 HTTPS 网站，确认出口地址为服务器的公网 IPv4，
+并检查 DNS、路由和 VPN/TUN 设置。本版本路由 **IPv4**；请在客户端或设备上禁用 IPv6，
+防止流量绕过隧道。项目中的 IPv6 设置不会修改设备设置。
+请保密保存客户端文件和二维码：它们授予 VPN 访问权限。
+
+协议检查和导入详情请参阅[客户端指南](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/)。
+
+## 管理部署
+
+使用 `flayer vpn status --project ~/flayer-vpn` 检查服务器。
+如果云操作中断，请保留项目并按照[恢复指南](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/)操作。
+需要删除此项目的云资源时，运行：
+
+```bash
+flayer vpn destroy --project ~/flayer-vpn --allow-mutation --scope-confirm YOUR_FOLDER_ID
+```
+
+通过报告和云文件夹确认资源已删除。本地密钥、产物和状态仍保留在磁盘上。
+断开客户端连接不会删除持续计费的云资源。
+
+**当前边界：**已实现的云服务商是 Yandex Cloud。准备后的项目不可变；
+VPN CLI 尚不支持原地调整资源、添加或撤销设备及轮换密钥。
+更改这些设置需要创建新项目，并按文档管理旧部署的生命周期。
+
+## 使用 AI 助手部署
+
+将以下任务交给具有终端访问权限的助手：
+
+> 请使用 F-Layer 部署我的自建 VPN：https://github.com/Fuzzy-Technologies/F-Layer。
+> 阅读其 AI 操作指南，并使用与已安装软件包匹配的文档。
+> 询问我的云平台、区域和设备。安装经过验证的软件包，准备私有项目，
+> 展示资源、访问规则、费用和清理计划。创建付费资源前获得我的批准。
+> 通过 F-Layer 的公共 CLI 部署，帮助导入客户端配置，并验证实际流量。
+> 将敏感信息保存在本地，说明哪些检查通过、哪些尚未执行，以及如何删除部署。
+
+[AI 操作指南](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/ai-operator/)涵盖完整流程。
+助手传入您的选择并运行 F-Layer；F-Layer 提供配置、部署生命周期和客户端产物。
+
+## 进一步了解
+
+[SSH 网关](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/first-deployment/) ·
+[CLI 诊断](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/cli/) ·
+[Python API](https://fuzzy-technologies.github.io/F-Layer/zh-CN/api/) ·
+[更新日志](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/CHANGELOG.md)
+
+由 **Fuzzy Technologies** 开发，采用
+[Apache 2.0](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/LICENSE) 许可证。
+参与贡献请先阅读 [CONTRIBUTING.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/CONTRIBUTING.md)。
 '''

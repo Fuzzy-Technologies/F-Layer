@@ -85,3 +85,17 @@ disk_type = "network-hdd"
     assert "direction=egress,protocol=any,v4-cidrs=0.0.0.0/0,from-port=0,to-port=65535" in rules, "Installed VPN egress would be rejected by yc"
     assert any("protocol=udp," in rule and ",from-port=51820,to-port=51820" in rule for rule in rules), "AmneziaWG listener ports changed"
     assert any("protocol=tcp," in rule and ",from-port=443,to-port=443" in rule for rule in rules), "VLESS listener ports changed"
+    failed = json.loads(_Run([str(python), "-c", (
+        "import sys\n"
+        "from unittest.mock import patch\n"
+        "from flayer.__main__ import Main\n"
+        "from flayer.providers.yandex import CommandResult\n"
+        "with patch('flayer.providers.yandex.SubprocessCommandRunner.Run', return_value=CommandResult(1, '', 'Unauthenticated token expired fixture-secret')) as runner:\n"
+        "    code = Main(['vpn', 'deploy', '--project', sys.argv[1], '--allow-mutation', '--scope-confirm', 'example-folder', '--format', 'json'])\n"
+        "    assert code == 2 and runner.call_count == 1\n"
+        "    assert runner.call_args.args[0][1:4] == ('resource-manager', 'folder', 'get')\n"
+    ), str(project)], tmp_path))
+
+    assert "preflight failed (authentication)" in failed["message"] and "Reauthenticate" in failed["message"]
+    assert "fixture-secret" not in json.dumps(failed), "Installed CLI leaked raw authentication output"
+    assert before == {path: path.read_bytes() for path in project.rglob("*") if path.is_file()}, "Denied installed deployment changed retained project files"

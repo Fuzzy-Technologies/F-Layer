@@ -62,7 +62,12 @@ from flayer.profiles.vpn import (
     VpnError,
     VpnProfile,
 )
-from flayer.providers.contracts import ProviderResource, ResourceKind, ResourceReference
+from flayer.providers.contracts import (
+    ProviderErrorCode,
+    ProviderResource,
+    ResourceKind,
+    ResourceReference,
+)
 from flayer.providers.lifecycle import JsonValue, ResourceSpec
 from flayer.providers.yandex import YandexCloudSettings
 from flayer.providers.yandex_lifecycle import ValidateComputeShape, YandexLifecycleProvider
@@ -719,6 +724,25 @@ def _Incomplete(action: str, report: LifecycleReport) -> VpnProjectReport:
                             details="Cloud operation did not finish; retained state is required for recovery")
 
 
+def _CheckCloudAccess(provider: VpnYandexProvider) -> None:
+    """Stop before lifecycle operations when the selected profile cannot read its folder."""
+
+    status = provider.CheckAuthentication()
+
+    if status.available and status.authenticated is True and status.error_code is None:
+        return
+
+    code = status.error_code or ProviderErrorCode.COMMAND_FAILED
+    guidance = {
+        ProviderErrorCode.AUTHENTICATION: "Reauthenticate the project.toml [cloud].yc_profile using the official local sign-in flow; keep credentials out of chat.",
+        ProviderErrorCode.PERMISSION_DENIED: "Verify the configured profile and its read permission for identity.scope_id; do not change IAM automatically.",
+        ProviderErrorCode.TIMEOUT: "Check connectivity and the configured profile with a read-only folder query; a timeout alone does not prove expired credentials or an API outage.",
+        ProviderErrorCode.UNAVAILABLE: "Install or restore access to the Yandex Cloud CLI in this controller environment.",
+    }.get(code, "Verify the configured profile, folder and CLI access with a read-only query before retrying.")
+
+    raise VpnError(f"Cloud access preflight failed ({code.value}). {guidance} No cloud lifecycle operation started; existing state and recovery requirements are unchanged.")
+
+
 def RunVpnProject(
     project: VpnProject, action: str, *, allow_mutation: bool = False, scope_confirm: str = "",
     rollback: bool = False, provider: VpnYandexProvider | None = None,
@@ -751,6 +775,7 @@ def RunVpnProject(
     plan = CompileVpnProject(project)
     provider = provider or VpnYandexProvider(YandexCloudSettings(project.vpn.identity.scope_id, project.cloud.yc_profile))
     engine = LifecycleEngine(plan, provider, project.root / "state.json")
+    _CheckCloudAccess(provider)
 
     if action == "destroy":
         report = engine.Destroy()

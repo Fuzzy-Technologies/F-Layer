@@ -74,6 +74,15 @@ Yandex API for that owned VM before transferring private files. A deployment
 report showing `services-active` confirms running server processes; the client
 connection still needs the check below.
 
+Before `deploy`, `status`, `recover` or `destroy`, F-Layer checks that the
+configured `cloud.yc_profile` can read `identity.scope_id`. Failed preflight
+stops before cloud lifecycle operations and preserves existing state and journals.
+For `authentication`, renew the profile through the official local sign-in flow;
+for `permission_denied`, verify folder access. A `timeout` alone proves neither
+expired credentials nor an API outage. Keep credentials private and follow the
+[AI operator troubleshooting steps](ai-operator.md#5-deploy-and-observe).
+The probe does not verify write permissions or guarantee access for the whole run.
+
 ## 4. Connect a device
 
 Use **AmneziaVPN 5.0.3.0 for Android** as the reference client. Use the files for

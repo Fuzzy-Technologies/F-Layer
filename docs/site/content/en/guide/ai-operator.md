@@ -143,6 +143,29 @@ not repair arbitrary partial guest installations. Follow the
 [recovery procedure](index.md#5-recover-or-remove-the-deployment) within the agreed
 scope. Do not claim success from an exit code alone or retry mutations blindly.
 
+Each VPN cloud command first probes read access to the configured folder.
+If it reports `Cloud access preflight failed`, no lifecycle operation started;
+existing state and recovery requirements remain unchanged. Before another
+mutation, distinguish expired authentication from missing permissions and network
+failure. Set `FLAYER_YC_PROFILE` to `cloud.yc_profile` and verify read access:
+
+```bash
+yc resource-manager folder get --id "$FLAYER_SCOPE_ID" \
+  --profile "$FLAYER_YC_PROFILE" --folder-id "$FLAYER_SCOPE_ID" \
+  --format json --no-browser --retry 0
+```
+
+For an explicit authentication rejection, ask the user to renew that profile
+through the official local sign-in flow, then repeat this read-only check.
+Do not request credentials in chat, dump profile configuration, change IAM or
+create a replacement project to work around authentication. A timeout alone is
+not evidence of expired credentials or a regional API outage. If the probe
+succeeds but compute reads still fail, diagnose that service endpoint separately.
+Keep the existing project and follow its recorded recovery requirements after
+access is restored. Preflight cannot guarantee write permissions or prevent
+credentials expiring later in the run. The CLI's conservative `recovery_required`
+flag on an exception does not prove that this preflight created a new journal.
+
 ## 6. Verify the user's connection
 
 Follow [client setup](index.md#4-connect-a-device), one protocol at a time.

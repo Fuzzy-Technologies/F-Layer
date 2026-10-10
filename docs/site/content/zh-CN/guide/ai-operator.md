@@ -124,6 +124,25 @@ flayer vpn status --project "$FLAYER_PROJECT" --format json
 在约定范围内遵循[恢复流程](index.md#5-recover-or-remove-the-deployment)。
 不能仅凭退出码宣称成功，也不能盲目重试变更。
 
+每个 VPN 云命令首先检查对已配置文件夹的读取权限。
+`Cloud access preflight failed` 表示生命周期操作尚未开始，已有状态和恢复要求
+保持不变。再次执行变更前，应区分认证过期、权限不足和网络故障。
+将 `FLAYER_YC_PROFILE` 设为 `cloud.yc_profile`，然后检查读取权限：
+
+```bash
+yc resource-manager folder get --id "$FLAYER_SCOPE_ID" \
+  --profile "$FLAYER_YC_PROFILE" --folder-id "$FLAYER_SCOPE_ID" \
+  --format json --no-browser --retry 0
+```
+
+如果明确收到认证拒绝，请让用户通过官方本地登录流程重新认证该配置，
+然后再次执行此只读检查。不要在聊天中索取凭据、输出配置中的认证信息、
+修改 IAM，或新建项目来绕过认证错误。单独的超时不能证明凭据过期或区域
+API 服务中断。如果预检成功但 compute 读取仍失败，应另行诊断该服务端点。
+保留原项目；恢复访问后，按照其记录的恢复要求继续。预检不能保证写权限，
+也不能防止凭据在运行期间过期。CLI 异常响应中的保守标志 `recovery_required`
+并不证明此次预检创建了新日志。
+
 ## 6. 验证用户的连接 {#6-verify-the-users-connection}
 
 按照[客户端设置](index.md#4-connect-a-device)逐个验证协议。确认真实的

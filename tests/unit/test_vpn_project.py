@@ -26,11 +26,12 @@ from flayer.providers.contracts import (
     ProviderError,
     ProviderErrorCode,
     ProviderResource,
+    ProviderStatus,
     ResourceKind,
     ResourceReference,
 )
 from flayer.providers.lifecycle import MutationError, ResourceSpec
-from flayer.providers.yandex import YandexCloudSettings
+from flayer.providers.yandex import CommandResult, YandexCloudSettings
 from flayer.vpn_project import (
     MAX_SERIAL_BYTES,
     CloudPlacement,
@@ -204,6 +205,15 @@ class FakeCloud(VpnYandexProvider):
         self.uncertain_create: str | None = None
         self.host_key: str | None = PUBLIC_KEY
         self.host_key_reads = 0
+        self.authentication_checks = 0
+        self.authentication_status = ProviderStatus(self.Identity, True, True)
+
+    def CheckAuthentication(self) -> ProviderStatus:
+        """Return explicit fixture access without executing the external CLI."""
+
+        self.authentication_checks += 1
+
+        return self.authentication_status
 
     def FindResource(self, spec: ResourceSpec, identity: StackIdentity) -> ProviderResource | None:
         """Return only an existing fixture resource under its declared logical ID."""
@@ -403,6 +413,98 @@ def test_MutationRequiresExactScopeBeforePreparation(tmp_path: Path, action: str
             RunVpnProject(project, action, allow_mutation=allow, scope_confirm=scope, provider=cloud)
 
     assert not cloud.created and not tuple(project.Artifacts.iterdir())
+    assert cloud.authentication_checks == 0, "Consent rejection accessed the cloud"
+
+
+@pytest.mark.parametrize("action", ["deploy", "status", "destroy", "recover"])
+@pytest.mark.parametrize("pending", [False, True])
+def test_AuthenticationFailurePreservesProjectBeforeAnyLifecycleOperation(tmp_path: Path, action: str, pending: bool) -> None:
+    """Refuse expired access without allocating, observing, rolling back, or rewriting recovery evidence."""
+
+    project = Project(tmp_path)
+    cloud = FakeCloud(project)
+    PrepareVpnProject(project)
+
+    if pending:
+        cloud.uncertain_create = "instance"
+        assert Run(project, "deploy", cloud).recovery_required
+
+    snapshot = {path: path.read_bytes() for path in project.root.rglob("*") if path.is_file()}
+    inventory = dict(cloud.resources)
+    created, deleted = tuple(cloud.created), tuple(cloud.deleted)
+    checks, host_reads = cloud.authentication_checks, cloud.host_key_reads
+    cloud.authentication_status = ProviderStatus(cloud.Identity, True, False, ProviderErrorCode.AUTHENTICATION)
+
+    with pytest.raises(VpnError, match=r"preflight failed \(authentication\).*Reauthenticate"):
+        Run(project, action, cloud, rollback=action == "recover")
+
+    assert cloud.authentication_checks == checks + 1, "Cloud access must be checked on each invocation"
+    assert cloud.resources == inventory and tuple(cloud.created) == created and tuple(cloud.deleted) == deleted
+    assert cloud.host_key_reads == host_reads, "Failed authentication reached guest discovery"
+    assert {path: path.read_bytes() for path in project.root.rglob("*") if path.is_file()} == snapshot, "Failed preflight changed retained state or artifacts"
+
+
+@pytest.mark.parametrize("code,expected", [
+    (ProviderErrorCode.PERMISSION_DENIED, "read permission"),
+    (ProviderErrorCode.TIMEOUT, "timeout alone does not prove"),
+    (ProviderErrorCode.UNAVAILABLE, "controller environment"),
+    (ProviderErrorCode.SCOPE_MISMATCH, "read-only query"),
+    (None, "read-only query"),
+])
+def test_AccessPreflightDistinguishesFailuresAndUnknownAuthentication(tmp_path: Path, code: ProviderErrorCode | None, expected: str) -> None:
+    """Require positive access evidence and retain distinct remediation for sanitized failure categories."""
+
+    project = Project(tmp_path)
+    cloud = FakeCloud(project)
+    PrepareVpnProject(project)
+    cloud.authentication_status = ProviderStatus(cloud.Identity, code != ProviderErrorCode.UNAVAILABLE, None, code)
+
+    with pytest.raises(VpnError, match=expected):
+        Run(project, "status", cloud)
+
+    assert not cloud.created and cloud.authentication_checks == 1
+
+
+def test_PrepareSkipsCloudAuthentication(tmp_path: Path) -> None:
+    """Keep offline credential preparation independent from expired cloud access."""
+
+    project = Project(tmp_path)
+    cloud = FakeCloud(project)
+    cloud.authentication_status = ProviderStatus(cloud.Identity, True, False, ProviderErrorCode.AUTHENTICATION)
+
+    assert Run(project, "prepare", cloud).status == "complete"
+    assert cloud.authentication_checks == 0 and not cloud.created
+
+
+@pytest.mark.parametrize("output_format", ["json", "text"])
+def test_PublicCliReportsExpiredProfileWithoutVendorSecrets(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], output_format: str) -> None:
+    """Exercise the real provider probe and console error path with captured secret-bearing rejection."""
+
+    project = Project(tmp_path)
+    config = project.root / "project.toml"
+    config.write_text(config.read_text().replace('yc_profile = "default"', 'yc_profile = "fixture-vpn-profile"'))
+    project = LoadVpnProject(project.root)
+    PrepareVpnProject(project)
+    calls: list[tuple[str, ...]] = []
+
+    def RunCommand(self: object, command: tuple[str, ...], timeout: float) -> CommandResult:
+        """Allow only the selected read-only authentication probe and return an expired fixture token."""
+
+        calls.append(command)
+
+        return CommandResult(1, "", "rpc error: code = Unauthenticated desc = token expired fixture-secret")
+
+    monkeypatch.setattr("flayer.providers.yandex.SubprocessCommandRunner.Run", RunCommand)
+
+    assert Main(["vpn", "deploy", "--project", str(project.root), "--allow-mutation", "--scope-confirm", "example-folder", "--format", output_format]) == 2
+    output = capsys.readouterr().out
+    message = json.loads(output)["message"] if output_format == "json" else output
+
+    assert "preflight failed (authentication)" in message and "Reauthenticate" in message
+    assert "fixture-secret" not in output and "rpc error" not in output, "Vendor output escaped sanitization"
+    assert len(calls) == 1 and calls[0][1:6] == ("resource-manager", "folder", "get", "--id", "example-folder")
+    assert calls[0][calls[0].index("--profile") + 1] == project.cloud.yc_profile
+    assert not (project.root / "state.json").exists() and not (project.root / ".state.json.operation.json").exists()
 
 
 def test_CreateFailureRollsBackOnlyNewCloudResources(tmp_path: Path) -> None:

@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import socket
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import NoReturn
 
 import pytest
+
+SOCKET_CONNECT = socket.socket.connect
 
 TEST_STAGES = frozenset({"unit", "contract", "functional", "integration", "e2e"})
 
@@ -42,3 +44,25 @@ def deny_network(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(socket.socket, "connect", RejectNetwork)
     monkeypatch.setattr(socket.socket, "connect_ex", RejectNetwork)
     monkeypatch.setattr(socket.socket, "sendto", RejectNetwork)
+
+
+@pytest.fixture
+def loopback_connection() -> Callable[[int], socket.socket]:
+    """Connect only to a repository-defined IPv4 loopback listener without DNS."""
+
+    def ConnectLoopback(port: int) -> socket.socket:
+        """Keep all non-loopback socket operations blocked by deny_network."""
+
+        connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        connection.settimeout(2)
+
+        try:
+            SOCKET_CONNECT(connection, ("127.0.0.1", port))
+
+        except OSError:
+            connection.close()
+            raise
+
+        return connection
+
+    return ConnectLoopback

@@ -67,6 +67,7 @@ def test_PrivateKeysAndDeviceCredentialsAreSeparate() -> None:
     assert server["inbounds"][0]["streamSettings"]["realitySettings"]["privateKey"] not in repr(material)
     assert material.devices[0].user_id not in repr(prepared)
     assert material.devices[0].user_id not in repr(material.devices[0])
+    assert server["dns"] == {"servers": ["1.1.1.1"], "queryStrategy": "UseIPv4"}
     assert client["inbounds"][0]["listen"] == "127.0.0.1"
     assert all(item.sensitive for bundle in (prepared.server_bundle, *prepared.device_bundles)
                for item in bundle.files)

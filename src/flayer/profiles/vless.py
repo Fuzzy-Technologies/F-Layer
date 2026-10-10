@@ -277,6 +277,7 @@ def RenderVlessServer(
 
     return _Json({
         "log": {"loglevel": "none", "access": "none", "error": "none"},
+        "dns": {"servers": list(profile.routes.dns_servers), "queryStrategy": "UseIPv4"},
         "inbounds": [{
             "tag": "vless-reality", "listen": "0.0.0.0", "port": port, "protocol": "vless",
             "settings": {

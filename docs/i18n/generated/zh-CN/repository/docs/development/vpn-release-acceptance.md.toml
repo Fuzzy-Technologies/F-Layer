@@ -88,7 +88,7 @@ flayer vpn status --project acceptance-vpn --format json
 
 Android 验收须记录 AmneziaVPN 版本，先导入 AmneziaWG 配置文件，
 再导入 VLESS 的 `amnezia.vpn` 或扫描全部带编号的原生二维码帧。
-请遵循 [Android 快速入门](../site/content/zh-CN/guide/index.md#4-connect-a-device)。
+请遵循 [Android 快速入门](../site/content/en/guide/index.md#4-connect-a-device)。
 分别记录远程 DNS（`socks5h`）与本地 IPv4 解析（`socks5`）的 HTTPS 结果；
 一项成功不能抵消另一项失败。记录 Reality 目标、固定的 Xray 版本、
 wheel 的确切提交/SHA256，以及身份认证后的实际流量结果。
@@ -127,7 +127,7 @@ Task 73 的验证记录必须包括候选版本身份、控制端与客户端版
 只有操作者接受实际结果后才能关闭 Task 73。关闭 `release-2.0` 前先完成其余原生里程碑项，之后再准备带版本的变更记录、稳定 master 发布和附注标签 `v2.0.0`。若已配置 PyPI 发布，还必须验证从已发布包索引进行安装。
 '''
 sourceHash = "sha256:7829054e93a3664715e345bf91d5ea644602b72a5365bace1af37306ee18c945"
-reviewedTranslationHash = "sha256:e14d576b5cb54f5e1eb7d2846ecb7fb286cd914aa757e69a9944c7b610dfbaee"
+reviewedTranslationHash = "sha256:a60de54498a85245bb6fd861f5e01a14ef90545eb0bec117f808536d1d441928"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
 reviewedAt = "2026-10-10T00:27:09Z"

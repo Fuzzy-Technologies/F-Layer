@@ -93,7 +93,7 @@ flayer vpn status --project acceptance-vpn --format json
 
 Для приёмки Android запишите версию AmneziaVPN: сначала импортируйте файл
 AmneziaWG, затем `amnezia.vpn` для VLESS или все нумерованные нативные QR-кадры.
-Следуйте [быстрому старту Android](../site/content/ru/guide/index.md#4-connect-a-device).
+Следуйте [быстрому старту Android](../site/content/en/guide/index.md#4-connect-a-device).
 Зафиксируйте HTTPS-результаты с удалённым DNS (`socks5h`) и локальным разрешением
 в IPv4 (`socks5`): успех одного не компенсирует сбой другого. Запишите узел Reality,
 версию Xray, точный коммит/SHA256 wheel и результат передачи трафика после
@@ -133,7 +133,7 @@ flayer vpn destroy --project acceptance-vpn --allow-mutation --scope-confirm exa
 Закрывайте Task 73 только после принятия реальных результатов оператором. Завершите остальные штатные пункты майлстоуна перед закрытием `release-2.0`; лишь затем готовьте версионный changelog, стабильный релиз `master` и аннотированный тег `v2.0.0`. Если публикация PyPI настроена, также нужно проверить установку из опубликованного индекса пакетов.
 '''
 sourceHash = "sha256:7829054e93a3664715e345bf91d5ea644602b72a5365bace1af37306ee18c945"
-reviewedTranslationHash = "sha256:48309e2ecdb995cca2e481ccce585fc13a64c5d6d5f0f2ecdd632e9a245dea37"
+reviewedTranslationHash = "sha256:e14c4c7fad5ec4a589a131d2f863db22524d67f5ca7fd98fbe129efb11ed15ae"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
 reviewedAt = "2026-10-10T00:27:09Z"

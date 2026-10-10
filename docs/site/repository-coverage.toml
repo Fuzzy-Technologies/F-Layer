@@ -53,7 +53,7 @@ category = "asset"
 reason = "Theme and branding assets are published with the site, without API pages."
 
 [[rules]]
-patterns = [".gitignore", "pyproject.toml", "docs/requirements-api.txt", "docs/site/*.toml", "docs/site/mkdocs.yml"]
+patterns = [".gitignore", ".gitattributes", "pyproject.toml", "docs/requirements-api.txt", "docs/site/*.toml", "docs/site/mkdocs.yml"]
 category = "configuration"
 reason = "Build, packaging, or documentation configuration; inspect the exact tracked source."
 

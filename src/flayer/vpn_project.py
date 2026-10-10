@@ -390,13 +390,21 @@ def LoadVpnProject(directory: str | Path) -> VpnProject:
 
 
 def _Publish(project: VpnProject, bundle: ArtifactBundle) -> Path:
-    """Reuse identical fully verified bundles and never overwrite changed or foreign files."""
+    """Reuse verified bundles, allowing only legacy VLESS installer newline equivalence."""
 
     directory = project.Artifacts / f"{bundle.kind}-{bundle.name}"
 
     if directory.exists() or directory.is_symlink():
         for artifact in bundle.files:
             actual = ReadOwnedArtifactFile(directory / artifact.name, bundle.identity, kind=bundle.kind, name=bundle.name)
+
+            if (
+                bundle.kind == "server"
+                and bundle.name == project.vpn.identity.stack + "-vless-reality"
+                and artifact.name == "install.py"
+            ):
+                # Verify the original manifest first; preserve its bytes instead of migrating secrets.
+                actual = actual.replace(b"\r\n", b"\n")
 
             if actual != artifact.content:
                 raise VpnError("Existing project artifacts differ. Keep the old project for cloud cleanup, then initialize a new private project")

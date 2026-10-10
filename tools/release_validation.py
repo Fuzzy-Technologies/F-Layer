@@ -41,7 +41,7 @@ FORBIDDEN_SUFFIXES = frozenset({
 SDIST_ROOTS = frozenset({"src", "tests", "tools", "docs", "examples", ".github"})
 SDIST_FILES = frozenset({
     "README.md", "LICENSE", "AGENTS.md", "DEVELOPMENT_PROTOCOL.md", "SECURITY.md",
-    "CONTRIBUTING.md", "CHANGELOG.md", "pyproject.toml", ".gitignore",
+    "CONTRIBUTING.md", "CHANGELOG.md", "pyproject.toml", ".gitignore", ".gitattributes",
 })
 SECRET_PATTERNS = (
     re.compile(rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),

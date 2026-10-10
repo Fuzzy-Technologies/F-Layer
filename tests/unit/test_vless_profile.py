@@ -21,6 +21,7 @@ import pytest
 from flayer.core.contracts import StackIdentity
 from flayer.profiles import _amnezia_export as amnezia_export
 from flayer.profiles import _vless_guest as guest
+from flayer.profiles import vless
 from flayer.profiles.artifacts import WriteArtifactBundle
 from flayer.profiles.vless import (
     BuildVlessUri,
@@ -51,6 +52,25 @@ def Profile() -> VpnProfile:
         VpnRoutes("full", ("0.0.0.0/0",), ("1.1.1.1",), "disabled"),
         (VpnListener("vless-reality", "tcp", 443, ("0.0.0.0/0",)),),
     )
+
+
+def test_PackagedInstallerLineEndingsDoNotChangePreparedArtifacts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Windows checkouts and Linux wheels must render identical installer bytes."""
+
+    profile = Profile()
+    material = GenerateVlessMaterial(profile)
+    canonical = Path(guest.__file__).read_bytes().replace(b"\r\n", b"\n")
+    resource = tmp_path / "_vless_guest.py"
+    monkeypatch.setattr(vless, "files", lambda package: tmp_path)
+    resource.write_bytes(canonical)
+    linux = PrepareVless(profile, ENDPOINT, SETTINGS, material)
+    resource.write_bytes(canonical.replace(b"\n", b"\r\n"))
+    windows = PrepareVless(profile, ENDPOINT, SETTINGS, material)
+
+    assert linux == windows, "Checkout line endings changed private VPN artifacts"
+    assert next(item.content for item in windows.server_bundle.files if item.name == "install.py") == canonical
 
 
 def test_PrivateKeysAndDeviceCredentialsAreSeparate() -> None:

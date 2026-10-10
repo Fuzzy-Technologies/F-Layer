@@ -14,6 +14,7 @@ from typing import Any
 
 import pytest
 
+from flayer import vpn_project
 from flayer.__main__ import Main
 from flayer.core.contracts import StackIdentity
 from flayer.core.lifecycle import LifecycleEngine
@@ -491,6 +492,51 @@ def test_ModifiedArtifactsAndChangedProjectSettingsBlockReuse(tmp_path: Path) ->
         PrepareVpnProject(project)
 
     assert material.read_bytes() == b"operator-modified-private-fixture"
+
+
+@pytest.mark.parametrize("variation", ["crlf", "changed", "tampered", "configuration"])
+def test_LegacyInstallerNewlinesReuseOnlyVerifiedEquivalentContent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, variation: str,
+) -> None:
+    """Retain old CRLF bundles intact without accepting code drift or bypassing manifests."""
+
+    project = Project(tmp_path)
+    prepare = vpn_project.PrepareVless
+
+    def PrepareLegacy(*args: Any, **kwargs: Any) -> Any:
+        """Emulate a previous package while preserving the actual artifact writer contract."""
+
+        prepared = prepare(*args, **kwargs)
+        filename = "server.json" if variation == "configuration" else "install.py"
+        bundle = prepared.server_bundle
+        artifacts = tuple(replace(item, content=(
+            item.content.replace(b"\n", b"\r\n")
+            + (b"# different implementation\r\n" if variation == "changed" else b"")
+        )) if item.name == filename else item for item in bundle.files)
+
+        return replace(prepared, server_bundle=replace(bundle, files=artifacts))
+
+    with monkeypatch.context() as patch:
+        patch.setattr(vpn_project, "PrepareVless", PrepareLegacy)
+        PrepareVpnProject(project)
+
+    installer = project.Artifacts / "server-gateway-vless-reality" / "install.py"
+
+    if variation == "tampered":
+        installer.write_bytes(installer.read_bytes().replace(b"\r\n", b"\n"))
+
+    before = {path: path.read_bytes() for path in project.root.rglob("*") if path.is_file()}
+
+    if variation == "crlf":
+        assert PrepareVpnProject(project).status == "complete", "Equivalent legacy installer blocked retry"
+
+    else:
+        with pytest.raises(ArtifactError if variation == "tampered" else VpnError):
+            PrepareVpnProject(project)
+
+    after = {path: path.read_bytes() for path in project.root.rglob("*") if path.is_file()}
+
+    assert after == before, "Retry rewrote credentials, manifests, state, or prepared artifacts"
 
 
 def test_ForeignOrMismatchedEndpointsBlockTrustAndGuestAccess(tmp_path: Path) -> None:

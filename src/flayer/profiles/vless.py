@@ -403,7 +403,7 @@ def PrepareVless(
         "schema_version": 1, "owner": owner, "config_sha256": hashlib.sha256(server).hexdigest(),
         "port": endpoint.port, "xray_version": XRAY_VERSION,
     })
-    installer = files("flayer.profiles").joinpath("_vless_guest.py").read_bytes()
+    installer = files("flayer.profiles").joinpath("_vless_guest.py").read_bytes().replace(b"\r\n", b"\n")
     server_bundle = BuildVpnServerBundle(profile, VLESS_TRANSPORT, (
         Artifact("server.json", server), Artifact("install.py", installer),
         Artifact("deployment.json", deployment),

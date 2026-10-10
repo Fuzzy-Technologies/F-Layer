@@ -215,6 +215,9 @@ def _Rules(value: JsonValue) -> tuple[str, ...]:
             if "from_port" in rule or "to_port" in rule:
                 raise ValueError("Any-protocol rules cannot specify ports")
 
+            # The CLI requires a port selector even for an unrestricted protocol.
+            result += ",from-port=0,to-port=65535"
+
         else:
             if not {"from_port", "to_port"} <= set(rule):
                 raise ValueError("TCP and UDP rules require an explicit port range")

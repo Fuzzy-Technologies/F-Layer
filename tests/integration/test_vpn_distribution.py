@@ -58,10 +58,18 @@ disk_type = "network-hdd"
     plan = json.loads(_Run([str(python), "-c", (
         "import json, sys\n"
         "from flayer.vpn_project import LoadVpnProject, CompileVpnProject\n"
+        "from flayer.providers.yandex_lifecycle import _Rules\n"
         "project = LoadVpnProject(sys.argv[1])\n"
-        "print(json.dumps({item.logical_id: dict(item.parameters) "
-        "for item in CompileVpnProject(project).resources}))\n"
+        "plan = {item.logical_id: dict(item.parameters) "
+        "for item in CompileVpnProject(project).resources}\n"
+        "plan['firewall_cli_rules'] = _Rules(plan['firewall']['rules'])\n"
+        "print(json.dumps(plan))\n"
     ), str(project)], tmp_path))
 
     assert (plan["instance"]["platform_id"], plan["instance"]["core_fraction"]) == ("standard-v3", 50), "Installed wheel lost explicit compute sizing"
     assert (plan["boot-disk"]["size_gib"], plan["boot-disk"]["type"]) == (10, "network-hdd"), "Installed wheel lost HDD sizing"
+    rules = plan["firewall_cli_rules"]
+
+    assert "direction=egress,protocol=any,v4-cidrs=0.0.0.0/0,from-port=0,to-port=65535" in rules, "Installed VPN egress would be rejected by yc"
+    assert any("protocol=udp," in rule and ",from-port=51820,to-port=51820" in rule for rule in rules), "AmneziaWG listener ports changed"
+    assert any("protocol=tcp," in rule and ",from-port=443,to-port=443" in rule for rule in rules), "VLESS listener ports changed"

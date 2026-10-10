@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "README.md"
-sourceHash = "sha256:af6142a4a9fa61b1aea1810a21a6f9bb83781bbf56fd80d4f52123dd3bbf3508"
-reviewedTranslationHash = "sha256:9d2012e76a977de4a6357fb8509f0065f0b9085217c5f3a8e591370256c398e5"
+sourceHash = "sha256:b858b74b5034b1cb81603c70f38b197d0da3bc45263f314ed153887365ccfeb0"
+reviewedTranslationHash = "sha256:4f095232f88436ca68e541392ed24642943a66e29dd640a62da65ece56d17680"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-10T20:40:38Z"
+reviewedAt = "2026-10-10T20:56:54Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # F-Layer
@@ -37,6 +37,22 @@ F-Layer 是一个开源基础设施自动化平台，面向需要可重复部署
 
 ## 快速入门
 
+### 使用 AI 助手部署
+
+将以下任务交给具有终端访问权限的助手：
+
+> 请使用 F-Layer 部署我的自建 VPN：https://github.com/Fuzzy-Technologies/F-Layer。
+> 阅读其 AI 操作指南，并使用与已安装软件包匹配的文档。
+> 询问我的云平台、区域和设备。安装经过验证的软件包，准备私有项目，
+> 展示资源、访问规则、费用和清理计划。创建付费资源前获得我的批准。
+> 通过 F-Layer 的公共 CLI 部署，帮助导入客户端配置，并验证实际流量。
+> 将敏感信息保存在本地，说明哪些检查通过、哪些尚未执行，以及如何删除部署。
+
+[AI 操作指南](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/ai-operator/)涵盖完整流程。
+助手传入您的选择并运行 F-Layer；F-Layer 提供配置、部署生命周期和客户端产物。
+
+### 手动部署
+
 **最终结果：**在您的 Yandex Cloud 文件夹中运行一台服务器，并获得可导入设备的私密连接文件。
 最后，请通过两种协议分别检查实际流量。
 
@@ -46,7 +62,7 @@ OpenSSH（`ssh` 和 `ssh-keygen`），以及已登录且对所选文件夹拥有
 服务器使用 Ubuntu 24.04 **amd64** 镜像。运行软件包不需要 Git 或 Docker。
 Windows 可运行本地软件包诊断；VPN 部署应在 Linux/WSL 内执行。
 
-### 1. 安装并检查
+#### 1. 安装并检查
 
 在 Linux/WSL 中创建并激活虚拟环境：
 
@@ -86,7 +102,7 @@ flayer check --format json
 预期输出为 `"status": "ok"`，退出码为 `0`。
 此检查只验证本地安装，不访问云平台，也不验证 VPN 连通性。
 
-### 2. 创建项目
+#### 2. 创建项目
 
 ```bash
 flayer project init ~/flayer-vpn
@@ -119,7 +135,7 @@ disk_type = "network-hdd"
 20 GiB SSD 配置。支持的组合见[配置指南](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/configuration/)。
 将项目保存在 Git 和共享目录之外；在 WSL 中使用 Linux 文件系统，而不是 `/mnt/c`。
 
-### 3. 准备并部署
+#### 3. 准备并部署
 
 `prepare` 在本地生成密钥和产物，不调用云平台。
 此步骤完成后，请保持配置不变并保留项目目录。
@@ -140,7 +156,7 @@ flayer vpn status --project ~/flayer-vpn
 以及位于 `~/flayer-vpn/artifacts/` 的各设备文件。
 服务器状态本身不能证明客户端能够访问互联网。
 
-### 4. 连接设备
+#### 4. 连接设备
 
 客户端指南使用 **Android 上的 AmneziaVPN 5.0.3.0**。
 对于模板中的 `laptop` 设备，请在项目内查找以下文件：
@@ -173,20 +189,6 @@ flayer vpn destroy --project ~/flayer-vpn --allow-mutation --scope-confirm YOUR_
 **当前边界：**已实现的云服务商是 Yandex Cloud。准备后的项目不可变；
 VPN CLI 尚不支持原地调整资源、添加或撤销设备及轮换密钥。
 更改这些设置需要创建新项目，并按文档管理旧部署的生命周期。
-
-## 使用 AI 助手部署
-
-将以下任务交给具有终端访问权限的助手：
-
-> 请使用 F-Layer 部署我的自建 VPN：https://github.com/Fuzzy-Technologies/F-Layer。
-> 阅读其 AI 操作指南，并使用与已安装软件包匹配的文档。
-> 询问我的云平台、区域和设备。安装经过验证的软件包，准备私有项目，
-> 展示资源、访问规则、费用和清理计划。创建付费资源前获得我的批准。
-> 通过 F-Layer 的公共 CLI 部署，帮助导入客户端配置，并验证实际流量。
-> 将敏感信息保存在本地，说明哪些检查通过、哪些尚未执行，以及如何删除部署。
-
-[AI 操作指南](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/ai-operator/)涵盖完整流程。
-助手传入您的选择并运行 F-Layer；F-Layer 提供配置、部署生命周期和客户端产物。
 
 ## 进一步了解
 

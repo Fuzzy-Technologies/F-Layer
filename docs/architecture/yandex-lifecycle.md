@@ -23,6 +23,13 @@ Numeric bounds are 2..32 cores, 1..128 GiB of memory and 10..1024 GiB of boot di
 
 Public SSH keys must use structurally valid OpenSSH Ed25519 or RSA encoding; RSA modulus size is bounded to 2048..16384 bits. Optional comments are omitted from CLI metadata. Private key content is never an accepted option.
 
+The portless `any` rule model translates to `from-port=0,to-port=65535` for `yc`,
+which requires an explicit port selector even for that protocol. This CLI-only
+translation preserves existing configuration, desired digests and ownership labels;
+TCP/UDP retain their configured ranges. The original missing-port rejection and
+the corrected parser path were reproduced with Yandex CLI 1.40.0 against a local
+unreachable endpoint, without cloud access. This is parser evidence, not cloud acceptance.
+
 ## Ownership and recovery
 
 The adapter attaches `managed-by`, `flayer-project`, `flayer-stack`, `flayer-owner`, `flayer-resource`, `flayer-spec` and `flayer-operation`. The stable desired digest is a SHA256-derived 40-character label. The operation ID is the core journal's 32-character lowercase hexadecimal nonce.
@@ -34,6 +41,14 @@ The adapter attaches `managed-by`, `flayer-project`, `flayer-stack`, `flayer-own
 Every dispatched failure is uncertain, including a timeout, malformed successful output or transport failure. A single inventory absence after timeout does not authorize another create. The core's durable journal controls explicit recovery and never blindly recreates an unresolved orphan.
 
 Read-only preflight failures are explicitly classified as not submitted, so the core can roll back earlier creations safely. Uncertain mutation errors also override the inherited `retryable` recommendation to false; their timeout category does not permit a blind retry.
+
+Upgrading the adapter does not clear an existing uncertain journal. Older journals
+do not retain the original CLI rejection or an authoritative operation result.
+Keep the project, snapshot and journal; inspect the pending resource and original
+private CLI log before any further mutation. An empty inventory alone cannot
+authorize resubmission, journal editing or a replacement project. The current
+`recover` command can continue only when the exact pending owned resource is found;
+automatic recovery from a recorded rejection is not implemented.
 
 `DeleteResource` refreshes the exact persisted resource ID and checks complete stack ownership and logical ID. Rollback also supplies the expected operation nonce, which the adapter checks again immediately before deletion. Missing references are already deleted. After a dispatched delete, one lookup must confirm absence; otherwise cleanup remains uncertain. Names alone never authorize deletion.
 

@@ -87,6 +87,14 @@ class RecordingRunner:
 
         assert operation == "create", "Fake runner received an unsupported operation"
 
+        if command[2] == "security-group":
+            for index, argument in enumerate(command):
+                if argument == "--rule":
+                    rule = dict(pair.split("=", 1) for pair in command[index + 1].split(","))
+
+                    if "port" not in rule and not {"from-port", "to-port"} <= rule.keys():
+                        return CommandResult(1, stderr="rule requires port or from-port/to-port")
+
         labels = command[command.index("--labels") + 1]
         name = command[command.index("--name") + 1]
         resource_id = f"resource-{len(self.resources) + 1}"
@@ -231,6 +239,34 @@ def test_CreateAndDeleteSixKindsUseExactOwnedDependencies() -> None:
 
     assert len(deletes) == 6 and not runner.resources, "Explicit cleanup left fake resources"
     assert all("--id" in item and "--name" not in item for item in deletes), "Deletion used names"
+
+
+@pytest.mark.parametrize("direction", ["ingress", "egress"])
+@pytest.mark.parametrize("protocol,ports", [
+    ("any", ()), ("tcp", (("from_port", 22), ("to_port", 22))),
+    ("udp", (("from_port", 51820), ("to_port", 51821))),
+])
+def test_SecurityGroupRulesCarryCliPortSelectors(
+    direction: str, protocol: str, ports: tuple[tuple[str, int], ...],
+) -> None:
+    """Translate both directions without widening transport ports or altering desired identity."""
+
+    provider, runner = Provider()
+    network = provider.CreateResource(Specs()[0], IDENTITY, {}, OPERATION_ID)
+    rule = (("direction", direction), ("protocol", protocol), ("cidr", "192.0.2.0/24"), *ports)
+    spec = ReplaceOption(Specs()[2], "rules", (rule,))
+    labels = spec.OwnershipLabels(IDENTITY)
+    resource = provider.CreateResource(spec, IDENTITY, {"network": network}, OPERATION_ID)
+    command = runner.calls[-1]
+    value = command[command.index("--rule") + 1]
+    lower, upper = (0, 65535) if protocol == "any" else (ports[0][1], ports[1][1])
+
+    assert value == (
+        f"direction={direction},protocol={protocol},v4-cidrs=192.0.2.0/24,"
+        f"from-port={lower},to-port={upper}"
+    ), "CLI rule changed direction, protocol, CIDR or allowed ports"
+    assert spec.OwnershipLabels(IDENTITY) == labels and resource.HasLabels(labels), "Translation changed the stored desired-state identity"
+    assert dict(spec.parameters)["rules"] == (rule,), "CLI-only port defaults leaked into desired parameters"
 
 
 def test_IdempotentOwnedDiscoveryPreventsSecondCreate() -> None:

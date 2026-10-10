@@ -289,6 +289,7 @@ def test_LocaleFallbacksExposeMissingState(tmp_path: Path) -> None:
 
     for locale in ("ru", "zh-CN"):
         page = (tmp_path / locale / "index.html").read_text(encoding="utf-8")
+
         assert 'lang="' + locale + '"' in page
         assert "<strong>missing</strong>" in page
         assert '../en/' in page

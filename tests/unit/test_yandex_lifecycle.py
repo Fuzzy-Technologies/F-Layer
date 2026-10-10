@@ -49,6 +49,7 @@ class RecordingRunner:
         """Supply fake read/create/delete responses; never invoke a shell, socket or CLI."""
 
         assert timeout == 45.0, "Configured command deadline was lost"
+
         self.calls.append(command)
         operation = command[3]
 
@@ -85,6 +86,7 @@ class RecordingRunner:
             return CommandResult(0)
 
         assert operation == "create", "Fake runner received an unsupported operation"
+
         labels = command[command.index("--labels") + 1]
         name = command[command.index("--name") + 1]
         resource_id = f"resource-{len(self.resources) + 1}"
@@ -226,6 +228,7 @@ def test_CreateAndDeleteSixKindsUseExactOwnedDependencies() -> None:
         provider.DeleteResource(resource.reference, IDENTITY, item.logical_id)  # type: ignore[attr-defined]
 
     deletes = [command for command in runner.calls if command[3] == "delete"]
+
     assert len(deletes) == 6 and not runner.resources, "Explicit cleanup left fake resources"
     assert all("--id" in item and "--name" not in item for item in deletes), "Deletion used names"
 
@@ -346,6 +349,7 @@ def test_DispatchedCreateFailureIsUncertainSanitizedAndNeverRetried(
         provider.CreateResource(Specs()[0], IDENTITY, {}, OPERATION_ID)
 
     evidence = "".join(traceback.format_exception(caught.value))
+
     assert caught.value.outcome_unknown is True, "Dispatched create was classified definitely absent"
     assert "synthetic-secret" not in evidence, "Vendor output or runner exception leaked"
     assert sum(command[3] == "create" for command in runner.calls) == 1, "Uncertain create was retried"
@@ -587,6 +591,7 @@ def test_TimeoutAfterAcceptedCreateRetainsDiscoverableOperationNonce() -> None:
         provider.CreateResource(spec, IDENTITY, {}, OPERATION_ID)
 
     recovered = provider.FindResource(spec, IDENTITY)
+
     assert caught.value.outcome_unknown is True, "Accepted mutation was classified absent"
     assert recovered is not None, "Stable logical labels cannot reconcile an interrupted create"
     assert dict(recovered.labels)["flayer-operation"] == OPERATION_ID, "Operation attribution was lost"
@@ -707,6 +712,7 @@ def test_SSHKeyStructuralBoundsAndCommentRemoval() -> None:
 
     runner = provider._runner
     metadata = runner.calls[-1][runner.calls[-1].index("--metadata") + 1]  # type: ignore[attr-defined]
+
     assert "untrusted-comment" not in metadata, "Public-key comment entered a CLI property value"
 
 
@@ -753,6 +759,7 @@ def test_PrivateTemporaryCleanupFailurePreservesRemoteUncertainty(
     assert caught.value.outcome_unknown is True, "Post-mutation cleanup failure lost remote uncertainty"
     assert "synthetic-secret" not in "".join(traceback.format_exception(caught.value)), "Cleanup path leaked"
     assert runner.last_temporary_path is not None, "Fake CLI never received a temporary input"
+
     original_unlink(runner.last_temporary_path)
 
 
@@ -768,7 +775,9 @@ def test_RollbackDeletionRechecksItsExactOperationNonce() -> None:
 
     assert caught.value.outcome_unknown is False, "Nonce mismatch was classified dispatched"
     assert not any(command[3] == "delete" for command in runner.calls), "Cross-operation rollback deleted a resource"
+
     provider.DeleteResource(resource.reference, IDENTITY, spec.logical_id, "b" * 32)
+
     assert not runner.resources, "Correctly attributed rollback could not remove its resource"
 
 

@@ -249,50 +249,50 @@ reviewedTranslationHash = "sha256:912720495e1c9ef67b12de60e8cc84a26700f69b6bf136
 id = "page:guide"
 kind = "page"
 sourcePath = "docs/site/content/en/guide/index.md"
-sourceHash = "sha256:f633b1e2ddb1dfbed4fb5045b06ef9742733ef27d5fd48c12e4eadc9f0791997"
+sourceHash = "sha256:2ea549f4a99685752460f82d246eb7341126f3bda353c09d14de862539eb1e58"
 reviewClass = "technical"
 
 [units.translations.ru]
 state = "approved"
 path = "docs/site/content/ru/guide/index.md"
-basedOnSourceHash = "sha256:f633b1e2ddb1dfbed4fb5045b06ef9742733ef27d5fd48c12e4eadc9f0791997"
+basedOnSourceHash = "sha256:2ea549f4a99685752460f82d246eb7341126f3bda353c09d14de862539eb1e58"
 
 [[units.translations.ru.reviews]]
 role = "editorial"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:33:02Z"
-reviewedSourceHash = "sha256:f633b1e2ddb1dfbed4fb5045b06ef9742733ef27d5fd48c12e4eadc9f0791997"
-reviewedTranslationHash = "sha256:7a51875871c9caa24ebd677cc7e4cbed0a697ba067a197b86f9ba07014ad5e4b"
+reviewedAt = "2026-10-10T00:27:09Z"
+reviewedSourceHash = "sha256:2ea549f4a99685752460f82d246eb7341126f3bda353c09d14de862539eb1e58"
+reviewedTranslationHash = "sha256:355ca8fd5d6cf757f93683d2479bd7a6eb9156f4facb761a8ead2e2646fdb926"
 
 [[units.translations.ru.reviews]]
 role = "technical"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:33:02Z"
-reviewedSourceHash = "sha256:f633b1e2ddb1dfbed4fb5045b06ef9742733ef27d5fd48c12e4eadc9f0791997"
-reviewedTranslationHash = "sha256:7a51875871c9caa24ebd677cc7e4cbed0a697ba067a197b86f9ba07014ad5e4b"
+reviewedAt = "2026-10-10T00:27:09Z"
+reviewedSourceHash = "sha256:2ea549f4a99685752460f82d246eb7341126f3bda353c09d14de862539eb1e58"
+reviewedTranslationHash = "sha256:355ca8fd5d6cf757f93683d2479bd7a6eb9156f4facb761a8ead2e2646fdb926"
 
 [units.translations.zh-CN]
 state = "approved"
 path = "docs/site/content/zh-CN/guide/index.md"
-basedOnSourceHash = "sha256:f633b1e2ddb1dfbed4fb5045b06ef9742733ef27d5fd48c12e4eadc9f0791997"
+basedOnSourceHash = "sha256:2ea549f4a99685752460f82d246eb7341126f3bda353c09d14de862539eb1e58"
 
 [[units.translations.zh-CN.reviews]]
 role = "editorial"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
-reviewedSourceHash = "sha256:f633b1e2ddb1dfbed4fb5045b06ef9742733ef27d5fd48c12e4eadc9f0791997"
-reviewedTranslationHash = "sha256:6355ad60cd9ef2d7514d94ead1fa72713d7328936f8a254213a4be813f95bd9e"
+reviewedAt = "2026-10-10T00:27:09Z"
+reviewedSourceHash = "sha256:2ea549f4a99685752460f82d246eb7341126f3bda353c09d14de862539eb1e58"
+reviewedTranslationHash = "sha256:ad58404ceeceab6333596a4385ffa5f8875aa05e36601234eb814551628b2c65"
 
 [[units.translations.zh-CN.reviews]]
 role = "technical"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
-reviewedSourceHash = "sha256:f633b1e2ddb1dfbed4fb5045b06ef9742733ef27d5fd48c12e4eadc9f0791997"
-reviewedTranslationHash = "sha256:6355ad60cd9ef2d7514d94ead1fa72713d7328936f8a254213a4be813f95bd9e"
+reviewedAt = "2026-10-10T00:27:09Z"
+reviewedSourceHash = "sha256:2ea549f4a99685752460f82d246eb7341126f3bda353c09d14de862539eb1e58"
+reviewedTranslationHash = "sha256:ad58404ceeceab6333596a4385ffa5f8875aa05e36601234eb814551628b2c65"
 
 [[units]]
 id = "page:guide.cli"

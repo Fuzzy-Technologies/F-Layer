@@ -124,6 +124,7 @@ def test_ServiceStatusIsReadOnlyAndDoesNotImplyClientConnectivity(tmp_path: Path
     assert report == (("flayer-example.service", False),)
     assert runner.calls[0][1] == b""
     assert runner.calls[0][0][-1] == "sudo -n /usr/bin/systemctl is-active --quiet flayer-example.service"
+
     runner.result = GuestResult(255, PRIVATE_PAYLOAD)
 
     with pytest.raises(VpnError):
@@ -222,10 +223,12 @@ def test_RemoteInstallerUsesPrivateRootStageAndCleansOnlyItsTemporaryDirectory(t
         """Inspect staged private files before returning a deterministic fake installer result."""
 
         stage = Path(options["cwd"])
+
         assert stat.S_IMODE(stage.stat().st_mode) == 0o700
         assert stat.S_IMODE((stage / "server.conf").stat().st_mode) == 0o600
         assert (stage / "server.conf").read_bytes() == PRIVATE_PAYLOAD
         assert options["stdout"] == options["stderr"] == subprocess.DEVNULL
+
         calls.append(command)
 
         return subprocess.CompletedProcess(command, 0)

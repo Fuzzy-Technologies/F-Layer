@@ -264,6 +264,7 @@ def test_ExecutionExceptionsSuppressSecretTracebacks(failure: Exception) -> None
         provider.ListResources(ResourceKind.NETWORK)
 
     assert error.value.__context__ is None, "Sanitized error retained the original exception"
+
     rendered = "".join(traceback.format_exception(error.value))
 
     assert "synthetic-secret" not in rendered, "Sanitized error retained a secret exception chain"
@@ -347,6 +348,7 @@ def test_ListRespectsCloudPageMaximum(kind: ResourceKind, configured_limit: int)
     )
 
     assert provider.ListResources(kind) == (), "Empty inventory must remain discoverable"
+
     command, _ = runner.calls[0]
     limit = int(command[command.index("--limit") + 1])
 

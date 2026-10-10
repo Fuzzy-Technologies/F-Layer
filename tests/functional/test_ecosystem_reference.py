@@ -63,6 +63,7 @@ class ObservationProvider:
         """Read one synthetic exact locator and count observations only."""
 
         assert reference == self.resource.reference, "Lifecycle requested a foreign fixture locator"
+
         self.lookups += 1
 
         return self.resource
@@ -121,6 +122,7 @@ def test_ReferenceConsumerReadsExistingSourcesWithoutDispatch(tmp_path: Path) ->
     ParseRequest(SerializeRequest(lifecycle_request), IDENTITY)
 
     assert provider.lookups == 0, "Parsing dispatched a provider operation"
+
     loaded = LoadState(state_path, IDENTITY)
     state_result = AdaptState(state_request, loaded)
     engine = LifecycleEngine(DeploymentPlan(IDENTITY, (spec,)), provider, state_path)

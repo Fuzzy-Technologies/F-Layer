@@ -112,6 +112,16 @@ An application can use `socks5h://127.0.0.1:10808`; the `h` requests remote host
 resolution. Verify an HTTPS request through that proxy and compare its visible
 source address with the deployed gateway's address.
 
+For AmneziaVPN 5.0.3.0 on Android, use the separate `amnezia.vpn` connection
+key/file or scan all numbered `amnezia-qr-*.svg` frames with its built-in scanner.
+The native container embeds the exact generated `client.json`, including DNS
+and routing, with no SSH credentials or server private key. The ordinary
+`import.txt` VLESS URI remains separate. GUI settings can override imported
+policy: check DNS, VPN/TUN, app exclusions and IPv6 before verifying real traffic.
+All exports are private artifacts; never send them to an online QR converter.
+The encoding follows the [versioned AmneziaVPN exporter](https://github.com/amnezia-vpn/amnezia-client/blob/5.0.3.0/client/core/controllers/selfhosted/exportController.cpp)
+and its [native QR framing](https://github.com/amnezia-vpn/amnezia-client/blob/5.0.3.0/client/core/utils/qrCodeUtils.cpp).
+
 ## Installation, updates, and removal
 
 The guest installer manages only `/opt/flayer/vless/<ownership-hash>` and its

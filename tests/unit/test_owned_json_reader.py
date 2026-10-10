@@ -80,6 +80,7 @@ def test_PostValidationFifoSwapFailsWithoutBlocking(tmp_path: Path, mode: str) -
         [sys.executable, "-c", FIFO_SWAP_SCRIPT, str(tmp_path / "stack.json"), mode],
         stdin=subprocess.DEVNULL, capture_output=True, text=True, check=False, timeout=3,
     )
+
     assert result.returncode == 0, "The bounded JSON reader must reject a substituted FIFO"
     assert result.stdout.strip() == "blocked"
 

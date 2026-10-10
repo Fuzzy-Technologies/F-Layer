@@ -10,6 +10,7 @@ import os
 import stat
 import subprocess
 import zipfile
+import zlib
 from contextlib import nullcontext
 from dataclasses import replace
 from pathlib import Path
@@ -18,6 +19,7 @@ from urllib.parse import parse_qs, urlsplit
 import pytest
 
 from flayer.core.contracts import StackIdentity
+from flayer.profiles import _amnezia_export as amnezia_export
 from flayer.profiles import _vless_guest as guest
 from flayer.profiles.artifacts import WriteArtifactBundle
 from flayer.profiles.vless import (
@@ -169,6 +171,7 @@ def test_InstallerInputIsBoundToPreparedConfig(tmp_path: Path) -> None:
     assert request["xray_version"] == "26.9.30"
     assert VlessServiceName(Profile()) == f"flayer-vless-{request['owner'][:24]}.service"
     assert stat.S_IMODE((directory / "server.json").stat().st_mode) == 0o600
+
     (directory / "server.json").write_bytes(config + b" ")
 
     with pytest.raises(guest.GuestError, match="differs"):
@@ -202,7 +205,9 @@ def test_ArchivePinAndSafeExtraction(monkeypatch: pytest.MonkeyPatch) -> None:
     """Verify archive digests before parsing and reject traversal, symlinks, and wrong binaries."""
 
     SetDownload(monkeypatch, Archive())
+
     assert guest._DownloadBinary() == b"\x7fELFtest"
+
     SetDownload(monkeypatch, Archive(), "0" * 64)
 
     with pytest.raises(guest.GuestError, match="checksum"):
@@ -246,8 +251,10 @@ def test_OwnedInstallReapplyAndRemove(tmp_path: Path, monkeypatch: pytest.Monkey
     assert b"DynamicUser=yes" in service.read_bytes()
     assert b"LoadCredential=server.json:" in service.read_bytes()
     assert stat.S_IMODE((root / "server.json").stat().st_mode) == 0o600
+
     guest._Remove(root, service, request["owner"])
     guest._Remove(root, service, request["owner"])
+
     assert not root.exists() and not service.exists()
 
 
@@ -289,7 +296,9 @@ def test_OwnedRetryEnsuresServiceRunsWithoutReplacingCredentials(
 
         nonlocal active
         commands.append(arguments)
+
         assert arguments == ["systemctl", "enable", "--now", service.name], "Retry must only ensure the owned service is enabled and running"
+
         active = True
 
     def CheckHealth(*args: object) -> None:
@@ -381,6 +390,7 @@ def test_RealPinnedXrayParsesGeneratedConfigs(tmp_path: Path) -> None:
     profile = Profile()
     material = GenerateVlessMaterial(profile)
     version = subprocess.run([binary, "version"], capture_output=True, check=True, text=True)
+
     assert "Xray 26.9.30" in version.stdout
 
     for name, content in (
@@ -392,6 +402,7 @@ def test_RealPinnedXrayParsesGeneratedConfigs(tmp_path: Path) -> None:
         result = subprocess.run(
             [binary, "run", "-test", "-config", str(path)], capture_output=True, timeout=15, check=False,
         )
+
         assert result.returncode == 0, "Pinned Xray rejected the generated configuration"
 
 
@@ -400,6 +411,7 @@ def test_PrivateMaterialRoundTripRejectsTampering() -> None:
 
     material = GenerateVlessMaterial(Profile())
     encoded = EncodeVlessMaterial(material)
+
     assert DecodeVlessMaterial(encoded) == material
 
     for payload in (b"null", b"{}", encoded + b"x", b"x" * 16385):
@@ -432,9 +444,12 @@ def test_GuestMainRejectsWrongHostBeforeWrites(monkeypatch: pytest.MonkeyPatch) 
     """Keep privilege and operating-system prerequisites separate from successful deployment."""
 
     monkeypatch.setattr(guest.os, "geteuid", lambda: 1000)
+
     assert guest.Main([]) == 1
+
     monkeypatch.setattr(guest.os, "geteuid", lambda: 0)
     monkeypatch.setattr(guest.platform, "freedesktop_os_release", lambda: {"ID": "debian", "VERSION_ID": "12"})
+
     assert guest.Main([]) == 1
 
 
@@ -619,3 +634,100 @@ def test_UnusableRealityTargetPreventsGuestMutation(
 
     else:
         assert not root.exists() and not service.exists()
+
+
+@pytest.mark.parametrize("mode", ["full", "split"])
+def test_AmneziaExportPreservesDevicePolicyAndPrivatePermissions(tmp_path: Path, mode: str) -> None:
+    """Decode the native container independently and compare its exact per-device Xray policy."""
+
+    profile = replace(Profile(), routes=VpnRoutes(
+        mode, ("0.0.0.0/0",) if mode == "full" else ("1.1.1.1/32", "8.8.8.8/32", "198.51.100.0/24"),
+        ("1.1.1.1", "8.8.8.8"), "disabled",
+    ))
+    material = GenerateVlessMaterial(profile)
+    bundle = PrepareVless(profile, ENDPOINT, SETTINGS, material).device_bundles[0]
+    artifacts = {item.name: item.content for item in bundle.files}
+    encoded = artifacts["amnezia.vpn"].strip().removeprefix(b"vpn://")
+    compressed = base64.urlsafe_b64decode(encoded + b"=" * (-len(encoded) % 4))
+    decoded = zlib.decompress(compressed[4:])
+
+    assert int.from_bytes(compressed[:4], "big") == len(decoded)
+
+    native = json.loads(decoded)
+
+    assert native["defaultContainer"] == "amnezia-xray"
+    assert native["hostName"] == ENDPOINT.host
+    assert (native["dns1"], native["dns2"]) == profile.routes.dns_servers
+    assert set(native) == {"containers", "defaultContainer", "hostName", "description", "dns1", "dns2"}
+
+    protocol = native["containers"][0]["xray"]
+
+    assert protocol["isThirdPartyConfig"] is True
+    assert protocol["last_config"].encode() == artifacts["client.json"]
+    assert material.devices[0].user_id in protocol["last_config"]
+    assert material.devices[1].user_id not in decoded.decode()
+    assert b"privateKey" not in decoded
+    assert artifacts["import.txt"].startswith(b"vless://")
+    assert all(item.sensitive for item in bundle.files)
+
+    directory = WriteArtifactBundle(tmp_path / "device", bundle)
+
+    assert stat.S_IMODE(directory.stat().st_mode) == 0o700
+    assert all(stat.S_IMODE((directory / item.name).stat().st_mode) == 0o600 for item in bundle.files)
+
+
+def test_AmneziaQrFramesReassembleLikeTheNativeScanner(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Decode multi-frame QDataStream headers and qCompress bytes without the export encoder."""
+
+    import segno
+
+    captured = []
+    original = segno.make_qr
+
+    def Capture(payload: str, **options: object) -> object:
+        """Retain the actual text encoded into each real SVG QR."""
+
+        captured.append(payload)
+
+        return original(payload, **options)
+
+    monkeypatch.setattr(segno, "make_qr", Capture)
+    client = json.dumps({"fixture": [hashlib.sha256(str(index).encode()).hexdigest()
+                                     for index in range(100)]}).encode()
+    artifacts = amnezia_export.BuildAmneziaArtifacts(client, ENDPOINT.host, "phone", ("1.1.1.1",))
+
+    assert len(captured) > 1
+
+    chunks = []
+
+    for index, payload in enumerate(captured):
+        frame = base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4))
+
+        assert int.from_bytes(frame[:2], "big") == 1984
+        assert frame[2] == len(captured) and frame[3] == index
+        assert int.from_bytes(frame[4:8], "big") == len(frame[8:]) <= 850
+        assert artifacts[index + 1].name == f"amnezia-qr-{index + 1:02d}.svg"
+        assert b"<svg" in artifacts[index + 1].content
+
+        chunks.append(frame[8:])
+
+    compressed = b"".join(chunks)
+    native = json.loads(zlib.decompress(compressed[4:]))
+
+    assert native["containers"][0]["xray"]["last_config"].encode() == client
+    assert native["dns1"] == native["dns2"] == "1.1.1.1"
+    assert artifacts[0].content == b"vpn://" + base64.urlsafe_b64encode(compressed).rstrip(b"=") + b"\n"
+
+
+def test_AmneziaExportExplainsMissingOptionalDependency(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Fail before publishing a partial bundle when QR support is missing."""
+
+    def Missing(name: str) -> None:
+        """Simulate installation without the vpn extra."""
+
+        raise ImportError(name)
+
+    monkeypatch.setattr(amnezia_export.importlib, "import_module", Missing)
+
+    with pytest.raises(ValueError, match="vpn.*extra"):
+        amnezia_export.BuildAmneziaArtifacts(b"{}", ENDPOINT.host, "phone", ("1.1.1.1",))

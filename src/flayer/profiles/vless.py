@@ -14,6 +14,7 @@ from importlib.resources import files
 from urllib.parse import quote, urlencode
 
 from flayer.core.contracts import ContractError, ValidateName
+from flayer.profiles._amnezia_export import BuildAmneziaArtifacts
 from flayer.profiles.artifacts import Artifact
 from flayer.profiles.vpn import (
     BuildVpnDeviceBundle,
@@ -412,6 +413,10 @@ def PrepareVless(
         Artifact("import.txt", (BuildVlessUri(
             profile, endpoint, settings, material, device.device_id,
         ) + "\n").encode("utf-8")),
+        *BuildAmneziaArtifacts(
+            RenderVlessClient(profile, endpoint, settings, material, device.device_id),
+            endpoint.host, device.device_id, profile.routes.dns_servers,
+        ),
     )) for device in profile.devices)
 
     return PreparedVpnTransport(profile, VLESS_CAPABILITIES, server_bundle, device_bundles)

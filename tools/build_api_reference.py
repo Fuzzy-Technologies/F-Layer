@@ -448,9 +448,9 @@ def InstallWheel(environment_python: Path, wheel_path: Path, build_root: Path) -
     RunCommand([environment_python, "-m", "pip", "install", "--no-index", "--no-deps",
                 "--disable-pip-version-check", "--target", installed_root, wheel_path], cwd=build_root)
     code = (
-        "import importlib.metadata as m; "
-        f"distributions = tuple(m.distributions(path=[{str(installed_root)!r}])); "
-        "assert len(distributions) == 1, 'Expected one installed wheel distribution'; "
+        "import importlib.metadata as m\n"
+        f"distributions = tuple(m.distributions(path=[{str(installed_root)!r}]))\n\n"
+        "assert len(distributions) == 1, 'Expected one installed wheel distribution'\n"
         "assert distributions[0].metadata['Name'] == 'f-layer', 'Unexpected wheel distribution'"
     )
     RunCommand([environment_python, "-c", code], cwd=build_root)

@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/vless-reality.md"
-sourceHash = "sha256:26f09c7dab74f2040a6079edf5459dd49a692d6bd489bc4404d6e7abac30f0ae"
-reviewedTranslationHash = "sha256:31ffd294e386793aff0afe07b03c21aaa0c8dd14ce0fd2c5bac9b560307a819b"
+sourceHash = "sha256:52e5dc9f470e9719f1b6157fecdb111bbf05babdbb348f908f20d2db4fca309b"
+reviewedTranslationHash = "sha256:5e6ac014ac5bd76aad2a3c8cadfde668c69a5637674bb8c1454f4d40fd1e5036"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-10T00:19:13.688041+00:00"
+reviewedAt = "2026-10-10T00:27:09Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # Шлюз VLESS Reality
@@ -122,6 +122,16 @@ F-Layer для работы Xray как прокси приложений.
 Приложение может использовать `socks5h://127.0.0.1:10808`; буква `h` означает
 разрешение имён на удалённой стороне. Проверьте HTTPS-запрос через этот прокси
 и сравните видимый внешний адрес с адресом развёрнутого шлюза.
+
+Для AmneziaVPN 5.0.3.0 на Android используйте отдельный файл/ключ подключения
+`amnezia.vpn` или отсканируйте все нумерованные `amnezia-qr-*.svg` встроенным
+сканером. Нативный контейнер включает точный `client.json` с DNS и маршрутами,
+без SSH-учётных данных и закрытого ключа сервера. Обычная ссылка VLESS остаётся
+отдельно в `import.txt`. Настройки приложения могут переопределить политику:
+проверьте DNS, VPN/TUN, исключения приложений и IPv6, затем реальный трафик.
+Все экспорты приватны; не отправляйте их в онлайн-конвертеры QR.
+Формат соответствует [экспортёру AmneziaVPN указанной версии](https://github.com/amnezia-vpn/amnezia-client/blob/5.0.3.0/client/core/controllers/selfhosted/exportController.cpp)
+и его [формату QR-кадров](https://github.com/amnezia-vpn/amnezia-client/blob/5.0.3.0/client/core/utils/qrCodeUtils.cpp).
 
 ## Установка, обновление и удаление
 

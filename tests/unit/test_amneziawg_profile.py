@@ -146,6 +146,7 @@ def test_SplitAndFullPoliciesHaveNoUnreachableIpv6Route() -> None:
 
     for content in clients.values():
         client = ParseClient(content)
+
         assert client["Peer"]["AllowedIPs"] == "10.90.0.0/16, 1.1.1.1/32"
         assert "::/0" not in content
         assert "0.0.0.0/0" not in content
@@ -190,6 +191,7 @@ def test_GeneratedShellParsesWithoutExecutingGuestOperations() -> None:
 
     for name in ("install.sh", "network.sh"):
         result = subprocess.run(["bash", "-n"], input=server[name], text=True, capture_output=True)
+
         assert result.returncode == 0, f"Generated {name} must parse as bash: {result.stderr}"
 
 

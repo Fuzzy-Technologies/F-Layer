@@ -250,10 +250,13 @@ def test_ExternalLoadRequiresExactPinAndUsesOwnedSource(tmp_path: Path) -> None:
         registry.Load(descriptor, allowed=(replace(descriptor, version="1.2.4"),))
 
     assert not (tmp_path / "example_plugin/executed.txt").exists(), "Unpinned load executed code"
+
     extension = registry.Load(descriptor, allowed=(descriptor,))
 
     assert isinstance(extension, ProviderExtension), "Loaded factory lost its typed provider contract"
+
     provider = extension.CreateProvider(ProviderContext("example-folder", "external-profile"))
+
     assert isinstance(provider, CloudProvider), "External factory did not construct a usable provider"
     assert (tmp_path / "example_plugin/executed.txt").read_text() == "executed"
     assert registry.Load(descriptor, allowed=(descriptor,)) is extension, "Factory was executed twice"
@@ -299,7 +302,9 @@ def test_ParentImportsUseVerifiedSnapshotsInsteadOfStaleBytecode(tmp_path: Path)
     plugin = tmp_path / "example_plugin/plugin.py"
     selected_source = plugin.read_text()
     stale_source = selected_source.replace("'executed'", "'obsolete'")
+
     assert len(stale_source) == len(selected_source), "Stale bytecode fixture must preserve source size"
+
     plugin.write_text(stale_source)
     timestamp = plugin.stat()
     py_compile.compile(str(plugin), doraise=True)
@@ -330,7 +335,9 @@ def test_LoaderOwnedModuleReceiptsPermitExactReuseAndRejectSourceDrift(tmp_path:
     descriptor = DiscoverExtensions((directory,))[0]
     ExtensionRegistry((descriptor,)).Load(descriptor, allowed=(descriptor,))
     reused = ExtensionRegistry((descriptor,)).Load(descriptor, allowed=(descriptor,))
+
     assert reused.Descriptor == descriptor, "Exact loader-owned source reuse was rejected"
+
     plugin = tmp_path / "example_plugin/plugin.py"
     plugin.write_text(plugin.read_text() + "\nchanged = True\n")
     WriteRecord(directory, (tmp_path / "example_plugin/__init__.py", plugin))
@@ -495,11 +502,15 @@ def test_BuiltinProvidersKeepReadOnlyAndLifecycleCapabilitiesSeparate() -> None:
 
     assert isinstance(read_only, ProviderExtension), "Read-only extension lost its provider factory"
     assert not isinstance(read_only, LifecycleProviderExtension), "Read-only factory requires mutation"
+
     provider = read_only.CreateProvider(context)
+
     assert ProviderCapability.CREATE_RESOURCE not in provider.Capabilities, "Read-only provider mutates"
     assert not hasattr(provider, "CreateResource"), "Read-only construction selected lifecycle adapter"
     assert isinstance(lifecycle, LifecycleProviderExtension), "Lifecycle extension lost optional factory"
+
     mutation_provider = lifecycle.CreateLifecycleProvider(context)
+
     assert isinstance(mutation_provider, LifecycleProvider), "Lifecycle extension did not return real adapter"
     assert ProviderCapability.CREATE_RESOURCE in mutation_provider.Capabilities
     assert provider.Identity.scope_id == mutation_provider.Identity.scope_id == "example-folder"
@@ -511,10 +522,14 @@ def test_BuiltinGatewayCompilesExportsAndRendersRealOwnedPlan(tmp_path: Path) ->
     configuration = tomllib.loads((PROJECT_ROOT / "examples/secure-gateway.toml").read_text())
     registry = ExtensionRegistry()
     extension = registry.Load(registry.Get(ExtensionKind.PROFILE, "secure-gateway"))
+
     assert isinstance(extension, ProfileExtension), "Profile descriptor did not return a profile factory"
+
     compiled = extension.CompileProfile(configuration, ProfileContext(IDENTITY))
+
     assert isinstance(compiled, CompiledProfile), "Compiled profile lost artifact or plan methods"
     assert compiled.Identity == IDENTITY, "Compilation changed the exact ownership boundary"
+
     bundle = compiled.BuildServerBundle()
     directory = WriteArtifactBundle(tmp_path / "artifacts", bundle)
     server_file = directory / bundle.files[0].name
@@ -527,7 +542,9 @@ def test_BuiltinGatewayCompilesExportsAndRendersRealOwnedPlan(tmp_path: Path) ->
 
     altered = copy.deepcopy(configuration)
     identity = altered["identity"]
+
     assert isinstance(identity, dict), "Fixture identity must remain a TOML table"
+
     identity["stack"] = "other"
 
     with pytest.raises(ExtensionError, match="ownership"):
@@ -562,18 +579,21 @@ def test_RegistryLookupAndInvalidContextsFailBeforeOperations() -> None:
         ProfileContext(None)  # type: ignore[arg-type]
 
     provider_extension = registry.Load(descriptor)
+
     assert isinstance(provider_extension, ProviderExtension)
 
     with pytest.raises(ExtensionError):
         provider_extension.CreateProvider(None)  # type: ignore[arg-type]
 
     lifecycle_extension = registry.Load(registry.Get(ExtensionKind.PROVIDER, "yandex-lifecycle"))
+
     assert isinstance(lifecycle_extension, LifecycleProviderExtension)
 
     with pytest.raises(ExtensionError):
         lifecycle_extension.CreateLifecycleProvider(None)  # type: ignore[arg-type]
 
     profile_extension = registry.Load(registry.Get(ExtensionKind.PROFILE, "secure-gateway"))
+
     assert isinstance(profile_extension, ProfileExtension)
 
     with pytest.raises(ExtensionError):

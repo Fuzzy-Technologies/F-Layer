@@ -71,7 +71,9 @@ def test_NewPublicModuleAndCliAreAutomaticallyDiscovered(
 
     assert [item.name for item in modules] == ["flayer", "flayer.__main__", "flayer.future"]
     assert modules[1].symbols == ("flayer.__main__.Main",)
+
     definitions = build_api_reference.DiscoverDefinitions(installed_root)
+
     assert any(item.symbol == "flayer._internal.Main" and item.disposition == "source-only"
                for item in definitions), "Private definitions must have accountable omissions"
 
@@ -392,6 +394,7 @@ def test_WheelInstallUsesOwnedTargetWithoutMutatingTools(
         """Capture bounded install and metadata commands without performing installation."""
 
         assert isinstance(command, list)
+
         calls.append(tuple(str(part) for part in command))
 
         return ""

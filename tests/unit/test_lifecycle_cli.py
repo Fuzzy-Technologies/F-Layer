@@ -161,10 +161,13 @@ def test_LifecycleProviderFailureAndTextOutputAreSanitized(
     monkeypatch.setattr(yandex, "YandexLifecycleProvider", FailedProvider)
     arguments = Arguments(tmp_path, "status")
     arguments[-1] = "text"
+
     assert Main(arguments) == 2
     assert capsys.readouterr().out == "Lifecycle operation blocked or failed\n"
+
     monkeypatch.setattr(yandex, "YandexLifecycleProvider", lambda settings: object())
     monkeypatch.setattr(lifecycle, "LifecycleEngine", FakeEngine)
+
     assert Main(arguments) == 1
     assert "Lifecycle status: incomplete" in capsys.readouterr().out
 

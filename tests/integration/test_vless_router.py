@@ -80,10 +80,12 @@ def test_RealPinnedXrayRoutesDualStackNamesWithoutAllowingPrivateTargets(
 
             except OSError:
                 assert process.poll() is None and time.monotonic() < deadline, "Xray router did not start"
+
                 time.sleep(0.02)
 
         with connection, connection.makefile("rb") as stream:
             connection.sendall(b"\x05\x01\x00")
+
             assert stream.read(2) == b"\x05\x00", "SOCKS negotiation failed"
 
             if ":" in destination:
@@ -98,7 +100,9 @@ def test_RealPinnedXrayRoutesDualStackNamesWithoutAllowingPrivateTargets(
 
             connection.sendall(b"\x05\x01\x00" + address + b"\x00\x50")
             response = stream.read(10)
+
             assert response[:2] == b"\x05\x00", "SOCKS request was rejected before routing"
+
             connection.sendall(b"GET / HTTP/1.0\r\n\r\n")
 
             try:

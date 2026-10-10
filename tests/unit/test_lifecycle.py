@@ -173,6 +173,7 @@ def test_CreateStatusDestroyAreIdempotentAndOrdered(tmp_path: Path) -> None:
 
     provider = FakeProvider()
     engine = Engine(tmp_path, provider)
+
     assert isinstance(provider, LifecycleProvider)
     assert engine.Status().status == "incomplete"
     assert engine.Create().ExitCode() == 0
@@ -194,6 +195,7 @@ def test_PreexistingResourcesSurviveRollback(tmp_path: Path) -> None:
     provider.fail_create = "instance"
     engine = Engine(tmp_path, provider)
     report = engine.Create()
+
     assert report.status == "rolled-back" and report.ExitCode() == 1
     assert provider.deleted == ["subnet"]
     assert set(provider.resources) == {"network"}
@@ -210,6 +212,7 @@ def test_AmbiguousMissingCreateNeverDuplicatesOnRecovery(tmp_path: Path) -> None
     provider.uncertain_create = "subnet"
     engine = Engine(tmp_path, provider)
     report = engine.Create()
+
     assert report.status == "uncertain" and report.recovery_required
     assert engine.Status().recovery_required
 
@@ -236,7 +239,9 @@ def test_InterruptedCreateRecoversAcceptedResourceWithoutDuplication(tmp_path: P
         engine.Create()
 
     assert not engine.state_path.with_name(".stack.json.operation.lock").exists()
+
     provider.interrupt_create = None
+
     assert engine.Recover().status == "complete"
     assert provider.created == ["network", "subnet", "instance"]
 
@@ -264,9 +269,12 @@ def test_RollbackFailureCanResumeSafely(tmp_path: Path) -> None:
     provider.fail_create = "instance"
     provider.fail_delete = "subnet"
     engine = Engine(tmp_path, provider)
+
     assert engine.Create().status == "rollback-incomplete"
     assert _LoadJournal(engine.state_path, PLAN).action == "rollback"
+
     provider.fail_delete = None
+
     assert engine.Recover().status == "rolled-back"
     assert not provider.resources
 
@@ -278,6 +286,7 @@ def test_DestroyFailureAndInterruptionRemainRecoverable(tmp_path: Path) -> None:
     engine = Engine(tmp_path, provider)
     engine.Create()
     provider.fail_delete = "subnet"
+
     assert engine.Destroy().status == "incomplete"
     assert set(provider.resources) == {"network", "subnet"}
 
@@ -291,6 +300,7 @@ def test_DestroyFailureAndInterruptionRemainRecoverable(tmp_path: Path) -> None:
         engine.Recover()
 
     provider.interrupt_delete = None
+
     assert engine.Recover().status == "complete"
     assert provider.deleted == ["instance", "subnet", "network"]
 
@@ -302,6 +312,7 @@ def test_UnconfirmedDeletionFailsClosed(tmp_path: Path) -> None:
     engine = Engine(tmp_path, provider)
     engine.Create()
     provider.unconfirmed_delete = True
+
     assert engine.Destroy().recovery_required
     assert len(LoadState(engine.state_path, IDENTITY).resources) == 3
 
@@ -335,7 +346,9 @@ def test_SnapshotFailureAfterCreationKeepsJournalForRecovery(
         engine.Create()
 
     assert len(_LoadJournal(engine.state_path, PLAN).created) == 1
+
     monkeypatch.setattr(lifecycle, "SaveState", actual_save)
+
     assert engine.Recover().status == "complete"
     assert provider.created == ["network", "subnet", "instance"]
 
@@ -421,6 +434,7 @@ def test_DestroySkipsAlreadyMissingExactResource(tmp_path: Path) -> None:
     engine = Engine(tmp_path, provider)
     engine.Create()
     del provider.resources["instance"]
+
     assert engine.Status().resources[0].status == "present"
     assert any(item.status == "missing" for item in engine.Status().resources)
     assert engine.Destroy().status == "complete"
@@ -439,6 +453,7 @@ def test_ExclusiveLockAndNoRecoveryJournalFailOffline(tmp_path: Path) -> None:
         engine.Create()
 
     assert lock.exists() and not provider.created
+
     lock.unlink()
 
     with pytest.raises(LifecycleError, match="No interrupted"):
@@ -518,6 +533,7 @@ name = "example-security"
 rules = [{ protocol = "tcp", port = 443 }]
 '''), encoding="utf-8")
     plan = LoadDeploymentPlan(path)
+
     assert plan.resources[0].kind is ResourceKind.SECURITY_GROUP
     assert CoreKind(plan.resources[0].kind) == "security-group"
     assert plan.Fingerprint() == LoadDeploymentPlan(path).Fingerprint()
@@ -619,6 +635,7 @@ def test_EmptyPlanConvergesAndStateContainsNoParameters(tmp_path: Path) -> None:
     """An empty plan safely converges; persisted state never gains desired option payloads."""
 
     engine = LifecycleEngine(DeploymentPlan(IDENTITY, ()), FakeProvider(), tmp_path / "empty.json")
+
     assert engine.Create().status == engine.Status().status == engine.Destroy().status == "complete"
     assert set(json.loads(engine.state_path.read_text(encoding="utf-8"))) == {
         "schema_version", "identity", "resources",
@@ -631,11 +648,14 @@ def test_DifferentOperationCannotBeRecoveredAsOwnCreation(tmp_path: Path) -> Non
     provider = FakeProvider()
     provider.uncertain_create = "subnet"
     engine = Engine(tmp_path, provider)
+
     assert engine.Create().status == "uncertain"
+
     other = provider.Put(SUBNET)
     provider.resources["subnet"] = ProviderResource(
         other.reference, other.name, labels=(*other.labels, ("flayer-operation", "b" * 32)),
     )
+
     assert engine.Recover(rollback=True).status == "uncertain"
     assert provider.deleted == []
     assert provider.resources["subnet"].reference.resource_id == "id-subnet"
@@ -648,7 +668,9 @@ def test_ChangedOperationLabelBlocksRollbackDeletion(tmp_path: Path) -> None:
     provider.fail_create = "instance"
     provider.fail_delete = "subnet"
     engine = Engine(tmp_path, provider)
+
     assert engine.Create().status == "rollback-incomplete"
+
     provider.fail_delete = None
     item = provider.resources["subnet"]
     labels = tuple((key, "b" * 32 if key == "flayer-operation" else value)
@@ -679,6 +701,7 @@ def test_ConcurrentAcceptedCreateHasForeignNonceAndRemainsUncertain(
 
     monkeypatch.setattr(provider, "CreateResource", ConcurrentCreate)
     engine = Engine(tmp_path, provider)
+
     assert engine.Create().status == "uncertain"
     assert engine.Recover(rollback=True).status == "uncertain"
     assert provider.deleted == []
@@ -695,6 +718,7 @@ def test_PlanCountBoundAndMissingOptionalProfile(tmp_path: Path) -> None:
 
     path = tmp_path / "plan.toml"
     path.write_text(PlanText("").replace('profile = "generic"\n', 'resources = []\n'), encoding="utf-8")
+
     assert LoadDeploymentPlan(path).resources == ()
 
 
@@ -723,6 +747,7 @@ def test_ConcurrentAdoptionRemainsOutsideRollbackEligibility(
 
     monkeypatch.setattr(provider, "FindResource", ConcurrentFind)
     engine = Engine(tmp_path, provider)
+
     assert engine.Create().status == "rolled-back"
     assert set(provider.resources) == {"network"}
     assert provider.deleted == ["subnet"]
@@ -779,6 +804,7 @@ def test_AcceptedCreateWithoutInventoryResultRemainsUncertain(
                                 spec.name, labels=spec.OwnershipLabels(identity))
 
     monkeypatch.setattr(provider, "CreateResource", InvisibleCreate)
+
     assert Engine(tmp_path, provider).Create().status == "uncertain"
     assert provider.deleted == []
 
@@ -829,7 +855,9 @@ def test_JournalDirectorySyncFailureKeepsRecoverableIntent(
         engine.Create()
 
     assert not provider.created and _JournalPath(engine.state_path).exists()
+
     monkeypatch.setattr(lifecycle, "_SyncDirectory", actual_sync)
+
     assert engine.Recover().status == "complete"
 
 
@@ -856,7 +884,9 @@ def test_CompletedOperationWithUnclearableJournalRecoversWithoutDuplication(
         engine.Create()
 
     assert provider.created == ["network", "subnet", "instance"]
+
     monkeypatch.setattr(Path, "unlink", actual_unlink)
+
     assert engine.Recover().status == "complete"
     assert provider.created == ["network", "subnet", "instance"]
 

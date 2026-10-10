@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/vless-reality.md"
-sourceHash = "sha256:16af6d39b2c76eb01d7cf8f5bf8de07173f1973e3efead9f900c658b548aef9a"
-reviewedTranslationHash = "sha256:5fc24ef92a82731276aed90f98696b0b9b641a4257df1db9fb137e78984099d8"
+sourceHash = "sha256:7217d9787ae1c1413d1adc34897f29d080acfebcf5d2fe303b6d8028b918afde"
+reviewedTranslationHash = "sha256:6a17295f447ec01aa1617e17edf32a5c43da34f694d6cad8bb9617bf912bb7bd"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:08:58.251144+00:00"
+reviewedAt = "2026-10-10T00:16:02.343621+00:00"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # VLESS Reality 网关
@@ -70,7 +70,9 @@ F-Layer 校验这些设置的语法。修改虚拟机服务前，安装程序会
 - `split`：仅代理配置的 IPv4 目标网段，拒绝不匹配的目标，
   不会在列表之外悄悄改用直连。
 
-DNS 服务器必须明确指定 IPv4 地址。DNS 解析使用 IPv4 并遵循代理路由规则；
+DNS 服务器必须明确指定 IPv4 地址。服务器和生成的客户端均使用这些 DNS 服务器，
+并将 `queryStrategy` 设为 `UseIPv4`，路由判定时的域名解析也遵循此设置。
+因此，具有可用 IPv4 地址的双栈域名不会仅因同时存在 AAAA 记录而被 IPv6 拒绝规则拦截。
 `split` 配置的允许网段必须包含 DNS 服务器。服务器阻止私有地址、环回地址、
 链路本地地址、组播地址和 IPv6 目标，包括云元数据网络。
 因此，该传输方式用于访问互联网，不用于访问云虚拟机的内部网络。
@@ -119,6 +121,9 @@ DNS 策略。导入 [v2rayN](https://github.com/2dust/v2rayN) 或
 拒绝未授权替换、安装失败清理、拒绝私密文件链接以及安装程序入口。
 `FLAYER_XRAY_BINARY` 可启用专项测试，把生成的服务器和客户端配置交给经过
 摘要校验的实际 Xray 26.3.27 程序检查。
+CI 还使用静态 DNS 应答和仅监听环回地址的测试端点验证实际路由行为：
+允许公共双栈域名和 IPv4 目标，继续阻止私有地址、元数据地址及 IPv6 目标。
+这些路由测试不验证 Reality 握手或外部 DNS 服务。
 
 这些检查验证配置与安装程序的行为，并不证明外部 VPN 连接已经成功。
 发布验收仍需获准的云部署、真实客户端连接、DNS 与路由检查，以及部署清理。

@@ -71,8 +71,11 @@ The generated client JSON supports two IPv4 policies:
 - `split`: proxy the configured IPv4 destination networks and refuse unmatched
   destinations. It does not silently connect directly outside that list.
 
-DNS servers are explicit IPv4 addresses. DNS resolution uses IPv4 and the proxy's
-routing rules; split intent must include the DNS servers in its allowed networks.
+DNS servers are explicit IPv4 addresses. Both server and generated client use
+these resolvers with `queryStrategy: UseIPv4`, including DNS lookup for routing.
+A dual-stack hostname therefore does not match the IPv6 deny rule merely because
+it also has an AAAA record. Split intent must include the DNS servers in its
+allowed networks.
 The server blocks private, loopback, link-local, multicast, and IPv6 destinations,
 including the cloud metadata network. This transport therefore targets Internet
 access, not access to a cloud VM's internal network.
@@ -131,6 +134,9 @@ settings, hash verification, malicious archive entries, unauthorized replacement
 failed-install cleanup, private-file link rejection, and installer entry points.
 `FLAYER_XRAY_BINARY` enables a targeted test that passes generated server and
 client configurations to the actual checksum-verified Xray 26.3.27 executable.
+CI also exercises its real router with static DNS and loopback-only sinks: public
+dual-stack names and IPv4 pass, while private, metadata and IPv6 targets remain
+blocked. These routing tests do not exercise a Reality handshake or external DNS.
 
 These checks establish configuration and installer behavior. They are not proof
 of an external VPN connection. Release acceptance still requires an authorized

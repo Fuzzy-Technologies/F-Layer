@@ -111,6 +111,7 @@ def test_UnknownFieldsRejectInlineSecrets(section: str) -> None:
         table = data[section][0]  # type: ignore[index]
 
     assert isinstance(table, dict), "Synthetic table construction failed"
+
     table["token"] = "synthetic-secret"
 
     with pytest.raises(ConfigError, match="unknown") as captured:
@@ -152,7 +153,9 @@ def test_InvalidIdentityFieldsAreRejected(field: str, value: object) -> None:
 
     data = ConfigData()
     identity = data["identity"]
+
     assert isinstance(identity, dict), "Synthetic identity construction failed"
+
     identity[field] = value
 
     with pytest.raises(ConfigError, match=field):
@@ -181,7 +184,9 @@ def test_DuplicateLogicalNamesAreRejected(section: str) -> None:
 
     data = ConfigData()
     values = data[section]
+
     assert isinstance(values, list), "Synthetic array construction failed"
+
     values.append(values[0].copy())
 
     with pytest.raises(ConfigError, match="unique"):

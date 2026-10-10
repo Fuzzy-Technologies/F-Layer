@@ -86,9 +86,13 @@ def test_GeneratedCatalogReviewBindsBothExactSourceAndTranslation(generated_proj
     record = ReviewRecord(unit, "Reviewed callable description.")
 
     assert generated_localization.ValidateTranslation(unit, record, ["human", "ai"]).state == "approved"
+
     changed = CanonicalUnit(unit.identifier, unit.kind, unit.source_path, "def Inspect() -> int", unit.body)
+
     assert generated_localization.ValidateTranslation(changed, record, ["human", "ai"]).state == "stale"
+
     record["body"] += " Changed afterward."
+
     assert generated_localization.ValidateTranslation(unit, record, ["human", "ai"]).state == "stale"
 
 
@@ -289,11 +293,15 @@ def test_MkdocsLoadsTheExactLocaleExtensionWithoutImportingRuntime(
                              capture_output=True, text=True)
 
     assert process.returncode == 0, process.stdout + process.stderr
+
     rendered = (tmp_path / "site/index.html").read_text(encoding="utf-8")
+
     assert "Reviewed callable description." in rendered
     assert "Reviewed class description." in rendered
     assert "Reviewed constructor description." in rendered
+
     labels = tomllib.loads((project_root / "docs/i18n/api-labels.toml").read_text())["ru"]
+
     assert labels["Source code in"] in rendered
     assert "Source code in" not in rendered
     assert 'id="flayer.Inspect"' in rendered

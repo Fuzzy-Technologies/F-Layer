@@ -218,6 +218,7 @@ def test_PreparationIsIdempotentAndKeepsClientKeysOutOfBootstrap(tmp_path: Path)
     assert len(plan.resources) == 6 and not cloud.created
     assert b"FLAYER_HOSTKEY " + project.Fingerprint().encode() in bootstrap
     assert b"chain forward" not in bootstrap, "Bootstrap must not override the transport-owned forwarding rules"
+
     document = json.loads(bootstrap.removeprefix(b"#cloud-config\n"))
     ssh_configuration = next(item["content"] for item in document["write_files"] if item["path"] == "/etc/ssh/sshd_config")
 
@@ -240,15 +241,18 @@ def test_RealOrchestrationCreatesExportsObservesAndDestroys(tmp_path: Path) -> N
     assert deployed.client_exports == ("artifacts/device-laptop-amneziawg", "artifacts/device-laptop-vless-reality")
     assert "203.0.113.20:51820" in ReadPrivate(project.Artifacts / "device-laptop-amneziawg" / "amneziawg.conf").decode()
     assert "203.0.113.20:443" in ReadPrivate(project.Artifacts / "device-laptop-vless-reality" / "import.txt").decode()
+
     state = json.loads(ReadPrivate(project.root / "state.json"))
 
     assert set(state) == {"schema_version", "identity", "resources"}
     assert "private_key" not in json.dumps(state) and "user_id" not in json.dumps(state)
     assert Run(project, "deploy", cloud).status == "complete" and len(cloud.created) == 6
+
     observed = Run(project, "status", cloud)
 
     assert observed.status == "complete" and not FakeGuest.instances[-1].installations
     assert observed.connectivity_status == "not-verified"
+
     destroyed = Run(project, "destroy", cloud)
 
     assert destroyed.status == "complete" and not cloud.resources
@@ -294,11 +298,13 @@ def test_UncertainCreationRequiresExplicitRecovery(tmp_path: Path) -> None:
     assert report.recovery_required and report.cloud_status == "uncertain"
     assert (project.root / ".state.json.operation.json").exists()
     assert not FakeGuest.instances
+
     cloud.uncertain_create = None
     arriving = cloud.resources.pop("instance")
     unresolved = Run(project, "recover", cloud)
 
     assert unresolved.recovery_required and unresolved.cloud_status == "uncertain"
+
     cloud.resources["instance"] = arriving
     recovered = Run(project, "recover", cloud)
 
@@ -317,6 +323,7 @@ def test_GuestFailureRetainsCloudAndCredentialsForRetry(tmp_path: Path) -> None:
         Run(project, "deploy", cloud)
 
     assert len(cloud.resources) == 6 and len(LoadState(project.root / "state.json", project.vpn.identity).resources) == 6
+
     material = ReadPrivate(project.Artifacts / "server-gateway-credentials" / "amneziawg.json")
     FakeGuest.fail_install = False
 
@@ -390,6 +397,7 @@ def test_AuthenticatedHostKeyPinCannotChangeSilently(tmp_path: Path) -> None:
         _HostTrust(project, cloud, instance, endpoint, wait=False)
 
     assert PUBLIC_KEY.encode() in ReadPrivate(project.Artifacts / "server-gateway-trust" / "known-hosts.txt")
+
     cloud.host_key = None
     delays: list[float] = []
 
@@ -425,6 +433,7 @@ def test_SerialTrustAcceptsOnlyUnambiguousExactFingerprintMarkers(tmp_path: Path
     cloud.payload = {"contents": "unrelated text\nFLAYER_HOSTKEY wrong " + OTHER_KEY + "\n" + marker + PUBLIC_KEY + "\n"}
 
     assert cloud.ReadHostKey(instance, project.Fingerprint()) == PUBLIC_KEY
+
     cloud.payload = {"contents": marker + PUBLIC_KEY + "\n" + marker + OTHER_KEY}
 
     with pytest.raises(VpnError, match="conflicting"):
@@ -473,6 +482,7 @@ def test_ProjectConfigurationRejectsInlineCredentialsAndOverlappingNetworks(tmp_
         LoadVpnProject(project.root)
 
     assert "fixture-secret" not in str(caught.value)
+
     config.write_text(original.replace('subnet_cidr = "10.42.0.0/24"', 'subnet_cidr = "10.66.0.0/24"'))
 
     with pytest.raises(VpnError, match="must not overlap"):
@@ -516,15 +526,18 @@ def test_CliProjectInitAndPrepareFromEditableLocalProject(tmp_path: Path, capsys
     directory = tmp_path / "cli-project"
 
     assert Main(["project", "init", str(directory)]) == 0
+
     config = directory / "project.toml"
     config.write_text(config.read_text().replace("replace-with-folder-id", "example-folder").replace("replace-with-ubuntu-2404-amd64-image-id", "example-image"))
 
     assert Main(["vpn", "prepare", "--project", str(directory), "--format", "json"]) == 0
+
     output = capsys.readouterr().out
 
     assert '"status": "complete"' in output
     assert "PRIVATE KEY" not in output and "server_private_key" not in output
     assert Main(["vpn", "deploy", "--project", str(directory), "--scope-confirm", "example-folder", "--format", "json"]) == 2
+
     error = capsys.readouterr().out
 
     assert '"status": "failed"' in error
@@ -537,14 +550,19 @@ def test_CliReportsActionableSafeProjectErrors(tmp_path: Path, capsys: pytest.Ca
     import flayer.vpn_project as projects
 
     directory = tmp_path / "project"
+
     assert Main(["project", "init", str(directory)]) == 0
+
     capsys.readouterr()
+
     assert Main(["vpn", "prepare", "--project", str(directory), "--format", "json"]) == 2
+
     result = json.loads(capsys.readouterr().out)
 
     assert "folder ID" in result["message"] and not result["recovery_required"]
     assert Main(["project", "init", str(directory)]) == 2
     assert "must be new" in capsys.readouterr().out
+
     config = directory / "project.toml"
     config.write_text(config.read_text().replace("replace-with-folder-id", "example-folder").replace("replace-with-ubuntu-2404-amd64-image-id", "example-image"))
 
@@ -554,7 +572,9 @@ def test_CliReportsActionableSafeProjectErrors(tmp_path: Path, capsys: pytest.Ca
         raise VpnError("AmneziaWG requires the f-layer[vpn] optional dependency")
 
     monkeypatch.setattr(projects, "GenerateAmneziaWgSecrets", MissingExtra)
+
     assert Main(["vpn", "prepare", "--project", str(directory), "--format", "json"]) == 2
+
     result = json.loads(capsys.readouterr().out)
 
     assert "f-layer[vpn]" in result["message"]
@@ -565,7 +585,9 @@ def test_CloudCleanupDoesNotRequireLostGuestPrivateKey(tmp_path: Path) -> None:
 
     project = Project(tmp_path)
     cloud = FakeCloud(project)
+
     assert Run(project, "deploy", cloud).status == "complete"
+
     (project.root / "admin-key").unlink()
     public_project = LoadVpnProject(project.root)
 
@@ -591,8 +613,10 @@ def test_DestroyedProjectCannotAllocateAgainBeforeResolvingOldEndpointArtifacts(
 
     project = Project(tmp_path)
     cloud = FakeCloud(project)
+
     assert Run(project, "deploy", cloud).status == "complete"
     assert Run(project, "destroy", cloud).status == "complete"
+
     cloud.host_key = OTHER_KEY
     created = tuple(cloud.created)
 
@@ -612,6 +636,7 @@ def test_OpenSshPathSubstitutionsFailBeforeLocalOrCloudCreation(tmp_path: Path, 
         InitializeVpnProject(path)
 
     assert not path.exists()
+
     project = Project(tmp_path)
     cloud = FakeCloud(project)
     moved = replace(project, root=path)

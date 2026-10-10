@@ -115,13 +115,13 @@ def BuildImportSmoke(import_root: Path) -> str:
     """Check that the imported package belongs to the intended source or install root."""
 
     return (
-        "from pathlib import Path; import sys; "
-        f"expected_root = Path({str(import_root)!r}).resolve(); "
-        "sys.path.insert(0, str(expected_root)); import flayer; "
-        "assert flayer.__file__ is not None, 'Package has no concrete import location'; "
-        "actual_path = Path(flayer.__file__).resolve(); "
+        "from pathlib import Path\nimport sys\n"
+        f"expected_root = Path({str(import_root)!r}).resolve()\n"
+        "sys.path.insert(0, str(expected_root))\nimport flayer\n\n"
+        "assert flayer.__file__ is not None, 'Package has no concrete import location'\n\n"
+        "actual_path = Path(flayer.__file__).resolve()\n\n"
         "assert actual_path.is_relative_to(expected_root), "
-        "f'Imported package outside expected root: {actual_path}'; "
+        "f'Imported package outside expected root: {actual_path}'\n\n"
         "print(f'Package import: {actual_path}')"
     )
 

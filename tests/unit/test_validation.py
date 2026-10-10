@@ -269,6 +269,7 @@ def test_GateRunsWholePlanFromCheckoutRoot(
         expected_pythonpath = os.pathsep.join(
             (str(checkout_root / "src"), str(checkout_root)),
         )
+
         assert environment["PYTHONPATH"] == expected_pythonpath, (
             "Stage inherited a different checkout's sources"
         )

@@ -377,6 +377,7 @@ def test_ArtifactCleanupCannotOverwriteOrRemoveChangedDeviceFiles(tmp_path: Path
         RemoveArtifactBundle(tmp_path, IDENTITY, kind="device", name=bundle.name)
 
     assert (location / "client.conf").read_bytes() == b"operator-modified-fixture"
+
     (location / "client.conf").write_bytes(PAYLOAD)
     RemoveArtifactBundle(tmp_path, IDENTITY, kind="device", name=bundle.name)
 

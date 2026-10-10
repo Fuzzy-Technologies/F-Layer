@@ -38,8 +38,10 @@ def test_AtomicRoundTripAndOwnedRemoval(tmp_path: Path) -> None:
     path = tmp_path / "nested" / "state.json"
 
     assert LoadState(path, state.identity) is None, "Missing state unexpectedly became a default"
+
     SaveState(path, state, state.identity)
     loaded = LoadState(path, state.identity)
+
     assert loaded == state, "State round trip changed resource ownership or locators"
     assert json.loads(path.read_text(encoding="utf-8")) == asdict(state) | {
         "resources": [asdict(resource) for resource in state.resources]
@@ -47,6 +49,7 @@ def test_AtomicRoundTripAndOwnedRemoval(tmp_path: Path) -> None:
 
     replacement = replace(state, resources=())
     SaveState(path, replacement, state.identity)
+
     assert LoadState(path, state.identity) == replacement, "Atomic replacement kept stale resources"
     assert RemoveState(path, state.identity), "Owned state was not removed"
     assert not RemoveState(path, state.identity), "Missing state should be an idempotent no-op"

@@ -70,7 +70,9 @@ def distribution_artifacts(tmp_path_factory: pytest.TempPathFactory) -> Distribu
 
     wheels = tuple(output.glob("*.whl"))
     sdists = tuple(output.glob("*.tar.gz"))
+
     assert len(wheels) == len(sdists) == 1, "Installation smoke requires one wheel and one sdist"
+
     wheel, sdist = wheels[0], sdists[0]
     unpacked = temporary_root / "unpacked"
     unpacked.mkdir()
@@ -78,6 +80,7 @@ def distribution_artifacts(tmp_path_factory: pytest.TempPathFactory) -> Distribu
     with tarfile.open(sdist) as archive:
         for member in archive.getmembers():
             relative_path = Path(member.name)
+
             assert (
                 not relative_path.is_absolute() and ".." not in relative_path.parts
                 and (member.isdir() or member.isfile())
@@ -88,7 +91,9 @@ def distribution_artifacts(tmp_path_factory: pytest.TempPathFactory) -> Distribu
                 continue
 
             stream = archive.extractfile(member)
+
             assert stream is not None, "Built sdist regular member has no content"
+
             destination = unpacked / relative_path
             destination.parent.mkdir(parents=True, exist_ok=True)
 
@@ -142,7 +147,9 @@ def test_DistributionMetadataAndTypedEntryPoint(
             "extra ==" in requirement for requirement in metadata.get_all("Requires-Dist", [])
         ), "Package unexpectedly requires runtime dependencies"
         assert "vpn" in metadata.get_all("Provides-Extra", []), "VPN installation extra is absent"
+
         requirements = [Requirement(value) for value in metadata.get_all("Requires-Dist", [])]
+
         assert any(
             requirement.name == "cryptography" and str(requirement.specifier) == "==50.0.2"
             and requirement.marker is not None and requirement.marker.evaluate({"extra": "vpn"})
@@ -173,6 +180,7 @@ def test_SdistRebuildAndIsolatedConsoleParity(
     assert hashlib.sha256(distribution_artifacts.wheel.read_bytes()).digest() == hashlib.sha256(
         distribution_artifacts.rebuilt_wheel.read_bytes()
     ).digest(), "Wheel rebuilt from sdist differs from the original distribution"
+
     code = (
         "import flayer, importlib.metadata as m, json; "
         "print(json.dumps({'runtime':flayer.__version__, 'metadata':m.version('f-layer'), "
@@ -187,6 +195,7 @@ def test_SdistRebuildAndIsolatedConsoleParity(
     assert not Path(result["path"]).is_relative_to(PROJECT_ROOT), (
         "Isolated installation test imported the checkout instead of the wheel"
     )
+
     console_help = _Run(
         [str(distribution_artifacts.console), "--help"], distribution_artifacts.outside_source,
     )

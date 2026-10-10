@@ -280,12 +280,15 @@ def test_PreparationProducesTwoPrivateOwnedBundlesAndLoadedPlan(tmp_path: Path) 
 
     for directory in (prepared.server_directory, prepared.plan_directory):
         assert directory.stat().st_mode & 0o777 == 0o700, "Owned bundle directories must remain private"
+
         manifest = json.loads((directory / "manifest.json").read_text())
+
         assert all(not item["sensitive"] for item in manifest["files"]), "Static profile must generate no secret artifact"
         assert all(path.stat().st_mode & 0o777 == 0o600 for path in directory.iterdir()), "Owned files must remain private"
 
     RemoveArtifactBundle(root, profile.identity, kind="server", name=profile.identity.stack + "-plan")
     RemoveArtifactBundle(root, profile.identity, kind="server", name=profile.identity.stack)
+
     assert list(root.iterdir()) == [], "Prepared-artifact cleanup must remove only both exact owned bundles"
 
 
@@ -403,6 +406,7 @@ def test_ValidSameIdentityReplacementSurvivesPreparationRollback(tmp_path: Path,
         PrepareStaticSite(profile, artifact_root=root)
 
     path = root / "server-site" / CLOUD_INIT_FILENAME
+
     assert path.read_bytes() == expected, "Rollback must preserve valid replacement bytes despite matching ownership"
     assert not (root / ".server-site.lock").exists(), "Refused rollback must release only its own cooperative lock"
     assert RemoveArtifactBundle(root, profile.identity, kind="server", name=profile.identity.stack), "Replacement must remain a complete valid owned bundle for later explicit cleanup"
@@ -436,14 +440,19 @@ def test_PreparationCliReadsExampleAndReportsOnlyLocalPreparedStatus(tmp_path: P
     """Offer a usable local entry point with no readiness or cloud mutation claim."""
 
     example = Path(__file__).resolve().parents[2] / "examples" / "static-site.toml"
+
     assert LoadStaticSiteProfile(example).identity == IDENTITY, "Tracked example must satisfy its concrete profile schema"
     assert Main((str(example), "--artifact-root", str(tmp_path / "artifacts"))) == 0, "CLI must prepare a local lifecycle plan"
+
     result = json.loads(capsys.readouterr().out)
+
     assert result["status"] == "prepared-unverified", "CLI must not claim deployed guest readiness"
     assert LoadDeploymentPlan(result["plan_file"]).identity == IDENTITY, "CLI output must reference a usable lifecycle plan"
     assert Main((str(example), "--artifact-root", str(tmp_path / "artifacts"))) == 1, "CLI must report exclusive publication failures"
     assert json.loads(capsys.readouterr().out)["status"] == "failed", "CLI failure must remain structured and sanitized"
+
     result_process = subprocess.run([sys.executable, "-m", "flayer.profiles.static_site", "--help"], env={**os.environ, "PYTHONPATH": str(example.parents[1] / "src")}, capture_output=True, text=True, check=False, timeout=5)
+
     assert result_process.returncode == 0 and "RuntimeWarning" not in result_process.stderr, "Module entry point must work without preloaded-module warnings"
 
 
@@ -454,7 +463,9 @@ def test_FixedBootstrapStopsOnSyntaxFailureBeforeServiceActivation(tmp_path: Pat
     script = tmp_path / "bootstrap.sh"
     script.write_text(GuestFiles()["/usr/local/sbin/f-layer-static-bootstrap"]["content"])
     syntax = subprocess.run(["/bin/sh", "-n", str(script)], capture_output=True, check=False, timeout=5)
+
     assert syntax.returncode == 0, "Fixed bootstrap must have valid POSIX shell syntax"
+
     commands = tmp_path / "commands"
     commands.mkdir()
     trace = tmp_path / "calls.txt"
@@ -539,14 +550,19 @@ def test_NginxValidatorIsolatesWritablePathsAndRetainsServerGrammar(tmp_path: Pa
         """Inspect the complete test configuration and require bounded parser-only invocation."""
 
         calls.append(command)
+
         assert command[0] == "/synthetic/nginx" and "-t" in command, "Validator must invoke installed nginx only in test mode"
         assert command[command.index("-e") + 1] == "stderr", "Early nginx diagnostics must not open a host error log"
         assert Path(command[command.index("-p") + 1]) == tmp_path, "Relative nginx paths must use the owned sandbox prefix"
+
         config = Path(command[command.index("-c") + 1]).read_text()
         original = GuestFiles()["/etc/nginx/nginx.conf"]["content"]
         socket_listener = "listen " + json.dumps("unix:" + str(tmp_path / "n.sock")) + " default_server;"
+
         assert socket_listener in config and config.count("listen ") == 1, "Nginx test mode must have only the caller-owned Unix socket listener"
+
         restored = config.replace(socket_listener, "listen 80 default_server;", 1)
+
         assert restored[restored.index("    default_type text/html;"):] == original[original.index("    default_type text/html;"):], "Validation must retain generated HTTP and server grammar except its isolated listen endpoint"
         assert "error_log stderr;" in config and "access_log off;" in config, "Nginx must have no writable default host logs"
 
@@ -555,6 +571,7 @@ def test_NginxValidatorIsolatesWritablePathsAndRetainsServerGrammar(tmp_path: Pa
 
         for module in ("client_body", "proxy", "fastcgi", "uwsgi", "scgi"):
             directory = tmp_path / (module + "-temp")
+
             assert f"{module}_temp_path {json.dumps(str(directory))};" in config, "Every compiled HTTP temporary path must have an explicit sandbox override"
             assert directory.is_dir() and directory.stat().st_mode & 0o777 == 0o700, "Temporary nginx paths must be precreated as private owned directories"
 
@@ -563,6 +580,7 @@ def test_NginxValidatorIsolatesWritablePathsAndRetainsServerGrammar(tmp_path: Pa
     monkeypatch.setattr(shutil, "which", lambda name: "/synthetic/nginx")
     monkeypatch.setattr(subprocess, "run", FakeRun)
     test_NginxParsesFixedConfigurationWithoutDaemonStartup(tmp_path)
+
     assert len(calls) == 1, "Configuration validation must not start another executable or service"
 
 

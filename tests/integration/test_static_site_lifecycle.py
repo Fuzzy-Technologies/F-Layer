@@ -35,6 +35,7 @@ class StaticSiteRunner:
 
         assert timeout == 45.0, "Adapter must retain its bounded command deadline"
         assert command[command.index("--folder-id") + 1] == "example-folder", "Every fake command must use explicit profile placement"
+
         self.calls.append(command)
         kind, operation = command[2:4]
 
@@ -58,6 +59,7 @@ class StaticSiteRunner:
             return CommandResult(0)
 
         assert operation == "create", "Fake runner must not accept an unmodeled cloud operation"
+
         resource_id = f"resource-{len(self.resources) + 1}"
         row: dict[str, object] = {
             "id": resource_id, "name": command[command.index("--name") + 1],
@@ -101,29 +103,43 @@ def test_SecondProfileComposesWithYandexAndDurableLifecycle(tmp_path: Path) -> N
 
     assert runner.calls == [], "Plan parsing and provider validation must remain offline"
     assert engine.Create().status == "complete", "Static-site plan must compose with existing owned create semantics"
+
     creates = [command for command in runner.calls if command[3] == "create"]
+
     assert len(creates) == 6, "New profile must use six separately owned resources without hidden creation"
     assert {command[2] for command in creates} == {"network", "subnet", "security-group", "address", "disk", "instance"}, "Static site must reuse existing provider resource kinds"
+
     instance = creates[-1]
+
     assert "--create-boot-disk" not in instance and "auto-delete=false" in instance[instance.index("--use-boot-disk") + 1], "Boot disk cleanup must remain an explicit lifecycle operation"
     assert instance[instance.index("--metadata") + 1].startswith("ssh-keys=site-admin:"), "Metadata must use the same explicit administrator as guest authorization"
+
     expected = (prepared.server_directory / CLOUD_INIT_FILENAME).read_bytes()
+
     assert runner.metadata == expected, "Actual provider metadata reader must dispatch exact profile bytes"
     assert runner.temporary_mode == 0o600 and runner.temporary_path is not None and not runner.temporary_path.exists(), "Provider temporary metadata copy must remain private and be removed after dispatch"
+
     state = LoadState(state_path, profile.identity)
+
     assert state is not None and len(state.resources) == 6, "Actual engine must persist all owned resources"
     assert "public_key" not in state_path.read_text() and "A small public page" not in state_path.read_text(), "Observed state must not absorb profile content or public credentials"
+
     status = engine.Status()
+
     assert status.status == "complete" and all(item.status == "present" for item in status.resources), "Status must report cloud existence without claiming HTTP readiness"
     assert "RUNNING" in {item.provider_status for item in status.resources}, "Fake guest state must remain a provider observation"
     assert engine.Create().status == "complete", "Repeated create must be idempotent"
     assert len([command for command in runner.calls if command[3] == "create"]) == 6, "Idempotent create must not mutate another resource"
     assert engine.Destroy().status == "complete", "Actual destroy must remove the complete owned graph"
+
     deletions = [command for command in runner.calls if command[3] == "delete"]
+
     assert deletions[0][2] == "instance" and deletions[-1][2] == "network", "Destroy must obey reverse dependencies"
     assert not runner.resources and engine.Destroy().status == "complete", "Destroy must be idempotent after verified absence"
+
     RemoveArtifactBundle(artifact_root, profile.identity, kind="server", name=profile.identity.stack + "-plan")
     RemoveArtifactBundle(artifact_root, profile.identity, kind="server", name=profile.identity.stack)
+
     assert list(artifact_root.iterdir()) == [], "Local cleanup must remove both exact owned prepared bundles"
 
 

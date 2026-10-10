@@ -23,7 +23,8 @@ flayer project --help
 flayer vpn --help
 ```
 
-`vpn` 可选依赖提供用于在本地生成密钥的密码学库，无需 Git 或 Docker。
+`vpn` 可选依赖提供本地生成密钥所需的密码学库，以及离线生成二维码的 Segno。
+无需 Git 或 Docker。
 
 ## 2. 创建并配置项目 {#2-set-up-the-project}
 
@@ -69,24 +70,47 @@ flayer vpn status --project ~/flayer-vpn
 并以此验证 SSH 连接。部署报告中的 `services-active` 表示服务器进程正在运行；
 客户端连接仍需按下一节验证。
 
-## 4. 连接设备 {#4-connect-a-device}
+## 4. 连接 Android 设备 {#4-connect-a-device}
 
-使用对应设备的文件。默认 `laptop` 设备的导入方法如下：
+参考客户端为 **Android 版 AmneziaVPN 5.0.3.0**。请使用对应设备的文件；
+以下路径采用默认设备名 `laptop`。
 
-| 协议          | 导入内容                                                                 | 客户端设置                                                                                     |
-| ------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| AmneziaWG     | `~/flayer-vpn/artifacts/device-laptop-amneziawg/amneziawg.conf`          | 导入支持 AmneziaWG 3.1 的客户端，再启用隧道。普通 WireGuard 客户端不支持新增的协议字段。       |
-| VLESS Reality | `~/flayer-vpn/artifacts/device-laptop-vless-reality/import.txt` 中的 URI | 导入 v2rayN、v2rayNG 等兼容客户端。要接管整台设备的流量，需明确设置 DNS、路由和 VPN/TUN 模式。 |
+1. 在 AmneziaVPN 中选择从文件添加连接，为 AmneziaWG 导入
+   `artifacts/device-laptop-amneziawg/amneziawg.conf`。
+   普通 WireGuard 客户端不支持 AmneziaWG 3.1 的附加字段。
+2. 对于 VLESS，在另一块屏幕上本地打开
+   `artifacts/device-laptop-vless-reality/amnezia-qr-01.svg`，
+   使用 **AmneziaVPN 内置扫码器**扫描。若有多个编号二维码，须在同一次导入
+   会话中依次扫描全部二维码。也可将 `amnezia.vpn` 作为连接文件导入，
+   或粘贴其中的 `vpn://` 连接密钥。不要用此扫码器扫描由 `import.txt` 生成的二维码。
+3. 启用 Android VPN 连接并授予系统请求的 VPN 权限。检查全设备 VPN/TUN 模式、
+   指定的 DNS 服务器及应用或目标地址排除项。原生配置包含生成的 Xray DNS 和
+   路由策略，但应用设置可能覆盖这些配置。请按前文说明在客户端或设备上禁用 IPv6；
+   IPv4 测试成功并不能证明 IPv6 不会绕过连接。
+4. **逐一测试**两种协议，先断开另一个配置。通过域名访问 HTTPS 网站，核对
+   可见的公网 IPv4 是否为服务器地址，并验证实际流量、DNS、路由及 IPv6 行为。
+   `services-active`、`connectivity=not-verified`、导入成功或客户端显示
+   “已连接”，均不能单独证明互联网访问正常。
 
-VLESS 导入链接不包含完整的 DNS 和路由策略。对于原生 Xray 客户端，同一目录还提供
-`client.json`，其中保留了应用代理策略，并在 `127.0.0.1:10808` 监听。应用需要使用
-`socks5h://127.0.0.1:10808`；其他应用的流量不会自动经过该代理。
-兼容客户端、分流路由和协议细节见 [AmneziaWG](../../../../architecture/amneziawg.md)
-和 [VLESS Reality](../../../../architecture/vless-reality.md) 指南。
+连接配置、二维码及连接密钥均可授予对应设备的访问权限，请妥善保密。
+文件权限保持为 `0600`，配置包目录权限为 `0700`。
+不要将其上传到在线二维码转换工具或公开的问题跟踪系统。
 
-**每次只测试一种协议**。通过各自的客户端打开 HTTPS 网站，确认网站看到的公网
-IPv4 地址是服务器地址，并检查 DNS 和 IPv6 的实际行为。导入成功或服务器服务
-正在运行，都不能单独证明流量已通过隧道。
+供 v2rayNG 等客户端使用的标准 VLESS URI 仍单独保存在 `import.txt` 中，
+不携带完整 DNS 和路由策略。`client.json` 保留完整的 Xray 应用代理策略，
+监听 `127.0.0.1:10808`。使用固定版本的 Xray 启动该配置，然后比较以下 HTTPS 检查：
+
+```bash
+curl --fail --show-error --max-time 20 --proxy socks5h://127.0.0.1:10808 https://example.com/
+curl --fail --show-error --max-time 20 --ipv4 --proxy socks5://127.0.0.1:10808 https://example.com/
+```
+
+两项均须成功。第一项通过代理解析域名，第二项在本地解析为 IPv4。
+另须使用操作人员选择的服务核对出口 IP。SOCKS 检查只覆盖使用该代理的应用，
+不能代替 Android VPN/TUN 测试。目标的 TLS 1.3/HTTP2 预检同样不能证明
+Reality 身份认证成功；更换目标或 Xray 版本后须重新验证真实客户端流量。
+详见 [AmneziaWG](../../../../architecture/amneziawg.md) 和
+[VLESS Reality](../../../../architecture/vless-reality.md) 指南。
 
 ## 5. 恢复或删除部署 {#5-recover-or-remove-the-deployment}
 

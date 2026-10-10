@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/vless-reality.md"
-sourceHash = "sha256:26f09c7dab74f2040a6079edf5459dd49a692d6bd489bc4404d6e7abac30f0ae"
-reviewedTranslationHash = "sha256:a2a51bd3115747c5a1ffb9626c9bbb97c09079fb2228782396389b06326563c9"
+sourceHash = "sha256:52e5dc9f470e9719f1b6157fecdb111bbf05babdbb348f908f20d2db4fca309b"
+reviewedTranslationHash = "sha256:96dc0c9d2ab79284c9ed16f295c87d73d4464c2b96685c2203cf468b38088f49"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-10T00:19:13.689033+00:00"
+reviewedAt = "2026-10-10T00:27:09Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # VLESS Reality 网关
@@ -103,6 +103,15 @@ DNS 策略。导入 [v2rayN](https://github.com/2dust/v2rayN) 或
 `xray run -test -config client.json`，然后运行 `xray run -config client.json`。
 应用程序可使用 `socks5h://127.0.0.1:10808`；其中 `h` 表示在远端解析主机名。
 通过此代理发送 HTTPS 请求，并确认对外显示的源地址与已部署网关的地址一致。
+
+在 Android 版 AmneziaVPN 5.0.3.0 中，使用独立的 `amnezia.vpn` 连接密钥/文件，
+或用内置扫码器扫描全部带编号的 `amnezia-qr-*.svg`。原生容器完整嵌入生成的
+`client.json`，保留 DNS 与路由，不包含 SSH 凭据或服务器私钥。
+标准 VLESS URI 仍单独保存在 `import.txt`。应用设置可能覆盖导入策略：
+请检查 DNS、VPN/TUN、应用排除项和 IPv6，再验证实际流量。
+所有导出文件均为私密配置，不要上传到在线二维码转换工具。
+编码依据[对应版本的 AmneziaVPN 导出器](https://github.com/amnezia-vpn/amnezia-client/blob/5.0.3.0/client/core/controllers/selfhosted/exportController.cpp)
+及其[原生二维码分帧格式](https://github.com/amnezia-vpn/amnezia-client/blob/5.0.3.0/client/core/utils/qrCodeUtils.cpp)。
 
 ## 安装、更新与删除
 

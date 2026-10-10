@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "README.md"
-sourceHash = "sha256:dec393be6096b385ee5f71ca86b86395d42ebb61ef200d2a944e8aa10415419a"
-reviewedTranslationHash = "sha256:9c31e00dfffd7866cb2165e615c97c82e885a79109601cf585fc46bdaefe8af9"
+sourceHash = "sha256:f1d8504c7ee9e69402ef869bac4fd33554842e4ec29eaadb1c220c399ac80a56"
+reviewedTranslationHash = "sha256:a755fbd25ade0730fabcc9bd2b72ba62894f425cdaaff28f103e6d6c8aac1b77"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:33:02Z"
+reviewedAt = "2026-10-10T00:27:09Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # F-Layer
@@ -91,6 +91,11 @@ python -m flayer check --format json
 созданные настройки клиентов. Руководство охватывает оба протокола, проверку
 DNS и маршрутов и удаление облачных ресурсов. Для ограниченных SSH-пробросов
 используйте [инструкцию по SSH-шлюзу](https://fuzzy-technologies.github.io/F-Layer/ru/guide/first-deployment/).
+
+Для Android в руководстве используется AmneziaVPN 5.0.3.0: импортируйте
+`amneziawg.conf` для AmneziaWG или приватный `amnezia.vpn` / нумерованные
+нативные QR-файлы для VLESS. Проверьте VPN/TUN, DNS, IPv6 и реальный HTTPS-трафик:
+надпись «Подключено» не заменяет проверку передачи данных.
 
 ## Возможности
 

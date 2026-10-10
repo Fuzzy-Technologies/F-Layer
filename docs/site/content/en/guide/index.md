@@ -24,7 +24,7 @@ flayer project --help
 flayer vpn --help
 ```
 
-The extra supplies the cryptography library used to generate keys locally.
+The extra supplies cryptography for local keys and Segno for offline QR export.
 Git and Docker are not needed.
 
 ## 2. Set up the project
@@ -76,25 +76,50 @@ connection still needs the check below.
 
 ## 4. Connect a device
 
-Use the files for your own device. For the default `laptop` device:
+Use **AmneziaVPN 5.0.3.0 for Android** as the reference client. Use the files for
+your device; the paths below use the default `laptop` device name.
 
-| Protocol      | Import                                                                     | Client setup                                                                                                                                    |
-| ------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| AmneziaWG     | `~/flayer-vpn/artifacts/device-laptop-amneziawg/amneziawg.conf`            | Import into an AmneziaWG 3.1-compatible client and activate the tunnel. Ordinary WireGuard clients do not understand the added protocol fields. |
-| VLESS Reality | The URI in `~/flayer-vpn/artifacts/device-laptop-vless-reality/import.txt` | Import into a compatible client such as v2rayN or v2rayNG. Set DNS, routing and VPN/TUN mode explicitly for device-wide traffic.                |
+1. In AmneziaVPN, add a connection from a file and select
+   `artifacts/device-laptop-amneziawg/amneziawg.conf` for AmneziaWG. Ordinary
+   WireGuard clients do not understand the additional AmneziaWG 3.1 fields.
+2. For VLESS, open `artifacts/device-laptop-vless-reality/amnezia-qr-01.svg`
+   locally on another screen and scan it with **AmneziaVPN's own scanner**.
+   If there are several numbered QR files, scan all of them in the same import
+   session. Alternatively, import `amnezia.vpn` as a connection file or paste
+   its `vpn://` connection key. Do not use a QR of `import.txt` with this scanner.
+3. Enable the Android VPN connection and accept Android's VPN permission.
+   Check full-device VPN/TUN mode, the intended DNS servers and any app or
+   destination exclusions. The native profile contains the generated Xray DNS
+   and routing policy, but application settings can override it. Disable IPv6
+   in the client/device as described above; IPv4 success does not prove IPv6
+   cannot bypass the connection.
+4. Test the protocols **one at a time**, disconnecting the other profile first.
+   Open an HTTPS site by hostname, check that the visible public IPv4 matches
+   the server, and verify actual traffic plus DNS, routes and IPv6 behavior.
+   `services-active`, `connectivity=not-verified`, successful import or a client
+   showing “Connected” are not confirmation of Internet access.
 
-A VLESS import link does not carry the complete DNS and route policy. For the
-raw Xray client, the same directory contains `client.json`, which preserves the
-application-proxy policy and listens on `127.0.0.1:10808`. Applications must use
-`socks5h://127.0.0.1:10808`; this does not automatically route other applications.
+Keep the profile, QR files and connection keys private; each grants access for
+that device. Files retain mode `0600` inside private `0700` bundle directories.
+Do not upload them to online QR converters or issue trackers.
+
+The separate standard VLESS URI remains in `import.txt` for clients such as
+v2rayNG; it does not carry the full DNS/routing policy. `client.json` preserves
+the complete Xray application-proxy policy and listens on `127.0.0.1:10808`.
+Run it with the pinned Xray version, then compare these two HTTPS checks:
+
+```bash
+curl --fail --show-error --max-time 20 --proxy socks5h://127.0.0.1:10808 https://example.com/
+curl --fail --show-error --max-time 20 --ipv4 --proxy socks5://127.0.0.1:10808 https://example.com/
+```
+
+Both must succeed. The first resolves the hostname through the proxy; the second
+resolves IPv4 locally. Test an operator-selected exit-IP endpoint as well.
+SOCKS checks cover only applications using that proxy, not Android VPN/TUN mode.
+TLS 1.3/HTTP2 target preflight also does not prove Reality authentication: repeat
+actual client traffic checks after changing the target or Xray version.
 See the [AmneziaWG](../../../../architecture/amneziawg.md) and
-[VLESS Reality](../../../../architecture/vless-reality.md) guides for compatible
-clients, split routing and protocol details.
-
-Test the protocols **one at a time**. Open an HTTPS site through each client,
-check that the visible public IPv4 address is the server's address, and verify
-DNS and IPv6 behavior. A successful import or active server service alone does
-not prove that traffic is using the tunnel.
+[VLESS Reality](../../../../architecture/vless-reality.md) guides for details.
 
 ## 5. Recover or remove the deployment
 

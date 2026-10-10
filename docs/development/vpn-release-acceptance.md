@@ -132,6 +132,20 @@ separate project. Test both a permitted destination and an excluded destination;
 record whether the documented behavior is blocking or direct routing. Do not
 change an already prepared project's settings to bypass replacement safeguards.
 
+For Android acceptance, record the AmneziaVPN version and import AmneziaWG's
+configuration file, then VLESS's `amnezia.vpn` or all numbered native QR frames.
+Follow the [Android Quick Start](../site/content/en/guide/index.md#4-connect-a-device).
+Record both remote-DNS `socks5h` and locally resolved IPv4 `socks5` HTTPS results;
+one succeeding does not excuse failure of the other. Record the Reality target,
+pinned Xray version, exact wheel commit/SHA256 and authenticated traffic result.
+TLS preflight, `services-active`, `not-verified` and “Connected” are not traffic PASS.
+Changing the target or exported profile requires repeating the affected checks.
+
+A stand created through `yc` can validate installed F-Layer guest provisioning
+and real clients. Record that separately: it does not validate the public CLI's
+cloud deploy/recovery/destroy lifecycle, which still needs a suitable environment.
+A previous candidate's phone success and clean teardown do not accept a new wheel.
+
 ## Verify repeat deployment and failure handling
 
 Run the same deployment command again. It must retain the cloud resource IDs

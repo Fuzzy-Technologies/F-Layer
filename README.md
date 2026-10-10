@@ -79,6 +79,10 @@ client settings. The guide covers both protocols, DNS and route checks, and
 removal of the cloud resources. For restricted SSH forwards, use the
 [SSH gateway walkthrough](https://fuzzy-technologies.github.io/F-Layer/en/guide/first-deployment/).
 
+For Android, the guide uses AmneziaVPN 5.0.3.0: import `amneziawg.conf` for
+AmneziaWG, or the private `amnezia.vpn` / numbered native QR files for VLESS.
+Check VPN/TUN, DNS, IPv6 and real HTTPS traffic; “Connected” is not a traffic test.
+
 ## What you can build
 
 - **A managed cloud environment:** create, inspect, recover and destroy an owned

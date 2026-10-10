@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "README.md"
-sourceHash = "sha256:dec393be6096b385ee5f71ca86b86395d42ebb61ef200d2a944e8aa10415419a"
-reviewedTranslationHash = "sha256:0634a06a41154630cdd9ed5a187632396fea53c946f5320d8391c9b01c6eacb9"
+sourceHash = "sha256:f1d8504c7ee9e69402ef869bac4fd33554842e4ec29eaadb1c220c399ac80a56"
+reviewedTranslationHash = "sha256:f31ac1fcd863c1466782e1a33f694c940ff9ff683100c444b5dd0a36b16d9b9b"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
+reviewedAt = "2026-10-10T00:27:09Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # F-Layer
@@ -80,6 +80,10 @@ python -m flayer check --format json
 创建私有项目，在 Yandex Cloud 部署，并导入生成的客户端设置。
 指南涵盖两种协议、DNS 和路由检查，以及云资源删除。对于受限的 SSH 转发，
 请阅读 [SSH 网关指南](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/first-deployment/)。
+
+Android 指南采用 AmneziaVPN 5.0.3.0：AmneziaWG 导入 `amneziawg.conf`，
+VLESS 导入私密的 `amnezia.vpn` 或带编号的原生二维码文件。
+须检查 VPN/TUN、DNS、IPv6 和真实 HTTPS 流量；“已连接”不能代替流量验证。
 
 ## 可以实现什么
 

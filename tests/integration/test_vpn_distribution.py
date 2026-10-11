@@ -99,3 +99,29 @@ disk_type = "network-hdd"
     assert "preflight failed (authentication)" in failed["message"] and "Reauthenticate" in failed["message"]
     assert "fixture-secret" not in json.dumps(failed), "Installed CLI leaked raw authentication output"
     assert before == {path: path.read_bytes() for path in project.rglob("*") if path.is_file()}, "Denied installed deployment changed retained project files"
+
+    # Seed synthetic device artifacts through installed renderers, without claiming live deployment.
+    _Run([str(python), "-c", (
+        "import sys\n"
+        "from flayer.vpn_project import LoadVpnProject, _MaterialBundle, _Transports\n"
+        "from flayer.profiles.artifacts import WriteArtifactBundle\n"
+        "project = LoadVpnProject(sys.argv[1])\n"
+        "for transport in _Transports(project, _MaterialBundle(project), '203.0.113.20'):\n"
+        "    for bundle in transport.device_bundles:\n"
+        "        WriteArtifactBundle(project.Artifacts, bundle)\n"
+    ), str(project)], tmp_path)
+    exported_source = {path: path.read_bytes() for path in project.rglob("*") if path.is_file()}
+
+    for protocol in ("amneziawg", "vless-reality"):
+        result = json.loads(_Run([str(console), "vpn", "export", "--project", str(project),
+                                 "--device", "laptop", "--protocol", protocol,
+                                 "--output", str(tmp_path / protocol), "--qr", "--format", "json"], tmp_path))
+        directory = Path(result["client_exports"][0])
+
+        assert result["status"] == "complete" and result["cloud_status"] == "not-requested"
+        assert result["connectivity_status"] == "not-verified", "Local export claimed client traffic"
+        assert (directory / "amnezia.vpn").read_bytes().startswith(b"vpn://")
+        assert tuple(directory.glob("amnezia-qr-*.svg")), "Installed CLI did not export native scanner frames"
+        assert "vpn://" not in json.dumps(result), "CLI printed a private connection key"
+
+    assert exported_source == {path: path.read_bytes() for path in project.rglob("*") if path.is_file()}, "Installed export modified source credentials or state"

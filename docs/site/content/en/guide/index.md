@@ -112,6 +112,10 @@ Keep the profile, QR files and connection keys private; each grants access for
 that device. Files retain mode `0600` inside private `0700` bundle directories.
 Do not upload them to online QR converters or issue trackers.
 
+For either protocol, use [local device export](cli.md#export-an-existing-vpn-device)
+to obtain a native AmneziaVPN connection file and optional QR frames from existing
+device files.
+
 The separate standard VLESS URI remains in `import.txt` for clients such as
 v2rayNG; it does not carry the full DNS/routing policy. `client.json` preserves
 the complete Xray application-proxy policy and listens on `127.0.0.1:10808`.

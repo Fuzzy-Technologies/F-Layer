@@ -84,9 +84,7 @@ back-merge to develop
 
 ## 完成任务
 
-所有者授权的 1.0.0/1.1.0 分阶段发布按里程碑选择已接受的提交，而不是将已经包含后续功能的 `develop` 分支顶端整体发布。范围、历史和发布卡片规则见 [ADR 0014](adr/0014-scoped-releases-and-changelog.md) 与[变更记录](../CHANGELOG.md)。每个版本必须先在 `master` 完成并打标签，再推进下一个候选版本；仅为发布所作的变更通过 PR 合回 `develop`。1.2.0 的范围补充是在已发布的 1.1.0 上选择文档和安全 PR #46、#48、#59、#60。该发行包被过早标为稳定版的状态已撤回；稳定发布前仍须验收 RU/ZH-CN 翻译。所有者要求由 AIna 核验；ADR 0015 记录了明确的 AI 评审授权以及原文和译文哈希要求。
-后续里程碑的运行时功能继续保留在 `develop`。
-完整回归检查在 CI 中运行，本地开发只检查受影响文件。
+发布范围与发布卡片规则由 [ADR 0014](adr/0014-scoped-releases-and-changelog.md) 定义。每个版本必须先在 `master` 完成并打标签，再推进下一个候选版本；仅为发布所作的变更通过 PR 合回 `develop`。后续里程碑功能继续保留在 `develop`。[ADR 0015](adr/0015-accountable-ai-translation-review.md) 定义翻译评审权限及原文与译文哈希要求。完整回归检查在 CI 中运行，本地只检查受影响文件。
 
 实现和评审期间 Task 保持打开。PR 合并后，仓库自动化可以完成明确关联的原生 Task。Feature 只有在必需的子 Task 和功能级验收条件均满足后才能关闭。CI 通过不能替代里程碑验收。
 
@@ -104,8 +102,6 @@ python tools/release_validation.py --check-milestone 4
 PyPI 工作流在完整验证前执行此检查，并在生成发布验证记录时再次执行。
 
 发布标题使用 `F-Layer vX.Y.Z — <short user-facing digest>`；注释标签使用 `vX.Y.Z`，软件包版本使用 `X.Y.Z`。发布卡片章节顺序遵循 ADR 0014。候选版本可以包含草稿或英文回退页面，并标为 GitHub **Pre-release**，但不得宣传为最新稳定版。
-
-2026-10-08，Task #27、Feature #8 和 release-1.2 尚未关闭时，v1.2.0 被错误归类为稳定版。其标题已修正，发布类型改为 Pre-release。现有标签、提交和已审计文件保持不可变。验收完成后，如果发布代码发生变化，必须使用新的补丁版本和标签；不得将 v1.2.0 移到另一提交。
 
 AIna 幻灯片保留在 README 和文档中。发布卡片中 Digest 下方的位置留给最终 release-2.0 里程碑；1.2.x 卡片不包含该幻灯片。
 
@@ -168,9 +164,9 @@ python tools/release_validation.py --tag vX.Y.Z
 
 现有合并后自动化会先验证 PR 已合并且 issue 的原生类型为 Task，再关闭明确关联的 Task 并删除符合条件的已合并实现分支。发布工作流不会削弱此约定，也不会关闭 Feature 或 Milestone。所有者必须另行核实它们的验收条件。
 '''
-sourceHash = "sha256:9495b723fd967708cf21d0db3f1d9c5df91fe0c1f867d2f2527eadf9180c112d"
-reviewedTranslationHash = "sha256:08dd70b94c5a58a92c634e1c257a85e2202c437b91d51753fa22caeaa683dd43"
+sourceHash = "sha256:da350c816fe6feaebbee6f19035fbe6ea802b599ff9860ce8b1696cda05c9ca0"
+reviewedTranslationHash = "sha256:b81d5a228de7f8e5791910421006162c50d7263b3542fe8651612fbc07c74c0c"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:33:02Z"
+reviewedAt = "2026-10-11T00:25:19Z"
 reviewRoles = ["editorial", "technical"]

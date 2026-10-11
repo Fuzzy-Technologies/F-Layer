@@ -9,14 +9,13 @@ body = '''
 - [Стиль кода Python](PYTHON_CODE_STYLE.md)
 - [Работа с ветками и выпуск релизов](../RELEASE_WORKFLOW.md)
 - [Требования к полноте документации](documentation-coverage.md)
-- [Безопасность зависимостей документации](dependency-security.md)
 - [Архитектурные решения](../adr/README.md)
 
 Основной источник сведений о ходе работ — GitHub: задачи, pull requests, CI, ADR и история релизов должны позволять восстановить состояние реализации без обращения к личной переписке.
 '''
-sourceHash = "sha256:3e3215750e46d0dea34cb9842e2ccc36db37a027ec143ca9c4a84b2c92803350"
-reviewedTranslationHash = "sha256:416035a34056f9e23244dc7272affa2a339deba1e9d93775bdd414974ab99f26"
+sourceHash = "sha256:b2d8aaf33002ec179c5688c7dcd8038792e9e2e9fe3478c1b5504080ffae547b"
+reviewedTranslationHash = "sha256:f89ba4ef0f58b0a80b136afe22b007794a628b960963b4df77e13b5fb5465d30"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:54Z"
+reviewedAt = "2026-10-11T00:25:19Z"
 reviewRoles = ["editorial", "technical"]

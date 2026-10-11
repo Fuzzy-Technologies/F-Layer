@@ -32,8 +32,6 @@ and uses current English fallbacks for missing or outdated translations. It pres
 installed-wheel import guard and strict links/anchors, adds per-route reachability
 evidence, and never creates human approvals. Translation basis hashes prevent a
 canonical registry refresh from hiding outdated translations. See [the rollout contract](../i18n/README.md).
-[The review snapshot](../i18n/review-snapshot.md) records the current translation
-reviews and historical publication acceptance, including reviewer provenance.
 
 PRs and `develop` upload preview artifacts. Only an approved `master` push
 can deploy Pages. Routes: `/F-Layer/en/`, `/F-Layer/ru/`, `/F-Layer/zh-CN/`.

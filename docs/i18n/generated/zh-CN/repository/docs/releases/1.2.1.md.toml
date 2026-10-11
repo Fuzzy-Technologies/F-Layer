@@ -27,16 +27,7 @@ F-Layer v1.2.1 改善了文档使用体验：可以从实用的 Quick Start 开�
 
 ## 验证
 
-- [Python 质量](https://github.com/Fuzzy-Technologies/F-Layer/actions/runs/37861711357)在精确发布的 master 提交上通过。
-- [文档质量检查](https://github.com/Fuzzy-Technologies/F-Layer/actions/runs/37861711338)在精确发布的 master 提交上通过。
-- [发行包验证](https://github.com/Fuzzy-Technologies/F-Layer/actions/runs/37861711292)在精确发布的 master 提交上通过。
-- [多语言 Pages 部署](https://github.com/Fuzzy-Technologies/F-Layer/actions/runs/37861711338)从这些精确源文件成功完成。全部 18 个俄文和中文编写译文通过了可追溯的 AI 评审；缺失的参考翻译继续回退到英文。
-- [release-1.2](https://github.com/Fuzzy-Technologies/F-Layer/milestone/3) 已完成并关闭，未完成项为零；Task #27 和 Feature #8 的验收记录在稳定发布前完成。
-- [带标签发行包审计](https://github.com/Fuzzy-Technologies/F-Layer/actions/runs/37862618156)通过了注释标签与版本归属、重复构建字节一致性、源码归档重建一致性、归档归属和 wheel RECORD 检查。
-- 发布前已下载附带的 wheel、源码归档及 build-evidence.json，并核对其已审计 SHA256 和大小。
-- 测试使用隔离资源；没有执行真实云修改或 PyPI 上传。
-
-源提交：d61cf946ade8d7d018f69351e24a3a0ca51d1079。
+构建来源信息见 [GitHub 发布](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.2.1)。
 
 ## 不兼容变更
 
@@ -57,15 +48,14 @@ python -m flayer check --format json
 
 ## 说明
 
-- 此补丁在已发布基线上完成 release-1.2 的文档和安全范围；后续运行时代码仍保留在 develop。
 - 预发布 v1.2.0 标签和已审计文件保持不变，以便追溯。
 - 本发布不执行真实云部署或 PyPI 上传。
 - [详细变更记录](https://github.com/Fuzzy-Technologies/F-Layer/blob/v1.2.1/CHANGELOG.md)
 - [发布里程碑](https://github.com/Fuzzy-Technologies/F-Layer/milestone/3)
 '''
-sourceHash = "sha256:f7bde3bb49601c4c4052e1724b26c4f51fcb2c1c41054307c2d5ae0b8a7517c6"
-reviewedTranslationHash = "sha256:4222a219429e7826eb1b07d77e4c509c3de765134b217732057df507b665b295"
+sourceHash = "sha256:7eb6474dc3673a0044a6d08ed4a7abc4461c1fc02f590a09e5a6afb4f9cf5afb"
+reviewedTranslationHash = "sha256:a7492912928c55d70211d4b322ab36f42cec35d2daa45bfe6af06213021a34e1"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:54Z"
+reviewedAt = "2026-10-11T00:25:19Z"
 reviewRoles = ["editorial", "technical"]

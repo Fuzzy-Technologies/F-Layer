@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/yandex-lifecycle.md"
-sourceHash = "sha256:7a8a7441afee96711c7ecebe00907ef5fbbb3200a844bf047791b88214019cee"
-reviewedTranslationHash = "sha256:7bf1f6df5201c21cc4e710ec4675954212765ab55cf5664e595ee45066b27b27"
+sourceHash = "sha256:24a145662327d26f80845b583ca9666cf4b48e9edf577dd5c11a320118fb3f1d"
+reviewedTranslationHash = "sha256:9139eb3100eeab74df99791226d01cb28774b1e48f4d63cfe579fa7102f900b8"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-10T21:53:38Z"
+reviewedAt = "2026-10-11T00:25:19Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # Yandex 生命周期适配器
@@ -121,7 +121,7 @@ POSIX 下必须属于调用用户且禁止组和其他用户访问。非普通�
 
 ## 官方 CLI 参考
 
-实现期间于 2026-10-04 对照官方 Yandex 文档核对了命令：
+适配器的命令映射遵循 Yandex CLI 官方参考：
 
 - 网络：[创建](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/network/create)和[删除](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/network/delete)
 - 子网：[创建](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/subnet/create)和[删除](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/subnet/delete)

@@ -3,7 +3,7 @@ sourcePath = "docs/releases/1.2.0.md"
 body = '''
 ## 摘要
 
-**预发布：release-1.2 尚未完成。** 此快照在里程碑验收完成前被发布为稳定版，其稳定分类已于 2026-10-08 撤回。Task #27 和 Feature #8 仍需要真实的人工翻译评审；稳定发布要求里程碑完成并关闭。现有标签和已审计文件保留，以便追溯。
+**预发布。** 1.2.0 保持预发布状态；完成的文档更新见 1.2.1。
 
 F-Layer v1.2.0 使文档更便于检查和发布：每个受跟踪文件都在生成参考中有明确记录，EN/RU/ZH-CN 路由显示真实翻译状态。文档工具链包含 setuptools 安全修复。运行时和 CLI 行为与 1.1.0 保持兼容；俄文和简体中文内容仍明确标为草稿。
 
@@ -15,7 +15,7 @@ F-Layer v1.2.0 使文档更便于检查和发布：每个受跟踪文件都在�
 - 完整的权威 Markdown 导航，包括政策、ADR 模板、架构、开发、发布指南和 GitHub PR 模板。
 - 可执行 CLI 与可调用协议的 API 覆盖、整个包的 wheel/源码一致性、精确锚点、本地链接检查和渲染页面可达性检查。
 - 已实现架构图与严格的多语言构建，包含本地化导航、草稿与回退提示，以及 18 个与原文绑定的 RU/ZH-CN 草稿页面。
-- 评审交接资料，关联权威原文、两种语言草稿、必需的人工评审角色、当前源哈希和发布验证要求。
+- 与原文绑定的翻译注册表，关联权威原文、语言草稿、评审角色和源哈希。
 
 ### 修复
 
@@ -34,9 +34,7 @@ F-Layer v1.2.0 使文档更便于检查和发布：每个受跟踪文件都在�
 
 ## 验证
 
-- 精确的发布候选版本必须通过完整 Python 质量、严格多语言文档和可复现发行包 CI。本地检查针对文档变更、链接重写、本地化约定及软件包元数据。
-- 带标签发布验证注释标签、精确 master/源码版本、重复构建逐字节一致性、源码归档重建一致性、成员归属、元数据和 wheel RECORD 哈希。
-- 发布附带已审计的 wheel、源码归档和构建记录，记录准确源提交、文件大小和 SHA256。
+构建来源信息见 [GitHub 发布](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.2.0)。
 
 ## 不兼容变更
 
@@ -57,15 +55,14 @@ python -m flayer check --format json
 
 ## 说明
 
-- 在带标签的 1.1.0 基础上选择 release-1.2 已接受的 PR #46、#48、#59、#60，并进行范围有限的发布稳定化。插件发现、生态集成接口和静态站点部署配置仍为后续工作。
-- 全部 18 个编写的 RU/ZH-CN 页面仍为草稿。生成 API 和尚未翻译的仓库资料明确回退到英文。人工编辑及技术评审尚未完成，因此 Task #27、Feature #8 和里程碑必须完成后才能发布稳定版。
+- 全部 18 个编写的 RU/ZH-CN 页面仍为草稿。API 与未翻译的参考资料使用英文回退；已评审指南见 1.2.1。
 - 本发布不执行真实云部署或 PyPI 上传。
 - [详细变更记录](https://github.com/Fuzzy-Technologies/F-Layer/blob/v1.2.0/CHANGELOG.md)
 - [发布来源](https://github.com/Fuzzy-Technologies/F-Layer/milestone/3)
 '''
-sourceHash = "sha256:a25b79e72aeb587e580bf8abc76a1a44db5e1b704edb7855904a1ec79ff6e279"
-reviewedTranslationHash = "sha256:b24ea0788005f8ceb86b7543d1ebcdaecf7bb4243f72f9844cb8029bb13c5d3d"
+sourceHash = "sha256:1934a742c1c473c406f6d857dcf02b2134f0bb2ad215ff313eec8314a4109154"
+reviewedTranslationHash = "sha256:5362efd0da3fb9fd03baa99cbc69fe7793bd2eb69de41470cbaecab673e3ccb9"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:54Z"
+reviewedAt = "2026-10-11T00:25:19Z"
 reviewRoles = ["editorial", "technical"]

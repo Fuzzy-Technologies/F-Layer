@@ -6,6 +6,14 @@ not that every file becomes a consumer API page. The generated
 route or source link, and its reason. The machine-readable counterpart is
 `_build/api-reference/repository-coverage.json`.
 
+Repository documentation contains maintained user guides, architecture contracts,
+ADRs, release notes and engineering instructions. Keep one-off investigations,
+session notes, audit reports, review summaries, raw logs and test-run receipts
+in GitHub issues, PRs, CI artifacts or private records, outside tracked release
+inputs and published pages. Reusable performance measurements and explicit
+ADR-compliance reports are the permitted report categories. Translation review
+metadata remains a build input; narrative review snapshots are not documentation.
+
 ## File accountability
 
 `docs/site/repository-coverage.toml` defines repository-relative `fnmatch` rules.

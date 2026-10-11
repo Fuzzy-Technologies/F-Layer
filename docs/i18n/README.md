@@ -81,7 +81,6 @@ source paths, code, and machine identifiers retain their original spelling.
 
 ## Publication evidence
 
-The [review snapshot](review-snapshot.md) records authored-guide review evidence.
 The build artifacts contain the complete discovered inventory and actual review
 states for the exact commit. Review alone does not imply deployment: publication
 requires a successful Pages deployment of the promoted master commit.

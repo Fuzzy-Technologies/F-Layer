@@ -18,10 +18,7 @@ F-Layer 1.0.0 是首个带版本的基础设施基线：管理归属明确的 Ya
 
 ## 验证
 
-- 对应的发布 PR 必须通过 Python 质量和严格文档 CI。
-- 发布验证注释标签、源码与软件包版本、重复构建的 wheel 和源码归档字节一致性、源码归档重建一致性、归档成员归属、凭据特征及 wheel RECORD 哈希。
-- 本发布附带已审计的发行包及构建记录，记录准确的源提交和文件 SHA256。
-- 测试使用隔离的模拟实现；本发布不进行真实云验证。
+构建来源信息见 [GitHub 发布](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.0.0)。
 
 ## 不兼容变更
 
@@ -42,15 +39,14 @@ python -m flayer check --format json
 
 ## 说明
 
-- 包含 release-1.0 已接受的 PR #32、#34、#35、#36、#37、#38、#42 和 #43。打包与控制台分发改进及用户指南属于 1.1；完整仓库文档覆盖、已评审翻译、插件、生态系统接口和额外的静态站点部署配置属于后续工作。
 - 云端 RUNNING 状态不能证明客户机 SSH 或隧道已经就绪。客户机镜像和外部服务行为必须在操作者的环境中验证。
 - 不上传 PyPI。请从准确标签或附带的 wheel 安装。
 - [详细变更记录](https://github.com/Fuzzy-Technologies/F-Layer/blob/v1.0.0/CHANGELOG.md)
 - [发布来源](https://github.com/Fuzzy-Technologies/F-Layer/milestone/1?closed=1)
 '''
-sourceHash = "sha256:585d419e8bb30c328a19f665c25e4cd0e7afafa8c8a23bf3ecb8d096e5e251d6"
-reviewedTranslationHash = "sha256:ecccea8b3b5d972212c008e964be73fc517b8a470e18d0567800bf34e083301d"
+sourceHash = "sha256:a623a75af196de40ec4e7bf1f503f0e1ccbf3cbef27b9d48f2901dd287a3461f"
+reviewedTranslationHash = "sha256:fa00b7b93e1293814bb2400d8977f75101e046736162c468daa2d4200954f56e"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:54Z"
+reviewedAt = "2026-10-11T00:25:19Z"
 reviewRoles = ["editorial", "technical"]

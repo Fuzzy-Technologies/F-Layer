@@ -114,8 +114,7 @@ Do not upload them to online QR converters or issue trackers.
 
 For either protocol, use [local device export](cli.md#export-an-existing-vpn-device)
 to obtain a native AmneziaVPN connection file and optional QR frames from existing
-device files. For application-specific failures, follow the
-[Shorts/Telegram diagnostic comparison](cli.md#investigate-shorts-and-telegram-media).
+device files.
 
 The separate standard VLESS URI remains in `import.txt` for clients such as
 v2rayNG; it does not carry the full DNS/routing policy. `client.json` preserves

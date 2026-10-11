@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/yandex-lifecycle.md"
-sourceHash = "sha256:7a8a7441afee96711c7ecebe00907ef5fbbb3200a844bf047791b88214019cee"
-reviewedTranslationHash = "sha256:ebb5f9f56a9620388d7c54e5a7c55c2d21854e36073deeb64d9b95b7a4fc9aad"
+sourceHash = "sha256:24a145662327d26f80845b583ca9666cf4b48e9edf577dd5c11a320118fb3f1d"
+reviewedTranslationHash = "sha256:d4f175cac5f0674c039f6ecfe5165fe456d1eccaa169f91d125eb7a61ea35c20"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-10T21:53:38Z"
+reviewedAt = "2026-10-11T00:25:19Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # Адаптер жизненного цикла Yandex
@@ -158,7 +158,7 @@ ID операции — случайный 32-символьный шестна�
 ## Официальная документация CLI
 
 Соответствие команд официальной документации Yandex проверено при реализации
-2026-10-04:
+Сопоставление команд в адаптере следует официальной справке Yandex CLI:
 
 - Сеть: [создание](https://yandex.cloud/ru/docs/cli/cli-ref/vpc/cli-ref/network/create) и [удаление](https://yandex.cloud/ru/docs/cli/cli-ref/vpc/cli-ref/network/delete)
 - Подсеть: [создание](https://yandex.cloud/ru/docs/cli/cli-ref/vpc/cli-ref/subnet/create) и [удаление](https://yandex.cloud/ru/docs/cli/cli-ref/vpc/cli-ref/subnet/delete)

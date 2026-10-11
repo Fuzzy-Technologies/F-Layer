@@ -105,7 +105,7 @@ flayer vpn status --project ~/flayer-vpn
 文件权限保持为 `0600`，配置包目录权限为 `0700`。
 不要将其上传到在线二维码转换工具或公开的问题跟踪系统。
 
-两种协议均可通过[本地设备导出](cli.md#export-an-existing-vpn-device)，从现有客户端文件生成 AmneziaVPN 原生连接文件和可选 QR 帧。应用单独出现问题时，使用 [Shorts/Telegram 对照诊断](cli.md#investigate-shorts-and-telegram-media)。
+两种协议均可通过[本地设备导出](cli.md#export-an-existing-vpn-device)，从现有客户端文件生成 AmneziaVPN 原生连接文件和可选 QR 帧。
 
 供 v2rayNG 等客户端使用的标准 VLESS URI 仍单独保存在 `import.txt` 中，
 不携带完整 DNS 和路由策略。`client.json` 保留完整的 Xray 应用代理策略，

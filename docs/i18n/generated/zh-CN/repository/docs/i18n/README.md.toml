@@ -47,7 +47,7 @@ python -m tools.build_locale_sites
 
 ## 发布验证记录
 
-[评审快照](review-snapshot.md)记录编写指南的评审结果。构建文件包含针对精确提交的完整发现清单及真实评审状态。只有评审并不代表已经部署：发布要求提升到 master 的提交成功部署到 Pages。稳定发布还要求里程碑已关闭且没有未完成项。
+构建文件包含针对精确提交的完整发现清单及真实评审状态。只有评审并不代表已经部署：发布要求提升到 master 的提交成功部署到 Pages。稳定发布还要求里程碑已关闭且没有未完成项。
 
 从 2.0 起，如果任何已渲染说明页面在两种语言中没有完成且仍有效的完整评审，文档构建器都会拒绝构建。更早的稳定化分支也可显式启用相同检查：
 
@@ -55,9 +55,9 @@ python -m tools.build_locale_sites
 python -m tools.build_locale_sites --require-complete-translations
 ```
 '''
-sourceHash = "sha256:8fd20568f6b9de4400fc432ba5af7fd001b28dccaf10a3ea6394e2f25666d212"
-reviewedTranslationHash = "sha256:b38ba18229317cd31f671a9db7093333d47a7d3423b1f4650677f92320405cc8"
+sourceHash = "sha256:20c37af69de8fe70b606f8beef97ddfe74dd9d28ba7fbfa749202fc681dad28c"
+reviewedTranslationHash = "sha256:2980e4b97a35ffc2fa5d2203591997e6cd2e11e4f70e9a9dfd1b389fa3660dee"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:06:40.549154+00:00"
+reviewedAt = "2026-10-11T00:25:19Z"
 reviewRoles = ["editorial", "technical"]

@@ -27,16 +27,7 @@ F-Layer v1.2.1 делает документацию удобнее: начни�
 
 ## Проверки
 
-- [Качество Python](https://github.com/Fuzzy-Technologies/F-Layer/actions/runs/37861711357) проверено на точном выпущенном коммите `master`.
-- [Качество документации](https://github.com/Fuzzy-Technologies/F-Layer/actions/runs/37861711338) проверено на точном выпущенном коммите `master`.
-- [Проверка релизных пакетов](https://github.com/Fuzzy-Technologies/F-Layer/actions/runs/37861711292) пройдена на точном выпущенном коммите `master`.
-- [Публикация многоязычных Pages](https://github.com/Fuzzy-Technologies/F-Layer/actions/runs/37861711338) успешно выполнена именно из этих исходников. Все 18 написанных русских и китайских переводов прошли документированное ИИ-ревью; для отсутствующих справочных переводов сохранён английский текст.
-- [release-1.2](https://github.com/Fuzzy-Technologies/F-Layer/milestone/3) завершён и закрыт без открытых пунктов; приёмка Task #27 и Feature #8 зафиксирована до стабильной публикации.
-- [Аудит пакетов по тегу](https://github.com/Fuzzy-Technologies/F-Layer/actions/runs/37862618156) подтвердил принадлежность аннотированного тега и версии, побайтную воспроизводимость сборок, соответствие повторной сборки из архива, принадлежность содержимого и корректность wheel RECORD.
-- Приложенные wheel, архив исходников и build-evidence.json скачаны и до публикации сверены с проверенными SHA256 и размерами.
-- Тесты используют изолированные ресурсы; изменений в реальном облаке и загрузки в PyPI не выполнялось.
-
-Коммит исходников: d61cf946ade8d7d018f69351e24a3a0ca51d1079.
+Сведения о сборке доступны в [релизе GitHub](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.2.1).
 
 ## Несовместимые изменения
 
@@ -57,15 +48,14 @@ python -m flayer check --format json
 
 ## Примечания
 
-- Этот patch завершает документацию и безопасность release-1.2 на выпущенной основе; более поздние изменения исполняемого кода остаются в `develop`.
 - Предварительный тег v1.2.0 и проверенные файлы остаются неизменными для прослеживаемости.
 - Этот релиз не выполняет развёртывание в реальном облаке и загрузку в PyPI.
 - [Подробная история изменений](https://github.com/Fuzzy-Technologies/F-Layer/blob/v1.2.1/CHANGELOG.md)
 - [Майлстоун релиза](https://github.com/Fuzzy-Technologies/F-Layer/milestone/3)
 '''
-sourceHash = "sha256:f7bde3bb49601c4c4052e1724b26c4f51fcb2c1c41054307c2d5ae0b8a7517c6"
-reviewedTranslationHash = "sha256:ee0eddb0bd97a8ef583854525c2ecfc143f7511a8fb170b8f303919d5d249a33"
+sourceHash = "sha256:7eb6474dc3673a0044a6d08ed4a7abc4461c1fc02f590a09e5a6afb4f9cf5afb"
+reviewedTranslationHash = "sha256:24c9e98b4be4fa62309dfdb52d77da017786240ee78e29bffdd111a9c944de32"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:54Z"
+reviewedAt = "2026-10-11T00:25:19Z"
 reviewRoles = ["editorial", "technical"]

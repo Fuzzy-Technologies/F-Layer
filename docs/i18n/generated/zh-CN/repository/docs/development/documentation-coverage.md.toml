@@ -5,6 +5,8 @@ body = '''
 
 文档完整性表示每个受跟踪文件都有明确的呈现方式，而不是每个文件都必须成为面向使用者的 API 页面。生成的[仓库清单](https://fuzzy-technologies.github.io/F-Layer/en/coverage/)记录每个文件、对应页面或源码链接，以及选择该方式的理由。机器可读版本位于 `_build/api-reference/repository-coverage.json`。
 
+仓库文档包含持续维护的用户指南、架构约定、ADR、发布说明和开发指引。一次性调查、会话笔记、审计报告、评审摘要、原始日志与测试运行记录应保存在 GitHub issue、PR、CI 产物或私有记录中，不进入受跟踪的发布输入或公开页面。允许保留的报告类别是可复现的性能测量及明确的 ADR 符合性检查。翻译评审元数据仍是构建输入；叙述性评审快照不属于文档。
+
 ## 文件归类
 
 `docs/site/repository-coverage.toml` 定义相对于仓库的 `fnmatch` 规则。每个 Git 跟踪文件必须且只能匹配一条规则，并有非空理由。未知文件类型、重叠规则、受跟踪文件缺失或规则格式错误都会使检查失败。未跟踪的软件包或权威站点文件不得进入构建产物。规则有意覆盖既定类别中未来新增的文件，不固定模块或文件数量。新类别需要明确修改清单，不能静默排除。
@@ -55,9 +57,9 @@ python tools/validate.py
 
 语言渲染器保留路由和原始标题锚点，记录每个实际缺失或过期单元，绝不把英文回退视为翻译。从软件包 2.0 起，任何已渲染说明文字翻译不完整都会阻止文档构建成功。可选的 `--require-complete-translations` 参数将相同要求用于较早的稳定化版本。现有受跟踪文件、API 锚点、导入保护、链接、可达性和 wheel 一致性检查仍然有效。
 '''
-sourceHash = "sha256:da8e85cea3ef18392d00317023fb8d4d24ad89a50cdb7714049ca1de34c9929e"
-reviewedTranslationHash = "sha256:f7afa3c86cfee5986f1c948c956fd75acc8f338806596a94cf9c68840c9b05a2"
+sourceHash = "sha256:58878744de2e74e8a3c610b15984d6f0f904116592a6b8f8575059e2ecad684e"
+reviewedTranslationHash = "sha256:a34ae9d0402c369a178ff672480253f35daba9c5133203665d9f287669e6772c"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:54Z"
+reviewedAt = "2026-10-11T00:25:19Z"
 reviewRoles = ["editorial", "technical"]

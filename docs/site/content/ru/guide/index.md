@@ -117,8 +117,7 @@ flayer vpn status --project ~/flayer-vpn
 
 Для обоих протоколов [локальный экспорт устройства](cli.md#export-an-existing-vpn-device)
 создаёт нативный файл подключения AmneziaVPN и, при необходимости, QR из существующих
-клиентских файлов. При сбоях отдельных приложений используйте
-[сравнение Shorts/Telegram](cli.md#investigate-shorts-and-telegram-media).
+клиентских файлов.
 
 Отдельная стандартная ссылка VLESS остаётся в `import.txt` для клиентов вроде
 v2rayNG; она не переносит всю политику DNS и маршрутов. `client.json` сохраняет

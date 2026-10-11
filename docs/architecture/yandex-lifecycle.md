@@ -83,7 +83,7 @@ There is no remote atomic compare-and-delete for labels. Cooperative local locki
 
 ## Official CLI references
 
-Command translations were checked against official Yandex documentation during implementation on 2026-10-04:
+The adapter's command mappings follow the official Yandex CLI references:
 
 - [Network create](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/network/create) and [delete](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/network/delete)
 - [Subnet create](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/subnet/create) and [delete](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/subnet/delete)

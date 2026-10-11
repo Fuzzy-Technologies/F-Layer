@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 from test_vpn_project import FakeCloud, Project, Run
+from test_vpn_project import ResetGuest as ResetGuest
 
 from flayer.__main__ import Main
 from flayer.profiles import _amnezia_export as native

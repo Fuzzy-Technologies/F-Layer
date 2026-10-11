@@ -15,6 +15,8 @@ from unittest.mock import Mock
 import pytest
 
 from flayer.core.contracts import StackIdentity
+from flayer.core.lifecycle import DeploymentPlan, LifecycleEngine
+from flayer.core.state import LoadState
 from flayer.providers.contracts import (
     ProviderCapability,
     ProviderError,
@@ -30,6 +32,7 @@ ZONE = "example-zone"
 OPERATION_ID = "a" * 32
 KEY_BYTES = b"\x00\x00\x00\x0bssh-ed25519\x00\x00\x00\x20" + b"x" * 32
 PUBLIC_KEY = "ssh-ed25519 " + base64.b64encode(KEY_BYTES).decode("ascii")
+RULE_REJECTION = "ERROR: execute command: run command: for rule spec port or [from/to]-port fields is required\n"
 
 
 class RecordingRunner:
@@ -49,6 +52,7 @@ class RecordingRunner:
         """Supply fake read/create/delete responses; never invoke a shell, socket or CLI."""
 
         assert timeout == 45.0, "Configured command deadline was lost"
+
         self.calls.append(command)
         operation = command[3]
 
@@ -61,6 +65,11 @@ class RecordingRunner:
             return response
 
         if operation == "list":
+            if int(command[command.index("--limit") + 1]) > 1000:
+                return CommandResult(1, stderr=(
+                    "InvalidArgument: page_size: Value must be less than or equal to 1000"
+                ))
+
             values = [row for row in self.resources.values() if row["test_kind"] == command[2]]
 
             return CommandResult(0, json.dumps(values))
@@ -80,6 +89,15 @@ class RecordingRunner:
             return CommandResult(0)
 
         assert operation == "create", "Fake runner received an unsupported operation"
+
+        if command[2] == "security-group":
+            for index, argument in enumerate(command):
+                if argument == "--rule":
+                    rule = dict(pair.split("=", 1) for pair in command[index + 1].split(","))
+
+                    if "port" not in rule and not {"from-port", "to-port"} <= rule.keys():
+                        return CommandResult(1, stderr="rule requires port or from-port/to-port")
+
         labels = command[command.index("--labels") + 1]
         name = command[command.index("--name") + 1]
         resource_id = f"resource-{len(self.resources) + 1}"
@@ -221,8 +239,37 @@ def test_CreateAndDeleteSixKindsUseExactOwnedDependencies() -> None:
         provider.DeleteResource(resource.reference, IDENTITY, item.logical_id)  # type: ignore[attr-defined]
 
     deletes = [command for command in runner.calls if command[3] == "delete"]
+
     assert len(deletes) == 6 and not runner.resources, "Explicit cleanup left fake resources"
     assert all("--id" in item and "--name" not in item for item in deletes), "Deletion used names"
+
+
+@pytest.mark.parametrize("direction", ["ingress", "egress"])
+@pytest.mark.parametrize("protocol,ports", [
+    ("any", ()), ("tcp", (("from_port", 22), ("to_port", 22))),
+    ("udp", (("from_port", 51820), ("to_port", 51821))),
+])
+def test_SecurityGroupRulesCarryCliPortSelectors(
+    direction: str, protocol: str, ports: tuple[tuple[str, int], ...],
+) -> None:
+    """Translate both directions without widening transport ports or altering desired identity."""
+
+    provider, runner = Provider()
+    network = provider.CreateResource(Specs()[0], IDENTITY, {}, OPERATION_ID)
+    rule = (("direction", direction), ("protocol", protocol), ("cidr", "192.0.2.0/24"), *ports)
+    spec = ReplaceOption(Specs()[2], "rules", (rule,))
+    labels = spec.OwnershipLabels(IDENTITY)
+    resource = provider.CreateResource(spec, IDENTITY, {"network": network}, OPERATION_ID)
+    command = runner.calls[-1]
+    value = command[command.index("--rule") + 1]
+    lower, upper = (0, 65535) if protocol == "any" else (ports[0][1], ports[1][1])
+
+    assert value == (
+        f"direction={direction},protocol={protocol},v4-cidrs=192.0.2.0/24,"
+        f"from-port={lower},to-port={upper}"
+    ), "CLI rule changed direction, protocol, CIDR or allowed ports"
+    assert spec.OwnershipLabels(IDENTITY) == labels and resource.HasLabels(labels), "Translation changed the stored desired-state identity"
+    assert dict(spec.parameters)["rules"] == (rule,), "CLI-only port defaults leaked into desired parameters"
 
 
 def test_IdempotentOwnedDiscoveryPreventsSecondCreate() -> None:
@@ -235,6 +282,88 @@ def test_IdempotentOwnedDiscoveryPreventsSecondCreate() -> None:
 
     assert first == second, "Idempotent creation changed a stable resource reference"
     assert sum(command[3] == "create" for command in runner.calls) == 1, "Resource was duplicated"
+
+
+@pytest.mark.parametrize("stderr", [RULE_REJECTION, "ERROR: execute command: unknown flag: --rule\n"])
+@pytest.mark.parametrize("preexisting", [False, True])
+@pytest.mark.parametrize("cleanup_failure", [False, True])
+def test_LocalCliRejectionRollsBackOwnedProgressAndAllowsExplicitRetry(
+    tmp_path: Path, stderr: str, preexisting: bool, cleanup_failure: bool,
+) -> None:
+    """A proven pre-RPC failure must not strand paid resources behind uncertain intent."""
+
+    class RejectingRunner(RecordingRunner):
+        """Refuse one local security-rule parse without allocating its resource."""
+
+        rejection: str | None = stderr
+
+        def Run(self, command: tuple[str, ...], timeout: float) -> CommandResult:
+            """Keep all successful operations real to the fake cloud's ownership contract."""
+
+            if command[1:4] == ("vpc", "security-group", "create") and self.rejection is not None:
+                self.calls.append(command)
+
+                return CommandResult(1, stderr=self.rejection)
+
+            return super().Run(command, timeout)
+
+    runner = RejectingRunner()
+    provider = YandexLifecycleProvider(YandexCloudSettings("test-folder"), runner)
+    original = provider.CreateResource(Specs()[0], IDENTITY, {}, "b" * 32) if preexisting else None
+
+    if cleanup_failure:
+        runner.overrides["delete"] = subprocess.TimeoutExpired("synthetic-secret-command", 45)
+
+    state_path = tmp_path / "state.json"
+    engine = LifecycleEngine(DeploymentPlan(IDENTITY, Specs()), provider, state_path)
+    report = engine.Create()
+
+    if cleanup_failure:
+        assert report.status == "rollback-incomplete" and report.recovery_required, "Interrupted cleanup lost its recovery intent"
+        runner.overrides.clear()
+        report = engine.Recover(rollback=True)
+
+    state = LoadState(state_path, IDENTITY)
+
+    assert report.status == "rolled-back" and not report.recovery_required, "Local parser failure poisoned the journal"
+    assert state is not None and len(state.resources) == int(preexisting), "Rollback did not preserve exactly the preexisting resources"
+    assert not state_path.with_name(".state.json.operation.json").exists(), "Completed rollback retained a pending create"
+    assert len(runner.resources) == int(preexisting), "Failed deployment left newly allocated resources"
+
+    if original is not None:
+        assert provider.GetResource(original.reference) == original, "Rollback touched a preexisting resource"
+
+    runner.rejection = None
+
+    assert engine.Create().status == "complete", "Explicit retry after rollback remained blocked"
+    assert len(runner.resources) == 6, "Retry duplicated or omitted a resource"
+
+
+@pytest.mark.parametrize("stdout,stderr,kind,unknown", [
+    ("", RULE_REJECTION, "security-group", False),
+    ("", RULE_REJECTION.replace("\n", "\r\n"), "security-group", False),
+    ("", "ERROR: execute command: unknown flag: --rule\n", "security-group", False),
+    ("", RULE_REJECTION, "network", True),
+    ("accepted", RULE_REJECTION, "security-group", True),
+    ("", "rpc error: code = InvalidArgument desc = " + RULE_REJECTION, "security-group", True),
+    ("", RULE_REJECTION + "operation accepted\n", "security-group", True),
+    ("", "ERROR: execute command: unknown flag: --not-in-command\n", "security-group", True),
+    ("", "ResourceExhausted: quota exceeded", "security-group", True),
+])
+def test_RejectionClassificationRequiresExactLocalEvidence(
+    stdout: str, stderr: str, kind: str, unknown: bool,
+) -> None:
+    """Do not turn output fragments, RPC failures, or incompatible commands into rejection proof."""
+
+    provider, runner = Provider()
+    runner.overrides["create"] = CommandResult(1, stdout=stdout, stderr=stderr)
+
+    with pytest.raises(MutationError) as caught:
+        provider._MutationRun(("vpc", kind, "create", "--rule", "fixture"), "create")
+
+    assert caught.value.outcome_unknown is unknown, "Mutation outcome classification lost its proof boundary"
+    assert len(runner.calls) == 1, "Failed mutation was automatically retried"
+    assert stderr.strip() not in "".join(traceback.format_exception(caught.value)), "Raw CLI output leaked"
 
 
 @pytest.mark.parametrize("variation", ["duplicate", "digest", "name", "status", "zone"])
@@ -341,6 +470,7 @@ def test_DispatchedCreateFailureIsUncertainSanitizedAndNeverRetried(
         provider.CreateResource(Specs()[0], IDENTITY, {}, OPERATION_ID)
 
     evidence = "".join(traceback.format_exception(caught.value))
+
     assert caught.value.outcome_unknown is True, "Dispatched create was classified definitely absent"
     assert "synthetic-secret" not in evidence, "Vendor output or runner exception leaked"
     assert sum(command[3] == "create" for command in runner.calls) == 1, "Uncertain create was retried"
@@ -582,6 +712,7 @@ def test_TimeoutAfterAcceptedCreateRetainsDiscoverableOperationNonce() -> None:
         provider.CreateResource(spec, IDENTITY, {}, OPERATION_ID)
 
     recovered = provider.FindResource(spec, IDENTITY)
+
     assert caught.value.outcome_unknown is True, "Accepted mutation was classified absent"
     assert recovered is not None, "Stable logical labels cannot reconcile an interrupted create"
     assert dict(recovered.labels)["flayer-operation"] == OPERATION_ID, "Operation attribution was lost"
@@ -702,6 +833,7 @@ def test_SSHKeyStructuralBoundsAndCommentRemoval() -> None:
 
     runner = provider._runner
     metadata = runner.calls[-1][runner.calls[-1].index("--metadata") + 1]  # type: ignore[attr-defined]
+
     assert "untrusted-comment" not in metadata, "Public-key comment entered a CLI property value"
 
 
@@ -748,6 +880,7 @@ def test_PrivateTemporaryCleanupFailurePreservesRemoteUncertainty(
     assert caught.value.outcome_unknown is True, "Post-mutation cleanup failure lost remote uncertainty"
     assert "synthetic-secret" not in "".join(traceback.format_exception(caught.value)), "Cleanup path leaked"
     assert runner.last_temporary_path is not None, "Fake CLI never received a temporary input"
+
     original_unlink(runner.last_temporary_path)
 
 
@@ -763,7 +896,9 @@ def test_RollbackDeletionRechecksItsExactOperationNonce() -> None:
 
     assert caught.value.outcome_unknown is False, "Nonce mismatch was classified dispatched"
     assert not any(command[3] == "delete" for command in runner.calls), "Cross-operation rollback deleted a resource"
+
     provider.DeleteResource(resource.reference, IDENTITY, spec.logical_id, "b" * 32)
+
     assert not runner.resources, "Correctly attributed rollback could not remove its resource"
 
 
@@ -872,3 +1007,99 @@ def test_UnexpectedReadTransportErrorsAreAlwaysSanitized(phase: str) -> None:
 
     if phase == "delete-after":
         assert isinstance(caught.value, MutationError) and caught.value.outcome_unknown is True, "Post-delete transport failure lost uncertainty"
+
+
+@pytest.mark.parametrize("platform,fraction,cores,memory", [
+    ("standard-v1", 5, 2, 1), ("standard-v1", 100, 32, 128),
+    ("standard-v2", 5, 4, 1), ("standard-v2", 50, 4, 16),
+    ("standard-v3", 20, 2, 1), ("standard-v3", 50, 2, 2),
+    ("standard-v3", 100, 8, 32),
+])
+def test_ExplicitComputeShapeReachesVendorArguments(platform: str, fraction: int, cores: int, memory: int) -> None:
+    """Transmit valid bounded Intel shapes without relying on ambient yc defaults."""
+
+    provider, runner = Provider()
+    resources = CreateDependencies(provider)
+    spec = Specs()[-1]
+
+    for key, value in {"platform_id": platform, "core_fraction": fraction, "cores": cores, "memory_gib": memory}.items():
+        spec = ReplaceOption(spec, key, value)
+
+    provider.CreateResource(spec, IDENTITY, {key: resources[key] for key in spec.dependencies}, OPERATION_ID)  # type: ignore[arg-type]
+    command = next(item for item in runner.calls if item[2:4] == ("instance", "create"))
+
+    for flag, value in {"--platform": platform, "--core-fraction": str(fraction), "--cores": str(cores), "--memory": str(memory)}.items():
+        assert command[command.index(flag) + 1] == value, "Requested compute setting did not reach yc"
+
+
+@pytest.mark.parametrize("changes", [
+    {"platform_id": "standard-v3"}, {"core_fraction": 50},
+    {"platform_id": "standard-v1", "core_fraction": 50},
+    {"platform_id": "standard-v3", "core_fraction": 5},
+    {"platform_id": "standard-v3", "core_fraction": True},
+    {"platform_id": "standard-v3", "core_fraction": 50, "cores": 8},
+    {"platform_id": "standard-v3", "core_fraction": 100, "cores": 18},
+    {"platform_id": "standard-v3", "core_fraction": 100, "memory_gib": 3},
+    {"platform_id": "standard-v3", "core_fraction": 50, "memory_gib": 10},
+    {"platform_id": "standard-v1", "core_fraction": 100, "memory_gib": 18},
+    {"platform_id": "standard-v2", "core_fraction": 50, "zone_id": "kz1-a"},
+    {"platform_id": "standard-v3; echo secret", "core_fraction": 50},
+])
+def test_InvalidComputeCombinationsRejectBeforeCloudAccess(changes: dict[str, object]) -> None:
+    """Refuse incomplete, impossible and injected shape options before even a read call."""
+
+    provider, runner = Provider()
+    spec = Specs()[-1]
+
+    for key, value in changes.items():
+        spec = ReplaceOption(spec, key, value)
+
+    with pytest.raises(MutationError) as caught:
+        provider.CreateResource(spec, IDENTITY, {}, OPERATION_ID)
+
+    assert caught.value.outcome_unknown is False, "Invalid shape was marked as dispatched"
+    assert not runner.calls, "Invalid compute shape reached the provider transport"
+
+
+def test_PublicProjectSizingFlowsThroughRealCompilerAndYandexAdapter(tmp_path: Path) -> None:
+    """Exercise TOML to actual yc argv through the public compiler and a recording transport."""
+
+    from flayer.vpn_project import (
+        CompileVpnProject,
+        InitializeVpnProject,
+        LoadVpnProject,
+        PrepareVpnProject,
+    )
+
+    directory = InitializeVpnProject(tmp_path / "customer")
+    path = directory / "project.toml"
+    path.write_text(path.read_text().replace("replace-with-folder-id", "test-folder").replace(
+        "replace-with-ubuntu-2404-amd64-image-id", "example-image"
+    ).replace('zone_id = "ru-central1-a"', 'zone_id = "example-zone"') + '''
+[resources]
+platform_id = "standard-v3"
+cores = 2
+core_fraction = 50
+memory_gib = 2
+disk_size_gib = 10
+disk_type = "network-hdd"
+''')
+    project = LoadVpnProject(directory)
+    PrepareVpnProject(project)
+    provider, runner = Provider()
+    resources = {}
+
+    for spec in CompileVpnProject(project).resources:
+        resources[spec.logical_id] = provider.CreateResource(
+            spec, project.vpn.identity, {key: resources[key] for key in spec.dependencies}, OPERATION_ID,
+        )
+
+    command = next(item for item in runner.calls if item[2:4] == ("instance", "create"))
+    disk = next(item for item in runner.calls if item[2:4] == ("disk", "create"))
+
+    assert command[command.index("--platform") + 1] == "standard-v3"
+    assert command[command.index("--core-fraction") + 1] == "50"
+    assert command[command.index("--cores") + 1] == "2"
+    assert command[command.index("--memory") + 1] == "2"
+    assert disk[disk.index("--size") + 1] == "10"
+    assert disk[disk.index("--type") + 1] == "network-hdd"

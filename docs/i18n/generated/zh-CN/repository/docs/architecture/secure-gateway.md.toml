@@ -1,0 +1,166 @@
+schemaVersion = 1
+sourcePath = "docs/architecture/secure-gateway.md"
+sourceHash = "sha256:5070d94048f2c94795a66213a8e5f9b83e02e7f283ff8bc7c979320ab7f9593a"
+reviewedTranslationHash = "sha256:d7a345ad4ce0ca1e22ca9ec9f115c5a2e67c7c3ff29318d486f3ef67698ad3ac"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T15:52:52Z"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# 安全网关配置
+
+首个 `secure-gateway` 配置为明确选择的 Ubuntu 24.04 cloud-init 镜像准备受限
+SSH 应用网关。加密 TCP 转发仅允许精确列出的目标，不配置完整 IP VPN。
+
+版本化示例为 [secure-gateway.toml](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/examples/secure-gateway.toml)。
+部署前必须替换每个标识、来源 CIDR 和示例公钥。示例只使用文档地址，不对应真实
+基础设施。
+
+## 契约与限制
+
+| 边界       | 要求                                                    |
+| ---------- | ------------------------------------------------------- |
+| 配置格式   | 版本 1；拒绝未知字段和内嵌私有凭据。                    |
+| 部署位置   | 明确指定提供方、范围、所有者、可用区和镜像。            |
+| 子网       | 规范 RFC1918 IPv4 子网，前缀 `/16` 至 `/28`。           |
+| 管理访问   | 明确管理员公钥；1–16 个 `/24` 至 `/32` 来源 CIDR。      |
+| SSH 传输   | 独立且无 sudo 权限的账号；1–8 个精确 TCP 目标。         |
+| 设备授权   | 1–16 台设备，公钥唯一；最多 32 个来源 CIDR。            |
+| 防火墙展开 | 最多 63 条入站规则及一条明确 IPv4 出站规则。            |
+| 资源大小   | 2–32 核、1–64 GiB RAM，独立归属的 10–256 GiB 启动磁盘。 |
+| 导出文件包 | 1–8 个文件，单个最多 1 MiB，总计最多 2 MiB。            |
+| 本地存储   | 调用用户拥有的 POSIX `0700` 目录及 `0600` 普通文件。    |
+| 替换与清理 | 独占发布；完整归属和摘要验证。                          |
+
+公钥必须是符合规定 SSH 编码格式、且不含注释的 Ed25519 公钥。管理员和每台设备使用不同密钥。
+格式不接受私钥值。CIDR 必须规范，同一来源集合内拒绝重复和重叠项。
+
+资源图先创建网络，再创建子网和安全组。虚拟机依赖子网、安全组、保留地址和
+启动磁盘。磁盘使用提供方契约的 `auto-delete=false`，由生命周期显式管理清理。
+
+## 准备
+
+准备配置只执行本地文件操作：
+
+```python
+from flayer.profiles import (
+    BuildServerBundle,
+    CompileGateway,
+    LoadGatewayProfile,
+    RenderPlan,
+    WriteArtifactBundle,
+)
+
+profile = LoadGatewayProfile("gateway.toml")
+server_directory = WriteArtifactBundle("generated-artifacts", BuildServerBundle(profile))
+plan_text = RenderPlan(
+    CompileGateway(profile),
+    user_data_file=server_directory / "server-cloud-init.json",
+)
+```
+
+仅将 `plan_text` 保存在明确的私有本地存储中。文件绝对路径是本机执行引用，
+不是可移植的仓库配置。生命周期解析器读取版本化 TOML；编排和云变更需要独立
+明确命令。上述准备调用不创建云资源。
+
+导出的 `server-cloud-init.json` 以 `#cloud-config` 开头，后接同样符合 YAML
+的 JSON。它创建仅用密钥登录的锁定账号，安装 nftables 和自动更新，写入完整
+SSH 服务配置，禁止 IP 数据包转发，并在启用服务前检查 SSH 与防火墙语法。完全替换
+SSH 配置只适用于新建虚拟机，不是任意现有服务器的原地管理命令。
+
+初始化前隧道账号必须不存在。账号已存在、查询失败或创建失败时，在激活服务前
+停止。明确选择 root 拥有的管理员和设备密钥文件，不合并镜像或用户目录中的
+无关 authorized keys。隧道账号拥有独立主组，无 sudo 成员资格。初始化关闭
+socket activation 后，启用 `ssh.service` 供后续启动使用。这是新虚拟机的一次性
+操作；账号创建后手动重跑会因前置条件不满足而失败。
+
+`RenderPlan()` 拒绝归属不符、被修改或不完整的文件包，将精确初始化摘要绑定到
+虚拟机配置。提供方发送初始化时再次验证摘要。只有路径不足以授权修改后的内容。
+
+## 设备配置
+
+独立取得实际服务器主机密钥后，保存到明确可信的 known-hosts 文件。将与声明
+公钥对应的设备私钥作为文件引用传入。生成过程不读取或验证这两个文件，也不
+自动信任主机密钥。
+
+```python
+from flayer.profiles import BuildSshDeviceBundle, WriteArtifactBundle
+
+device_directory = WriteArtifactBundle(
+    "generated-artifacts",
+    BuildSshDeviceBundle(
+        profile,
+        "laptop",
+        endpoint="203.0.113.42",
+        identity_file="/path/to/laptop-key",
+        known_hosts_file="/path/to/trusted-known-hosts",
+        local_ports=(8443,),
+    ),
+)
+```
+
+本地端口元组按声明目标的顺序对应。端口必须唯一且在 `1024..65535` 范围内，
+转发始终绑定 IPv4 回环。Windows 客户端文件引用使用 `C:/Keys/laptop-key`
+这样的绝对路径。
+
+使用 OpenSSH 运行生成的配置：
+
+```bash
+ssh -F generated-artifacts/device-laptop/ssh-client.conf -N laptop
+```
+
+示例通过网关将 `127.0.0.1:8443` 转发至 `example.org:443`。远端目标字符串
+必须精确匹配服务器 `PermitOpen`。这只提供 TCP 可达性，不改变 HTTP 主机名、
+TLS 名称、应用路由或操作系统默认路由。
+
+客户端强制严格主机密钥验证、公钥认证、一次连接尝试、有界超时及转发绑定失败
+即退出。禁用 agent、X11、shell、proxy command 和 local command。
+`ExitOnForwardFailure` 不证明目标接受连接。描述状态为 `prepared-unverified`，
+不会标记为已部署或健康。
+
+`BuildDeviceBundle()` 另行接受外部签发的敏感传输文件。字节不进入 repr、清单、
+状态或受版本控制的配置。该函数不签发凭据，也不验证其他传输的实现。
+
+## 归属与清理
+
+```python
+from flayer.profiles import RemoveArtifactBundle
+
+RemoveArtifactBundle(
+    "generated-artifacts", profile.identity, kind="device", name="laptop"
+)
+RemoveArtifactBundle(
+    "generated-artifacts", profile.identity, kind="server", name=profile.identity.stack
+)
+```
+
+清理前验证完整清单、精确部署身份、每个摘要、私有权限和目录中的完整文件列表。保留归属
+不符或被修改的文件，不跟随符号链接、不接受硬链接，也不递归删除目录。删除本地
+文件不删除云资源。
+
+清理过程会保存已验证的 inode 和内容校验记录，在每个破坏性步骤前再次检查，包括回滚和释放
+锁。读取返回经过验证的不可变快照，不重新读取未绑定的文件名。发现同用户替换
+或原地修改时保留内容，要求恢复。
+
+私有目录和独占锁形成协作式写入边界。POSIX 不提供按 inode 和内容原子条件
+unlink；相同系统身份的进程仍可能在最终检查后竞争或绕过锁。本存储不能隔离
+同用户的恶意进程或特权管理员。
+
+现有文件包从不覆盖。已有操作锁保留，等待显式恢复。写入失败只回滚自身文件；
+文件系统故障可能留下已发布或部分文件包。删除中断可能留下清单及剩余文件，
+后续自动清理会拒绝不完整清单。在引用服务器文件的部署或恢复完成前应保留文件。
+
+## 验证及剩余限制
+
+确定性测试覆盖严格格式和大小、资源图序列化、文件归属、公私钥边界、冲突、
+符号链接、硬链接、FIFO 拒绝、权限变化、删除前完整检查及部分发布/删除失败。
+可用的 OpenSSH 工具离线验证客户端和服务器语法。只有现有开发环境可运行
+`sshd -T` 时，才检查实际 `Match User` 行为。
+
+离线检查不证明 cloud-init 执行、真实 SSH 认证、主机密钥获取、目标可达性或
+虚拟机就绪。Cloud-init 和 nftables 不是 F-Layer 的运行时依赖。提供方状态仍然
+只是云端观测。文件存储没有 Windows ACL 实现；目标 DNS 在网关连接时解析，
+允许的 DNS 名称不代表目标 IP 的归属永远不变。
+
+设计决策见 [ADR 0007](../adr/0007-secure-gateway-profile.md)。
+'''

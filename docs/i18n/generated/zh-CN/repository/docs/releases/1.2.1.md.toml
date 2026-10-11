@@ -1,0 +1,61 @@
+schemaVersion = 1
+sourcePath = "docs/releases/1.2.1.md"
+body = '''
+## 摘要
+
+F-Layer v1.2.1 改善了文档使用体验：可以从实用的 Quick Start 开始，阅读更清晰的产品说明，并按照经过验证、没有翻译草稿提示的俄文和中文指南操作。发布现在要求里程碑完成并关闭。运行时和 CLI 行为仍与 1.1.0 及预发布的 1.2.0 快照兼容。
+
+## 变更内容
+
+### 新增
+
+- 英文、俄文和简体中文 Quick Start，包含安装、离线检查、帮助及首次部署链接。
+- README 和文档首页中的 F-Layer 公司幻灯片、紧凑的页眉标志及方形网站图标。
+- 对全部 18 个 RU/ZH-CN 编写页面进行可追溯的 AIna 评审，与精确英文原文及译文绑定。缺失的 API 翻译仍显示英文。
+
+### 调整
+
+- 用工程师和潜在客户易懂的语言描述受支持的 Yandex Cloud、安全 SSH 网关及诊断流程。
+- 稳定发布前要求完成原生发布里程碑；标题使用 `F-Layer vX.Y.Z`，已发布标签保持不变。
+- 翻译评审记录保存在元数据中，不再在每个已批准页面显示提示。AI 评审明确标识，绝不称为人工批准。
+
+### 修复
+
+- 首页幻灯片被裁切及页眉标志过大的问题。
+- 俄文资源归属措辞、中文虚拟机术语、本地化文档链接，以及统一的 v1.2.1 安装示例。
+- 翻译变更检查现在会在译文修改时撤销 AI 批准，即使英文原文没有变化。
+
+## 验证
+
+构建来源信息见 [GitHub 发布](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.2.1)。
+
+## 不兼容变更
+
+运行时 API 和 CLI 命令没有不兼容变更。文档评审元数据现在支持明确获授权的 AI 评审者；默认仍只允许人工评审。
+
+## 从源码试用
+
+```bash
+git clone https://github.com/Fuzzy-Technologies/F-Layer.git
+cd F-Layer
+git checkout v1.2.1
+python -m pip install .
+flayer --help
+python -m flayer check --format json
+```
+
+需要 Python 3.11 或更新版本。发布到包索引是独立操作。
+
+## 说明
+
+- 预发布 v1.2.0 标签和已审计文件保持不变，以便追溯。
+- 本发布不执行真实云部署或 PyPI 上传。
+- [详细变更记录](https://github.com/Fuzzy-Technologies/F-Layer/blob/v1.2.1/CHANGELOG.md)
+- [发布里程碑](https://github.com/Fuzzy-Technologies/F-Layer/milestone/3)
+'''
+sourceHash = "sha256:7eb6474dc3673a0044a6d08ed4a7abc4461c1fc02f590a09e5a6afb4f9cf5afb"
+reviewedTranslationHash = "sha256:a7492912928c55d70211d4b322ab36f42cec35d2daa45bfe6af06213021a34e1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-11T00:25:19Z"
+reviewRoles = ["editorial", "technical"]

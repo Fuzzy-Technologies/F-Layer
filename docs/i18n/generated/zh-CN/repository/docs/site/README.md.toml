@@ -1,0 +1,38 @@
+schemaVersion = 1
+sourcePath = "docs/site/README.md"
+body = '''
+# 文档平台
+
+F-Layer 遵循 Fuzzy Technologies 的 MkDocs Material 文档蓝图。英文源文件位于 `content/en/`；本地化哈希、评审状态和术语表位于 `../i18n/`。Python API 接口说明保留在包的文档字符串中。
+
+```bash
+python tools/build_api_reference.py
+python tools/build_locale_sites.py
+python tools/build_api_reference.py --serve
+python -m tools.locale_documentation validate --output _build/documentation-gates/locales.json
+```
+
+干净构建会在隔离环境中安装 wheel 和精确锁定的文档依赖，阻止运行时导入，从已安装源代码生成模块页面，严格验证链接、锚点及本地化，然后写入 `_build/api-reference/build-evidence.json`。离线或可复现的 CI 可以通过 `--environment-python PATH` 指定预先准备的虚拟环境；其中的文档工具版本必须与锁文件完全一致。
+该环境必须放在 `_build/api-reference/` 之外，因为构建器会重新创建此目录。如果环境创建过程将过期输出恢复到受控构建根目录，构建会在发布前失败，并要求使用外部已验证环境。
+
+生成的 API 符号使用蓝图中相同的原文哈希方案，注册表仅作临时输出。实际译文和评审记录决定本地化状态；生成注册表不会自动产生翻译或评审。
+复制的验证器保留上游哈希、模式键和评审语义；内部标识符遵循项目风格。
+
+多语言封装构建器显示已批准的 RU/ZH 页面，不添加草稿提示；缺失或过期译文则回退到当前英文。它保留已安装 wheel 的导入保护及严格链接和锚点检查，补充每个路由的可达性验证，且绝不生成人工批准。翻译依据哈希使刷新权威注册表无法掩盖过期译文。详见[本地化规则](../i18n/README.md)。
+PR 和 `develop` 上传预览文件。只有获接受的 `master` 推送可以部署 Pages。路由为 `/F-Layer/en/`、`/F-Layer/ru/`、`/F-Layer/zh-CN/`。
+文档依赖与运行时元数据分离，存放于 `../requirements-api.txt`。
+
+## 完整性验证
+
+[覆盖要求](../development/documentation-coverage.md) 区分已渲染 Markdown、生成的公开 API，以及有明确理由的仅源码文件。`_build/api-reference/repository-coverage.json` 记录所有受跟踪文件及包中定义的符号。未知或重叠的文件类别、wheel 缺少源码、包中存在额外或被修改的文件、API 锚点缺失，以及存在却无法到达的 Markdown 页面，都会导致构建失败。
+
+生成的覆盖页面链接到每个文件或页面。全部权威仓库 Markdown 均被纳入，包括 ADR 模板、治理与发布指南及 GitHub PR 模板。[架构参考](../architecture/reference.md) 将已实现边界和图示关联到当前源码接口。
+
+Wheel 安装到新的受控构建目录中，独立于所选择的文档工具环境。环境中或以前安装的 F-Layer 不会影响 API 发现，安装软件包也不会修改该工具环境。在创建语言回退页面之前，严格验证的英文输出先组成新的发布目录树；恢复出来的相邻语言路由会被丢弃。
+'''
+sourceHash = "sha256:e8647490d782954a1687a9a657b528f424956e54d850b30802edc0c51da531ad"
+reviewedTranslationHash = "sha256:ff58256cd5a5d6cacbed9be341fd22c2b8eb9af90cd9f95957e044249cb308f9"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-11T00:25:19Z"
+reviewRoles = ["editorial", "technical"]

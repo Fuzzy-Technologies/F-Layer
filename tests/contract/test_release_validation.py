@@ -216,7 +216,9 @@ def test_MilestoneOnlyCheckDoesNotBuild(
     monkeypatch.setattr(release, "RunCommand", lambda *_arguments: json.dumps(ClosedMilestone()))
 
     assert release.Main(["--check-milestone", "3"]) == 0, "Completed milestone preflight failed"
+
     evidence = json.loads(capsys.readouterr().out)
+
     assert evidence["published"] is False, "Read-only preflight claimed publication"
     assert not (tmp_path / "_build").exists(), "Milestone-only preflight built artifacts"
 
@@ -604,7 +606,9 @@ def test_CliFailureDoesNotEchoTagOrPayload(monkeypatch: pytest.MonkeyPatch, caps
     monkeypatch.setattr(release, "ValidateRelease", Fail)
 
     assert release.Main(["--tag", "fixture-private-tag"]) == 1, "Validation failure returned success"
+
     output = capsys.readouterr()
+
     assert "fixture-private" not in output.out + output.err, "CLI repeated private error detail"
 
 
@@ -673,6 +677,7 @@ def test_ReleaseEvidenceRequiresBothBuildComparisons(
     else:
         evidence = release.ValidateRelease(repo_root, tag, publication)
         evidence_path = repo_root / "_build/release/build-evidence.json"
+
         assert json.loads(evidence_path.read_text()) == evidence, "Persisted evidence differs"
         assert evidence["reproducible"] is True and evidence["sdist_wheel_parity"] is True, (
             "Successful comparisons were not recorded"

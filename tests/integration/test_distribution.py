@@ -15,6 +15,7 @@ from email.parser import BytesParser
 from pathlib import Path
 
 import pytest
+from packaging.requirements import Requirement
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -37,9 +38,10 @@ def _Run(command: list[str], cwd: Path) -> str:
     environment = os.environ.copy()
     environment.pop("PYTHONPATH", None)
     environment.pop("PYTHONHOME", None)
-    environment["SOURCE_DATE_EPOCH"] = "1704067200"
+    environment.setdefault("SOURCE_DATE_EPOCH", "1704067200")
     environment["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
     environment["PIP_NO_INDEX"] = "1"
+    environment["PIP_CONFIG_FILE"] = os.devnull
     result = subprocess.run(
         command, cwd=cwd, env=environment, capture_output=True, text=True,
         timeout=60, check=False,
@@ -57,19 +59,28 @@ def distribution_artifacts(tmp_path_factory: pytest.TempPathFactory) -> Distribu
     """Build, safely unpack, rebuild and install distributions without an index."""
 
     temporary_root = tmp_path_factory.mktemp("distribution")
-    output = temporary_root / "original"
-    _Run(
-        [sys.executable, "-m", "hatchling", "build", "--directory", str(output)],
-        PROJECT_ROOT,
-    )
-    wheel = next(output.glob("*.whl"))
-    sdist = next(output.glob("*.tar.gz"))
+    supplied_directory = os.environ.get("FLAYER_DISTRIBUTION_DIRECTORY")
+    output = Path(supplied_directory).resolve() if supplied_directory else temporary_root / "original"
+
+    if not supplied_directory:
+        _Run(
+            [sys.executable, "-m", "hatchling", "build", "--directory", str(output)],
+            PROJECT_ROOT,
+        )
+
+    wheels = tuple(output.glob("*.whl"))
+    sdists = tuple(output.glob("*.tar.gz"))
+
+    assert len(wheels) == len(sdists) == 1, "Installation smoke requires one wheel and one sdist"
+
+    wheel, sdist = wheels[0], sdists[0]
     unpacked = temporary_root / "unpacked"
     unpacked.mkdir()
 
     with tarfile.open(sdist) as archive:
         for member in archive.getmembers():
             relative_path = Path(member.name)
+
             assert (
                 not relative_path.is_absolute() and ".." not in relative_path.parts
                 and (member.isdir() or member.isfile())
@@ -80,7 +91,9 @@ def distribution_artifacts(tmp_path_factory: pytest.TempPathFactory) -> Distribu
                 continue
 
             stream = archive.extractfile(member)
+
             assert stream is not None, "Built sdist regular member has no content"
+
             destination = unpacked / relative_path
             destination.parent.mkdir(parents=True, exist_ok=True)
 
@@ -100,7 +113,7 @@ def distribution_artifacts(tmp_path_factory: pytest.TempPathFactory) -> Distribu
     python = binary_root / ("python.exe" if os.name == "nt" else "python")
     _Run(
         [sys.executable, "-m", "pip", "--python", str(python), "install",
-         "--no-index", "--no-deps", str(wheel)],
+         "--no-index", str(wheel)],
         temporary_root,
     )
 
@@ -133,6 +146,19 @@ def test_DistributionMetadataAndTypedEntryPoint(
         assert all(
             "extra ==" in requirement for requirement in metadata.get_all("Requires-Dist", [])
         ), "Package unexpectedly requires runtime dependencies"
+        assert "vpn" in metadata.get_all("Provides-Extra", []), "VPN installation extra is absent"
+
+        requirements = [Requirement(value) for value in metadata.get_all("Requires-Dist", [])]
+
+        assert any(
+            requirement.name == "cryptography" and str(requirement.specifier) == "==50.0.2"
+            and requirement.marker is not None and requirement.marker.evaluate({"extra": "vpn"})
+            for requirement in requirements
+        ), "VPN extra lost its reviewed cryptography dependency"
+        assert any(
+            value == "Documentation, https://fuzzy-technologies.github.io/F-Layer/"
+            for value in metadata.get_all("Project-URL", [])
+        ), "Installed package metadata has no documentation link"
 
     with tarfile.open(distribution_artifacts.sdist) as archive:
         names = archive.getnames()
@@ -154,6 +180,7 @@ def test_SdistRebuildAndIsolatedConsoleParity(
     assert hashlib.sha256(distribution_artifacts.wheel.read_bytes()).digest() == hashlib.sha256(
         distribution_artifacts.rebuilt_wheel.read_bytes()
     ).digest(), "Wheel rebuilt from sdist differs from the original distribution"
+
     code = (
         "import flayer, importlib.metadata as m, json; "
         "print(json.dumps({'runtime':flayer.__version__, 'metadata':m.version('f-layer'), "
@@ -168,6 +195,7 @@ def test_SdistRebuildAndIsolatedConsoleParity(
     assert not Path(result["path"]).is_relative_to(PROJECT_ROOT), (
         "Isolated installation test imported the checkout instead of the wheel"
     )
+
     console_help = _Run(
         [str(distribution_artifacts.console), "--help"], distribution_artifacts.outside_source,
     )
@@ -177,3 +205,62 @@ def test_SdistRebuildAndIsolatedConsoleParity(
     )
 
     assert console_help == module_help, "Console and module CLI help surfaces disagree"
+
+
+def test_InstalledConsoleRunsWithoutSourceOrCloudTools(
+    distribution_artifacts: DistributionArtifacts,
+) -> None:
+    """A fresh wheel installation performs real local diagnostics without cloud credentials."""
+
+    result = json.loads(_Run(
+        [str(distribution_artifacts.console), "check", "--format", "json"],
+        distribution_artifacts.outside_source,
+    ))
+
+    assert result["command"] == "check", "Installed console ran the wrong diagnostic command"
+    assert result["status"] == "ok", "Installed wheel cannot complete local runtime checks"
+    assert result["checks"][0]["name"] == "python-runtime", "Runtime diagnostic is missing"
+    assert "No broken requirements found" in _Run(
+        [sys.executable, "-m", "pip", "--python", str(distribution_artifacts.python), "check"],
+        distribution_artifacts.outside_source,
+    ), "Fresh core installation has unresolved dependencies"
+    assert _Run(
+        [str(distribution_artifacts.python), "-I", "-c",
+         "import importlib.util; print(importlib.util.find_spec('cryptography') is None)"],
+        distribution_artifacts.outside_source,
+    ).strip() == "True", "Core installation unexpectedly pulled in the optional VPN dependency"
+
+
+def test_VpnExtraInstallsAndGeneratesKeys(
+    distribution_artifacts: DistributionArtifacts, tmp_path: Path,
+) -> None:
+    """The documented VPN extra resolves offline and provides working key generation."""
+
+    wheelhouse = os.environ.get("FLAYER_DISTRIBUTION_WHEELHOUSE")
+
+    if not wheelhouse:
+        pytest.skip("VPN dependency wheelhouse is required; release CI downloads it before smoke")
+
+    environment_root = tmp_path / "vpn-environment"
+    venv.EnvBuilder(with_pip=False).create(environment_root)
+    binary_root = environment_root / ("Scripts" if os.name == "nt" else "bin")
+    python = binary_root / ("python.exe" if os.name == "nt" else "python")
+    wheel_specification = f"f-layer[vpn] @ {distribution_artifacts.wheel.as_uri()}"
+    _Run(
+        [sys.executable, "-m", "pip", "--python", str(python), "install", "--no-index",
+         "--find-links", str(Path(wheelhouse).resolve()), wheel_specification],
+        tmp_path,
+    )
+    code = (
+        "import json; from cryptography.hazmat.primitives.asymmetric import rsa, x25519; "
+        "left=x25519.X25519PrivateKey.generate(); right=x25519.X25519PrivateKey.generate(); "
+        "shared=left.exchange(right.public_key()) == right.exchange(left.public_key()); "
+        "key=rsa.generate_private_key(public_exponent=65537,key_size=2048); "
+        "print(json.dumps({'x25519':shared,'rsa_bits':key.key_size}))"
+    )
+    result = json.loads(_Run([str(python), "-I", "-c", code], tmp_path))
+
+    assert result == {"x25519": True, "rsa_bits": 2048}, "Installed VPN crypto backend is unusable"
+    assert "No broken requirements found" in _Run(
+        [sys.executable, "-m", "pip", "--python", str(python), "check"], tmp_path,
+    ), "Fresh VPN installation has unresolved dependencies"

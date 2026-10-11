@@ -494,6 +494,7 @@ def test_InstalledOpenSshEnforcesServerRoleConfig(tmp_path: Path) -> None:
     result = subprocess.run([
         str(shutil.which("ssh-keygen")), "-t", "ed25519", "-N", "", "-f", str(host_key),
     ], capture_output=True, check=False, text=True, timeout=5)
+
     assert result.returncode == 0, "Synthetic host key must remain inside the isolated test directory"
 
     for user, forwarding in (("gateway-tunnel", "local"), ("gateway-admin", "no")):
@@ -501,6 +502,7 @@ def test_InstalledOpenSshEnforcesServerRoleConfig(tmp_path: Path) -> None:
             str(shutil.which("sshd")), "-T", "-f", str(server_path), "-h", str(host_key), "-C",
             f"user={user},host=client.example.org,addr=198.51.100.42",
         ], capture_output=True, check=False, text=True, timeout=5)
+
         assert result.returncode == 0, "Generated server configuration must parse in OpenSSH"
         assert f"allowtcpforwarding {forwarding}\n" in result.stdout
 
@@ -532,7 +534,9 @@ def test_UnicodeArtifactPathsAndWindowsDeviceReferencesRemainLiteral(tmp_path: P
     instance = next(item for item in plan["resources"] if item["kind"] == "instance")
 
     assert instance["parameters"]["user_data_file"] == str(directory / "server-cloud-init.json")
+
     bundle = BuildSshDeviceBundle(profile, "laptop", endpoint="203.0.113.42", identity_file="C:/Keys/laptop-key", known_hosts_file="C:/Keys/trusted-hosts", local_ports=(8443,))
+
     assert 'IdentityFile "C:/Keys/laptop-key"' in bundle.files[0].content.decode("utf-8")
 
 
@@ -596,9 +600,11 @@ def test_BootstrapAccountGuardAndPersistentServiceActivation(tmp_path: Path, loo
         assert result.returncode == 0
         assert "useradd --create-home --shell /bin/bash --user-group gateway-tunnel" in calls
         assert "usermod --lock gateway-tunnel" in calls
+
         disable = calls.index("systemctl disable --now ssh.socket")
         reload = calls.index("systemctl daemon-reload")
         enable = calls.index("systemctl enable --now ssh.service")
         restart = calls.index("systemctl restart ssh.service")
+
         assert disable < reload < enable < restart
         assert calls[-1] == "touch /var/lib/f-layer/bootstrap-ready"

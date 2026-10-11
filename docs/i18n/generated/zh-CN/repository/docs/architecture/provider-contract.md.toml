@@ -1,0 +1,121 @@
+schemaVersion = 1
+sourcePath = "docs/architecture/provider-contract.md"
+sourceHash = "sha256:cb01f193ac1fac2dfee1f127210a9f819a45e6896e7e92f4bff81934d1a08cef"
+reviewedTranslationHash = "sha256:ed1cd89fdc27271b2067e96a51429ca151aeaf91c0ce89f68bb5853267e38737"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T19:31:45Z"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# 提供方接口
+
+F-Layer 提供方把各云平台的认证和资源信息转换为明确的通用接口。该接口支持
+**只读查询 Yandex Cloud 资源**。创建、接管、回滚和删除由独立的
+[Yandex 生命周期适配器](yandex-lifecycle.md)负责。
+
+## 已实现的接口
+
+通用接口位于 `flayer.providers.contracts`，首个适配器位于
+`flayer.providers.yandex`。
+
+| 公开 API                     | 行为                                                |
+| ---------------------------- | --------------------------------------------------- |
+| `CloudProvider.Identity`     | 提供方 ID、明确的资源范围和不含秘密的认证来源名称。 |
+| `CloudProvider.Capabilities` | 已实现的清单和查询操作，与当前账号的权限无关。      |
+| `CheckAvailability()`        | 本地 CLI 执行检查；认证状态仍未知。                 |
+| `CheckAuthentication()`      | 使用现有 CLI 凭据检查指定文件夹的读取权限。         |
+| `ListResources(kind)`        | 返回某个受支持类型的已验证、已排序资源列表。        |
+| `GetResource(reference)`     | 根据资源 ID 查询，并验证引用和返回的范围。          |
+| `DiscoverInventory()`        | 查询所有支持的类型；任一失败则不返回部分结果。      |
+
+`ResourceReference` 绑定提供方 ID、范围 ID、资源类型和资源 ID。
+`ProviderResource` 包含该引用、名称、云平台状态、可选可用区、不可变归属标签
+和公网 IPv4 地址。未知状态明确表示为 `UNKNOWN`。原始云 JSON、虚拟机元数据
+和凭据不会成为资源字段。
+
+支持的 `ResourceKind` 为 `INSTANCE`、`DISK`、`NETWORK`、`SUBNET`、
+`ADDRESS` 和 `SECURITY_GROUP`。各类型内部按资源 ID 排序，完整清单按枚举
+顺序排列。列出和查询资源并不证明资源归属。`HasLabels()` 是要求非空匹配标签的
+比较辅助方法；变更授权遵循独立生命周期适配器的完整归属策略。
+
+## 明确认证和作用范围
+
+`YandexCloudSettings` 必须提供文件夹 ID，不使用 CLI 命名配置的默认文件夹。还可设置
+CLI 命名配置名称、CLI 可执行文件、有界命令超时和清单上限。设置不包含令牌、密钥、
+凭据文件或本地基础设施假设。
+
+适配器使用 CLI 已有的认证机制，不初始化 CLI 命名配置、不读取凭据文件、不导出令牌、
+不调用 `iam create-token`，也不修改认证设置。`CheckAuthentication()` 验证指定
+文件夹的访问权限；失败可能来自凭据无效、权限不足或基础设施不可用。成功不代表
+拥有每一种资源类型的权限。
+
+每条云命令都明确传入 `--profile`、`--folder-id`、`--format json`、
+`--no-browser` 和 `--retry 0`。`SubprocessCommandRunner` 使用参数列表、
+`shell=False`、关闭的 stdin 和明确超时。创建适配器、读取身份和能力列表没有
+副作用。可用性检查只执行 `yc --version`。
+
+CLI 可以跨所有可访问文件夹按 ID 查找资源。因此适配器验证每个返回资源的
+`folder_id`，并在执行查询前拒绝提供方或范围不匹配的引用。云命令成功本身不足以
+证明资源属于指定范围。
+
+## 结果完整性与失败行为
+
+适配器对每种资源类型采用配置的清单上限与 1000 中的较小值作为请求上限。
+为保持兼容，配置的默认上限仍为 10 000，但它不能覆盖云 API 每页最多 1000
+个结果的限制。具体来说，`yc` 1.40.0 会把过大的网络列表上限直接传给 API，
+即使文件夹为空，API 也会拒绝该请求。
+
+响应数量达到或超过实际请求上限时，适配器以 `INCOMPLETE_INVENTORY` 拒绝结果，
+绝不将其视为完整的资源归属证据。这一保守规则也可能拒绝数量恰好等于上限的完整
+结果。提高较小的配置上限只能在 1000 的云端限制以内消除歧义。达到该限制的
+文件夹需要尚未实现的分页支持；把配置上限设为大于 1000 不能绕过完整性检查。
+
+JSON 无效、响应结构异常、资源 ID 无效或重复、地址格式错误或范围未验证均导致
+拒绝。一种类型失败就会中止 `DiscoverInventory()`，不返回部分清单。资源发现
+不是原子的云快照：两次读取之间资源可能变化。
+
+`ProviderError` 提供稳定的 `ProviderErrorCode`、操作名称和重试建议。超时和
+限流允许重试，但没有自动重试。已知 CLI 标记对应认证、权限、未找到、超时、
+限流和冲突类别；其他非零退出归为 `COMMAND_FAILED`。
+
+云 CLI 的 stdout/stderr 仅暂存，用于解析成功 JSON 或分类错误，不出现在错误
+消息中。子进程和 JSON 异常链被隐藏。`CommandResult` 的对象表示不显示
+stdout/stderr。返回的资源名称和标签属于公开字段，基础设施所有者不应在其中保存
+凭据。
+
+## 示例
+
+```python
+from flayer.providers.contracts import ResourceKind
+from flayer.providers.yandex import YandexCloudProvider, YandexCloudSettings
+
+provider = YandexCloudProvider(
+    YandexCloudSettings(folder_id="example-folder", profile="example")
+)
+
+# These calls access the selected account; construction alone does not.
+status = provider.CheckAuthentication()
+
+if status.authenticated:
+    instances = provider.ListResources(ResourceKind.INSTANCE)
+```
+
+确定性测试可以注入 `CommandRunner`，由其 `Run(command, timeout)` 返回
+`CommandResult`。单元测试使用示例资源 ID 和文档地址，不执行 CLI、不读取
+凭据，也不访问真实云资源。
+
+## 设计与验证
+
+[ADR 0002](../adr/0002-read-only-provider-boundary.md)记录依赖和授权决策。
+适配器继承 A-VPN 中按文件夹读取 Compute/VPC 和按标签比较归属的方式，同时
+将这些功能与部署配置及生命周期变更分离。
+
+官方参考：
+
+- [Network.List 的每页结果上限与分页](https://yandex.cloud/en/docs/vpc/api-ref/Network/list)
+- [Yandex CLI 虚拟机列表和通用参数](https://yandex.cloud/en/docs/compute/cli-ref/instance/list)
+- [资源 ID 查询范围](https://yandex.cloud/en/docs/compute/operations/vm-info/get-info)
+- [磁盘列表](https://yandex.cloud/en/docs/cli/cli-ref/compute/cli-ref/disk/list)
+- [安全组列表](https://yandex.cloud/en/docs/vpc/cli-ref/v0/security-group/list)
+- [地址列表](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/v0/address/list)
+'''

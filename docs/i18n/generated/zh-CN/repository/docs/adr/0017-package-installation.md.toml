@@ -1,0 +1,46 @@
+schemaVersion = 1
+sourcePath = "docs/adr/0017-package-installation.md"
+sourceHash = "sha256:6e5caa2db6deac402698aa0aae0d6230447a86398b30992140d879eec1e1b435"
+reviewedTranslationHash = "sha256:4f1e59ca4f22a5ca59cae422d3a288e40bc76c024b06ed6fd6afaf79acc8358b"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:58:01.355282+00:00"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# ADR 0017：软件包安装与可选 VPN 依赖
+
+## 状态
+
+为 2.0 发布提出。
+
+## 背景
+
+F-Layer 已经能够构建可复现的 wheel 和源码分发包，但用户指南仍要求获取源码，导致安装后应用的使用方式不清楚。release-2.0 网关流程还需要在本地生成 VPN 密钥，而诊断和其他核心功能并不需要密码学依赖。PyPI 发布自动化已存在，但账户归属和首次上传尚未得到验证。
+
+## 决策
+
+以已有 `f-layer` 分发包和 `flayer` 控制台命令作为标准安装接口。命令行用户推荐 pipx，Python 调用者推荐虚拟环境中的 pip。官方 GitHub Release 的 wheel 是立即可用的安装渠道。只有验证实际发布成功后，按 PyPI 包名安装才成为受支持、可写入指南的渠道。
+
+新增 `vpn` 可选 extra，固定依赖 `cryptography==50.0.2`；该版本已于 2026-10-09 对照上游 changelog 核实为当前发行版。最小核心保持无必需第三方运行依赖；VPN 代码仅在需要时导入密码学实现。将相同依赖纳入现有 `dev` extra，确保标准测试环境覆盖 VPN。这扩展 ADR 0009 的零依赖约定，但不改变核心安装。
+
+在上传预览发布文件和发布 PyPI 前，对经过审计的同一 wheel 与 sdist 执行分发集成测试。必须检查重建一致性、隔离核心安装、控制台执行和依赖。将 VPN extra 从预先下载的二进制 wheel 安装到另一全新环境，验证后端能够生成协议所需的密钥。安装检查不得使用 editable 源码导入，也不得访问真实云账户。
+
+保留 ADR 0008 中由所有者显式控制的 OIDC 发布契约。实现功能时不得顺带建立账户归属、上传包，或宣传未经验证的 PyPI 包名。初始网关控制器支持 Linux 和 WSL，因为私有文件处理依赖 POSIX 权限。容器镜像不属于此次分发决策。
+
+## 影响
+
+用户无需 Git 或开发依赖，即可安装经过审查的发行版。VPN 用户明确安装密码学 extra，依赖解析器可选择适合平台的二进制 wheel。源码分发包仍可用于重建。受控 CI 检查使用实际待发布产物，覆盖两种安装方式。
+
+首次 PyPI 发布仍是明确的发布任务，需要验证项目归属并配置发布者。wheel 可用不表示真实云部署或 VPN 客户端互通已经成功；这些是 release 2.0 的独立验收项目。
+
+## 备选方案
+
+以源码检出为主要安装路径，会让所有用户承担构建工具的复杂性。强制密码学依赖会给核心用户加入不需要的代码。仅提供 Docker 控制器，会使访问用户云 CLI 配置和私有项目文件更复杂。每个标签自动上传会取消现有的所有者发布批准环节。
+
+## 参考资料
+
+- [分发与安装](../development/distribution.md)
+- [ADR 0008](0008-reproducible-release-automation.md)
+- [ADR 0009](0009-distribution-version-source.md)
+- [Cryptography changelog](https://cryptography.io/en/latest/changelog/)
+'''

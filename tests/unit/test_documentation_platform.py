@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -82,12 +84,15 @@ def test_CanonicalSourceDriftFails(locale_project: Path) -> None:
     assert any("canonical source drift" in item for item in report.diagnostics)
 
 
-def test_ApprovalWithoutHumanReviewFails(locale_project: Path) -> None:
-    """Automation cannot convert an untranslated unit into an approved translation."""
+def test_ApprovalWithoutRequiredReviewsFails(locale_project: Path) -> None:
+    """Approved translations fail validation when their required reviews are removed."""
 
     registry = locale_project / "docs/i18n/units.toml"
-    registry.write_text(registry.read_text().replace('state = "missing"',
-                                                   'state = "approved"', 1))
+    content = re.sub(
+        r"\n\[\[units\.translations\.ru\.reviews\]\].*?(?=\n\[|\Z)",
+        "", registry.read_text(), flags=re.DOTALL,
+    )
+    registry.write_text(content)
     report = ValidateLocales(locale_project)
 
     assert any("approved state lacks review roles" in item for item in report.diagnostics)
@@ -173,28 +178,25 @@ def test_StaticModuleDiscoveryNeverExecutesCode(
 def test_DynamicApiUnitsAreExplicitlyMissing(
     locale_project: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Integrated modules receive stable hashes with no invented translation reviews."""
+    """An API contract without a catalog stays missing instead of gaining invented approval."""
 
-    source = ('"""An additional module contract."""\n'
-              'class State:\n    """Track fixture state."""\n'
-              '    def Inspect(self) -> str:\n        """Return fixture state."""\n'
-              '        return "safe"\n')
-    module_path = locale_project / "src/flayer/state.py"
-    module_path.write_text(source, encoding="utf-8")
+    from tools import generated_localization
+
+    unit = CanonicalUnit("symbol:flayer.state.State", "symbol", "src/flayer/state.py",
+                         "class State", "Track fixture state.")
     build_root = locale_project / "_build/api-reference"
     build_root.mkdir(parents=True)
     monkeypatch.setattr(build_api_reference, "PROJECT_ROOT", locale_project)
+    monkeypatch.setattr(generated_localization, "DiscoverGeneratedUnits", lambda root: {unit.identifier: unit})
+    monkeypatch.setattr(generated_localization, "LoadTranslations", lambda root, units: {"ru": {}, "zh-CN": {}})
     module = build_api_reference.ModuleSource(
-        "flayer.state", module_path, "src/flayer/state.py",
-        ("flayer.state.State", "flayer.state.State.Inspect"),
+        "flayer.state", locale_project / unit.source_path, unit.source_path, ("flayer.state.State",),
     )
     build_api_reference.WriteApiLocaleInventory((module,), build_root)
-    report = ValidateLocales(locale_project, build_root / "api-locales-project.toml")
+    report = json.loads((build_root / "api-locales.json").read_text(encoding="utf-8"))
 
-    assert not report.diagnostics
-    assert set(report.states) == {"symbol:flayer.state.State", "symbol:flayer.state.State.Inspect"}
-    assert all(state == "missing" for states in report.states.values() for state in states.values())
-    assert "reviews" not in (build_root / "api-units.toml").read_text(encoding="utf-8")
+    assert report["states"] == {unit.identifier: {"ru": "missing", "zh-CN": "missing"}}
+    assert report["sourceHashes"] == {unit.identifier: CanonicalHash(unit)}
 
 
 def test_ImportGuardBlocksRuntimeExecution(tmp_path: Path) -> None:
@@ -287,6 +289,7 @@ def test_LocaleFallbacksExposeMissingState(tmp_path: Path) -> None:
 
     for locale in ("ru", "zh-CN"):
         page = (tmp_path / locale / "index.html").read_text(encoding="utf-8")
+
         assert 'lang="' + locale + '"' in page
         assert "<strong>missing</strong>" in page
         assert '../en/' in page

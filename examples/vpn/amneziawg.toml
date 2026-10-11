@@ -1,0 +1,29 @@
+# Public example intent. Generate private device credentials locally with F-Layer.
+schema_version = 1
+
+[identity]
+project = "example"
+stack = "vpn"
+provider = "yandex"
+scope_id = "example-scope"
+owner_id = "example-owner"
+
+[routes]
+mode = "full"
+ipv4_cidrs = ["0.0.0.0/0"]
+dns_servers = ["1.1.1.1"]
+ipv6_policy = "disabled"
+
+[[listeners]]
+transport = "amneziawg"
+protocol = "udp"
+port = 51820
+source_cidrs = ["0.0.0.0/0"]
+
+[[devices]]
+device_id = "laptop"
+ipv4_address = "10.66.0.2"
+
+[[devices]]
+device_id = "phone"
+ipv4_address = "10.66.0.3"

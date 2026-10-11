@@ -1,0 +1,13 @@
+{
+  "envelope": "request",
+  "identity": {
+    "owner_id": "example-owner",
+    "project": "example",
+    "provider": "fake",
+    "scope_id": "scope-example",
+    "stack": "sandbox"
+  },
+  "operation": "status",
+  "request_id": "example-001",
+  "schema_version": 1
+}

@@ -1,0 +1,52 @@
+schemaVersion = 1
+sourcePath = "docs/releases/1.0.0.md"
+body = '''
+## 摘要
+
+F-Layer 1.0.0 是首个带版本的基础设施基线：管理归属明确的 Yandex Cloud 资源栈、准备安全 SSH 网关，并通过限制资源消耗的诊断检查运行状况。配置、恢复和清理已有确定性的离线测试结果；真实云部署和客户机就绪状态仍需操作者验证。
+
+## 变更内容
+
+### 新增
+
+- 严格配置和可靠持久化状态，与明确的资源栈归属绑定。
+- Yandex Cloud 资源清单及六类资源的创建、状态查询和删除编排，包括幂等性、恢复、回滚以及归属校验后的清理。
+- 安全 SSH 网关部署配置，包含明确的访问规则和可验证的生成文件；不分发私钥或个人基础设施资料。
+- status/check 命令，以及显式启用、限制资源使用的 HTTP health/benchmark 探测。
+- 从已安装 wheel 生成的英文 API 文档，以及仅从 master 安全发布 Pages 的流程；俄文和简体中文明确标示尚无翻译的内容。
+- 离线 CI、关联 Task 完成、分支清理，以及规定限定范围的发布历史和 Fuzzy Technologies 变更记录格式的 ADR 0014。
+
+## 验证
+
+构建来源信息见 [GitHub 发布](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.0.0)。
+
+## 不兼容变更
+
+相对于此前的 F-Layer 稳定版不存在不兼容变更，因为这是首个带版本基线。资源归属和状态约定从首次发布即适用。
+
+## 从源码试用
+
+```bash
+git clone https://github.com/Fuzzy-Technologies/F-Layer.git
+cd F-Layer
+git checkout v1.0.0
+python -m pip install .
+python -m flayer --help
+python -m flayer check --format json
+```
+
+需要 Python 3.11 或更新版本。修改云资源还需要明确选定账户、所属项目的计划与状态路径，以及修改授权；操作真实资源栈前请阅读随包提供的架构指南。
+
+## 说明
+
+- 云端 RUNNING 状态不能证明客户机 SSH 或隧道已经就绪。客户机镜像和外部服务行为必须在操作者的环境中验证。
+- 不上传 PyPI。请从准确标签或附带的 wheel 安装。
+- [详细变更记录](https://github.com/Fuzzy-Technologies/F-Layer/blob/v1.0.0/CHANGELOG.md)
+- [发布来源](https://github.com/Fuzzy-Technologies/F-Layer/milestone/1?closed=1)
+'''
+sourceHash = "sha256:a623a75af196de40ec4e7bf1f503f0e1ccbf3cbef27b9d48f2901dd287a3461f"
+reviewedTranslationHash = "sha256:fa00b7b93e1293814bb2400d8977f75101e046736162c468daa2d4200954f56e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-11T00:25:19Z"
+reviewRoles = ["editorial", "technical"]

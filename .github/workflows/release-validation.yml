@@ -40,6 +40,19 @@ jobs:
           else
             python tools/release_validation.py
           fi
+      - name: Resolve VPN dependency wheels for an isolated installation
+        run: |
+          wheels=(_build/release/dist/*.whl)
+          test "${#wheels[@]}" -eq 1
+          python -m pip download --only-binary=:all: \
+            --dest "$RUNNER_TEMP/flayer-vpn-wheels" "${wheels[0]}[vpn]"
+      - name: Test the audited wheel as an installed application
+        env:
+          FLAYER_DISTRIBUTION_DIRECTORY: _build/release/dist
+          FLAYER_DISTRIBUTION_WHEELHOUSE: ${{ runner.temp }}/flayer-vpn-wheels
+        run: |
+          export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
+          python -m pytest tests/integration/test*distribution.py --no-cov
       - name: Upload audited distribution preview
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:

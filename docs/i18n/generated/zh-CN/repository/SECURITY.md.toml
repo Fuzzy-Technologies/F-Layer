@@ -1,0 +1,27 @@
+schemaVersion = 1
+sourcePath = "SECURITY.md"
+body = '''
+# 安全政策
+
+## 报告漏洞
+
+请勿在公开 issue 中发布可用于利用漏洞的细节、凭据、令牌、私钥或敏感的云服务信息。
+
+如仓库已启用 GitHub 私密漏洞报告功能，请使用该渠道。在此功能启用前，请通过 Fuzzy Technologies 的私密渠道联系仓库所有者。
+
+## 适用范围
+
+安全报告应描述 F-Layer 本身的漏洞，包括代码、生成的文件、云服务集成边界、生命周期操作、配置与状态处理，以及发布的软件包。
+
+用户自行管理的基础设施配置错误或遭到入侵，并不自动构成 F-Layer 漏洞。但如果默认配置存在可复现的安全问题，或生成的配置有缺陷，仍应报告。
+
+## 开发边界
+
+没有明确授权，测试不得修改或探测真实的第三方基础设施。默认使用仓库定义的测试数据、模拟实现和隔离的测试资源。
+'''
+sourceHash = "sha256:2681b184261b87743d289e9467d6673beb69dfdaabb7aa4b880817ef4fd3a810"
+reviewedTranslationHash = "sha256:ed9bda7bd9bbd9956e8bc7a1bdc3f7c78a80609fafa5260a8be113e221822049"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:54Z"
+reviewRoles = ["editorial", "technical"]

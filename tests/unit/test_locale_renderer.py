@@ -75,7 +75,9 @@ def test_RefreshingCanonicalHashCannotHideStaleDraft(locale_project: Path) -> No
 
     section = re.search(r'\[\[units\]\]\nid = "page:guide.cli".*?(?=\n\[\[units\]\]|\Z)',
                         content, re.DOTALL)
+
     assert section is not None, "The fixture CLI unit must exist"
+
     registry.write_text(content.replace(section[0], section[0].replace('state = "approved"',
                                                                       'state = "stale"')))
 
@@ -109,6 +111,7 @@ def test_LocalizedConfigPreservesEnvironmentTagAndExactRoutes(tmp_path: Path) ->
 
     chinese = locale_renderer.LocalizeConfig(config, "zh-CN", tmp_path / "zh-CN",
                                             tmp_path / "chinese-site", {}, "https://example.com")
+
     assert "  language: zh\n" in chinese, "Material uses zh for Simplified Chinese UI templates"
     assert "site_url: https://example.com/zh-CN/" in chinese
 
@@ -119,25 +122,36 @@ def test_PreparedPagesRetainApprovedProvenanceAndFallbackNotices(locale_project:
     project = tomllib.loads((locale_project / "docs/i18n/project.toml").read_text())
     registry = tomllib.loads((locale_project / project["unitManifest"]).read_text())
     notices = tomllib.loads((locale_project / "docs/i18n/fallbacks.toml").read_text())
+    states = ValidateLocales(locale_project).states
+    states["page:api"]["ru"] = "missing"
+
+    for record in registry["units"]:
+        if record["id"] == "page:api":
+            record["translations"]["ru"] = {"state": "missing"}
+
     build_root = locale_project / "_build/api-reference"
     shutil.copytree(locale_project / "docs/site/content/en", build_root / "content/en")
     restored_locale = build_root / "content/ru"
     restored_locale.mkdir()
     (restored_locale / "stale-generated-page.md").write_text("Stale restored output")
     content_root, evidence = locale_renderer._PrepareLocale(
-        locale_project, build_root, "ru", project, registry, ValidateLocales(locale_project).states,
+        locale_project, build_root, "ru", project, registry, states,
         notices["ru"], "https://fuzzy-technologies.github.io/F-Layer",
     )
 
     assert evidence["guide/cli.md"]["state"] == "approved"
     assert evidence["api/index.md"]["renderedContent"] == "english-fallback"
+
     approved_page = (content_root / "guide/cli.md").read_text()
+
     assert '<aside hidden data-translation-state="approved"' in approved_page
     assert 'class="fl-translation-notice"' not in approved_page
     assert "Черновик перевода" not in approved_page
     assert 'data-translation-state="missing"' in (content_root / "api/index.md").read_text()
     assert not (content_root / "stale-generated-page.md").exists(), "Stale generated inputs must be replaced"
+
     status = (content_root / "translation-status/index.md").read_text()
+
     assert AlignMarkdown(status) == status, "Generated status tables must retain content padding"
 
 
@@ -212,6 +226,7 @@ def test_LocalizedExamplesRemainExactCanonicalCode() -> None:
             localized_path = PROJECT_ROOT / "docs/site/content" / locale / "guide" / canonical_path.name
             translated_blocks = re.findall(r"^```.*?^```", localized_path.read_text(),
                                            re.MULTILINE | re.DOTALL)
+
             assert translated_blocks == canonical_blocks, "Code examples must preserve canonical contracts"
 
 
@@ -233,6 +248,58 @@ def test_FallbackLinksPreserveLocalizedLabelsAndCanonicalAnchors(tmp_path: Path)
     assert locale_renderer.RewriteFallbackLinks(text, source, canonical_root) == (
         "[API](../api/index.md#flayer) ![Brand](../assets/brand.svg)"
     ), "Locale routing must preserve labels, fragments, and existing generated fallback targets"
+
+
+@pytest.mark.parametrize("locale", ["ru", "zh-CN"])
+def test_PreparedAuthoredPagesRouteRepositoryGuidesWithinTheirLocale(
+    locale_project: Path, locale: str,
+) -> None:
+    """Root and nested authored overlays resolve their real source links into local generated pages."""
+
+    project = tomllib.loads((locale_project / "docs/i18n/project.toml").read_text())
+    registry = tomllib.loads((locale_project / project["unitManifest"]).read_text())
+    notices = tomllib.loads((locale_project / "docs/i18n/fallbacks.toml").read_text())
+    build_root = locale_project / "_build/api-reference"
+    shutil.copytree(locale_project / "docs/site/content/en", build_root / "content/en")
+    content_root, _ = locale_renderer._PrepareLocale(
+        locale_project, build_root, locale, project, registry, ValidateLocales(locale_project).states,
+        notices[locale], "https://fuzzy-technologies.github.io/F-Layer",
+    )
+    destinations = {
+        "architecture.md": ["repository/docs/architecture/reference.md",
+                            "repository/docs/architecture/README.md", "repository/docs/adr/README.md",
+                            "repository/docs/development/documentation-coverage.md"],
+        "development.md": ["repository/docs/development/PYTHON_CODE_STYLE.md"],
+        "documentation.md": ["repository/docs/development/documentation-coverage.md",
+                             "repository/docs/adr/0004-documentation-platform.md"],
+        "guide/index.md": ["../repository/docs/architecture/amneziawg.md",
+                           "../repository/docs/architecture/vless-reality.md",
+                           "../repository/docs/development/vpn-release-acceptance.md"],
+    }
+
+    for source, targets in destinations.items():
+        rendered = content_root / source
+        body = rendered.read_text()
+
+        for target in targets:
+            assert f"]({target})" in body, f"{locale}/{source} lost local destination {target}"
+            assert (rendered.parent / target).resolve().is_relative_to(content_root)
+
+
+def test_RepositoryOverlayLinksKeepQueryFragmentAndExplicitSourceFiles(tmp_path: Path) -> None:
+    """Mapping repository Markdown does not drop query/anchor data or confuse files with pages."""
+
+    root = tmp_path / "project"
+    source = root / "docs/site/content/ru/guide/index.md"
+    canonical = root / "docs/site/content/en"
+    body = ("[Схема](../../../../architecture/reference.md?view=compact#composition) "
+            "[Настройки](../../../../../pyproject.toml) "
+            "[Облако](https://yandex.cloud/ru/docs/cli/quickstart)")
+    mapped = locale_renderer.RewriteFallbackLinks(body, source, canonical, root)
+
+    assert "[Схема](../repository/docs/architecture/reference.md?view=compact#composition)" in mapped
+    assert "[Настройки](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/pyproject.toml)" in mapped
+    assert "[Облако](https://yandex.cloud/ru/docs/cli/quickstart)" in mapped
 
 
 def test_ApiLocaleInventoryIncludesCallableAndConditionalContracts(locale_project: Path) -> None:

@@ -1,0 +1,430 @@
+schemaVersion = 1
+
+[[units]]
+id = "module:flayer.profiles.amneziawg"
+sourcePath = "src/flayer/profiles/amneziawg.py"
+sourceHash = "sha256:42580f2d75669649e954d36b06daf3105c4ca52008a5a8340e83c88735d7bb54"
+body = "Подготовка AmneziaWG 3.1 с закрытыми ключами и установщиком для Ubuntu с закреплённой версией."
+reviewedTranslationHash = "sha256:1dad098fa9ead743d146ca2e652deea32ecc4eb838e6ce68ec0bb9de4e91368d"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.136779+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.amneziawg.AmneziaWgDeviceKey"
+sourcePath = "src/flayer/profiles/amneziawg.py"
+sourceHash = "sha256:a0e6bab3043fe25a19b4855dfe330b05c822df61843e4e7e32c40941680052d1"
+body = "Учётные данные одного устройства, исключённые из диагностического представления объекта."
+reviewedTranslationHash = "sha256:cb7328c11e8e9017fba052f1e929e263fa6d0a013af556a4048a8ce1fd825b86"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.136976+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.amneziawg.AmneziaWgSecrets"
+sourcePath = "src/flayer/profiles/amneziawg.py"
+sourceHash = "sha256:775d9fbea410c221d61705cf20828fcacd9ea3e0df3fc15d93bae97238ad4e1d"
+body = "Закрытые данные для подготовки конфигураций; не попадают в общие настройки, состояние и repr."
+reviewedTranslationHash = "sha256:d0de3184c8fbd3b8c832f165d3fb47bbf94016126e159ff03f0acccd8452eda1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137012+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.amneziawg.AmneziaWgSettings"
+sourcePath = "src/flayer/profiles/amneziawg.py"
+sourceHash = "sha256:c58db5cf4d46fa00ff94070109efabad8e1e1782c9ad698f17ced61a5fc20635"
+body = "Ограниченная IPv4-подсеть туннеля и консервативный размер пакетов клиента."
+reviewedTranslationHash = "sha256:3c81b1613d220c4aaa5dded5bf2403694e37341446fefe54bc738afe2f75082b"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137039+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.amneziawg.GenerateAmneziaWgSecrets"
+sourcePath = "src/flayer/profiles/amneziawg.py"
+sourceHash = "sha256:68636deeade5fbba48a93495fef72bc8e5ece5bc554ddef7ade718710f0c4510"
+body = "Сохраняет неизменённые учётные данные при явно запрошенном добавлении, смене ключей или удалении устройств."
+reviewedTranslationHash = "sha256:f8d819710a3d88414c7a8e8af49f8d45c4b7a1e7a45e1d1415f7133e5be11164"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137064+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.amneziawg.EncodeAmneziaWgSecrets"
+sourcePath = "src/flayer/profiles/amneziawg.py"
+sourceHash = "sha256:8e044e135d178b9267c5595d90081088e07a6c2e846492e175c4616256efa49c"
+body = "Сериализует учётные данные только для контроллера в закрытый набор файлов своего стека."
+reviewedTranslationHash = "sha256:e6185bd84e40148392ad8060a95bea00ef662cb6d44b8cfd0238e7f89d6cdff6"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137088+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.amneziawg.DecodeAmneziaWgSecrets"
+sourcePath = "src/flayer/profiles/amneziawg.py"
+sourceHash = "sha256:fffc006687a8f5c602f70d5f97432ad7b0e8a51226feace222e4287f49975b3d"
+body = "Проверяет закрытые данные с ограничением размера и не включает отклонённое содержимое в ошибки."
+reviewedTranslationHash = "sha256:4cfcdd0858e17ee0465735adf02b936ac76a1c5cb5c684fb6bec1a217618cee9"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137110+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.amneziawg.AmneziaWgServiceName"
+sourcePath = "src/flayer/profiles/amneziawg.py"
+sourceHash = "sha256:c0917c1ee73b7138aabf5b1b9ea86cab05baadf619a4cbd8f0433ebca8c25193"
+body = "Получает стабильное имя гостевой службы из полных идентификаторов стека, без использования учётных данных."
+reviewedTranslationHash = "sha256:97c5219220f6d3689d839719ee1339a4ca5b0858dca92efef1a99455a63164e4"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137132+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.amneziawg.PrepareAmneziaWg"
+sourcePath = "src/flayer/profiles/amneziawg.py"
+sourceHash = "sha256:7e447174fa8ac72130e48330b890faa6f2bfdfd1c6d80438b215a26f96f88460"
+body = "Формирует воспроизводимые закрытые файлы сервера и клиентов без внешних операций."
+reviewedTranslationHash = "sha256:405afa762677a80979ad15926f18c97c38186903ac75b8b04a49e124d4ca4ac3"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137155+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.profiles.vless"
+sourcePath = "src/flayer/profiles/vless.py"
+sourceHash = "sha256:80d09e2979aefb6c9379d25a0006aa4504acf3bb30b64642f70d0a2338e25ddc"
+body = "Готовит закрытые профили VLESS Reality для закреплённой версии Xray."
+reviewedTranslationHash = "sha256:d694c09a6bd846092df8c8e2172dbb738b5c6700e235acc6b481e6ca45a546ed"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137176+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vless.VlessError"
+sourcePath = "src/flayer/profiles/vless.py"
+sourceHash = "sha256:a95f85c91916b0c07a1ab8b2f7ab4b4c271fd812b3eb1a7d7ae21a8f25acdb0a"
+body = "Настройки или учётные данные VLESS не позволяют безопасно создать поддерживаемую конфигурацию."
+reviewedTranslationHash = "sha256:7ce6e0bed3032699953058a9dea3fff03da762d79f21561c3c70d811746b70eb"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137198+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vless.VlessRealitySettings"
+sourcePath = "src/flayer/profiles/vless.py"
+sourceHash = "sha256:7f1d57592fd5158ca083a63a6fcd0020a5ce5d55d7aa6f3871e663b98b58ed96"
+body = "Публичный адрес рукопожатия Reality и настройки локального прокси для приложений."
+reviewedTranslationHash = "sha256:3b974e92c9cdb2bf310f68fefffbeec7411c0f1f7ccbcc6ff85d38aeac996b11"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137221+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vless.VlessDeviceCredential"
+sourcePath = "src/flayer/profiles/vless.py"
+sourceHash = "sha256:c964312a3ab413e5a5fce863aeff1e63e11194ba0e5f50e46a766b30fab55dcd"
+body = "Отдельный отзываемый UUID VLESS для устройства, исключённый из представления объекта."
+reviewedTranslationHash = "sha256:2eda100437ba8497553bc423f21275db3b58dd4f46b7d502a443d5e022cf4aa6"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137243+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vless.VlessMaterial"
+sourcePath = "src/flayer/profiles/vless.py"
+sourceHash = "sha256:14bd48b87a4eab96160ef007cf02463d7386fb66ccc6aa936f15d88d52c11d3b"
+body = "Явно переданные секреты хранятся только в закрытых наборах файлов, без записи в общее состояние жизненного цикла."
+reviewedTranslationHash = "sha256:ccaf8e3d6e6a06fa09ac69198dd327832e5b8f15b92b2d8e94bd55da9a3b1397"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137266+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vless.GenerateVlessMaterial"
+sourcePath = "src/flayer/profiles/vless.py"
+sourceHash = "sha256:ce66d086f431fa46360e6f28335f92d36002a3ed1d5afefe832b9b8d8e025b44"
+body = "Генерирует новые учётные данные сервера и устройств только для явно проверенного профиля."
+reviewedTranslationHash = "sha256:9eb8e68cfdef7a368c15dfcded04ebf9c56afbbf670223a3a5d10f90f0abcc16"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137289+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vless.EncodeVlessMaterial"
+sourcePath = "src/flayer/profiles/vless.py"
+sourceHash = "sha256:b1a1a4d9f34a43450f1e6142a62274f7f7fbae41e263d58dd547f2bf63f4cef2"
+body = "Сериализует учётные данные только в закрытый файл, принадлежащий вызывающему коду; в общее состояние их не записывает."
+reviewedTranslationHash = "sha256:2900af19ac5919f90076e5e001cf047222db1c397d8c34222f462ebfa1cf4593"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137310+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vless.DecodeVlessMaterial"
+sourcePath = "src/flayer/profiles/vless.py"
+sourceHash = "sha256:98ab04900ae05b6715e8eee6ce8fb50cde2f86cdc525a55cb3ea99a051dbfc77"
+body = "Читает явно переданный закрытый снимок ограниченного размера без неявных локальных настроек."
+reviewedTranslationHash = "sha256:c9e21465b6b79f2894fed3bb9d0daeea67f86ce13738cec33ad3a365886790f0"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137331+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vless.RenderVlessServer"
+sourcePath = "src/flayer/profiles/vless.py"
+sourceHash = "sha256:8631b7845bd6aed9438c81f4956c699e42e84bc3b42fb9ed19c3e9a1313dbfed"
+body = "Формирует IPv4-прокси с защитой Reality без журналирования трафика устройств и учётных данных."
+reviewedTranslationHash = "sha256:c2d0162e3595a3a1e062d6b91f109f878e098320b40f8d73b6d8b064e011d1d1"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137352+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vless.RenderVlessClient"
+sourcePath = "src/flayer/profiles/vless.py"
+sourceHash = "sha256:610d0960cf4af9bd597de691d4aa6e55629c4c441bd96e4e05d41d8f202c82dd"
+body = "Формирует SOCKS-клиент, доступный только локально; при раздельной маршрутизации отклоняет назначения вне разрешённого списка."
+reviewedTranslationHash = "sha256:80558a9f162a0c5e5a122d97f9906c622d10d29dff67a32c599869476aa1e5e4"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137374+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vless.BuildVlessUri"
+sourcePath = "src/flayer/profiles/vless.py"
+sourceHash = "sha256:558d7f85293666fa738f1fea28824727913eb2fefafdde9b1a173eb205cf2434"
+body = "Создаёт URI для импорта транспорта; маршруты и DNS клиента настраиваются отдельно."
+reviewedTranslationHash = "sha256:6b7f3205870d65e59813171bb89f7ce668917c78c3912ffbac5d7481c7b202f3"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137395+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vless.VlessServiceName"
+sourcePath = "src/flayer/profiles/vless.py"
+sourceHash = "sha256:c23cc467f45ed5875b2302ecf6c75d7fd20ab9a04bb084bc2d365b421f5a3edf"
+body = "Возвращает однозначное имя службы systemd для полного набора идентификаторов этого стека."
+reviewedTranslationHash = "sha256:e628705bd21f6d15fe96fa34e91a6dc9f109900d455e55f35d598f8a73ff5f5a"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137434+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vless.PrepareVless"
+sourcePath = "src/flayer/profiles/vless.py"
+sourceHash = "sha256:8b676027a04102e8fcb0e30dda79406ff722957e7a997db201c5e2c08cadf21f"
+body = "Готовит установщик своего стека и отдельный закрытый набор файлов импорта для каждого объявленного устройства."
+reviewedTranslationHash = "sha256:1297b8c38de356b321c9ede8fcb904914f92a1008e8d5a2dfcd11fc260ce0da4"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137456+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "module:flayer.profiles.vpn"
+sourcePath = "src/flayer/profiles/vpn.py"
+sourceHash = "sha256:dfaa9d598ea41b95e35f66b1b647b1cd99adca46105eee0f847b7fee68676c8e"
+body = "Независимые от транспорта настройки VPN, принадлежность закрытых файлов и проверки их замены."
+reviewedTranslationHash = "sha256:1de9e8d04a5081803c9055df074dbd679e8a6113acc0ed19c5f4069569d8fcec"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137477+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vpn.VpnError"
+sourcePath = "src/flayer/profiles/vpn.py"
+sourceHash = "sha256:1d18c847f2a7612d34630bb2f1125c0892c923160e1a6808c46ed178bcd1424f"
+body = "Настройки VPN или принадлежность файлов некорректны; внешние операции ещё не выполнялись."
+reviewedTranslationHash = "sha256:17c6e7c55560f6368a2b3c1435d7816c80922cd7acf36d52924c4717c41732aa"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137498+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vpn.VpnDevice"
+sourcePath = "src/flayer/profiles/vpn.py"
+sourceHash = "sha256:cb883c68a3c622e1d2c85bc3477bcdb0ac2f52c0676fa33297bacda8a3b74613"
+body = "Один именованный клиент; необязательный частный IPv4-адрес используется для IP-туннеля."
+reviewedTranslationHash = "sha256:ee7ae6808d259d8d576fb10a4a8defc57ad42e988c43912bede13ef246ef4828"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137639+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vpn.VpnRoutes"
+sourcePath = "src/flayer/profiles/vpn.py"
+sourceHash = "sha256:1bd1a2e7e2563c449ccf8bae5195aed31f6090e45662c7b3b53fdafef3d51696"
+body = "Правила IPv4-маршрутизации; в этой первой версии контракта клиенты должны отключать IPv6."
+reviewedTranslationHash = "sha256:f13afffc741f279dd541051326222c13eed9f70bf47433511590d5b8d9a3b3e5"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137674+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vpn.VpnEndpoint"
+sourcePath = "src/flayer/profiles/vpn.py"
+sourceHash = "sha256:956df94fb9ba202a2022facfe2a92d39d5685fb1c60a2152ea4c6f740bdf13cc"
+body = "Публичный адрес транспорта; для DNS-имени адаптер должен отдельно получить IPv4-адрес."
+reviewedTranslationHash = "sha256:a63ca5dd278dc473118b61568f0fce919d2b6d2a8ce2fba18c74ca1a2e1e2d7f"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137698+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vpn.VpnListener"
+sourcePath = "src/flayer/profiles/vpn.py"
+sourceHash = "sha256:20110c6760b9d6a9bd02132cd9fc137f6543093eae9a3171f3b3c48c894e4dea"
+body = "Одно явно разрешённое входящее TCP- или UDP-подключение для именованной реализации транспорта."
+reviewedTranslationHash = "sha256:76a6d9f2b5849477d5a0b10e5fdab03a42eec7aa58e888e12eba56f6c4393e6d"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137723+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vpn.VpnCapabilities"
+sourcePath = "src/flayer/profiles/vpn.py"
+sourceHash = "sha256:4104d69fd2d70b1f3cb1e09fb883fcfc9d0390a37b63353a5cfe61d42ee592ca"
+body = "Заявленная транспортом область обработки трафика; прокси приложений не является туннелем для всей ОС."
+reviewedTranslationHash = "sha256:eee321e23b49a405b12b845be49a04bd58443eedcb3bfbdb9eebcaa3e3853b2c"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137745+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vpn.VpnProfile"
+sourcePath = "src/flayer/profiles/vpn.py"
+sourceHash = "sha256:6202fdce9a8bae3a150eacd3fe8fb419ad924e7fe8e598fa23e320dc17db14d2"
+body = "Публичные настройки устройств и маршрутов, принадлежащие одному точно определённому инфраструктурному стеку."
+reviewedTranslationHash = "sha256:b317e2a0b7b5d7a13f47b32b7fdf7819f8e9484b39ea8003e07e90af6b922bb9"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137767+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vpn.VpnProfile.Fingerprint"
+sourcePath = "src/flayer/profiles/vpn.py"
+sourceHash = "sha256:90a09811f572c974bbf2bce9e2c20a0529cc905d0fd667c89dbab362fa88f8bc"
+body = "Хеширует только публичные настройки, чтобы связать подготовленные файлы с точным профилем."
+reviewedTranslationHash = "sha256:0a345e8afe612597d49a457122b22bebdb455cf36e77b6bb77c373f82191e61a"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137789+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vpn.ValidateVpnTransport"
+sourcePath = "src/flayer/profiles/vpn.py"
+sourceHash = "sha256:dcbb03b8c996606b07bee4adf78d5ac995dc1c1dd4b2fe6fd00345b12460d199"
+body = "Требует, чтобы выбранная реализация поддерживала именно указанные правила маршрутизации."
+reviewedTranslationHash = "sha256:e6264e312776fe97d90927c65bc7aa55a4744afaf05449048a7419cc847458e9"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137810+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vpn.BuildVpnServerBundle"
+sourcePath = "src/flayer/profiles/vpn.py"
+sourceHash = "sha256:90713c469fc6762dd63750f9b4a5cebaf0feaf29b6ce7c4920cb3e7665ef23b3"
+body = "Готовит закрытые серверные данные для аутентифицированной установки в гостевой системе; в метаданные облака они не передаются."
+reviewedTranslationHash = "sha256:5687696aa561e215ec79b9ef79a5e34d692256bb5c84ce824a1dc0d70951fcd8"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137839+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vpn.BuildVpnDeviceBundle"
+sourcePath = "src/flayer/profiles/vpn.py"
+sourceHash = "sha256:837c17be80f2668fcb2a1d0562891fb13b9ebb67851c1f3a5ce589487249ee8f"
+body = "Готовит клиентские файлы своего стека без перезаписи и отзыва существующих учётных данных."
+reviewedTranslationHash = "sha256:b9a847cb838338f358211b2dbd46a0fcb6957ea2167044b586b9d32dde496a03"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137910+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vpn.PreparedVpnTransport"
+sourcePath = "src/flayer/profiles/vpn.py"
+sourceHash = "sha256:aa82f93d4c7ff5409f2da82288fe3ba731001119c8f1a4b0ecfb5d6d6a6a5274"
+body = "Закрытые файлы сервера и клиентов; их подготовка не подтверждает развёртывание и работоспособность."
+reviewedTranslationHash = "sha256:9eeb7c00f90f65b9cfab6c9ff03d9fab61690c0891b283928fe5bcc6cbb42f76"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137933+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vpn.PreparedVpnTransport.Fingerprint"
+sourcePath = "src/flayer/profiles/vpn.py"
+sourceHash = "sha256:6fa18bb0aa0a5f85827d60da3037dbd9ee0c4ecd4fe5af5397017e12e7f92ab4"
+body = "Связывает разрешение на замену с публичными настройками и точными хешами закрытых данных."
+reviewedTranslationHash = "sha256:0228660c10c06cbd30b69d59a0fa045c05355fe796d3bb0fc71091df324d743e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137955+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vpn.ValidateVpnReplacement"
+sourcePath = "src/flayer/profiles/vpn.py"
+sourceHash = "sha256:3b231857aae76f3b81d09ec2678c7f9886a0e582d1e83d2429eed5333695a270"
+body = "Требует разрешения на замену точного старого набора файлов; отзыв на сервере и локальная очистка выполняются отдельно."
+reviewedTranslationHash = "sha256:36e57265fb705112ecbc3b6c8db8179d417c986722ab401c8fdeb499fba90cff"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137977+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vpn.ParseVpnProfile"
+sourcePath = "src/flayer/profiles/vpn.py"
+sourceHash = "sha256:0a730218e70be5cd5db23d49b3177f9967b0a3739798747fb2642f0407572532"
+body = "Разбирает только публичные настройки VPN и отклоняет неизвестные поля, включая встроенные учётные данные."
+reviewedTranslationHash = "sha256:1619fe254ef3196bf6dde0187aaa9fe561944634690619aa70bddf9054701a41"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.137998+00:00"
+reviewRoles = ["editorial", "technical"]
+
+[[units]]
+id = "symbol:flayer.profiles.vpn.LoadVpnProfile"
+sourcePath = "src/flayer/profiles/vpn.py"
+sourceHash = "sha256:f7bdcf6fb632bfbb30eb7e873675f704b2f3a3a8045c5c68d9a64c31d45f3d30"
+body = "Читает публичный TOML-профиль ограниченного размера без получения учётных данных и обращения к провайдеру."
+reviewedTranslationHash = "sha256:260c97fc86a1f90153008ba582079b073586943dc1b2b13bbbad58c547ce2706"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:22.138018+00:00"
+reviewRoles = ["editorial", "technical"]

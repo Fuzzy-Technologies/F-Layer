@@ -16,7 +16,7 @@ contract exists. Installation and offline diagnostics are separate capabilities.
 
 ## Operator sequence
 
-1. Install from the desired source revision and configure the existing `yc` profile.
+1. [Install the package](installation.md) and configure the existing `yc` profile.
 2. Prepare and validate the secure gateway profile locally.
 3. Build the server artifacts and inspect the generated lifecycle plan/cloud-init.
 4. Check that identity, folder, SSH key, management ranges and service ports match your intent.
@@ -32,8 +32,8 @@ A-VPN product, private NAS, fixed country, or implicit account.
 ## Prepare a secure gateway locally
 
 Save this as `gateway.toml` in an operator-controlled working directory.
-The folder, zone, image, management address, and public keys below are synthetic.
-Replace them before deployment. Choose an Ubuntu 24.04 image compatible with
+This is an example. Replace the folder, zone, image ID, management address
+and public keys with your own values before deployment. Choose an Ubuntu 24.04 image compatible with
 the explicit guest contract and the smallest appropriate management CIDRs.
 
 ```toml

@@ -9,7 +9,7 @@ import json
 import subprocess
 import sys
 import tomllib
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -262,13 +262,26 @@ def WriteInventory(
     (build_root / "repository-coverage.json").write_text(
         json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8",
     )
-    lines = ["# Repository documentation coverage", "",
-             "Every Git-tracked file has one explicit classification. API pages document",
-             "supported definitions; private helpers, tests, tools, configuration, assets,",
-             "and workflows remain source-only with a reason. This is file accountability,",
-             "not a claim that every source file is a public API or a reviewed translation.", "",
-             "[Coverage contract](../repository/docs/development/documentation-coverage.md)", "",
-             "| File | Disposition | Reason |", "| --- | --- | --- |"]
+    coverage_root = build_root / "content/en/coverage"
+    coverage_root.mkdir(parents=True, exist_ok=True)
+    (coverage_root / "index.md").write_text(RenderInventory(files, definitions), encoding="utf-8")
+
+
+def RenderInventory(
+    files: Sequence[FileCoverage], definitions: Sequence[DefinitionCoverage],
+    translate: Callable[[str], str] = str,
+) -> str:
+    """Render exact coverage evidence using locale prose without changing identifiers or URLs."""
+
+    lines = ["# " + translate("Repository documentation coverage"), "",
+             translate("Every Git-tracked file has one explicit classification. API pages document "
+                       "supported definitions; private helpers, tests, tools, configuration, assets, "
+                       "and workflows remain source-only with a reason. This is file accountability, "
+                       "not a claim that every source file is a public API or a reviewed translation."), "",
+             "[" + translate("Coverage contract") + "]"
+             "(../repository/docs/development/documentation-coverage.md)", "",
+             f"| {translate('File')} | {translate('Disposition')} | {translate('Reason')} |",
+             "| --- | --- | --- |"]
 
     for item in files:
         target = "../" + item.page_path if item.page_path else SOURCE_URL + item.source_path
@@ -276,19 +289,18 @@ def WriteInventory(
         if item.disposition == "locale-overlay":
             target = SOURCE_URL + item.source_path
 
-        lines.append(f"| [{item.source_path}]({target}) | {item.disposition} | {item.reason} |")
+        lines.append(f"| [{item.source_path}]({target}) | `{item.disposition}` | {translate(item.reason)} |")
 
-    lines.extend(["", "## Defined package symbols", "",
-                  "Imported aliases, constants, fields, and inherited methods are represented",
-                  "by their defining module or class; they do not receive duplicate anchor requirements.",
-                  "", "| Symbol | Disposition | Reason |", "| --- | --- | --- |"])
+    lines.extend(["", "## " + translate("Defined package symbols"), "",
+                  translate("Imported aliases, constants, fields, and inherited methods are represented "
+                            "by their defining module or class; they do not receive duplicate anchor requirements."),
+                  "", f"| {translate('Symbol')} | {translate('Disposition')} | {translate('Reason')} |",
+                  "| --- | --- | --- |"])
 
     for definition in definitions:
-        lines.append(f"| `{definition.symbol}` | {definition.disposition} | {definition.reason} |")
+        lines.append(f"| `{definition.symbol}` | `{definition.disposition}` | {translate(definition.reason)} |")
 
-    coverage_root = build_root / "content/en/coverage"
-    coverage_root.mkdir(parents=True, exist_ok=True)
-    (coverage_root / "index.md").write_text(AlignMarkdown("\n".join(lines) + "\n"), encoding="utf-8")
+    return AlignMarkdown("\n".join(lines) + "\n")
 
 
 def Main(arguments: Sequence[str] | None = None) -> int:

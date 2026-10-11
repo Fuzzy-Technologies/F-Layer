@@ -23,6 +23,13 @@ Numeric bounds are 2..32 cores, 1..128 GiB of memory and 10..1024 GiB of boot di
 
 Public SSH keys must use structurally valid OpenSSH Ed25519 or RSA encoding; RSA modulus size is bounded to 2048..16384 bits. Optional comments are omitted from CLI metadata. Private key content is never an accepted option.
 
+The portless `any` rule model translates to `from-port=0,to-port=65535` for `yc`,
+which requires an explicit port selector even for that protocol. This CLI-only
+translation preserves existing configuration, desired digests and ownership labels;
+TCP/UDP retain their configured ranges. The original missing-port rejection and
+the corrected parser path were reproduced with Yandex CLI 1.40.0 against a local
+unreachable endpoint, without cloud access. This is parser evidence, not cloud acceptance.
+
 ## Ownership and recovery
 
 The adapter attaches `managed-by`, `flayer-project`, `flayer-stack`, `flayer-owner`, `flayer-resource`, `flayer-spec` and `flayer-operation`. The stable desired digest is a SHA256-derived 40-character label. The operation ID is the core journal's 32-character lowercase hexadecimal nonce.
@@ -31,9 +38,28 @@ The adapter attaches `managed-by`, `flayer-project`, `flayer-stack`, `flayer-own
 
 `CreateResource` executes at most one create command after validation and discovery. Every create command carries an explicit folder/profile, JSON output, disabled browser authentication and `--retry 0`, and executes without a shell under the configured deadline. Successful output must match scope, ownership, operation and requested name/zone.
 
-Every dispatched failure is uncertain, including a timeout, malformed successful output or transport failure. A single inventory absence after timeout does not authorize another create. The core's durable journal controls explicit recovery and never blindly recreates an unresolved orphan.
+By default, a dispatched failure is uncertain, including a timeout, malformed successful output or transport failure. A single inventory absence after timeout does not authorize another create. The core's durable journal controls explicit recovery and never blindly recreates an unresolved orphan.
 
 Read-only preflight failures are explicitly classified as not submitted, so the core can roll back earlier creations safely. Uncertain mutation errors also override the inherited `retryable` recommendation to false; their timeout category does not permit a blind retry.
+
+Local CLI parser rejection is a bounded exception. With exit code 1 and empty
+stdout, the adapter recognizes only the exact missing-port security-group error
+and an exact unknown-flag error naming an argument in this create command. These
+pre-RPC signatures were reproduced with `yc` 1.40.0 against an unreachable
+loopback endpoint. They return `outcome_unknown=False`, allowing the existing
+core rollback to remove only this operation's verified creations. A successful
+`rolled-back` result permits a later explicit deployment attempt; incomplete
+rollback retains its journal for `recover --rollback`. Raw CLI output is discarded.
+Quota/RPC errors, unmatched text, nonempty stdout, timeouts, and lost responses
+remain uncertain; no substring or inventory-absence heuristic authorizes retry.
+
+Upgrading the adapter does not clear an existing uncertain journal. Older journals
+do not retain the original CLI rejection or an authoritative operation result.
+Keep the project, snapshot and journal; inspect the pending resource and original
+private CLI log before any further mutation. An empty inventory alone cannot
+authorize resubmission, journal editing or a replacement project. The current
+`recover` command can continue only when the exact pending owned resource is found;
+automatic recovery from a recorded rejection is not implemented.
 
 `DeleteResource` refreshes the exact persisted resource ID and checks complete stack ownership and logical ID. Rollback also supplies the expected operation nonce, which the adapter checks again immediately before deletion. Missing references are already deleted. After a dispatched delete, one lookup must confirm absence; otherwise cleanup remains uncertain. Names alone never authorize deletion.
 
@@ -57,7 +83,7 @@ There is no remote atomic compare-and-delete for labels. Cooperative local locki
 
 ## Official CLI references
 
-Command translations were checked against official Yandex documentation during implementation on 2026-10-04:
+The adapter's command mappings follow the official Yandex CLI references:
 
 - [Network create](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/network/create) and [delete](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/network/delete)
 - [Subnet create](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/subnet/create) and [delete](https://yandex.cloud/en/docs/cli/cli-ref/vpc/cli-ref/subnet/delete)

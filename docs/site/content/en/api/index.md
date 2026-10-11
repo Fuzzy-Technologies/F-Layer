@@ -1,10 +1,13 @@
 # API reference
 
-This reference is generated from the installed F-Layer wheel, using English
-Python annotations and docstrings. The module list reflects the exact revision
-being built; it does not document unreleased roadmap APIs as completed work.
+This reference describes the Python modules in the F-Layer package built for
+this documentation. It is generated from the installed wheel and checked
+against the source revision, so signatures and available modules match the
+package being documented.
 
-The package remains in foundation development. Before `v1.0.0`, public contracts
-may evolve without a compatibility guarantee.
+Start with the [configuration guide](../guide/configuration.md) for a small
+Python example, or the [architecture overview](../architecture.md) to see how
+configuration, providers and lifecycle operations fit together.
 
-The clean builder appends the statically discovered module inventory here.
+The module list below is generated automatically. Python names, parameter
+names and code examples retain their original spelling in every language.

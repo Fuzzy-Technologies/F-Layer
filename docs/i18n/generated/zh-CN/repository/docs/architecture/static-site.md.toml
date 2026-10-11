@@ -1,0 +1,182 @@
+schemaVersion = 1
+sourcePath = "docs/architecture/static-site.md"
+sourceHash = "sha256:7e870f42ef1575a404c26ca7dd03bc5df3d5de290960efa2b8824cb190ba31f1"
+reviewedTranslationHash = "sha256:f11803b81c5dbe24d06131423339ce96031ea8342445ff4cd9a7287b2dff2a2e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T15:52:52Z"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# 静态网站配置
+
+第二个具体部署配置 `static-site` 设置 nginx，在 HTTP 80 端口提供一个 HTML
+页面。它接受有界纯文本，转义后放入固定 HTML。它复用[安全网关](secure-gateway.md)
+的资源归属和文件契约，但输出网页服务，不创建设备账号或 SSH 传输。
+
+配置明确选择 Yandex Cloud 位置及 `ubuntu-24.04-cloud-init` 新客户机契约。
+提供方、文件夹、所有者、可用区和镜像不从宿主环境推断。所选镜像必须实际满足
+契约；本地验证不检查镜像内容。[示例](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/examples/static-site.toml)
+不包含真实位置或可用私有凭据。部署前替换归属、位置、来源范围和示例 Ed25519
+公钥。
+
+## 契约与限制
+
+| 边界       | 要求                                                          |
+| ---------- | ------------------------------------------------------------- |
+| 格式       | 版本 1，`static-site`；拒绝未知字段和命令。                   |
+| 位置       | 明确 Yandex 身份、文件夹、所有者、可用区、镜像和子网。        |
+| 子网       | 规范 RFC1918 IPv4 子网，前缀 `/16` 至 `/28`。                 |
+| 管理员     | 明确非 root 用户名和一个符合 SSH 编码格式的 Ed25519 公钥。    |
+| 管理来源   | 1–16 个规范 IPv4 CIDR，前缀 `/24` 至 `/32`。                  |
+| HTTP 来源  | 1–16 个明确规范 IPv4 CIDR；仅 HTTP 允许 `/0`。                |
+| 来源唯一性 | 同一来源集合内拒绝重复和重叠。                                |
+| 页面       | 非空纯文本标题最多 160 UTF-8 字节；正文最多 8192 字节。       |
+| 文本控制   | 拒绝控制字符和无效 Unicode 标量；正文允许换行。               |
+| 资源大小   | 2–32 核、1–64 GiB RAM，独立归属的 10–256 GiB 启动磁盘。       |
+| 防火墙     | 最多 32 条入站规则及一条明确 IPv4 出站规则。                  |
+| 输入       | 普通 UTF-8 TOML 文件最多 32768 字节；禁止路径跳转和符号链接。 |
+| 生成存储   | 现有调用用户拥有的 POSIX `0700` 目录和 `0600` 文件。          |
+
+标题和正文全部字符进行 HTML 转义，包括引号。HTML、模板语法及类似 shell 的
+文本都成为页面文本。格式不提供任意路径、HTML 模板、shell 命令、nginx 指令、
+包列表、凭据值、设备账号或 VPN 路由设置。只能使用可公开内容，页面会提供给
+声明的 HTTP 客户端。
+
+公钥只接受规范的 `ssh-ed25519` 类型及完整的 SSH 公钥编码数据，无注释或密钥选项。
+配置不解析私钥、不输出秘密文件。HTTP 和管理员来源可以重叠，但 HTTP 许可
+不授予 SSH 22 端口访问。管理员不能命名为 `root`、`www-data` 或 `nginx`；
+Web 工作进程账号必须与特权管理员分离。
+
+## 本地准备
+
+安装 F-Layer 后准备两个所属本地文件包：
+
+```bash
+python -m flayer.profiles.static_site site.toml --artifact-root generated-artifacts
+```
+
+命令输出 JSON，包含 `status: prepared-unverified` 和绝对 `plan_file` 路径。
+只执行本地文件操作，不实例化提供方。示例部署名为 `site` 时，结果如下：
+
+| 文件包             | 所属文件                      | 用途                           |
+| ------------------ | ----------------------------- | ------------------------------ |
+| `server-site`      | `static-site-cloud-init.json` | 精确且不含秘密的客户机初始化。 |
+| `server-site-plan` | `deployment-plan.toml`        | 既有生命周期计划 TOML。        |
+
+每个目录还包含归属与摘要 `manifest.json`。新文件包独占发布，重复准备会失败，
+不会覆盖文件。路径不能跳转或跟随符号链接。计划留在调用方选择的文件根内，
+引用 cloud-init 绝对路径；这属于本机引用，不是可移植仓库配置。
+
+同样的准备也可通过 Python API 执行：
+
+```python
+from flayer.core.lifecycle import LoadDeploymentPlan
+from flayer.profiles.static_site import LoadStaticSiteProfile, PrepareStaticSite
+
+profile = LoadStaticSiteProfile("site.toml")
+prepared = PrepareStaticSite(profile, artifact_root="generated-artifacts")
+plan = LoadDeploymentPlan(prepared.PlanFile)
+```
+
+`ParseStaticSiteProfile()`、`CompileStaticSite()`、`BuildStaticSiteBundle()`
+和 `RenderStaticSitePlan()` 分别提供解析、验证、生成及计划渲染。渲染要求精确
+文件名，并验证完整已有归属清单、全部摘要及与编译配置的字节语义一致性，再将
+SHA-256 绑定到虚拟机描述。
+
+## 组合现有生命周期
+
+计划包含六种已有资源：网络、子网、安全组、保留地址、启动磁盘和虚拟机。子网与
+安全组依赖网络；虚拟机依赖子网、安全组、地址和磁盘。磁盘独立归属，使用已有
+`auto-delete=false` 行为。新配置不改变生命周期恢复、提供方语义、云默认值或
+持久状态。
+
+现有显式生命周期 CLI 接收生成的计划。选择真实位置并预先认证 CLI 命名配置后，
+可以执行下列命令；准备阶段不会自行执行这些命令：
+
+```bash
+python -m flayer lifecycle create \
+  --config generated-artifacts/server-site-plan/deployment-plan.toml \
+  --state site-state.json --yc-profile YOUR_PROFILE \
+  --allow-mutation --scope-confirm YOUR_FOLDER_ID
+
+python -m flayer lifecycle status \
+  --config generated-artifacts/server-site-plan/deployment-plan.toml \
+  --state site-state.json --yc-profile YOUR_PROFILE
+
+python -m flayer lifecycle destroy \
+  --config generated-artifacts/server-site-plan/deployment-plan.toml \
+  --state site-state.json --yc-profile YOUR_PROFILE \
+  --allow-mutation --scope-confirm YOUR_FOLDER_ID
+```
+
+在部署、删除及任何使用该计划的恢复结束前，保留两个文件包。Yandex 适配器发送
+私有临时元数据副本前，再次对照摘要检查初始化内容。提供方 `RUNNING` 只描述
+云资源存在状态，不证明 cloud-init 成功、SSH 认证、HTTP 内容或客户机就绪。
+
+## 新客户机行为
+
+云初始化使用 `#cloud-config` 后接 JSON，同时符合 YAML。创建一个密码锁定但
+具有 sudo 权限的管理员，安装 nginx、nftables 和自动更新，并写入固定 root
+配置。为新客户机完全替换 SSH 和 nginx 配置，不是任意现有服务器的原地更新。
+
+SSH 只选择 root 拥有的精确文件 `/etc/ssh/f-layer-static-admin-keys`。
+用户目录或镜像密钥、密钥命令和 SSH CA 不会成为额外授权来源。`AllowUsers`
+将唯一管理员限制到其来源 CIDR。禁用 root/密码登录、SSH 转发、agent 转发、
+Unix 套接字转发和隧道接口。HTTP 入站分别由云安全组和客户机防火墙限制。
+客户机禁止 IP 数据包转发并关闭 IPv6。
+
+Nginx 仅从固定文档根提供 `/` 和 `/index.html`，其他 URL 返回 404。不提供
+目录索引和动态执行。页面和目录属于 root。HTTP 不加密；该有界配置不签发 TLS
+证书，不提供 HTTPS、域名管理、上传或动态后端。
+
+固定 bootstrap 以 `set -eu` 运行，在其显式服务激活前执行 `sshd -t`、
+`nft --check --file` 和 `nginx -t`，关闭 socket activation 后启用持久
+`ssh.service` 并启用 nginx。包管理器可能在安装过程中启动发行版服务，bootstrap
+检查并不否认这一点。配置不生成就绪标记，也不在本地报告客户机执行成功。
+
+## 清理与失败行为
+
+只在停止使用后删除计划和服务器文件包：
+
+```python
+from flayer.profiles.artifacts import RemoveArtifactBundle
+
+RemoveArtifactBundle(
+    "generated-artifacts", profile.identity,
+    kind="server", name=profile.identity.stack + "-plan",
+)
+RemoveArtifactBundle(
+    "generated-artifacts", profile.identity,
+    kind="server", name=profile.identity.stack,
+)
+```
+
+清理复用完整清单、身份、私有权限、文件成员、摘要及固定验证记录检查。保留
+被修改或归属不符的文件，拒绝符号链接、硬链接、特殊文件和冲突。不递归删除目录，
+也不删除云资源。
+
+计划准备失败时，如果没有精确验证的已发布计划引用原服务器包，清理绑定到原始
+生成包。现有存储在清理锁内、任何删除前验证调用方预期文件、精确字节及清单
+元数据。同身份但内容不同的有效替换会保留，不会仅凭归属重新授权。计划发布后的
+晚期失败保留已验证的成对文件用于显式恢复。发现服务器替换会保留并报告清理拒绝。
+文件系统故障可能留下部分输出或锁；已有锁不会自动移除。这仍是同用户协作写入
+契约，不隔离相同 UID 或 root 的恶意进程。字节和清单元数据完全相同的替换视为
+等价内容；可选内容绑定并不是历史 inode 记录。
+
+## 验证与剩余限制
+
+确定性测试使用实际生命周期解析器、引擎和 Yandex 适配器，配合内存 CLI 执行器。
+覆盖六资源创建、云状态、幂等性、逆依赖删除、虚拟机变更前摘要拒绝、回滚和两个
+准备包的清理。其他测试覆盖严格格式、UTF-8 边界、页面转义、公钥结构、来源隔离、
+私有路径、发布冲突及保留替换。
+
+Shell 语法和 bootstrap 顺序使用隔离命令替身，不触及宿主用户、客户机文件或
+服务。OpenSSH 可用时离线解析配置。Cloud-init 格式和 nginx 测试模式是可选
+开发检查；缺失时跳过，不算通过。Nginx 测试将可写路径和监听地址重定向到自有
+临时目录与 Unix 套接字，因为测试模式也可能绑定套接字。保留 server/location
+规则和 `default_server`，另用断言检查生产 HTTP 80 端口。不打开特权或公网 TCP
+监听。这里不验证真实云资源、客户机安装、nginx 部署、服务重启、凭据签发、
+HTTP 连接或实际客户机就绪。
+
+扩展性决策见 [ADR 0013](../adr/0013-static-site-profile.md)。
+'''

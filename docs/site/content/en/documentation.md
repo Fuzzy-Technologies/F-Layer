@@ -31,8 +31,8 @@ inline code cells, alignment markers and literal fenced examples.
 
 Authored English pages use the tracked locale unit registry. Dynamically
 generated API units use a disposable inventory with the same stable symbol
-IDs and versioned source hashes. Their target-language states are explicitly
-`missing`; this generated inventory cannot manufacture a translation or review.
+IDs and versioned source hashes. A generated entry does not by itself establish translation or review: its
+state is determined from actual translations and review records.
 
 ## Language and review
 
@@ -40,7 +40,7 @@ English is canonical. The authored Russian and Simplified Chinese pages have
 been checked against their English sources by AIna-Dev, as requested by the
 project owner. Reviewed pages open directly without a draft notice. Missing
 or outdated translations display the current English text with a fallback notice.
-Generated API pages and untranslated engineering references remain in English.
+This also applies to untranslated API pages and engineering references.
 
 Each translation records its stable unit ID, English source hash and path.
 Approval requires named editorial and technical reviews with UTC timestamps
@@ -60,8 +60,7 @@ Only a `push` event for the `master` branch may deploy the verified Pages
 artifact. Documentation publishing is separate from package publication.
 
 The public routes are `/F-Layer/en/`, `/F-Layer/ru/`, and `/F-Layer/zh-CN/`.
-The root opens the English reference. No immutable release documentation is
-claimed before a stable release exists.
+The root opens the English reference.
 
 [ADR 0004](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/docs/adr/0004-documentation-platform.md)
 records the accepted generator, review, source-hash, fallback, and publication

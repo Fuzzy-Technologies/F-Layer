@@ -1,0 +1,37 @@
+schemaVersion = 1
+sourcePath = "docs/adr/0009-distribution-version-source.md"
+body = '''
+# ADR 0009：发行包与运行时版本使用同一来源
+
+- 状态：已接受
+- 日期：2026-10-04
+- 任务：[#25](https://github.com/Fuzzy-Technologies/F-Layer/issues/25)
+
+## 背景
+
+在启用发布自动化之前，F-Layer 就需要能够构建的发行包和控制台命令。在包元数据和源码中重复维护版本，会让产物与发布标签的一致性更难验证。
+
+## 决策
+
+在顶层包中保留字面量 `__version__`。Hatchling 通过正则表达式来源读取它，而不执行运行时代码。将项目版本声明为动态，并继续使用现有的 `X.Y.Z` 发布约定。在明确、经过评审的版本升级之前，保留初始值 `0.0.0`。
+
+提供 `flayer` 控制台脚本，其入口使用已有的 `Main()` CLI；保持零运行时依赖，并包含 PEP 561 类型标记。补充发行包元数据，但不声称已在 PyPI 发布。
+
+## 影响
+
+Wheel 元数据、sdist 元数据和运行时版本有同一来源。离线测试安装真实 wheel，并从 sdist 重新构建，因此缺少源码、包数据或入口点都会导致验证失败。仓库示例加入明确的 sdist 包含列表。
+
+## 替代方案
+
+重复的静态版本可能发生漂移。根据 Git 推导版本会让重复构建依赖 Git 元数据，不适合干净导出的 sdist。需要执行代码的版本插件可能在打包过程中导入服务商或运行时代码。
+
+## 兼容性
+
+现有 Python 模块和 `python -m flayer` 仍然可用。`flayer` 是新增的安装入口点，`__version__` 是新增元数据。本变更不会创建标签、发布条目或执行真实软件包发布。
+'''
+sourceHash = "sha256:bc2309a802c3339ed945ba086a5631c5d29c17bab265f6759a2c675bc9f210d9"
+reviewedTranslationHash = "sha256:dddb6604e887a5352cd35251e7e9f5bfd0a0f4188eb6f0833c1319659769ab0a"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:48:24.891591+00:00"
+reviewRoles = ["editorial", "technical"]

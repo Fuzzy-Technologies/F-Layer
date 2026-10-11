@@ -1,0 +1,123 @@
+schemaVersion = 1
+sourcePath = "docs/architecture/amneziawg.md"
+sourceHash = "sha256:b74479e7e1ef685b8615c94c8ceba826e70f5d1ad3baae67ab94ac36e3ce97e7"
+reviewedTranslationHash = "sha256:66803cb35eed49f121090de8792b61d333671df5733dd7bc63cfb180f7318a38"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T15:52:52Z"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# AmneziaWG 部署配置
+
+F-Layer 准备 AmneziaWG 3.1 服务器，并为每台设备生成独立可导入的 `.conf`
+文件。服务器使用 Ubuntu 24.04 x86-64、systemd 及可工作的 `/dev/net/tun`。
+采用官方用户空间实现，不需要第三方内核模块。
+
+公开示例为 [`examples/vpn/amneziawg.toml`](../../examples/vpn/amneziawg.toml)。
+设备地址属于 `10.66.0.0/24`，其中 `10.66.0.1` 留给服务器。若与现有网络冲突，
+请选择其他私有子网。
+
+## 流量与客户端支持
+
+full 模式通过隧道路由所有 **IPv4** 目标；split 模式只路由列出的目标。
+DNS 地址必须在路由范围内。服务器转发使用相同目标列表并进行 IPv4 NAT。
+客户端不能向其他 VPN 客户端或云元数据网段转发。
+
+本配置不支持 IPv6。作为全隧道使用前，关闭客户端连接的 IPv6。
+`ipv6_policy = "disabled"` 只记录前置要求，不修改客户端操作系统。F-Layer
+不会为仅支持 IPv4 的服务器添加 `::/0`。断线保护（kill switch）和禁用 IPv6 是独立客户端
+操作，必须在真实设备上验证。
+
+使用支持协议 3.1 的原生 AmneziaWG 客户端：
+
+- [Windows AmneziaWG 3.1.0](https://github.com/amnezia-vpn/amneziawg-windows-client/releases/tag/3.1.0)。
+- [Android AmneziaWG v3.1.20260814](https://github.com/amnezia-vpn/amneziawg-android/releases/tag/v3.1.20260814)。
+
+用客户端 **Import from file** 导入设备的 `amneziawg.conf`，再启用隧道。
+每台设备使用独立配置。普通 WireGuard 和旧版 AmneziaWG 无法读取全部 3.1
+设置。参阅[官方导入说明](https://docs.amnezia.org/documentation/instructions/awg-app/)。
+
+## 准备与凭据处理
+
+`GenerateAmneziaWgSecrets()` 通过可选 `cryptography` 依赖生成 Curve25519
+密钥及独立的 32 字节头保护密钥。`PrepareAmneziaWg()` 将验证后的不含密钥的配置、
+端点、设置和密钥生成带有归属信息的服务器和设备文件包。渲染不进行文件、网络或云操作，
+相同输入产生相同字节。
+
+服务器包有五个文件：
+
+| 文件              | 用途                                  |
+| ----------------- | ------------------------------------- |
+| `server.conf`     | 服务器私钥、混淆设置和设备公钥。      |
+| `install.sh`      | 固定版本安装、健康检查、替换和删除。  |
+| `firewall.nft`    | 按接口限制 IPv4 转发并执行 NAT。      |
+| `network.sh`      | 隧道地址、MTU、转发和所属防火墙激活。 |
+| `service.service` | 用户空间隧道的持久 systemd 服务。     |
+
+全部文件标为敏感。客户端私钥只出现在对应客户端包和控制端私有凭据存储中，
+不在 `server.conf` 中。不要将控制端编码的凭据复制到虚拟机、cloud-init 元数据、
+通用资源状态、日志或 Git 仓库。
+
+`EncodeAmneziaWgSecrets()` 和 `DecodeAmneziaWgSecrets()` 支持有大小限制的控制端私有凭据存储，可以在云分配 IP 前准备密钥，再用真实端点和相同密钥生成客户端。
+这些字节应按现有私有文件存储规则保存，并验证其归属。
+
+增删设备时，修改不含密钥的配置，并将保存的凭据传给
+`GenerateAmneziaWgSecrets(profile, previous)`。未变化的设备和服务器保留
+密钥。要替换被泄露的单个设备密钥，明确指定 `rotate_device_ids=("phone",)`。
+仅准备配置不会撤销设备。初版安装器只接受新部署或完全相同的重试，拒绝修改已有
+部署，直到全流程支持明确的预期旧部署记录。目前改变凭据需要受控删除后重建。
+删除旧本地客户端文件前，先验证新服务器结果。
+
+## 虚拟机安装契约
+
+配置适配器必须验证 SSH 主机密钥，将五个服务器文件传到目标虚拟机的私有暂存
+目录。文件必须是普通文件、root 所有、权限 `0600`，并且硬链接数恰为一。执行：
+
+```bash
+sudo bash ./install.sh
+sudo bash ./install.sh --check
+```
+
+安装器验证 Ubuntu 24.04 和 x86-64，通过发行版认证 APT 仓库安装标准构建及
+网络依赖，然后构建固定官方源码。解压前验证 Go 归档 SHA-256，构建前验证两个
+Git 版本，并要求 Go 模块校验和数据库及只读依赖图。首次安装需要 HTTPS 访问
+GitHub、`go.dev`、Go 模块代理和校验和服务。
+
+| 组件            | 固定版本                                                         |
+| --------------- | ---------------------------------------------------------------- |
+| AmneziaWG Go    | `v3.1.20260828`，提交 `b5928efb6ca19f0153958460c3d141f04abc5c2e` |
+| AmneziaWG tools | `v3.1.20260812`，提交 `ee0f0a9aa34ff0a0da4b3433b9512781cfe02843` |
+| Go 编译器       | `1.27.2`，固定 SHA-256 的官方 Linux amd64 归档。                 |
+
+服务和接口名称由完整部署归属身份派生。安装拒绝外来路径或符号链接。重复安装
+未变化且健康的部署时，不重新安装依赖。保存的内容记录变化或缺失会在下载或
+服务变更前停止。相同但不健康的安装可修复：先备份文件，启动失败则恢复旧文件
+并尝试重启旧服务。Systemd 会在重启后启动隧道及其防火墙规则。
+
+虚拟机初始化必须明确允许所选 UDP 入站及本配置所需转发路径。原 SSH 应用网关
+的 forwarding 策略是 `drop`，不能原样复用；其他 nftables 基础链的 `accept`
+不能覆盖该丢弃。本安装器从不清空无关规则。服务启动时，`network.sh` 启用
+IPv4 转发。
+
+`--check` 验证 systemd 单元、隧道监听端口、IPv4 地址、转发和所属 nftables
+表，不证明客户端握手、互联网可达、DNS 成功或对特定网络过滤的规避。
+部署后须由真实客户端检查。
+
+`sudo bash ./install.sh --remove` 仅删除归属已验证的服务及私有虚拟机文件。
+保留发行版包和全局转发设置，因为其他配置可能使用它们。删除所属云虚拟机仍由
+生命周期适配器负责。
+
+## 验证与上游参考
+
+定向测试覆盖设备独立密钥、敏感信息脱敏、原生客户端 INI 解析、确定性文件包、
+full/split 路由、设备替换、错误输入、编码私有材料、根据资源归属生成名称及 shell 语法。
+固定官方 AmneziaWG tools 解析器也在本地纯解析检查中接受了生成的服务器配置。
+固定上游工具和 Go 守护进程均已使用所选依赖在本地编译。这不等于真实云或设备
+隧道测试。
+
+- [官方 AmneziaWG 3.1 配置](https://docs.amnezia.org/documentation/amnezia-wg/)。
+- [官方用户空间安装指南](https://docs.amnezia.org/documentation/instructions/install-amneziawg-go/)。
+- [固定用户空间源码](https://github.com/amnezia-vpn/amneziawg-go/tree/b5928efb6ca19f0153958460c3d141f04abc5c2e)。
+- [固定工具源码](https://github.com/amnezia-vpn/amneziawg-tools/tree/ee0f0a9aa34ff0a0da4b3433b9512781cfe02843)。
+- [Go 官方下载与校验和](https://go.dev/dl/)。
+'''

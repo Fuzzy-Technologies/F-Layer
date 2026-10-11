@@ -1,0 +1,100 @@
+schemaVersion = 1
+sourcePath = "docs/architecture/diagnostics.md"
+sourceHash = "sha256:88f38cd75959ecb628f37776a285ec6e3087a97e97a6f2c8e928938e4ca001da"
+reviewedTranslationHash = "sha256:cd4cf38813906362783fefe6264e3726def9249e3ae934113002303df1831b72"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:42:11Z"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# 诊断、健康检查与性能测量
+
+F-Layer 通过 `flayer.diagnostics` 和模块 CLI 提供只读诊断。实现沿用 A-VPN
+基线的结构化检查结果、报告时效和有界下载测量，不嵌入提供方、客户机系统、
+传输配置、服务目录或私有基础设施设置。
+
+## 已实现的命令
+
+```bash
+python -m flayer --help
+python -m flayer check --format json
+python -m flayer status --format text
+python -m flayer health --endpoint https://your-controlled-endpoint.example/health --timeout 3
+python -m flayer benchmark --endpoint https://your-controlled-endpoint.example/sample \
+  --timeout 3 --count 3 --bytes 65536 --format json
+```
+
+请使用获准产生相应流量的目标地址。网络操作必须提供 `--endpoint`。命令不会
+访问默认服务、发现云资源、读取凭据、运行 SSH 或修改基础设施。
+
+| 命令        | 当前检查内容                   | 离线行为                               |
+| ----------- | ------------------------------ | -------------------------------------- |
+| `check`     | 本地 Python 运行环境兼容性。   | 只报告本地执行结果。                   |
+| `status`    | 运行环境及通用提供方观测接口。 | 在适配器提供数据之前，云观测不受支持。 |
+| `health`    | 指定端点是否返回 HTTP 2xx。    | 缺少端点时为 unsupported。             |
+| `benchmark` | 多次有界 HTTP 下载。           | 缺少端点时为 unsupported。             |
+
+`health` 测量端点可达性，不证明云生命周期状态、客户机加固、隧道握手或应用
+正确性。`benchmark` 记录下载的应用数据及 HTTP 请求耗时，包括 DNS、连接、
+TLS 和响应开销，不是上传速度或最大链路容量估计。
+
+## 结果和退出码
+
+JSON 输出包含 `schema_version: 1`、`command`、总体 `status` 和有序 `checks`
+数组。每项包含 `name`、`status`、`message` 和 `details` 对象。JSON 键排序，
+不包含响应正文或原始异常文本。文本输出使用相同的脱敏结果，每项一行。
+
+| 状态          | 退出码 | 含义                                         |
+| ------------- | ------ | -------------------------------------------- |
+| `ok`          | 0      | 全部请求检查成功。                           |
+| `warning`     | 1      | 提供的观测表明性能下降或尚未完成。           |
+| `failed`      | 1      | 检查失败或结构化数据无效。                   |
+| `stale`       | 3      | 健康数据已过期或时间戳来自未来。             |
+| `unsupported` | 4      | 未提供适配器、数据或端点，或其格式不受支持。 |
+| CLI 输入无效  | 2      | 命令参数、端点或范围限制无效。               |
+
+总体状态优先顺序为 `failed`、`stale`、`unsupported`、`warning`、`ok`。
+空报告为 unsupported。本地环境正常不能掩盖远程数据缺失。
+
+## 适配器边界
+
+`RunChecks()` 接受只读 `HealthProbe` 可调用对象，返回 `CheckResult`。
+适配器负责授权和超时约束。收集器将异常或无效返回值转成失败项，不复制异常消息。
+
+`ProviderStatus()` 接受通用观测字典，`state` 仅允许 `ready`、`pending`、
+`failed` 或 `absent`，只报告此白名单状态，不调用提供方 SDK。适配器在该边界
+转换云平台原生状态。
+
+`EvaluateHealthReport()` 接受已收集数据，其中 `schema_version` 为整数 `1`，
+Unix `timestamp` 为有限数字，`status` 为 `ok`、`warning` 或 `failed`。
+它拒绝格式错误的字段，将时间不在 `[now - max_age_seconds, now]` 内的数据
+标为 stale，不解析原始串口输出或加载客户机文件。
+
+`EndpointTransport` 可注入，以支持离线测试和后续适配器。默认
+`MeasureEndpoint()` 在新进程中使用标准库 HTTP 客户端。父进程期限覆盖进程
+启动、DNS、连接、TLS 和响应读取。超时后终止工作进程；terminate 和 kill
+各自的清理等待最多一秒。
+
+## 流量与输出限制
+
+- 必须明确提供 HTTP(S) 地址，不允许用户信息、查询或片段。
+- 每次请求超时大于零且不超过 30 秒。
+- 每次测量包含 1 至 10 个请求，每请求读取 1 至 1 048 576 字节的应用数据。默认 3 次请求、3 秒和 65 536 字节。
+- 请求使用 `GET` 和 `Range` 标头。即使服务器忽略标头，读取上限仍有效。该上限指客户端读取的内容，不包括协议封装，也不限制服务器在连接关闭前已发送的数据。
+- 重定向视为失败，不继续跟随。不读取环境代理设置；HTTPS 使用标准库默认的证书验证。
+- 公共输出省略端点地址、响应正文、标头和原始错误文本。序列化递归隐藏类似凭据的键、bearer/私钥文本、URL 和 IPv4 文本。任意对象与二进制数据会被替换，而非转成字符串。不安全的字典键被清理，冲突使用确定性后缀；嵌套限制为 16 层，防止循环数据破坏渲染。
+
+脱敏是额外边界，并非检测所有秘密的通用工具。适配器只应返回白名单诊断事实，
+省略无关私有数据。不要将原始提供方响应、串口输出或凭据作为普通字段。
+注入的传输必须遵守超时及字节上限；收集器可以验证指标，但不能取消调用方提供的
+任意代码。
+
+## 验证与后续集成
+
+单元测试在无外部网络流量下验证状态聚合、时效、递归脱敏、错误适配器数据、CLI
+输入隐私、内容上限、重定向失败、期限、终止和清理。CLI 帮助和本地检查可以用于
+安装及导入检查。
+
+提供方驱动的 CLI 状态和部署专用客户机检查仍需适配器集成。提供方及配置接口
+稳定后可组合这些契约。详见 [ADR 0003](../adr/0003-safe-diagnostics.md)。
+'''

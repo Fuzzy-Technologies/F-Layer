@@ -1,5 +1,6 @@
 """Typed boundary for the semantically preserved corporate locale validator port."""
 
+import ast
 from argparse import Namespace
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -56,5 +57,17 @@ def ParseArguments(arguments: Sequence[str] | None = ...) -> Namespace:
 
 def Main(arguments: Sequence[str] | None = ...) -> int:
     """Run inventory or deterministic locale validation."""
+
+    ...
+
+
+def _AuthoredUnits(module_name: str, source_path: Path, project_root: Path) -> tuple[CanonicalUnit, ...]:
+    """Discover exact public authored contracts for generated-reference translation."""
+
+    ...
+
+
+def _NodeUnit(identifier: str, source_path: str, node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef) -> CanonicalUnit:
+    """Bind statically rendered constructor prose to its exact callable signature."""
 
     ...

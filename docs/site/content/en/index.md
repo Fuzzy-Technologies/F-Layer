@@ -11,15 +11,16 @@ plan, creates the cloud resources you explicitly authorize, and keeps a local
 record of their identities. Use the same plan and record to inspect the stack,
 recover an interrupted operation or remove its resources.
 
-The current release supports **Yandex Cloud**, a **secure SSH gateway** with
-per-device connection settings, and HTTP availability and timing checks.
-It is useful for teams automating service environments and for developers
-building infrastructure features into their own products. Other clouds and VPN
-profiles are planned. F-Layer is open source; cloud usage is billed by your provider.
+**F-Layer 2.0** deploys a corporate VPN on Yandex Cloud with **AmneziaWG 3.1**
+and **VLESS Reality**, then exports connection settings for each device. It also
+supports a secure SSH gateway and HTTP checks. Other cloud providers need an
+adapter. F-Layer is open source; cloud usage is billed by your provider.
 
 ## Quick Start
 
-[Install the stable release and run your first check](guide/index.md).
+Start with [Install](guide/installation.md).
+The [Quick Start](guide/index.md) takes F-Layer 2.0 from installation to a private
+project, Yandex Cloud deployment and client connection.
 Once installed, this command works without cloud access:
 
 ```bash
@@ -33,10 +34,10 @@ availability. To create a server, continue with the deployment walkthrough.
 
 <div class="grid cards" markdown>
 
-- **Prepare a cloud server**
+- **Connect through your own VPN server**
 
-    Follow the [first deployment](guide/first-deployment.md) to build a gateway
-    plan, review its resources and authorize deployment.
+    Follow the [Quick Start](guide/index.md) for both VPN protocols, or the
+    [SSH gateway guide](guide/first-deployment.md) for restricted SSH forwarding.
 
 - **Check a running service**
 

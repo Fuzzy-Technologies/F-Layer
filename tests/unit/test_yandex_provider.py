@@ -264,6 +264,7 @@ def test_ExecutionExceptionsSuppressSecretTracebacks(failure: Exception) -> None
         provider.ListResources(ResourceKind.NETWORK)
 
     assert error.value.__context__ is None, "Sanitized error retained the original exception"
+
     rendered = "".join(traceback.format_exception(error.value))
 
     assert "synthetic-secret" not in rendered, "Sanitized error retained a secret exception chain"
@@ -300,7 +301,7 @@ def test_ListResourcesNormalizesAndSortsOnlyPublicContractFields() -> None:
     assert resources[1].status == "UNKNOWN", "Missing vendor state was guessed"
     assert "synthetic-secret" not in repr(resources), "Raw instance metadata leaked into resources"
     assert command == (
-        "yc", "compute", "instance", "list", "--limit", "10000",
+        "yc", "compute", "instance", "list", "--limit", "1000",
         "--profile", "default", "--folder-id", "test-folder", "--format", "json",
         "--no-browser", "--retry", "0",
     ), "Inventory command lost explicit scope, format or retry bounds"
@@ -334,6 +335,50 @@ def test_EmptyInventoryIsSuccessful() -> None:
     provider, _ = ProviderWithPayload([])
 
     assert provider.ListResources(ResourceKind.NETWORK) == (), "Empty resource list was rejected"
+
+
+@pytest.mark.parametrize("kind", list(ResourceKind))
+@pytest.mark.parametrize("configured_limit", [7, 1000, 10000, 100000])
+def test_ListRespectsCloudPageMaximum(kind: ResourceKind, configured_limit: int) -> None:
+    """Configured inventory ceilings cannot exceed the API request page-size bound."""
+
+    runner = FakeCommandRunner([CommandResult(0, "[]")])
+    provider = YandexCloudProvider(
+        YandexCloudSettings("test-folder", inventory_limit=configured_limit), runner
+    )
+
+    assert provider.ListResources(kind) == (), "Empty inventory must remain discoverable"
+
+    command, _ = runner.calls[0]
+    limit = int(command[command.index("--limit") + 1])
+
+    assert 1 <= limit <= 1000, "CLI limit violates the cloud page_size maximum"
+    assert limit <= configured_limit, "CLI request exceeded the caller's smaller ceiling"
+
+
+@pytest.mark.parametrize("configured_limit", [1000, 10000, 100000])
+@pytest.mark.parametrize("row_count", [999, 1000, 1001])
+def test_CloudPageSaturationRemainsIncomplete(configured_limit: int, row_count: int) -> None:
+    """A full cloud-sized page must not silently hide resources from ownership discovery."""
+
+    payload = [ResourcePayload(f"resource-{index}") for index in range(row_count)]
+    runner = FakeCommandRunner([CommandResult(0, json.dumps(payload))])
+    provider = YandexCloudProvider(
+        YandexCloudSettings("test-folder", inventory_limit=configured_limit), runner
+    )
+
+    if row_count < 1000:
+        assert len(provider.ListResources(ResourceKind.NETWORK)) == row_count, (
+            "A non-saturated valid response was rejected"
+        )
+
+    else:
+        with pytest.raises(ProviderError) as error:
+            provider.ListResources(ResourceKind.NETWORK)
+
+        assert error.value.code == ProviderErrorCode.INCOMPLETE_INVENTORY, (
+            "Cloud-page saturation was mistaken for complete ownership inventory"
+        )
 
 
 @pytest.mark.parametrize(

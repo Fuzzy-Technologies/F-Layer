@@ -3,7 +3,7 @@
 F-Layer core separates desired intent from the minimum inventory needed to
 locate resources it owns. These contracts are implemented in `flayer.core`;
 cloud provisioning, lifecycle orchestration, and deployment-specific settings
-are separate work. See [ADR 0001](../adr/0001-config-state-contracts.md).
+are implemented in separate components. See [ADR 0001](../adr/0001-config-state-contracts.md).
 
 ## Module boundaries
 

@@ -1,0 +1,25 @@
+schemaVersion = 1
+sourcePath = ".github/pull_request_template.md"
+body = '''
+## 变更说明
+
+<!-- 修改了什么，为什么修改？ -->
+
+## 验证
+
+<!-- 列出实际执行的检查或测试及其结果。 -->
+
+## 对安全与基础设施的影响
+
+<!-- 说明对云资源操作、凭据、生成文件、路由、兼容性或生命周期的影响。如无影响，请填写“None”。 -->
+
+## 关联任务
+
+Closes #
+'''
+sourceHash = "sha256:2b48d71dfbf6604229061608db2f26dc1ab70377cf80102efd64a07ecc10ee85"
+reviewedTranslationHash = "sha256:ffe5bfb162b301d22bca9f67ac0c139dc52b0428dd990539b6b5027d6522fa7f"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:51:54Z"
+reviewRoles = ["editorial", "technical"]

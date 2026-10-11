@@ -1,0 +1,73 @@
+schemaVersion = 1
+sourcePath = "docs/adr/0014-scoped-releases-and-changelog.md"
+sourceHash = "sha256:af0dc3bd4a12c89b3d3913e97508b1961e4f1c157f42f6c19b50a7adf120ec5a"
+reviewedTranslationHash = "sha256:477918baeebe2319bb483f07823488876886f07ecf5590056db607a8df529f11"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:58:01.351992+00:00"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# ADR 0014：按里程碑发布并编写易懂的变更日志
+
+## 状态
+
+已接受，用于所有者授权的 1.0.0 和 1.1.0 发布。
+
+## 背景
+
+`develop` 中已接受的内容同时包含完成的 1.0、1.1 工作及 1.2/2.0 工作。若整体提升分支最新状态，就会把后续里程碑功能悄悄放入较早版本。每次要求的发布都需要精确代码范围、不可变标签、可重建的产物，以及用户能够理解的说明。
+
+参考项目 1337 在开发协议中定义 changelog 层级，在发布流程中定义发布卡片模板。在其已接受的 ADR 目录中未找到独立的 changelog ADR。F-Layer 在此明确记录调整后的决策。
+
+## 决策
+
+这次分阶段发布从已发布的 `master` 基线创建 `release/1.0.0`，选择已接受的 release-1.0 提交。随后从已发布的 master 状态创建 `release/1.1.0`，选择已接受的 release-1.1 提交。记录来源 PR、提交标识及仅用于发布的有限调整。不能仅因后续功能已经存在于 `develop`，就将其纳入较早版本。
+
+通过 PR 按顺序提升两个候选版本。本地只运行受影响文件的针对性检查；CI 运行完整回归、文档和适用的产物检查。每个稳定版本都必须具有明确的源码版本字面值、匹配的包元数据、指向准确 master 提交的带注释不可变 `vX.Y.Z` 标签，以及包含已核验文件的 GitHub Release。先发布 1.0.0，再将 master 推进到 1.1.0。通过 PR 将发布专用元数据和决策回合并到 develop。临时管理工作流仅放在隔离分支，完成后删除。GitHub Release 本身不授权 PyPI 上传或真实基础设施变更。
+
+稳定发布要求完成验收，并关闭原生 `release-X.Y` 里程碑且不存在未完成项。实现 CI 通过或“完成发布”的指令不能豁免验收标准。所有者在关闭前核实标准；自动化检查原生里程碑证据，不负责关闭它。
+
+采用 Fuzzy Technologies 的 changelog 层级：
+
+```text
+# F-Layer Changelog
+# Major N
+## Minor N.M
+### Patch P — vN.M.P — YYYY-MM-DD
+#### Digest
+#### Added
+#### Fixed
+#### Changed
+#### Removed
+#### Security
+```
+
+省略不适用的部分，但保持顺序。每个层级内最新的 major、minor 和 patch 排在前面。已发布记录保留为历史；只有经所有者授权，才能更正已经证实的事实错误。不要添加自由形式的 Unreleased 部分。Digest 简述用户可见的结果，详细章节说明具体行为，而不是提交时间线。
+
+GitHub Release 标题采用 `F-Layer vX.Y.Z — <short user-facing digest>`。卡片以 `## Digest` 开始，随后按需使用 `## What's Changed`、`## Validation`、`## Breaking Changes`、`## Try it from source` 和 `## Notes`。没有破坏性变更时明确写 None。区分已交付行为、实际测试证据和仍待完成的运行验证。保留检出准确标签的命令，链接到详细 changelog 和源码来源，但不要把摘要写成提交列表。
+
+## Release-1.2 范围补充——2026-10-08
+
+所有者要求发布 1.2.0 时，采用相同的里程碑筛选：从已发布的 1.1.0 开始，选择已接受的 PR #46、#48、#59 和 #60。纳入语言页面源码链接、按版本安装示例、原文哈希和发布元数据的有限稳定性调整。插件发现、生态集成契约和静态站点方案留在后续里程碑。
+
+候选文档中，没有人工批准记录的内容必须如实显示草稿或英文回退状态。稳定发布前必须完成任务 #27、功能 #8 和 release-1.2，包括真实的人工审核要求，以及实际 master/Pages 发布证据。通过 PR 将发布专用修改返回 develop，并保留已经接受的后续里程碑工作。
+
+此前的补充错误地允许在里程碑完成前稳定发布。该例外未获得所有者授权，现已撤销。2026-10-08，将过早发布的 v1.2.0 改为 Pre-release，在标题中补回 `v`，并保留其不可变标签和附件。
+
+## 影响
+
+- 即使集成分支领先，发布范围仍对应其里程碑。
+- 标签、源码及包版本、发布说明和附件哈希可以一起核验。
+- 完整回归由 CI 负责，本地开发不重复这些测试集。
+- Changelog 包含在源码分发包和生成文档中。
+- 分阶段基线需要显式回合并，不重写已发布历史。
+- 稳定标签不表示已验证真实云、来宾就绪、翻译批准或 PyPI 发布成功。
+
+## 参考资料
+
+- [1337 changelog](https://github.com/Fuzzy-Technologies/1337/blob/develop/CHANGELOG.md)
+- [1337 changelog 契约](https://github.com/Fuzzy-Technologies/1337/blob/develop/DEVELOPMENT_PROTOCOL.md#8-changelog-contract)
+- [1337 发布卡片格式](https://github.com/Fuzzy-Technologies/1337/blob/develop/docs/RELEASE_WORKFLOW.md#published-release-notes)
+- [F-Layer 发布流程](../RELEASE_WORKFLOW.md)
+- [F-Layer changelog](../../CHANGELOG.md)
+'''

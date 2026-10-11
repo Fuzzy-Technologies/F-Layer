@@ -50,7 +50,9 @@ OPTIONAL_PARAMETERS: dict[ResourceKind, frozenset[str]] = {
     ResourceKind.SECURITY_GROUP: frozenset(),
     ResourceKind.ADDRESS: frozenset(),
     ResourceKind.DISK: frozenset({"type"}),
-    ResourceKind.INSTANCE: frozenset({"ssh_username", "user_data_file", "user_data_sha256"}),
+    ResourceKind.INSTANCE: frozenset({
+        "ssh_username", "user_data_file", "user_data_sha256", "platform_id", "core_fraction",
+    }),
 }
 DEPENDENCY_KINDS = {
     "network_dependency": ResourceKind.NETWORK,
@@ -85,6 +87,44 @@ def _Integer(value: JsonValue, minimum: int, maximum: int) -> int:
         raise ValueError("Lifecycle numeric option exceeds its bounds")
 
     return value
+
+
+def ValidateComputeShape(options: Mapping[str, JsonValue]) -> None:
+    """Validate the supported Intel shapes without consulting a cloud account."""
+
+    cores = _Integer(options["cores"], 2, 32)
+    memory = _Integer(options["memory_gib"], 1, 128)
+
+    if "platform_id" not in options and "core_fraction" not in options:
+        return
+
+    if "platform_id" not in options or "core_fraction" not in options:
+        raise ValueError("Specify platform_id and core_fraction together")
+
+    platform = _String(options["platform_id"])
+    fractions = {"standard-v1": (5, 20, 100), "standard-v2": (5, 20, 50, 100),
+                 "standard-v3": (20, 50, 100)}
+    fraction = _Integer(options["core_fraction"], 1, 100)
+
+    if platform not in fractions or fraction not in fractions[platform]:
+        raise ValueError("Unsupported platform_id/core_fraction combination")
+
+    if _String(options.get("zone_id", "")).startswith("kz1-") and platform != "standard-v3":
+        raise ValueError("Kazakhstan deployments require platform_id standard-v3")
+
+    if fraction == 100:
+        valid_cores = (*range(2, 17, 2), 20, 24, 28, 32)
+        ratios = tuple(float(value) for value in range(1, 9 if platform == "standard-v1" else 17))
+
+    else:
+        valid_cores = (2, 4)
+        ratios = tuple(value / 2 for value in range(1, 5 if fraction == 5 else 9))
+
+        if platform == "standard-v2" and fraction == 5:
+            ratios = (0.25, *ratios)
+
+    if cores not in valid_cores or memory / cores not in ratios:
+        raise ValueError("Unsupported vCPU/RAM combination for the selected platform and core_fraction")
 
 
 def _PublicKey(value: JsonValue) -> str:
@@ -174,6 +214,9 @@ def _Rules(value: JsonValue) -> tuple[str, ...]:
         if protocol == "any":
             if "from_port" in rule or "to_port" in rule:
                 raise ValueError("Any-protocol rules cannot specify ports")
+
+            # The CLI requires a port selector even for an unrestricted protocol.
+            result += ",from-port=0,to-port=65535"
 
         else:
             if not {"from_port", "to_port"} <= set(rule):
@@ -273,8 +316,7 @@ class YandexLifecycleProvider(YandexCloudProvider):
                     raise ValueError("Unsupported boot disk type")
 
             elif spec.kind == ResourceKind.INSTANCE:
-                _Integer(options["cores"], 2, 32)
-                _Integer(options["memory_gib"], 1, 128)
+                ValidateComputeShape(options)
                 _PublicKey(options["ssh_public_key"])
 
                 if USERNAME_PATTERN.fullmatch(_String(options.get("ssh_username", "yc-user"))) is None:
@@ -540,7 +582,29 @@ class YandexLifecycleProvider(YandexCloudProvider):
                 "--network-interface", interface, "--metadata", f"ssh-keys={username}:{public_key}",
             ))
 
+            if "platform_id" in options:
+                arguments.extend(("--platform", _String(options["platform_id"]),
+                                  "--core-fraction", str(options["core_fraction"])))
+
         return tuple(arguments)
+
+    def _CommandFailure(
+        self, arguments: tuple[str, ...], result: CommandResult, operation: str,
+    ) -> ProviderError:
+        """Recognize only proven local parser refusals, never generic RPC error categories."""
+
+        if result.return_code == 1 and not result.stdout.strip() and operation == "create":
+            message = result.stderr.strip()
+            unknown_flag = re.fullmatch(r"ERROR: execute command: unknown flag: (--[a-z][a-z0-9-]*)", message)
+            rule_rejection = (
+                arguments[:3] == ("vpc", "security-group", "create")
+                and message == "ERROR: execute command: run command: for rule spec port or [from/to]-port fields is required"
+            )
+
+            if rule_rejection or (unknown_flag is not None and unknown_flag[1] in arguments):
+                return MutationError(ProviderErrorCode.UNSUPPORTED, operation, False)
+
+        return super()._CommandFailure(arguments, result, operation)
 
     def _MutationRun(self, arguments: tuple[str, ...], operation: str) -> CommandResult:
         """Never retry a dispatched mutation or retain raw runner exceptions in the error."""
@@ -553,6 +617,9 @@ class YandexLifecycleProvider(YandexCloudProvider):
 
         except ProviderError as error:
             code = error.code
+
+            if isinstance(error, MutationError):
+                outcome_unknown = error.outcome_unknown
 
         except Exception:
             code = ProviderErrorCode.COMMAND_FAILED

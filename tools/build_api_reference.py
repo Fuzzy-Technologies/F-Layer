@@ -21,10 +21,9 @@ from urllib.parse import unquote, urlsplit
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tools import documentation_coverage, documentation_gates  # noqa: E402
+from tools import documentation_coverage, documentation_gates, generated_localization  # noqa: E402
 from tools.locale_documentation import (  # noqa: E402
     CanonicalHash,
-    DiscoverCanonicalUnits,
     ValidateLocales,
 )
 
@@ -211,53 +210,19 @@ def DiscoverDefinitions(installed_root: Path) -> tuple[documentation_coverage.De
 
 
 def WriteApiLocaleInventory(modules: tuple[ModuleSource, ...], build_root: Path) -> None:
-    """Validate dynamic API units with unchanged hashes and explicitly missing locales."""
+    """Record actual source-bound API reviews instead of manufacturing missing states."""
 
-    coverage_path = build_root / "api-coverage.toml"
-    coverage_text = "schemaVersion = 1\n"
-
-    for module in modules:
-        coverage_text += (
-            f'\n[[surfaces]]\nmodule = "{module.name}"\n'
-            f'source = "{module.source_path}"\nmode = "authored"\n'
-        )
-
-    coverage_path.write_text(coverage_text, encoding="utf-8")
-    project = tomllib.loads((PROJECT_ROOT / "docs/i18n/project.toml").read_text())
-    project["contentRoot"] = "_build/api-reference/api-locales-content"
-    project["apiCoverageManifest"] = "_build/api-reference/api-coverage.toml"
-    project["unitManifest"] = "_build/api-reference/api-units.toml"
-    units = DiscoverCanonicalUnits(PROJECT_ROOT, project)
-    unit_text = "schemaVersion = 1\n"
-
-    for unit in units:
-        unit_text += (
-            f'\n[[units]]\nid = "{unit.identifier}"\nkind = "{unit.kind}"\n'
-            f'sourcePath = "{unit.source_path}"\nsourceHash = "{CanonicalHash(unit)}"\n'
-            'reviewClass = "technical"\n\n[units.translations.ru]\nstate = "missing"\n'
-            '\n[units.translations.zh-CN]\nstate = "missing"\n'
-        )
-
-    (build_root / "api-units.toml").write_text(unit_text, encoding="utf-8")
-    original = (PROJECT_ROOT / "docs/i18n/project.toml").read_text(encoding="utf-8")
-    original = original.replace('contentRoot = "docs/site/content"',
-                                f'contentRoot = "{project["contentRoot"]}"')
-    original = original.replace('apiCoverageManifest = "docs/site/api-coverage.toml"',
-                                f'apiCoverageManifest = "{project["apiCoverageManifest"]}"')
-    original = original.replace('unitManifest = "docs/i18n/units.toml"',
-                                f'unitManifest = "{project["unitManifest"]}"')
-    manifest_path = build_root / "api-locales-project.toml"
-    manifest_path.write_text(original, encoding="utf-8")
-    report = ValidateLocales(PROJECT_ROOT, manifest_path)
-
-    if report.diagnostics:
-        raise ValueError("\n".join(report.diagnostics))
-
+    units = generated_localization.DiscoverGeneratedUnits(PROJECT_ROOT)
+    translations = generated_localization.LoadTranslations(PROJECT_ROOT, units)
+    source_paths = {module.source_path for module in modules}
+    api_units = {identifier: unit for identifier, unit in units.items()
+                 if unit.kind == "symbol" and unit.source_path in source_paths}
+    states = generated_localization.TranslationStates(api_units, translations)
+    payload = {"status": "pass", "states": states,
+               "sourceHashes": {identifier: CanonicalHash(unit) for identifier, unit in api_units.items()}}
     (build_root / "api-locales.json").write_text(
-        json.dumps({"status": "pass", "states": report.states}, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8",
     )
-
 
 
 def RewriteDirectoryLinks(content: str, source_path: Path) -> str:
@@ -483,9 +448,9 @@ def InstallWheel(environment_python: Path, wheel_path: Path, build_root: Path) -
     RunCommand([environment_python, "-m", "pip", "install", "--no-index", "--no-deps",
                 "--disable-pip-version-check", "--target", installed_root, wheel_path], cwd=build_root)
     code = (
-        "import importlib.metadata as m; "
-        f"distributions = tuple(m.distributions(path=[{str(installed_root)!r}])); "
-        "assert len(distributions) == 1, 'Expected one installed wheel distribution'; "
+        "import importlib.metadata as m\n"
+        f"distributions = tuple(m.distributions(path=[{str(installed_root)!r}]))\n\n"
+        "assert len(distributions) == 1, 'Expected one installed wheel distribution'\n"
         "assert distributions[0].metadata['Name'] == 'f-layer', 'Unexpected wheel distribution'"
     )
     RunCommand([environment_python, "-c", code], cwd=build_root)

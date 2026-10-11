@@ -1,6 +1,6 @@
 # Provider contract
 
-F-Layer providers translate cloud-specific authentication and resource observations into an explicit, provider-neutral boundary. The first implementation supports **read-only Yandex Cloud discovery**. Lifecycle creation, mutation, ownership adoption, rollback and destruction remain issue #20 work.
+F-Layer providers translate cloud-specific authentication and resource observations into an explicit, provider-neutral boundary. This interface supports **read-only Yandex Cloud discovery**. Creation, adoption, rollback and deletion use the separate [Yandex lifecycle adapter](yandex-lifecycle.md).
 
 ## Implemented interface
 
@@ -18,7 +18,7 @@ Import the generic boundary from `flayer.providers.contracts` and the first adap
 
 A `ResourceReference` binds provider ID, scope ID, resource kind and resource ID. A `ProviderResource` contains that reference, name, vendor status, optional zone, immutable ownership labels and public IPv4 endpoints. Unknown state is explicitly `UNKNOWN`. Raw provider JSON, instance metadata and credentials never become resource fields.
 
-Supported `ResourceKind` values are `INSTANCE`, `DISK`, `NETWORK`, `SUBNET`, `ADDRESS` and `SECURITY_GROUP`. Results are sorted by resource ID within each kind; full inventory follows enum order. Listing and lookup do not assert resource ownership. `HasLabels()` is a comparison helper requiring non-empty matching labels; future mutation authorization must define its complete policy separately.
+Supported `ResourceKind` values are `INSTANCE`, `DISK`, `NETWORK`, `SUBNET`, `ADDRESS` and `SECURITY_GROUP`. Results are sorted by resource ID within each kind; full inventory follows enum order. Listing and lookup do not assert resource ownership. `HasLabels()` is a comparison helper requiring non-empty matching labels; mutation authorization follows the separate lifecycle adapter's complete ownership policy.
 
 ## Explicit authentication and scope
 
@@ -32,7 +32,9 @@ The CLI resolves IDs globally across accessible folders. The adapter therefore v
 
 ## Completeness and failure behavior
 
-CLI list operations have a finite limit. The adapter requests an explicit limit, defaults to 10,000 resources per kind and rejects a response at or above that limit as `INCOMPLETE_INVENTORY`. This conservative rule can reject an exactly-full but complete response; increasing the configured limit within its bounded range resolves that ambiguity. Future pagination may replace this rule without changing callers' completeness requirement.
+CLI list operations have a finite limit. The adapter requests the smaller of the configured inventory limit and 1,000 resources per kind. The settings retain their 10,000 default ceiling for compatibility, but it cannot override the cloud API's 1,000-item page-size maximum. In particular, `yc` 1.40.0 forwards an oversized network-list limit to the API, which rejects it even for an empty folder.
+
+A response at or above the effective request limit fails as `INCOMPLETE_INVENTORY`; it is never used as complete ownership evidence. This conservative rule can reject an exactly-full but complete response. Increasing a smaller configured ceiling can resolve that ambiguity only below the 1,000-item cloud limit. Folders reaching that limit require future pagination support; increasing the setting above 1,000 does not bypass the completeness check.
 
 Malformed JSON, unexpected response structure, invalid resource IDs, duplicate IDs, malformed endpoints and unverified scope fail closed. One failed kind aborts `DiscoverInventory()` without returning a partial snapshot. Discovery is not an atomic cloud snapshot: resources may change between read operations.
 
@@ -65,6 +67,7 @@ For deterministic tests, inject a `CommandRunner` whose `Run(command, timeout)` 
 
 Official references:
 
+- [Yandex Network.List page-size maximum and pagination](https://yandex.cloud/en/docs/vpc/api-ref/Network/list)
 - [Yandex CLI instance listing and global flags](https://yandex.cloud/en/docs/compute/cli-ref/instance/list)
 - [Yandex CLI resource-ID lookup scope](https://yandex.cloud/en/docs/compute/operations/vm-info/get-info)
 - [Yandex CLI disk listing](https://yandex.cloud/en/docs/cli/cli-ref/compute/cli-ref/disk/list)

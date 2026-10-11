@@ -160,6 +160,7 @@ def test_RuntimeOnlyDescribesLocalExecution(monkeypatch: pytest.MonkeyPatch) -> 
     """Runtime compatibility cannot imply infrastructure or endpoint health."""
 
     assert RuntimeChecks()[0].status is DiagnosticStatus.OK, "Supported runtime was rejected"
+
     monkeypatch.setattr(sys, "version_info", (3, 10, 0))
 
     assert RuntimeChecks()[0].status is DiagnosticStatus.FAILED, "Unsupported runtime passed"

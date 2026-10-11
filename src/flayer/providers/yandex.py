@@ -22,6 +22,7 @@ from .contracts import (
 )
 
 PROVIDER_ID = "yandex-cloud"
+MAX_CLI_LIST_LIMIT = 1000
 RESOURCE_COMMANDS: dict[ResourceKind, tuple[str, str]] = {
     ResourceKind.INSTANCE: ("compute", "instance"),
     ResourceKind.DISK: ("compute", "disk"),
@@ -178,14 +179,15 @@ class YandexCloudProvider:
         """Read one resource kind, rejecting malformed or possibly truncated inventory."""
 
         command = self._CommandForKind(kind)
+        limit = min(self._settings.inventory_limit, MAX_CLI_LIST_LIMIT)
         payload = self._ReadJson(
-            (*command, "list", "--limit", str(self._settings.inventory_limit)), "list"
+            (*command, "list", "--limit", str(limit)), "list"
         )
 
         if not isinstance(payload, list):
             raise ProviderError(ProviderErrorCode.INVALID_RESPONSE, "list")
 
-        if len(payload) >= self._settings.inventory_limit:
+        if len(payload) >= limit:
             raise ProviderError(ProviderErrorCode.INCOMPLETE_INVENTORY, "list")
 
         resources = tuple(self._NormalizeResource(item, kind, "list") for item in payload)
@@ -261,19 +263,27 @@ class YandexCloudProvider:
             raise ProviderError(failure_code, operation)
 
         if result.return_code != 0:
-            details = (result.stderr or result.stdout).casefold()
-            code = ProviderErrorCode.COMMAND_FAILED
+            error = self._CommandFailure(arguments, result, operation)
+            del result
 
-            for candidate, markers in ERROR_MARKERS:
-                if any(marker in details for marker in markers):
-                    code = candidate
-                    break
-
-            del details, result
-
-            raise ProviderError(code, operation)
+            raise error
 
         return result
+
+    def _CommandFailure(
+        self, arguments: tuple[str, ...], result: CommandResult, operation: str,
+    ) -> ProviderError:
+        """Classify transient command output without retaining raw vendor diagnostics."""
+
+        details = (result.stderr or result.stdout).casefold()
+        code = ProviderErrorCode.COMMAND_FAILED
+
+        for candidate, markers in ERROR_MARKERS:
+            if any(marker in details for marker in markers):
+                code = candidate
+                break
+
+        return ProviderError(code, operation)
 
     def _ReadJson(self, arguments: tuple[str, ...], operation: str) -> object:
         """Parse JSON without retaining its text in propagated decode exceptions."""

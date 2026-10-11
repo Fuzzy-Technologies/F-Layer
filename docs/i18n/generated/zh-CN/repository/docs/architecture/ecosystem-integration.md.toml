@@ -1,0 +1,133 @@
+schemaVersion = 1
+sourcePath = "docs/architecture/ecosystem-integration.md"
+sourceHash = "sha256:faca1fad3be7840fe77c508e3c532929b4c1d1b1d578db725b24dd0447419998"
+reviewedTranslationHash = "sha256:ea76cf34fb07c59c259b7aeac086be6b6c150a3bb0193b55abbe03ba6c6fa800"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T15:52:52Z"
+reviewRoles = ["editorial", "technical"]
+body = '''
+# 生态系统集成
+
+`flayer.integrations` 为 1337、Fuzzy 工具和其他客户端提供与使用方无关的版本 1
+观测契约。这是集成边界的 F-Layer 一侧。测试数据和离线参考流程展示包的行为，
+尚未验证真实 1337 或 MCP 集成。
+
+架构原则是：模型负责推理，持久核心负责执行、状态、资源归属和结果记录。AI 与
+MCP 应用是客户端。模型、解析后的消息、能力声明或适配器都不会赋予隐式授权。
+决策记录于 [ADR 0012](../adr/0012-consumer-neutral-evidence-contracts.md)。
+
+## 消息封装与归属
+
+请求和结果都精确包含以下元数据字段。结果额外包含 `evidence`；请求没有参数或
+结果负载。
+
+| 字段             | 规则                                                             |
+| ---------------- | ---------------------------------------------------------------- |
+| `schema_version` | 整数 `1`；拒绝布尔值和未知版本。                                 |
+| `envelope`       | `request` 或 `result`，必须符合所调用解析器。                    |
+| `identity`       | 完整精确的 `StackIdentity`，不得省略或使用默认字段。             |
+| `request_id`     | 1–64 个 ASCII 字母、数字、点、下划线或连字符，以字母或数字开头。 |
+| `operation`      | 下列五种只读观测之一。                                           |
+| `evidence`       | 仅结果包含；操作决定严格数据格式。                               |
+
+`identity` 包含 `project`、`stack`、`provider`、`scope_id` 和 `owner_id`，
+全部必须匹配调用方独立持有的预期值。状态投影验证 `StackState` 保存的身份。
+诊断和生命周期报告没有身份字段，其适配器要求选定来源的宿主显式提供
+`observed_identity`。这只验证契约绑定，不是远端证明，也无法核实来源真实性。
+
+`ParseRequest(payload, expected_identity)` 返回验证后的请求。
+`ParseResult(payload, expected_request)` 还要求操作、请求 ID、版本、范围和
+归属完全一致。结果关联不认证发送者、不建立时效、不防重放，也不证明客户机就绪。
+解析后的请求和结果仍是不可信表示。宿主必须认证传输并独立授权结果来源的访问。
+
+身份及请求 ID 是不含秘密的路由元数据，不是自由文本负载。不得放入凭据和私有
+内容。契约必须保留精确身份，不能因脱敏而使归属边界含糊。示例只使用测试身份。
+
+## 支持的观测
+
+| 操作               | 适配器             | 数据                                           |
+| ------------------ | ------------------ | ---------------------------------------------- |
+| `status`           | `AdaptDiagnostics` | 总体诊断严重程度和有序检查结果。               |
+| `health`           | `AdaptDiagnostics` | 总体诊断严重程度和有序检查结果。               |
+| `benchmark`        | `AdaptDiagnostics` | 检查结果及白名单数值指标。                     |
+| `state`            | `AdaptState`       | 已记录所属资源数量。                           |
+| `lifecycle-report` | `AdaptLifecycle`   | 已有动作、结果、恢复标志和按状态统计的资源数。 |
+
+诊断报告命令必须精确匹配请求操作。`ok`、`warning`、`failed`、`stale` 和
+`unsupported` 保持现有含义和严重程度顺序。空检查为 `unsupported`。总体状态
+与检查结果不一致会被拒绝。每项仅保留 `status` 和 `metrics`，顺序保留，指标
+键规范化，诊断名称和消息省略。
+
+指标可选。适配器省略未知详情；消息中未知指标字段及已知指标的错误值被拒绝。
+字符串、布尔值、凭据字节、响应内容和非结构化错误不能作为指标。
+
+| 指标               | 允许值                                     |
+| ------------------ | ------------------------------------------ |
+| `duration_seconds` | 0 至 30 的有限数字。                       |
+| `received_bytes`   | 0 至 1 048 576 的整数。                    |
+| `byte_limit`       | 1 至 1 048 576 的整数。                    |
+| `http_status`      | 100 至 599 的整数或 `null`。               |
+| `throughput_mbps`  | 0 至 1 000 000 000 000 的有限数字或 null。 |
+
+状态的 `resource_count` 只描述本地归属快照，不说明资源仍在远端存在或部署健康。
+生命周期结果包含 `action`、`status`、`recovery_required` 和由 `{status, count}`
+类别组成的 `resources`。支持动作 `status`、`create`、`destroy`、`recover`；
+结果为 `complete`、`incomplete`、`uncertain`、`rolled-back`、
+`rollback-incomplete`；资源类别为 `recorded`、`present`、`missing`、
+`not-recorded`。类别唯一，总数最多 4 096。
+
+生命周期报告可以描述已执行的变更。汇总报告不会请求、批准、重试或执行变更。
+`create`、`destroy`、`recover`、`apply` 和 `execute` 不允许作为请求操作。
+未来面向变更的集成需要独立审查的授权及持久执行契约。
+
+## 边界与序列化
+
+- UTF-8 输入和序列化输出最多 65 536 字节。
+- 解码后最多八层嵌套、4 096 个值。
+- 诊断最多 128 项，每项最多五个唯一指标。
+- 状态和生命周期资源总数最多 4 096。
+- 拒绝 JSON 重复键、非标准数值常量、未知字段、错误类型和未知版本，不回显原始输入。
+- `SerializeRequest` 和 `SerializeResult` 输出确定性的标准 JSON。
+
+这些限制约束进程内解析和数据转换，不产生网络超时、不授权端点，也不限制任意
+宿主回调。本包没有任务调度回调。已有诊断 API 管理明确的探测/测量限制，持久
+生命周期核心负责操作状态与恢复语义。
+
+## 离线参考流程
+
+1. 获授权宿主选择精确部署身份及可信数据来源，客户端准备含关联 ID 的观测请求。
+2. 宿主根据独立选择的身份上下文解析请求；解析不执行提供方操作、不查询凭据、不写状态。
+3. 宿主通过已有 F-Layer API 独立取得观测。例如 `LifecycleEngine.Status()` 读取所属远端资源是否存在；健康检查和测量传输必须明确选择并限定。
+4. 相应适配器只投影允许的数据，不调用提供方、不执行生命周期方法、不写状态。
+5. 使用方对照原请求解析结果，并结合已认证的来源及宿主时效策略解释结果。
+
+```python
+from flayer.core.contracts import StackIdentity
+from flayer.core.state import StackState
+from flayer.integrations import (
+    AdaptState, IntegrationOperation, IntegrationRequest, ParseRequest,
+    ParseResult, SerializeRequest, SerializeResult,
+)
+
+identity = StackIdentity("example", "sandbox", "fake", "scope-example", "example-owner")
+request = IntegrationRequest(identity, "example-001", IntegrationOperation.STATE)
+parsed = ParseRequest(SerializeRequest(request), identity)
+result = AdaptState(parsed, StackState(identity))
+observed = ParseResult(SerializeResult(result), request)
+```
+
+参阅[消息示例](https://github.com/Fuzzy-Technologies/F-Layer/tree/develop/examples/integrations)
+及[离线功能参考测试](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/tests/functional/test_ecosystem_reference.py)。
+测试使用现有 status、health、benchmark、持久状态和 lifecycle status API，配合
+本地数据与模拟提供方。它验证解析和适配器不发送提供方调用，所属状态内容不变。
+契约测试覆盖各操作消息、错误归属、关联不符、格式错误及超限输入、隐私省略和
+变更名称拒绝。这证明 F-Layer 一侧的边界，不证明外部使用方实现兼容。
+
+## 扩展边界
+
+传输托管、MCP 工具注册、使用方认证、防重放和时效策略、外部客户端符合性都
+在包之外。核心契约没有使用方名称，也没有推测性的编排、调度器或代理执行层。
+版本 1 拒绝格式扩展，而非静默丢弃。新增不兼容字段或操作需要明确版本和兼容性
+决策。
+'''

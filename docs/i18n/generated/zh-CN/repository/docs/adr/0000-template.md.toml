@@ -1,0 +1,35 @@
+schemaVersion = 1
+sourcePath = "docs/adr/0000-template.md"
+body = '''
+# ADR 0000：决策名称
+
+- 状态：提议
+- 日期：YYYY-MM-DD
+- 相关任务：#NN
+
+## 背景
+
+说明需要作出决策的问题、约束和影响因素。
+
+## 决策
+
+清楚说明选定的架构或契约。
+
+## 影响
+
+说明优点、缺点，以及对兼容性、运维和迁移的影响。
+
+## 考虑过的替代方案
+
+列出可行的替代方案，并解释未采用的原因。
+
+## 验证
+
+说明如何通过实现验证该决策达到了预期目标。
+'''
+sourceHash = "sha256:6f178dbfdb2e38cdbd843ed7f768ef42b76c6a2e95bec550793b67d901e38ae2"
+reviewedTranslationHash = "sha256:bcbf620cc0a02a00ecf7ecb33924a187fd28b4e2cf20247e65d8b1552765dfec"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-09T07:48:24.891591+00:00"
+reviewRoles = ["editorial", "technical"]

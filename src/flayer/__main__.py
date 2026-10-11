@@ -66,6 +66,34 @@ def Parser() -> argparse.ArgumentParser:
         if action == "recover":
             child.add_argument("--rollback", action="store_true")
 
+    project = commands.add_parser("project", help="Create a private installable VPN project")
+    project_actions = project.add_subparsers(dest="action", required=True)
+    initialize = project_actions.add_parser("init", help="Create an editable project and administration key")
+    initialize.add_argument("directory")
+
+    vpn = commands.add_parser("vpn", help="Prepare and manage a two-protocol VPN project")
+    vpn_actions = vpn.add_subparsers(dest="action", required=True)
+
+    for action in ("prepare", "deploy", "status", "destroy", "recover"):
+        child = vpn_actions.add_parser(action)
+        child.add_argument("--project", required=True, help="Private project directory")
+        child.add_argument("--format", choices=("text", "json"), default="text")
+
+        if action in {"deploy", "destroy", "recover"}:
+            child.add_argument("--allow-mutation", action="store_true")
+            child.add_argument("--scope-confirm", required=True, help="Repeat the exact cloud folder ID")
+
+        if action == "recover":
+            child.add_argument("--rollback", action="store_true")
+
+    export = vpn_actions.add_parser("export", help="Export existing device files without cloud access")
+    export.add_argument("--project", required=True, help="Private project directory")
+    export.add_argument("--device", required=True, help="One declared device ID")
+    export.add_argument("--protocol", required=True, choices=("amneziawg", "vless-reality"))
+    export.add_argument("--output", required=True, help="Separate private export root")
+    export.add_argument("--qr", action="store_true", help="Include numbered native AmneziaVPN QR SVGs")
+    export.add_argument("--format", choices=("text", "json"), default="text")
+
     return parser
 
 
@@ -119,10 +147,65 @@ def _Lifecycle(args: argparse.Namespace) -> int:
     return report.ExitCode()
 
 
+def _VpnProject(args: argparse.Namespace) -> int:
+    """Dispatch local project creation or explicit VPN operations without revealing private data."""
+
+    from .core.contracts import ContractError
+    from .profiles.vpn import VpnError
+    from .providers.contracts import ProviderError
+    from .vpn_project import InitializeVpnProject, LoadVpnProject, RunVpnProject
+
+    try:
+        if args.command == "project":
+            InitializeVpnProject(args.directory)
+            print("Private project created. Edit project.toml, then run flayer vpn prepare --project DIRECTORY.")
+
+            return 0
+
+        project = LoadVpnProject(args.project)
+
+        if args.action == "export":
+            from .vpn_export import ExportVpnDevice
+
+            report = ExportVpnDevice(project, args.device, args.protocol, args.output, qr=args.qr)
+
+        else:
+            report = RunVpnProject(
+                project, args.action,
+                allow_mutation=getattr(args, "allow_mutation", False),
+                scope_confirm=getattr(args, "scope_confirm", ""),
+                rollback=getattr(args, "rollback", False),
+            )
+
+    except (ContractError, ProviderError, OSError) as error:
+        message = str(error) if isinstance(error, VpnError) else (
+            "Device export failed. Verify existing source manifests and private output permissions; source files were not changed."
+            if args.action == "export" else
+            "VPN operation failed. Check private artifact ownership, cloud access, and retained state before retrying."
+        )
+        payload = {"action": args.action, "status": "failed", "message": message,
+                   "recovery_required": args.action in {"deploy", "destroy", "recover"}}
+        print(json.dumps(payload) if getattr(args, "format", "text") == "json" else message)
+
+        return 2
+
+    print(json.dumps(asdict(report), sort_keys=True) if args.format == "json" else
+          f"VPN {report.action}: {report.status}; cloud={report.cloud_status}; guest={report.guest_status}; "
+          f"connectivity={report.connectivity_status}. {report.details}")
+
+    for export in report.client_exports if args.format == "text" else ():
+        print(f"Client files: {export}")
+
+    return report.ExitCode()
+
+
 def Main(arguments: Sequence[str] | None = None) -> int:
     """Run explicit diagnostics or authorized lifecycle actions and return their outcome."""
 
     args = Parser().parse_args(arguments)
+
+    if args.command in {"project", "vpn"}:
+        return _VpnProject(args)
 
     if args.command == "lifecycle":
         return _Lifecycle(args)

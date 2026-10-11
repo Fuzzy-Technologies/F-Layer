@@ -1,0 +1,134 @@
+schemaVersion = 1
+sourcePath = "docs/development/vpn-release-acceptance.md"
+body = '''
+# 发布前验证已安装的 VPN 流程
+
+只有在操作者安装候选软件包、在 Yandex Cloud 部署项目，并使用 AmneziaWG 和 VLESS Reality 两种协议连接真实客户端后，2.0 才具备发布条件。请将结果记录到 [Task 73](https://github.com/Fuzzy-Technologies/F-Layer/issues/73)。配置测试和已运行的 systemd 服务不能替代此项验证。
+
+## 验证 AI 入口
+
+验收 AI 辅助流程时，启动一个能够访问终端的全新助手会话。仅提供 README 中的
+可复制任务、所选候选产物的身份，以及操作者自己的环境/范围选择和授权。
+助手应找到 [AI 操作指南](../site/content/en/guide/ai-operator.md)，在没有私有
+开发聊天上下文的情况下完成下方相同检查。记录助手及其版本、文档修订、提出的
+问题、批准边界、手动介入和实际结果。交接时保留已有的有界授权；不要假定另一
+会话已经知道这些授权。
+
+配置资源之前，验证不受支持的云平台选项以及未获付费资源批准时，流程会停止
+且不产生变更。缺少 Linux 控制端时，应明确指出前置条件及下一步动作。已安装
+CLI 的冒烟测试和文档审核不能证明独立助手完成了真实流程。实际执行前应记录
+为 `not run`；候选产物和资源证据要求与手动路径一致。
+
+## 选择候选版本与云资源范围
+
+使用对应精确已评审提交、且发行包 CI 成功的 wheel 和构建记录。记录提交、工作流运行、wheel 文件名、SHA-256 和 Python 版本。发行包版本为 `2.0.0`；除版本外，还应以哈希和提交识别每次测试的构建。保留 CI 报告中的产物文件名。
+
+使用专用 Yandex Cloud 云文件夹，并明确资源预算及创建、删除测试资源的权限。操作者选择账户、`yc` 命名配置（profile）、云文件夹、可用区和兼容的 Ubuntu 24.04 amd64 镜像。本操作指南不授予账户访问权，也不授权自动化代理创建付费资源。云标识符与客户端凭据应保存在私有本地记录中；公开 issue 需要结果、版本和验证资料引用，不需要机密。
+
+在具有 Python 3.11 或更新版本及 OpenSSH 的 Linux 或兼容 POSIX 环境中运行控制端。在任何源码工作副本之外创建新虚拟环境，安装所选 wheel 及其 `vpn` 扩展。将示例文件名替换为实际下载的文件：
+
+```bash
+python3 -m venv flayer-acceptance-env
+. flayer-acceptance-env/bin/activate
+python -m pip install './f_layer-2.0.0-py3-none-any.whl[vpn]'
+python -m pip check
+flayer --help
+flayer check --format json
+```
+
+确认 Python 从此环境中已安装的包导入 `flayer`。不要设置 `PYTHONPATH`，不要使用可编辑安装，也不要从仓库目录运行。
+
+## 创建并部署一个项目
+
+按 [Quick Start](../site/content/en/guide/index.md) 操作，并记录任何需要未写入文档的知识或手动修正的步骤。创建新的私有项目：
+
+```bash
+flayer project init acceptance-vpn
+```
+
+编辑 `acceptance-vpn/project.toml`：设置选定的云文件夹、`yc` 命名配置、镜像、可用区、管理员当前公网 IPv4 范围和可达的 Reality 目标。每个客户端使用独立命名的设备。隧道子网、云子网和客户端本地网络不能重叠。在将连接视为完整 IPv4 隧道前，先满足文档中的客户端 IPv6 前提条件。
+
+本地准备必须在不访问云的情况下成功，重复运行必须复用已有密钥：
+
+```bash
+flayer vpn prepare --project acceptance-vpn --format json
+flayer vpn prepare --project acceptance-vpn --format json
+```
+
+随后由操作者明确授权在所选云文件夹中创建资源。将 `example-folder` 替换为项目中使用的同一个云文件夹 ID：
+
+```bash
+flayer vpn deploy --project acceptance-vpn --allow-mutation --scope-confirm example-folder --format json
+flayer vpn status --project acceptance-vpn --format json
+```
+
+确认预期的网络、子网、安全组、保留公网地址、启动盘和虚拟机归属于该项目。传输私密文件前，必须通过已认证的云渠道取得并固定 SSH 主机密钥。不得绕过主机密钥不匹配，也不得启用首次使用时信任。使用成功部署报告中的客户端文件路径。
+
+## 连接两种协议
+
+分别测试协议，避免第一条可用隧道掩盖第二条隧道失败。为每个设备记录操作系统、客户端版本、导入方式和结果。使用操作者控制或明确选择的 HTTPS 端点观察连接源地址。
+
+对于 [AmneziaWG](../architecture/amneziawg.md)：
+
+1. 将该设备的 `amneziawg.conf` 导入兼容的 AmneziaWG 3.1 客户端。
+2. 启用隧道，核实客户端与服务器确实完成握手。
+3. 通过隧道解析主机名并加载 HTTPS 内容，确认观测到的 IPv4 源地址与项目保留公网地址一致。
+4. 检查配置的路由策略及客户端 IPv6 设置。IPv4 成功不能证明 IPv6 或其他流量无法绕过隧道。
+5. 测试 VLESS 前先断开隧道。
+
+对于 [VLESS Reality](../architecture/vless-reality.md)：
+
+1. 将该设备 `import.txt` 中的 URI 导入兼容的图形客户端，或使用文档指定的 Xray 版本运行生成的 `client.json`。
+2. 对图形客户端，明确选择代理或 VPN/TUN 模式，并应用文档中的 DNS 和路由设置。导入 URI 不包含完整路由策略；应记录所选模式覆盖哪些流量。
+3. 验证真实认证连接、主机名解析及通过连接进行的 HTTPS 传输。观测到的 IPv4 源地址必须与网关一致。
+4. 对生成的 Xray 配置，通过 `socks5h://127.0.0.1:10808` 测试应用程序。此项检查验证应用代理，不验证整个操作系统的路由。任何宣称的 VPN/TUN 行为都必须在所选客户端中单独检查。
+5. 断开并重新连接，确认保留的导入配置仍可使用。
+
+发布打算宣传的任何分流模式，都应使用单独项目验证。分别测试允许和排除的目标，记录文档规定的是阻断还是直连。不要修改已经准备好的项目设置来绕过替换保护。
+
+Android 验收须记录 AmneziaVPN 版本，先导入 AmneziaWG 配置文件，
+再导入 VLESS 的 `amnezia.vpn` 或扫描全部带编号的原生二维码帧。
+请遵循 [Android 快速入门](../site/content/en/guide/index.md#4-connect-a-device)。
+分别记录远程 DNS（`socks5h`）与本地 IPv4 解析（`socks5`）的 HTTPS 结果；
+一项成功不能抵消另一项失败。记录 Reality 目标、固定的 Xray 版本、
+wheel 的确切提交/SHA256，以及身份认证后的实际流量结果。
+TLS 预检、`services-active`、`not-verified` 或“已连接”均不等于流量测试通过。
+更换目标或导出配置后须重新执行受影响的检查。
+
+通过 `yc` 创建的测试环境可以验证已安装 F-Layer 的来宾配置流程和真实客户端，
+但须单独记录：这不能验证公共 CLI 的云端 deploy/recovery/destroy 生命周期，
+完整流程仍需在适当环境中验收。旧候选版本的手机测试和清理成功不能替代新 wheel 的验收。
+
+## 验证重复部署与失败处理
+
+再次运行相同部署命令。云资源 ID 和客户端凭据必须保持不变；此前导入的两个配置仍须能够连接。记录结果时不要将私密配置内容复制到 issue。
+
+在已授权测试范围内进行可控中断。记录中断发生在云资源创建还是客户机安装阶段，保留私有项目及状态，并按相应文档恢复。对于中断的云操作，明确命令如下：
+
+```bash
+flayer vpn recover --project acceptance-vpn --allow-mutation --scope-confirm example-folder --format json
+flayer vpn deploy --project acceptance-vpn --allow-mutation --scope-confirm example-folder --format json
+```
+
+云资源创建后发生客户机安装失败，通常可保留项目并再次执行 `deploy`。客户机配置替换期间强制终止进程，可能需要文档所述的人工检查和修复；如果该路径没有实际成功验证，不得宣称可以自动恢复。任何失败或无法解释的结果都应保持为发布阻塞项。
+
+## 删除资源并记录结果
+
+断开客户端，然后删除准确的所属部署：
+
+```bash
+flayer vpn destroy --project acceptance-vpn --allow-mutation --scope-confirm example-folder --format json
+```
+
+在 Yandex Cloud 中确认此次部署记录的全部资源均已删除，包括保留地址和启动盘；无关资源必须保持完整。完成核实前保留私有状态。根据操作者的数据保留策略单独删除本地凭据；`destroy` 会保留本地文件供检查。
+
+Task 73 的验证记录必须包括候选版本身份、控制端与客户端版本、两种协议的连接/DNS/路由结果、重复部署结果、中断与恢复结果、清理确认以及任何限制。每项检查标注 `passed`、`failed` 或 `not run`。缺少验证记录不等于通过。
+
+只有操作者接受实际结果后才能关闭 Task 73。关闭 `release-2.0` 前先完成其余原生里程碑项，之后再准备带版本的变更记录、稳定 master 发布和附注标签 `v2.0.0`。若已配置 PyPI 发布，还必须验证从已发布包索引进行安装。
+'''
+sourceHash = "sha256:7829054e93a3664715e345bf91d5ea644602b72a5365bace1af37306ee18c945"
+reviewedTranslationHash = "sha256:a60de54498a85245bb6fd861f5e01a14ef90545eb0bec117f808536d1d441928"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-10T00:27:09Z"
+reviewRoles = ["editorial", "technical"]

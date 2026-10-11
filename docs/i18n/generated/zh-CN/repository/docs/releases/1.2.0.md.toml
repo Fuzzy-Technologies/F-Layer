@@ -1,0 +1,68 @@
+schemaVersion = 1
+sourcePath = "docs/releases/1.2.0.md"
+body = '''
+## 摘要
+
+**预发布。** 1.2.0 保持预发布状态；完成的文档更新见 1.2.1。
+
+F-Layer v1.2.0 使文档更便于检查和发布：每个受跟踪文件都在生成参考中有明确记录，EN/RU/ZH-CN 路由显示真实翻译状态。文档工具链包含 setuptools 安全修复。运行时和 CLI 行为与 1.1.0 保持兼容；俄文和简体中文内容仍明确标为草稿。
+
+## 变更内容
+
+### 新增
+
+- 文件和定义清单，区分已安装 wheel 的公开 API、渲染的仓库 Markdown、语言覆盖文件，以及仅作为源码提供的工程文件。
+- 完整的权威 Markdown 导航，包括政策、ADR 模板、架构、开发、发布指南和 GitHub PR 模板。
+- 可执行 CLI 与可调用协议的 API 覆盖、整个包的 wheel/源码一致性、精确锚点、本地链接检查和渲染页面可达性检查。
+- 已实现架构图与严格的多语言构建，包含本地化导航、草稿与回退提示，以及 18 个与原文绑定的 RU/ZH-CN 草稿页面。
+- 与原文绑定的翻译注册表，关联权威原文、语言草稿、评审角色和源哈希。
+
+### 修复
+
+- 修复从仓库评审资料到语言草稿源文件的生成链接，并为两种语言及保留的片段锚点提供回归检查。
+- 英文、俄文和简体中文快照安装说明均选择 `v1.2.0`，保留受支持的控制台及模块命令。
+
+### 调整
+
+- 自动发现现有覆盖类别中的新增文件；未知或含糊类别、wheel 内容缺失会使验证失败。
+- 翻译评审状态与构建成功分开记录。草稿和缺失翻译明确标注；自动化不会生成批准。
+
+### 安全
+
+- 文档工具链固定 setuptools `83.0.0`，修复 GHSA-h35f-9h28-mq5c / CVE-2026-59890，替换存在漏洞的 `80.9.0`。
+- 保留其他文档依赖版本、Hatchling 打包后端、静态 API 渲染和现有资源归属及修改授权边界。
+
+## 验证
+
+构建来源信息见 [GitHub 发布](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.2.0)。
+
+## 不兼容变更
+
+无。运行时 API、CLI 命令、所属资源状态约定和云服务行为均与 1.1.0 兼容。本发布增加文档和验证工具。
+
+## 从源码试用
+
+```bash
+git clone https://github.com/Fuzzy-Technologies/F-Layer.git
+cd F-Layer
+git checkout v1.2.0
+python -m pip install .
+flayer --help
+python -m flayer check --format json
+```
+
+需要 Python 3.11 或更新版本。也可以使用附带的 wheel 代替源码安装；上传包索引是由所有者单独控制的操作。
+
+## 说明
+
+- 全部 18 个编写的 RU/ZH-CN 页面仍为草稿。API 与未翻译的参考资料使用英文回退；已评审指南见 1.2.1。
+- 本发布不执行真实云部署或 PyPI 上传。
+- [详细变更记录](https://github.com/Fuzzy-Technologies/F-Layer/blob/v1.2.0/CHANGELOG.md)
+- [发布来源](https://github.com/Fuzzy-Technologies/F-Layer/milestone/3)
+'''
+sourceHash = "sha256:1934a742c1c473c406f6d857dcf02b2134f0bb2ad215ff313eec8314a4109154"
+reviewedTranslationHash = "sha256:5362efd0da3fb9fd03baa99cbc69fe7793bd2eb69de41470cbaecab673e3ccb9"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-11T00:25:19Z"
+reviewRoles = ["editorial", "technical"]

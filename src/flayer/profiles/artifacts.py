@@ -537,13 +537,22 @@ def ReadOwnedArtifactFile(
 
 def RemoveArtifactBundle(
     root: str | Path, identity: StackIdentity, *, kind: str, name: str,
+    expected_bundle: ArtifactBundle | None = None,
 ) -> bool:
-    """Remove only exact, unchanged owned files; never recurse or delete provider resources."""
+    """Remove unchanged owned files, optionally binding cleanup to exact caller-expected content."""
 
     if not isinstance(identity, StackIdentity) or not isinstance(kind, str) or kind not in {"server", "device"}:
         raise ArtifactError("Artifact removal requires explicit identity and bundle kind")
 
     ValidateName(name, "artifact name")
+
+    if expected_bundle is not None and (
+        not isinstance(expected_bundle, ArtifactBundle)
+        or expected_bundle.identity != identity or expected_bundle.kind != kind
+        or expected_bundle.name != name
+    ):
+        raise ArtifactError("Expected cleanup bundle must match the complete requested ownership")
+
     root_path = Path(root)
     bundle_name = f"{kind}-{name}"
 
@@ -564,6 +573,15 @@ def RemoveArtifactBundle(
                 try:
                     _RequireOwned(os.fstat(descriptor), directory=True)
                     snapshot = _ValidateManifest(descriptor, identity, kind, name)
+
+                    if expected_bundle is not None and (
+                        {item.name: item.content for item in snapshot.files}
+                        != {item.name: item.content for item in expected_bundle.files}
+                        or snapshot.manifest.sha256
+                        != hashlib.sha256(_Manifest(expected_bundle)).hexdigest()
+                    ):
+                        raise ArtifactError("Artifact bundle differs from the expected cleanup content")
+
                     _AssertDirectory(parent, bundle_name, descriptor)
 
                     for file in snapshot.files:

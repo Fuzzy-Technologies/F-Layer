@@ -1,9 +1,38 @@
 schemaVersion = 1
 sourcePath = "CHANGELOG.md"
-body = '''
-# F-Layer 变更记录
+body = '''# F-Layer 变更记录
 
 按时间记录 F-Layer 已发布的行为、兼容性、文档和安全边界。发布条目遵循 [ADR 0014](docs/adr/0014-scoped-releases-and-changelog.md)。
+
+# 主版本 2
+
+通过已安装的 CLI 部署自建 VPN 并管理设备配置。
+
+## 次版本 2.0
+
+### 补丁 0 — v2.0.0 — 2026-10-11
+
+#### 摘要
+
+- 从一份私有配置在自己的 Yandex Cloud 服务器上部署 AmneziaWG 3.1 与 VLESS Reality。导出现有设备配置及 AmneziaVPN 原生二维码，不修改密钥或服务器。
+
+#### 新增
+
+- 通过已安装的 CLI 初始化、准备、部署、检查状态、恢复和删除私有 VPN 项目。
+- 可配置服务器规格、管理访问、各设备标识，以及完整或分流的 IPv4 路由。
+- 两种协议的离线 `vpn export --qr`，验证产物归属、采用私有输出权限，并提供 AmneziaVPN 原生配置。
+- 带版本的扩展加载、与消费者无关的集成证据约定，以及限定范围的静态网站部署配置。
+- 英文、俄文和中文 VPN 快速入门及 AI 操作指南。
+
+#### 修复
+
+- 已安装软件包的部署/恢复，以及 SSH 身份和就绪状态检查。
+- AmneziaVPN 原生配置与二维码导入兼容性。
+
+#### 变更
+
+- 将自建 VPN 作为 2.0 的主要工作流，保留现有基础设施、SSH 网关及诊断命令。
+- 将一次性调查、运行日志和临时审计排除在发布文档及源码分发之外。
 
 # 主版本 1
 
@@ -129,9 +158,9 @@ body = '''
 
 [v1.2.0]: https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.2.0
 '''
-sourceHash = "sha256:ab3218bcdf51fa419db0520f4c886eb941148ad745f6177ff47101cec2e52bb8"
-reviewedTranslationHash = "sha256:21ce9e327102f9b773ca47d15a526632464e2175017bfcab7ed02447c1b53a96"
+sourceHash = "sha256:44d9347a8e782083a60f2943e766f88cb663d45f2e43a0b1276d9b239429aa25"
+reviewedTranslationHash = "sha256:038322ba511dbdc4328ed16483b6ad82a0eb7743fa43022892a38c29814692c1"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:54Z"
+reviewedAt = "2026-10-11T01:05:22Z"
 reviewRoles = ["editorial", "technical"]

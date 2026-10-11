@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   validate-release:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Check out the selected workflow revision and local tag history
@@ -92,7 +92,7 @@ jobs:
       vars.FLAYER_RELEASE_OWNER != '' &&
       github.actor == vars.FLAYER_RELEASE_OWNER &&
       inputs.confirm_publication == true
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       id-token: write

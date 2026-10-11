@@ -21,6 +21,7 @@ body = '''# F-Layer 变更记录
 - 通过已安装的 CLI 初始化、准备、部署、检查状态、恢复和删除私有 VPN 项目。
 - 可配置服务器规格、管理访问、各设备标识，以及完整或分流的 IPv4 路由。
 - 两种协议的离线 `vpn export --qr`，验证产物归属、采用私有输出权限，并提供 AmneziaVPN 原生配置。
+- 带版本的扩展加载、与消费者无关的集成证据约定，以及限定范围的静态网站部署配置。
 - 英文、俄文和中文 VPN 快速入门及 AI 操作指南。
 
 #### 修复
@@ -157,9 +158,9 @@ body = '''# F-Layer 变更记录
 
 [v1.2.0]: https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.2.0
 '''
-sourceHash = "sha256:d98af219bfb2b247ea335705f839aabf455a2ff35705b3d5ad380041e94d770e"
-reviewedTranslationHash = "sha256:7b79a874936fec72a26631d2df57c139b9709f4c2a6e583b089b46a27485e98e"
+sourceHash = "sha256:44d9347a8e782083a60f2943e766f88cb663d45f2e43a0b1276d9b239429aa25"
+reviewedTranslationHash = "sha256:038322ba511dbdc4328ed16483b6ad82a0eb7743fa43022892a38c29814692c1"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-11T01:00:56Z"
+reviewedAt = "2026-10-11T01:05:22Z"
 reviewRoles = ["editorial", "technical"]

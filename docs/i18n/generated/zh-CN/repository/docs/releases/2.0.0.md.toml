@@ -13,6 +13,7 @@ body = '''![Fuzzy Technologies 工程实验室中的 F-Layer 与 AIna](https://r
 - 私有 `project.toml` 工作流，可配置服务器资源、设备标识、访问规则，以及完整或分流的 IPv4 路由。
 - `flayer project init` 和 `flayer vpn prepare`、`deploy`、`status`、`recover`、`destroy`，云端修改需要明确的资源归属和授权。
 - 两种协议的离线 `flayer vpn export --qr`：导出现有设备文件及 AmneziaVPN 原生配置，不修改密钥或服务器。
+- 带版本的扩展加载、与消费者无关的集成证据约定，以及限定范围的静态网站部署配置。
 - 英文、俄文和中文 VPN 快速入门及 AI 操作指南。
 
 ### 修复
@@ -57,9 +58,9 @@ flayer check --format json
 - [详细变更记录](https://github.com/Fuzzy-Technologies/F-Layer/blob/v2.0.0/CHANGELOG.md)
 - [发布里程碑](https://github.com/Fuzzy-Technologies/F-Layer/milestone/4)
 '''
-sourceHash = "sha256:d52eca81bab451cb8ccf064c35b68522c4d7f63e1cf7c96afad60bb139d42c7d"
-reviewedTranslationHash = "sha256:8dce651d5a82648f1e3202a77383b08da55f58dc28d7e0e802b9c552ecc61567"
+sourceHash = "sha256:901f87fd8b68742532352c770b8ddd69422328a70e0429a919c7d1aec21f0f6b"
+reviewedTranslationHash = "sha256:39a4caa76e7a397a1d87a9f9570ed6c3b23b92fdcbd2a349c93610d22f736a46"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-11T01:00:56Z"
+reviewedAt = "2026-10-11T01:05:22Z"
 reviewRoles = ["editorial", "technical"]

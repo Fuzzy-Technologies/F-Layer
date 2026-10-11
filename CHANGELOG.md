@@ -25,6 +25,8 @@ Self-hosted VPN deployment and device profiles through the installed CLI.
   full or split IPv4 routing.
 - Offline `vpn export --qr` for both protocols with verified artifact ownership,
   private output permissions and native AmneziaVPN profiles.
+- Versioned extension loading, consumer-neutral integration evidence and a
+  bounded static-site deployment profile.
 - English, Russian and Chinese VPN Quick Start and AI operator guides.
 
 #### Fixed

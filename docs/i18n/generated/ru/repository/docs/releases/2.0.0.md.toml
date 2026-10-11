@@ -13,6 +13,7 @@ body = '''![F-Layer с АИной в инженерной лаборатории
 - Приватный проект `project.toml` с настройкой ресурсов сервера, идентификаторов устройств, правил доступа и полной либо раздельной маршрутизации IPv4.
 - `flayer project init` и `flayer vpn prepare`, `deploy`, `status`, `recover`, `destroy` с явной принадлежностью ресурсов и согласием на облачные изменения.
 - Локальный `flayer vpn export --qr` для обоих протоколов: экспорт существующих файлов устройств и нативных профилей AmneziaVPN без изменения ключей и сервера.
+- Версионная загрузка расширений, независимые от потребителя контракты интеграционных данных и профиль развёртывания статического сайта с ограниченной областью действия.
 - VPN Quick Start и инструкции для ИИ-оператора на английском, русском и китайском.
 
 ### Исправлено
@@ -57,9 +58,9 @@ flayer check --format json
 - [Подробная история изменений](https://github.com/Fuzzy-Technologies/F-Layer/blob/v2.0.0/CHANGELOG.md)
 - [Майлстоун релиза](https://github.com/Fuzzy-Technologies/F-Layer/milestone/4)
 '''
-sourceHash = "sha256:d52eca81bab451cb8ccf064c35b68522c4d7f63e1cf7c96afad60bb139d42c7d"
-reviewedTranslationHash = "sha256:72ff211fcb49d22417b492b0e0e97549e7c24a89f4e4f73de035c72a4b046d72"
+sourceHash = "sha256:901f87fd8b68742532352c770b8ddd69422328a70e0429a919c7d1aec21f0f6b"
+reviewedTranslationHash = "sha256:574729b420f9a5f55f6a2895f19f66c59c86d3267c040af4e199b39877fe4e3f"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-11T01:00:56Z"
+reviewedAt = "2026-10-11T01:05:22Z"
 reviewRoles = ["editorial", "technical"]

@@ -13,7 +13,7 @@ permissions:
 jobs:
   validate-artifacts:
     name: Release artifact validation
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Check out the exact reviewed revision and local tag history

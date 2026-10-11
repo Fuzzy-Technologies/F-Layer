@@ -1,13 +1,6 @@
 schemaVersion = 1
 sourcePath = "README.md"
-sourceHash = "sha256:b858b74b5034b1cb81603c70f38b197d0da3bc45263f314ed153887365ccfeb0"
-reviewedTranslationHash = "sha256:4f095232f88436ca68e541392ed24642943a66e29dd640a62da65ece56d17680"
-reviewer = "AIna-Dev"
-reviewerType = "ai"
-reviewedAt = "2026-10-10T20:56:54Z"
-reviewRoles = ["editorial", "technical"]
-body = '''
-# F-Layer
+body = '''# F-Layer
 
 ![Fuzzy Technologies 工程实验室中的 F-Layer 与 AIna](https://raw.githubusercontent.com/Fuzzy-Technologies/F-Layer/master/docs/site/content/en/assets/brand/FTech-card-F-Layer.png)
 
@@ -29,7 +22,7 @@ F-Layer 是一个开源基础设施自动化平台，面向需要可重复部署
 ## 您将获得什么
 
 - **自主掌控的 VPN：**创建虚拟机、网络、防火墙、公网 IP 和磁盘，安装两种服务，
-  并生成私密的客户端配置以及用于 VLESS 的 AmneziaVPN 二维码。
+  并导出私密的客户端配置及两种协议的 AmneziaVPN 原生二维码。
 - **可配置的资源：**在 `project.toml` 中选择 CPU、内存、平台、CPU 保证性能比例、
   磁盘大小以及 HDD/SSD 类型。
 - **统一的部署生命周期：**借助保留的本地状态检查部署、恢复中断的云操作，并删除自己的资源。
@@ -71,28 +64,16 @@ python3 -m venv ~/.venvs/flayer
 source ~/.venvs/flayer/bin/activate
 ```
 
-**发布状态：**2.0 正在准备发布。下方 PyPI 命令仅适用于 **2.0.0 发布之后**；
-在此之前，请按下文安装经过验证的候选 wheel。
-
-```bash
-python -m pip install "f-layer[vpn]==2.0.0"
-```
-
-<details markdown="1">
-<summary>正式发布前安装候选 wheel</summary>
-
-在 [GitHub Actions](https://github.com/Fuzzy-Technologies/F-Layer/actions/workflows/release-validation.yml)
-中，为所需提交选择成功的 **Release artifact validation** 运行。
-下载并解压 `flayer-release-preview` 和 `flayer-release-evidence`。
-核对提交以及 wheel 的 SHA-256 是否与 `build-evidence.json` 一致，然后在 wheel 所在目录运行：
+从 [v2.0.0 发布版本](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v2.0.0)
+下载 wheel 和 `build-evidence.json`。核对 wheel 的 SHA-256 与构建记录一致后，
+在下载目录安装：
 
 ```bash
 python -m pip install "./f_layer-2.0.0-py3-none-any.whl[vpn]"
 ```
 
-此命令只在本地安装所选构建，不会发布版本。
-
-</details>
+单独完成 PyPI 发布后，也可使用
+`python -m pip install "f-layer[vpn]==2.0.0"`。`vpn` 扩展安装本地密钥生成所需的密码学依赖。
 
 ```bash
 flayer --help
@@ -201,3 +182,9 @@ VPN CLI 尚不支持原地调整资源、添加或撤销设备及轮换密钥。
 [Apache 2.0](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/LICENSE) 许可证。
 参与贡献请先阅读 [CONTRIBUTING.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/CONTRIBUTING.md)。
 '''
+sourceHash = "sha256:345b3110787e1d01c16a3a9cedc222a153f2a0e88897e032bb94561befe4096e"
+reviewedTranslationHash = "sha256:e5e3231ed38cadf12fd0403a940d72273e0ca140918968a40cf9b09a03c650c3"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-11T01:00:56Z"
+reviewRoles = ["editorial", "technical"]

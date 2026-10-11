@@ -23,7 +23,7 @@ you pay the cloud provider for resources and traffic.
 ## What you get
 
 - **A VPN you control:** provision the VM, network, firewall, public IP and disk,
-  install both services, and generate private client profiles and VLESS AmneziaVPN QR codes.
+  install both services, and export private client profiles and native AmneziaVPN QR codes for both protocols.
 - **Configurable resources:** choose CPU, RAM, platform, CPU performance level,
   disk size and HDD/SSD type in `project.toml`.
 - **One deployment lifecycle:** inspect status, recover interrupted cloud
@@ -71,29 +71,18 @@ python3 -m venv ~/.venvs/flayer
 source ~/.venvs/flayer/bin/activate
 ```
 
-**Release status:** 2.0 is being prepared. The following PyPI command is for
-use **after 2.0.0 is published**; until then, use a verified candidate wheel below.
-
-```bash
-python -m pip install "f-layer[vpn]==2.0.0"
-```
-
-<details markdown="1">
-<summary>Install a candidate wheel before publication</summary>
-
-Choose a successful **Release artifact validation** run for the intended commit
-in [GitHub Actions](https://github.com/Fuzzy-Technologies/F-Layer/actions/workflows/release-validation.yml).
-Download and extract `flayer-release-preview` and `flayer-release-evidence`.
-Check the commit and wheel SHA-256 against `build-evidence.json`, then run from
-the directory containing the wheel:
+Download the wheel and `build-evidence.json` from the
+[v2.0.0 release](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v2.0.0).
+Check the wheel SHA-256 against the build evidence, then install from the
+download directory:
 
 ```bash
 python -m pip install "./f_layer-2.0.0-py3-none-any.whl[vpn]"
 ```
 
-This installs the selected build locally and does not publish a release.
-
-</details>
+After the separate PyPI publication, you can also install with
+`python -m pip install "f-layer[vpn]==2.0.0"`. The `vpn` extra installs the
+cryptography dependency needed for local key generation.
 
 ```bash
 flayer --help

@@ -3,6 +3,42 @@
 A chronological record of shipped F-Layer behavior, compatibility, documentation,
 and security boundaries. Release entries follow [ADR 0014](docs/adr/0014-scoped-releases-and-changelog.md).
 
+# Major 2
+
+Self-hosted VPN deployment and device profiles through the installed CLI.
+
+## Minor 2.0
+
+### Patch 0 — v2.0.0 — 2026-10-11
+
+#### Digest
+
+- Deploy AmneziaWG 3.1 and VLESS Reality on your own Yandex Cloud server from
+  one private configuration. Export existing device profiles and native
+  AmneziaVPN QR codes without changing keys or the server.
+
+#### Added
+
+- Private VPN project initialization, preparation, deployment, status, recovery
+  and removal through the installed CLI.
+- Configurable server sizing, management access, per-device identities and
+  full or split IPv4 routing.
+- Offline `vpn export --qr` for both protocols with verified artifact ownership,
+  private output permissions and native AmneziaVPN profiles.
+- English, Russian and Chinese VPN Quick Start and AI operator guides.
+
+#### Fixed
+
+- Installed-package deployment/recovery and SSH identity/readiness checks.
+- Native AmneziaVPN profile and QR import compatibility.
+
+#### Changed
+
+- Make self-hosted VPN the main 2.0 workflow while retaining existing
+  infrastructure, SSH gateway and diagnostic commands.
+- Keep one-off investigations, operational logs and transient audits out of
+  published documentation and release source archives.
+
 # Major 1
 
 The first versioned infrastructure foundation. Operational validation against a

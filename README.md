@@ -72,16 +72,16 @@ source ~/.venvs/flayer/bin/activate
 ```
 
 Download the wheel and `build-evidence.json` from the
-[v2.0.0 release](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v2.0.0).
+[v2.0.1 release](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v2.0.1).
 Check the wheel SHA-256 against the build evidence, then install from the
 download directory:
 
 ```bash
-python -m pip install "./f_layer-2.0.0-py3-none-any.whl[vpn]"
+python -m pip install "./f_layer-2.0.1-py3-none-any.whl[vpn]"
 ```
 
 After the separate PyPI publication, you can also install with
-`python -m pip install "f-layer[vpn]==2.0.0"`. The `vpn` extra installs the
+`python -m pip install "f-layer[vpn]==2.0.1"`. The `vpn` extra installs the
 cryptography dependency needed for local key generation.
 
 ```bash

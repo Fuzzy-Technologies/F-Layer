@@ -74,15 +74,15 @@ source ~/.venvs/flayer/bin/activate
 ```
 
 Скачайте wheel и `build-evidence.json` из
-[релиза v2.0.0](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v2.0.0).
+[релиза v2.0.1](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v2.0.1).
 Сверьте SHA-256 wheel со сведениями о сборке, затем установите из каталога загрузки:
 
 ```bash
-python -m pip install "./f_layer-2.0.0-py3-none-any.whl[vpn]"
+python -m pip install "./f_layer-2.0.1-py3-none-any.whl[vpn]"
 ```
 
 После отдельной публикации PyPI также доступна команда
-`python -m pip install "f-layer[vpn]==2.0.0"`. Дополнение `vpn` устанавливает
+`python -m pip install "f-layer[vpn]==2.0.1"`. Дополнение `vpn` устанавливает
 криптографическую зависимость для локальной генерации ключей.
 
 ```bash
@@ -199,9 +199,9 @@ flayer vpn destroy --project ~/flayer-vpn --allow-mutation --scope-confirm YOUR_
 [Apache 2.0](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/LICENSE).
 Для участия в разработке начните с [CONTRIBUTING.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/CONTRIBUTING.md).
 '''
-sourceHash = "sha256:345b3110787e1d01c16a3a9cedc222a153f2a0e88897e032bb94561befe4096e"
-reviewedTranslationHash = "sha256:7c0bf5d7bf33c785f7d8b76b6852268e72a9b2bc0b4418c9ebc5d1e2eda72a40"
+sourceHash = "sha256:27a0d68eacc2a63d58236926099fa814b0a0923f7a73786472a473ee9dacd4a1"
+reviewedTranslationHash = "sha256:77ce4afa66a41588469193972a7af45f41e6f10a50f38eb607e39fbbd9bfefc2"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-11T01:00:56Z"
+reviewedAt = "2026-10-11T01:53:25Z"
 reviewRoles = ["editorial", "technical"]

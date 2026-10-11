@@ -64,16 +64,16 @@ python3 -m venv ~/.venvs/flayer
 source ~/.venvs/flayer/bin/activate
 ```
 
-从 [v2.0.0 发布版本](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v2.0.0)
+从 [v2.0.1 发布版本](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v2.0.1)
 下载 wheel 和 `build-evidence.json`。核对 wheel 的 SHA-256 与构建记录一致后，
 在下载目录安装：
 
 ```bash
-python -m pip install "./f_layer-2.0.0-py3-none-any.whl[vpn]"
+python -m pip install "./f_layer-2.0.1-py3-none-any.whl[vpn]"
 ```
 
 单独完成 PyPI 发布后，也可使用
-`python -m pip install "f-layer[vpn]==2.0.0"`。`vpn` 扩展安装本地密钥生成所需的密码学依赖。
+`python -m pip install "f-layer[vpn]==2.0.1"`。`vpn` 扩展安装本地密钥生成所需的密码学依赖。
 
 ```bash
 flayer --help
@@ -182,9 +182,9 @@ VPN CLI 尚不支持原地调整资源、添加或撤销设备及轮换密钥。
 [Apache 2.0](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/LICENSE) 许可证。
 参与贡献请先阅读 [CONTRIBUTING.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/CONTRIBUTING.md)。
 '''
-sourceHash = "sha256:345b3110787e1d01c16a3a9cedc222a153f2a0e88897e032bb94561befe4096e"
-reviewedTranslationHash = "sha256:e5e3231ed38cadf12fd0403a940d72273e0ca140918968a40cf9b09a03c650c3"
+sourceHash = "sha256:27a0d68eacc2a63d58236926099fa814b0a0923f7a73786472a473ee9dacd4a1"
+reviewedTranslationHash = "sha256:fb785a7fcc1c2f2a1c82583d927012904aaf2f9360bd9afe3735378154ab755b"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-11T01:00:56Z"
+reviewedAt = "2026-10-11T01:53:25Z"
 reviewRoles = ["editorial", "technical"]

@@ -10,6 +10,17 @@ body = '''# F-Layer 变更记录
 
 ## 次版本 2.0
 
+### 补丁 1 — v2.0.1 — 2026-10-11
+
+#### 摘要
+
+- 完成 2.0 自建 VPN 发布，确保软件包发布兼容并保留带注释的发布标签。
+
+#### 修复
+
+- 使用更新且固定 SHA 的 PyPI action 发布当前的软件包元数据。
+- 在 CI 检出源码后、发布验证前恢复远程带注释的标签。
+
 ### 补丁 0 — v2.0.0 — 2026-10-11
 
 #### 摘要
@@ -158,9 +169,9 @@ body = '''# F-Layer 变更记录
 
 [v1.2.0]: https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.2.0
 '''
-sourceHash = "sha256:44d9347a8e782083a60f2943e766f88cb663d45f2e43a0b1276d9b239429aa25"
-reviewedTranslationHash = "sha256:038322ba511dbdc4328ed16483b6ad82a0eb7743fa43022892a38c29814692c1"
+sourceHash = "sha256:39bea3c43e0b12d06865bd7575ced2ed3bdddbdc3c9ec811f30ad73d6c8747e2"
+reviewedTranslationHash = "sha256:55ed6c4e46f86111577e403a1aaa2f5d4d3b88eeed31bda1c777b537813aacc6"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-11T01:05:22Z"
+reviewedAt = "2026-10-11T01:53:25Z"
 reviewRoles = ["editorial", "technical"]

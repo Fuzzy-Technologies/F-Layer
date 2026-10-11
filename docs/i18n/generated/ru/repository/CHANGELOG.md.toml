@@ -10,6 +10,18 @@ body = '''# История изменений F-Layer
 
 ## Минорная версия 2.0
 
+### Исправление 1 — v2.0.1 — 2026-10-11
+
+#### Кратко
+
+- Завершён выпуск собственного VPN версии 2.0 с совместимой публикацией пакета
+  и сохранением аннотированных релизных тегов.
+
+#### Исправлено
+
+- Публикация актуальных метаданных пакета через обновлённый PyPI action с закреплённым SHA.
+- Восстановление аннотированных удалённых тегов после получения исходников в CI перед проверкой релиза.
+
 ### Исправление 0 — v2.0.0 — 2026-10-11
 
 #### Кратко
@@ -158,9 +170,9 @@ body = '''# История изменений F-Layer
 
 [v1.2.0]: https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v1.2.0
 '''
-sourceHash = "sha256:44d9347a8e782083a60f2943e766f88cb663d45f2e43a0b1276d9b239429aa25"
-reviewedTranslationHash = "sha256:40f620940fad67eef951ef31ee2841d29da9432a083da8d3c985314a5ac7136e"
+sourceHash = "sha256:39bea3c43e0b12d06865bd7575ced2ed3bdddbdc3c9ec811f30ad73d6c8747e2"
+reviewedTranslationHash = "sha256:b89a912eaac3fa7a5d2444dbbfa8d70b9e3ff85495124751ea69db124e604c1e"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-11T01:05:22Z"
+reviewedAt = "2026-10-11T01:53:25Z"
 reviewRoles = ["editorial", "technical"]

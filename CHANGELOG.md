@@ -9,6 +9,18 @@ Self-hosted VPN deployment and device profiles through the installed CLI.
 
 ## Minor 2.0
 
+### Patch 1 — v2.0.1 — 2026-10-11
+
+#### Digest
+
+- Finalize the 2.0 self-hosted VPN release with compatible package publication
+  and preserved annotated release tags.
+
+#### Fixed
+
+- Publish current package metadata through the updated SHA-pinned PyPI action.
+- Restore annotated remote tags after CI checkout before release validation.
+
 ### Patch 0 — v2.0.0 — 2026-10-11
 
 #### Digest

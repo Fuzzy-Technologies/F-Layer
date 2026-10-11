@@ -1,0 +1,67 @@
+schemaVersion = 1
+sourcePath = "docs/releases/2.0.1.md"
+body = '''![Fuzzy Technologies 工程实验室中的 F-Layer 与 AIna](https://raw.githubusercontent.com/Fuzzy-Technologies/F-Layer/v2.0.1/docs/site/content/en/assets/brand/FTech-card-F-Layer.png)
+
+## 摘要
+
+从一个私有项目在 Yandex Cloud 部署自己的 VPN：同一台服务器运行 AmneziaWG 3.1 和 VLESS Reality，提供设备配置及 AmneziaVPN 原生二维码。通过已安装的 F-Layer CLI 管理部署、状态、恢复和删除。云账户、服务器和密钥始终由您掌控。
+
+## 变更内容
+
+### 新增
+
+- 私有 `project.toml` 工作流，可配置服务器资源、设备标识、访问规则，以及完整或分流的 IPv4 路由。
+- `flayer project init` 和 `flayer vpn prepare`、`deploy`、`status`、`recover`、`destroy`，云端修改需要明确的资源归属和授权。
+- 两种协议的离线 `flayer vpn export --qr`：导出现有设备文件及 AmneziaVPN 原生配置，不修改密钥或服务器。
+- 带版本的扩展加载、与消费者无关的集成证据约定，以及限定范围的静态网站部署配置。
+- 英文、俄文和中文 VPN 快速入门及 AI 操作指南。
+
+### 修复
+
+- 发布标签验证及采用当前软件包元数据的 PyPI 发布。
+- 已安装软件包的部署与恢复、SSH 服务器身份验证，以及客机就绪状态报告。
+- AmneziaVPN 配置封装与二维码导入兼容性。
+
+### 变更
+
+- 使用同一个 CLI 准备、部署和导出设备配置。
+- 将一次性调查及运行日志排除在发布文档之外。
+
+## 验证
+
+可复现且经过审计的 wheel 和源码分发附有 `build-evidence.json`。自动检查涵盖 CLI、部署约定、故障处理、隔离的分发安装及三语言文档。
+
+所有者接受了限定范围的实机冒烟测试：Android 上两种协议均可使用互联网、普通 YouTube 和 Speedtest；两种原生二维码均可扫描并导入 AmneziaVPN。部署与导出在不同的已识别候选版本上验证，并非对同一最终构建进行完整验收。
+
+## 不兼容变更
+
+现有 CLI 命令和运行时 API 无不兼容变更。VPN 命令为新增功能。
+
+## 从源码试用
+
+```bash
+git clone --branch v2.0.1 https://github.com/Fuzzy-Technologies/F-Layer.git
+cd F-Layer
+python -m pip install ".[vpn]"
+flayer --help
+flayer check --format json
+```
+
+需要 Python 3.11+。VPN 部署需要 Linux/WSL、OpenSSH 及已认证的 Yandex Cloud CLI。只有源码检出需要 Git；发布的 wheel 可直接安装。
+
+## 说明
+
+- 支持 IPv4 路由。请在客户端禁用 IPv6，以防绕过隧道。
+- 实机测试中，两种协议均无法使用 Shorts。Telegram 性能尚未确定。DNS 泄漏、出口 IP 一致性、IPv6 绕过、完整恢复/重启验收及实机清理尚未验证。
+- 进一步加固和更全面的实机验收推迟到后续版本。
+- PyPI 发布独立于本次 GitHub Release；在 PyPI 上出现 `f-layer` 2.0.1 之前，请使用附带的 wheel。
+- [文档](https://fuzzy-technologies.github.io/F-Layer/)
+- [详细变更记录](https://github.com/Fuzzy-Technologies/F-Layer/blob/v2.0.1/CHANGELOG.md)
+- [发布里程碑](https://github.com/Fuzzy-Technologies/F-Layer/milestone/4)
+'''
+sourceHash = "sha256:2e53baed2a9a3dbf9a061bf58d398cf5928f696e0a4aca8337d7a0557a1ad768"
+reviewedTranslationHash = "sha256:1452f85a4b35569781f980ac00e102a06742b9266ab31f82017bb0aab76b10a8"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-11T01:53:25Z"
+reviewRoles = ["editorial", "technical"]

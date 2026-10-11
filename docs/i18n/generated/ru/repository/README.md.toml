@@ -1,13 +1,6 @@
 schemaVersion = 1
 sourcePath = "README.md"
-sourceHash = "sha256:b858b74b5034b1cb81603c70f38b197d0da3bc45263f314ed153887365ccfeb0"
-reviewedTranslationHash = "sha256:5a3a9fc5e54d27c8af1ebfd23d548d02bfa085680ea55398b09e0ade2b524207"
-reviewer = "AIna-Dev"
-reviewerType = "ai"
-reviewedAt = "2026-10-10T20:56:54Z"
-reviewRoles = ["editorial", "technical"]
-body = '''
-# F-Layer
+body = '''# F-Layer
 
 ![F-Layer и АИна в инженерной лаборатории Fuzzy Technologies](https://raw.githubusercontent.com/Fuzzy-Technologies/F-Layer/master/docs/site/content/en/assets/brand/FTech-card-F-Layer.png)
 
@@ -32,7 +25,7 @@ F-Layer — открытая платформа автоматизации ин�
 ## Что вы получаете
 
 - **VPN под вашим управлением:** создание ВМ, сети, межсетевого экрана, публичного IP
-  и диска, установка обоих сервисов, приватные профили клиентов и QR-коды AmneziaVPN для VLESS.
+  и диска, установка обоих сервисов, экспорт приватных профилей клиентов и нативных QR-кодов AmneziaVPN для обоих протоколов.
 - **Настраиваемые ресурсы:** CPU, RAM, платформа, гарантированная доля CPU,
   размер и тип диска HDD/SSD задаются в `project.toml`.
 - **Единый жизненный цикл:** проверка состояния, восстановление прерванных облачных
@@ -80,28 +73,17 @@ python3 -m venv ~/.venvs/flayer
 source ~/.venvs/flayer/bin/activate
 ```
 
-**Статус релиза:** версия 2.0 готовится к выпуску. Команда PyPI ниже предназначена
-для использования **после публикации 2.0.0**; до этого установите проверенный тестовый wheel.
+Скачайте wheel и `build-evidence.json` из
+[релиза v2.0.1](https://github.com/Fuzzy-Technologies/F-Layer/releases/tag/v2.0.1).
+Сверьте SHA-256 wheel со сведениями о сборке, затем установите из каталога загрузки:
 
 ```bash
-python -m pip install "f-layer[vpn]==2.0.0"
+python -m pip install "./f_layer-2.0.1-py3-none-any.whl[vpn]"
 ```
 
-<details markdown="1">
-<summary>Установка тестового wheel до публикации</summary>
-
-Выберите успешный запуск **Release artifact validation** для нужного коммита
-в [GitHub Actions](https://github.com/Fuzzy-Technologies/F-Layer/actions/workflows/release-validation.yml).
-Скачайте и распакуйте `flayer-release-preview` и `flayer-release-evidence`.
-Сверьте коммит и SHA-256 wheel с `build-evidence.json`, затем выполните в каталоге с wheel:
-
-```bash
-python -m pip install "./f_layer-2.0.0-py3-none-any.whl[vpn]"
-```
-
-Команда устанавливает выбранную сборку локально и не публикует релиз.
-
-</details>
+После отдельной публикации PyPI также доступна команда
+`python -m pip install "f-layer[vpn]==2.0.1"`. Дополнение `vpn` устанавливает
+криптографическую зависимость для локальной генерации ключей.
 
 ```bash
 flayer --help
@@ -217,3 +199,9 @@ flayer vpn destroy --project ~/flayer-vpn --allow-mutation --scope-confirm YOUR_
 [Apache 2.0](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/LICENSE).
 Для участия в разработке начните с [CONTRIBUTING.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/CONTRIBUTING.md).
 '''
+sourceHash = "sha256:27a0d68eacc2a63d58236926099fa814b0a0923f7a73786472a473ee9dacd4a1"
+reviewedTranslationHash = "sha256:77ce4afa66a41588469193972a7af45f41e6f10a50f38eb607e39fbbd9bfefc2"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-11T01:53:25Z"
+reviewRoles = ["editorial", "technical"]

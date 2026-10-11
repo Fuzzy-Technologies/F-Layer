@@ -16,7 +16,7 @@ permissions:
 jobs:
   close-linked-tasks:
     if: github.event.pull_request.merged == true
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}

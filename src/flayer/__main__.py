@@ -86,6 +86,14 @@ def Parser() -> argparse.ArgumentParser:
         if action == "recover":
             child.add_argument("--rollback", action="store_true")
 
+    export = vpn_actions.add_parser("export", help="Export existing device files without cloud access")
+    export.add_argument("--project", required=True, help="Private project directory")
+    export.add_argument("--device", required=True, help="One declared device ID")
+    export.add_argument("--protocol", required=True, choices=("amneziawg", "vless-reality"))
+    export.add_argument("--output", required=True, help="Separate private export root")
+    export.add_argument("--qr", action="store_true", help="Include numbered native AmneziaVPN QR SVGs")
+    export.add_argument("--format", choices=("text", "json"), default="text")
+
     return parser
 
 
@@ -154,15 +162,25 @@ def _VpnProject(args: argparse.Namespace) -> int:
 
             return 0
 
-        report = RunVpnProject(
-            LoadVpnProject(args.project), args.action,
-            allow_mutation=getattr(args, "allow_mutation", False),
-            scope_confirm=getattr(args, "scope_confirm", ""),
-            rollback=getattr(args, "rollback", False),
-        )
+        project = LoadVpnProject(args.project)
+
+        if args.action == "export":
+            from .vpn_export import ExportVpnDevice
+
+            report = ExportVpnDevice(project, args.device, args.protocol, args.output, qr=args.qr)
+
+        else:
+            report = RunVpnProject(
+                project, args.action,
+                allow_mutation=getattr(args, "allow_mutation", False),
+                scope_confirm=getattr(args, "scope_confirm", ""),
+                rollback=getattr(args, "rollback", False),
+            )
 
     except (ContractError, ProviderError, OSError) as error:
         message = str(error) if isinstance(error, VpnError) else (
+            "Device export failed. Verify existing source manifests and private output permissions; source files were not changed."
+            if args.action == "export" else
             "VPN operation failed. Check private artifact ownership, cloud access, and retained state before retrying."
         )
         payload = {"action": args.action, "status": "failed", "message": message,

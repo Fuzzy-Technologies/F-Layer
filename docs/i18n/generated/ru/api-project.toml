@@ -307,3 +307,23 @@ reviewer = "AIna-Dev"
 reviewerType = "ai"
 reviewedAt = "2026-10-09T08:02:40.344626+00:00"
 reviewRoles = ["editorial", "technical"]
+[[units]]
+id = "module:flayer.vpn_export"
+sourcePath = "src/flayer/vpn_export.py"
+sourceHash = "sha256:9db541146a316178d72992a111c21b9ae92d24ec8b0e48924733929743c36cea"
+body = "Локальный экспорт существующих клиентских файлов VPN с проверкой принадлежности и нативными профилями AmneziaVPN."
+reviewedTranslationHash = "sha256:23430f15937ee8c1a8ca7018ca7575ec35fcb7764c5c3cac6fbe0f620d641926"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-11T00:07:22.749054+00:00"
+reviewRoles = ["editorial", "technical"]
+[[units]]
+id = "symbol:flayer.vpn_export.ExportVpnDevice"
+sourcePath = "src/flayer/vpn_export.py"
+sourceHash = "sha256:a5f203fd253d63501b5733eb5df7b7acbdb86c9c94b0efd7938b398b36b979cf"
+body = "Копирует файлы одного устройства после проверки манифеста, без обращений к облаку, генерации ключей или записи в исходные файлы."
+reviewedTranslationHash = "sha256:01a0b8bdf9ab862809db78265ca86a49784b7c9b8b7603a9af20c2cc17df411e"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-11T00:07:22.749054+00:00"
+reviewRoles = ["editorial", "technical"]

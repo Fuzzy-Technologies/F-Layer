@@ -307,3 +307,23 @@ reviewer = "AIna-Dev"
 reviewerType = "ai"
 reviewedAt = "2026-10-09T08:02:40.345159+00:00"
 reviewRoles = ["editorial", "technical"]
+[[units]]
+id = "module:flayer.vpn_export"
+sourcePath = "src/flayer/vpn_export.py"
+sourceHash = "sha256:9db541146a316178d72992a111c21b9ae92d24ec8b0e48924733929743c36cea"
+body = "离线导出现有且归属已验证的 VPN 设备文件及 AmneziaVPN 原生配置。"
+reviewedTranslationHash = "sha256:618425e8d23aa038d118e9737a3637c7c56cabaf6e890e74cc6d4fbb4e765518"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-11T00:07:22.749054+00:00"
+reviewRoles = ["editorial", "technical"]
+[[units]]
+id = "symbol:flayer.vpn_export.ExportVpnDevice"
+sourcePath = "src/flayer/vpn_export.py"
+sourceHash = "sha256:a5f203fd253d63501b5733eb5df7b7acbdb86c9c94b0efd7938b398b36b979cf"
+body = "验证归属清单后复制一个设备的文件，不调用云端、不生成密钥，也不修改源文件。"
+reviewedTranslationHash = "sha256:5da0317fdcc86463bdd9f8f643c41e1f7585cd1a1adf60f8b864f03c11d3c098"
+reviewer = "AIna-Dev"
+reviewerType = "ai"
+reviewedAt = "2026-10-11T00:07:22.749054+00:00"
+reviewRoles = ["editorial", "technical"]

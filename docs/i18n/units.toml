@@ -249,99 +249,99 @@ reviewedTranslationHash = "sha256:912720495e1c9ef67b12de60e8cc84a26700f69b6bf136
 id = "page:guide"
 kind = "page"
 sourcePath = "docs/site/content/en/guide/index.md"
-sourceHash = "sha256:fcb869a2d88ed3e9ad02715b22cafdedbdb3396b82e10a84c7fac4d69f185135"
+sourceHash = "sha256:5aa0071a04a0edc1375d35ecd5cba970c23478e1f5cacdc22f6e2a5e81312e66"
 reviewClass = "technical"
 
 [units.translations.ru]
 state = "approved"
 path = "docs/site/content/ru/guide/index.md"
-basedOnSourceHash = "sha256:fcb869a2d88ed3e9ad02715b22cafdedbdb3396b82e10a84c7fac4d69f185135"
+basedOnSourceHash = "sha256:5aa0071a04a0edc1375d35ecd5cba970c23478e1f5cacdc22f6e2a5e81312e66"
 
 [[units.translations.ru.reviews]]
 role = "editorial"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-10T22:13:12Z"
-reviewedSourceHash = "sha256:fcb869a2d88ed3e9ad02715b22cafdedbdb3396b82e10a84c7fac4d69f185135"
-reviewedTranslationHash = "sha256:86edbf83163fbbc7d749c992d9a8761d3416bd5fdb36722b6f4d4cab28e98794"
+reviewedAt = "2026-10-11T00:07:34Z"
+reviewedSourceHash = "sha256:5aa0071a04a0edc1375d35ecd5cba970c23478e1f5cacdc22f6e2a5e81312e66"
+reviewedTranslationHash = "sha256:88b70079343548406db8ea8f7075fde8d0a40bbaab6d0e82e3afa1d8893a4f86"
 
 [[units.translations.ru.reviews]]
 role = "technical"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-10T22:13:12Z"
-reviewedSourceHash = "sha256:fcb869a2d88ed3e9ad02715b22cafdedbdb3396b82e10a84c7fac4d69f185135"
-reviewedTranslationHash = "sha256:86edbf83163fbbc7d749c992d9a8761d3416bd5fdb36722b6f4d4cab28e98794"
+reviewedAt = "2026-10-11T00:07:34Z"
+reviewedSourceHash = "sha256:5aa0071a04a0edc1375d35ecd5cba970c23478e1f5cacdc22f6e2a5e81312e66"
+reviewedTranslationHash = "sha256:88b70079343548406db8ea8f7075fde8d0a40bbaab6d0e82e3afa1d8893a4f86"
 
 [units.translations.zh-CN]
 state = "approved"
 path = "docs/site/content/zh-CN/guide/index.md"
-basedOnSourceHash = "sha256:fcb869a2d88ed3e9ad02715b22cafdedbdb3396b82e10a84c7fac4d69f185135"
+basedOnSourceHash = "sha256:5aa0071a04a0edc1375d35ecd5cba970c23478e1f5cacdc22f6e2a5e81312e66"
 
 [[units.translations.zh-CN.reviews]]
 role = "editorial"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-10T22:13:12Z"
-reviewedSourceHash = "sha256:fcb869a2d88ed3e9ad02715b22cafdedbdb3396b82e10a84c7fac4d69f185135"
-reviewedTranslationHash = "sha256:c8cd96d7217cea6fbde648480c01b6f529d94d7ad546dce8501a11e28a721b02"
+reviewedAt = "2026-10-11T00:07:34Z"
+reviewedSourceHash = "sha256:5aa0071a04a0edc1375d35ecd5cba970c23478e1f5cacdc22f6e2a5e81312e66"
+reviewedTranslationHash = "sha256:be57640939b1bf87e67d705e65a8fc2e4d2f496ae4614a9aeacf3469d557d5de"
 
 [[units.translations.zh-CN.reviews]]
 role = "technical"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-10T22:13:12Z"
-reviewedSourceHash = "sha256:fcb869a2d88ed3e9ad02715b22cafdedbdb3396b82e10a84c7fac4d69f185135"
-reviewedTranslationHash = "sha256:c8cd96d7217cea6fbde648480c01b6f529d94d7ad546dce8501a11e28a721b02"
+reviewedAt = "2026-10-11T00:07:34Z"
+reviewedSourceHash = "sha256:5aa0071a04a0edc1375d35ecd5cba970c23478e1f5cacdc22f6e2a5e81312e66"
+reviewedTranslationHash = "sha256:be57640939b1bf87e67d705e65a8fc2e4d2f496ae4614a9aeacf3469d557d5de"
 
 [[units]]
 id = "page:guide.cli"
 kind = "page"
 sourcePath = "docs/site/content/en/guide/cli.md"
-sourceHash = "sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc"
+sourceHash = "sha256:3ca6e340919869c57256c58452d42f60d2fba4ba44eec3b5154128eabfd0869e"
 reviewClass = "technical"
 
 [units.translations.ru]
 state = "approved"
 path = "docs/site/content/ru/guide/cli.md"
-basedOnSourceHash = "sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc"
+basedOnSourceHash = "sha256:3ca6e340919869c57256c58452d42f60d2fba4ba44eec3b5154128eabfd0869e"
 
 [[units.translations.ru.reviews]]
 role = "editorial"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:31:37Z"
-reviewedSourceHash = "sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc"
-reviewedTranslationHash = "sha256:c0374f9b34208ecfe751d33b06821e01ca406d7ea3f2b89eaadca5a92e3c8173"
+reviewedAt = "2026-10-11T00:07:34Z"
+reviewedSourceHash = "sha256:3ca6e340919869c57256c58452d42f60d2fba4ba44eec3b5154128eabfd0869e"
+reviewedTranslationHash = "sha256:cd1af35c6a8d7950d0567b08f713026ebc34638755b1efb04671f98f0774194a"
 
 [[units.translations.ru.reviews]]
 role = "technical"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:31:37Z"
-reviewedSourceHash = "sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc"
-reviewedTranslationHash = "sha256:c0374f9b34208ecfe751d33b06821e01ca406d7ea3f2b89eaadca5a92e3c8173"
+reviewedAt = "2026-10-11T00:07:34Z"
+reviewedSourceHash = "sha256:3ca6e340919869c57256c58452d42f60d2fba4ba44eec3b5154128eabfd0869e"
+reviewedTranslationHash = "sha256:cd1af35c6a8d7950d0567b08f713026ebc34638755b1efb04671f98f0774194a"
 
 [units.translations.zh-CN]
 state = "approved"
 path = "docs/site/content/zh-CN/guide/cli.md"
-basedOnSourceHash = "sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc"
+basedOnSourceHash = "sha256:3ca6e340919869c57256c58452d42f60d2fba4ba44eec3b5154128eabfd0869e"
 
 [[units.translations.zh-CN.reviews]]
 role = "editorial"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
-reviewedSourceHash = "sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc"
-reviewedTranslationHash = "sha256:cc00bedcdfce18dd336dae640c345eb7e4063f10e34f1a03cc5644501fa737f5"
+reviewedAt = "2026-10-11T00:07:34Z"
+reviewedSourceHash = "sha256:3ca6e340919869c57256c58452d42f60d2fba4ba44eec3b5154128eabfd0869e"
+reviewedTranslationHash = "sha256:cf6152667224fbc4430161a83e944b2bd1612d3889c071deebf334982b0c449d"
 
 [[units.translations.zh-CN.reviews]]
 role = "technical"
 reviewer = "AIna-Dev"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
-reviewedSourceHash = "sha256:5fb769af7ee418e6969f064600c5249fdbf489c2cf663a0a2851c07447c69fbc"
-reviewedTranslationHash = "sha256:cc00bedcdfce18dd336dae640c345eb7e4063f10e34f1a03cc5644501fa737f5"
+reviewedAt = "2026-10-11T00:07:34Z"
+reviewedSourceHash = "sha256:3ca6e340919869c57256c58452d42f60d2fba4ba44eec3b5154128eabfd0869e"
+reviewedTranslationHash = "sha256:cf6152667224fbc4430161a83e944b2bd1612d3889c071deebf334982b0c449d"
 
 [[units]]
 id = "page:guide.configuration"

@@ -18,7 +18,7 @@ from flayer.__main__ import Main
 from flayer.profiles import _amnezia_export as native
 from flayer.profiles.artifacts import ArtifactError
 from flayer.profiles.vpn import VpnDevice, VpnError, VpnRoutes
-from flayer.vpn_export import ExportVpnDevice
+from flayer.vpn_export import ExportVpnDevice, _AllowQuicVlessClient, _FragmentVlessClient
 from flayer.vpn_project import VpnProject
 
 
@@ -322,6 +322,103 @@ def test_ChangingExportSelectionDoesNotModifyExistingFiles(tmp_path: Path) -> No
     assert Snapshot(tmp_path) == before
 
 
+@pytest.mark.parametrize("mode", ["full", "split"])
+@pytest.mark.parametrize("qr", [False, True])
+def test_FragmentExportPreservesAuthenticationAndPolicy(tmp_path: Path, mode: str, qr: bool) -> None:
+    """Carry the exact derived client in the native envelope without changing the project."""
+
+    project = Deployed(tmp_path, mode)
+    before = Snapshot(project.root)
+    source = project.Artifacts / "device-laptop-vless-reality"
+    original = json.loads((source / "client.json").read_bytes())
+    output = tmp_path / "fragment-export"
+    report = ExportVpnDevice(project, "laptop", "vless-reality", output, tls_fragment=True, qr=qr)
+    destination = Path(report.client_exports[0])
+    client_bytes = (destination / "client.json").read_bytes()
+    client = json.loads(client_bytes)
+    _, profile = Decode((destination / "amnezia.vpn").read_bytes())
+
+    assert Snapshot(project.root) == before
+    assert client["dns"] == original["dns"] and client["routing"] == original["routing"]
+    assert client["inbounds"] == original["inbounds"]
+    assert client["outbounds"][0]["settings"] == original["outbounds"][0]["settings"]
+    assert client["outbounds"][0]["streamSettings"]["realitySettings"] == original["outbounds"][0]["streamSettings"]["realitySettings"]
+    assert client["outbounds"][0]["streamSettings"]["sockopt"]["dialerProxy"] == "tls-fragment"
+    assert client["outbounds"][1] == original["outbounds"][1], "The policy's blocked outbound changed"
+    assert client["outbounds"][-1] == {
+        "tag": "tls-fragment", "protocol": "freedom",
+        "settings": {"fragment": {"packets": "tlshello", "length": "100-200", "interval": "10-20"}},
+    }
+    assert profile["containers"][0]["xray"]["last_config"].encode() == client_bytes  # type: ignore[index]
+    assert not (destination / "import.txt").exists(), "A URI cannot represent the derived policy"
+    assert bool(tuple(destination.glob("amnezia-qr-*.svg"))) is qr
+    assert ExportVpnDevice(project, "laptop", "vless-reality", output, tls_fragment=True, qr=qr) == report
+
+    exported = Snapshot(output)
+
+    with pytest.raises(VpnError, match="differs"):
+        ExportVpnDevice(project, "laptop", "vless-reality", output, qr=qr)
+
+    assert Snapshot(output) == exported
+
+
+@pytest.mark.parametrize("options", [["--tls-fragment"], ["--allow-quic"], ["--tls-fragment", "--allow-quic"]])
+def test_TransportCliRemainsOffline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, options: list[str],
+) -> None:
+    """Expose transport options without a guest, provider, or key-generation call."""
+
+    import flayer.vpn_project as projects
+
+    project = Project(tmp_path)
+    Run(project, "deploy", FakeCloud(project))
+    before = Snapshot(project.root)
+
+    def Forbidden(*arguments: object, **options: object) -> None:
+        """Fail on accidental infrastructure or credential mutation."""
+
+        pytest.fail("Client transport export attempted infrastructure or credential mutation")
+
+    for name in ("RunVpnProject", "GenerateAmneziaWgSecrets", "GenerateVlessMaterial", "_CheckCloudAccess"):
+        monkeypatch.setattr(projects, name, Forbidden)
+
+    assert Main(["vpn", "export", "--project", str(project.root), "--device", "laptop",
+                 "--protocol", "vless-reality", "--output", str(tmp_path / "fragment"), *options]) == 0
+    assert Snapshot(project.root) == before
+
+    with pytest.raises(VpnError, match="only for VLESS"):
+        ExportVpnDevice(project, "laptop", "amneziawg", tmp_path / "invalid", tls_fragment=True)
+
+    assert not (tmp_path / "invalid").exists()
+
+
+@pytest.mark.parametrize("case", ["malformed", "chained", "wrong-security", "duplicate-tag"])
+def test_FragmentRejectsUnsafeCompositionWithoutEchoingCredentials(case: str) -> None:
+    """Refuse to replace an existing proxy chain or fragment an unrelated transport."""
+
+    client = {
+        "outbounds": [{"protocol": "vless", "streamSettings": {
+            "network": "tcp", "security": "reality", "sockopt": {},
+        }, "settings": {"vnext": [{"address": "192.0.2.10", "users": [{"id": "fixture-secret"}]}]}}],
+    }
+
+    if case == "chained":
+        client["outbounds"][0]["streamSettings"]["sockopt"]["dialerProxy"] = "previous"  # type: ignore[index]
+
+    elif case == "wrong-security":
+        client["outbounds"][0]["streamSettings"]["security"] = "none"  # type: ignore[index]
+
+    elif case == "duplicate-tag":
+        client["outbounds"].append({"tag": "tls-fragment"})
+
+    value = b"fixture-secret" if case == "malformed" else json.dumps(client).encode()
+
+    with pytest.raises(VpnError) as caught:
+        _FragmentVlessClient(value)
+
+    assert "fixture-secret" not in str(caught.value)
+
+
 @pytest.mark.parametrize("output_format", ["text", "json"])
 def test_CliMissingDeviceFilesExplainsLocalExportFailure(
     tmp_path: Path, capsys: pytest.CaptureFixture[str], output_format: str,
@@ -362,3 +459,124 @@ def test_NativeAwgRejectsUnrepresentableOrInvalidPolicy(
 
     with pytest.raises(VpnError, match="invalid or unsupported"):
         native.BuildAmneziaWgArtifacts(client.replace(original, replacement).encode(), "laptop")
+
+
+@pytest.mark.parametrize("tls_fragment", [False, True])
+@pytest.mark.parametrize("qr", [False, True])
+@pytest.mark.parametrize("mode", ["full", "split"])
+def test_QuicExportChangesOnlySelectedClientFlow(
+    tmp_path: Path, tls_fragment: bool, qr: bool, mode: str,
+) -> None:
+    """Preserve keys, source ownership, and routing while allowing optional QUIC and fragmentation."""
+
+    project = Deployed(tmp_path, mode)
+    before = Snapshot(project.root)
+    original = json.loads((project.Artifacts / "device-laptop-vless-reality" / "client.json").read_bytes())
+    output = tmp_path / "quic"
+    report = ExportVpnDevice(project, "laptop", "vless-reality", output,
+                             allow_quic=True, tls_fragment=tls_fragment, qr=qr)
+    destination = Path(report.client_exports[0])
+    client_bytes = (destination / "client.json").read_bytes()
+    client = json.loads(client_bytes)
+    _, profile = Decode((destination / "amnezia.vpn").read_bytes())
+
+    assert client["outbounds"][0]["settings"]["vnext"][0]["users"][0]["flow"] == "xtls-rprx-vision-udp443"
+    assert profile["containers"][0]["xray"]["last_config"].encode() == client_bytes  # type: ignore[index]
+    assert bool(tuple(destination.glob("amnezia-qr-*.svg"))) is qr
+    assert not (destination / "import.txt").exists()
+    assert report.connectivity_status == "not-verified"
+    assert Snapshot(project.root) == before, "QUIC export changed source credentials or manifests"
+
+    client["outbounds"][0]["settings"]["vnext"][0]["users"][0]["flow"] = "xtls-rprx-vision"
+
+    if tls_fragment:
+        assert client["outbounds"].pop()["tag"] == "tls-fragment"
+        assert client["outbounds"][0]["streamSettings"].pop("sockopt") == {"dialerProxy": "tls-fragment"}
+
+    assert client == original, "Unrelated authentication, DNS, routing, or transport fields changed"
+    assert ExportVpnDevice(project, "laptop", "vless-reality", output,
+                           allow_quic=True, tls_fragment=tls_fragment, qr=qr) == report
+
+    exported = Snapshot(output)
+
+    with pytest.raises(VpnError, match="differs"):
+        ExportVpnDevice(project, "laptop", "vless-reality", output, tls_fragment=tls_fragment, qr=qr)
+
+    assert Snapshot(output) == exported, "A different export policy overwrote the existing profile"
+
+
+@pytest.mark.parametrize("value", [1, 0, None, "true"])
+def test_QuicExportRejectsInvalidOptionsBeforeWriting(tmp_path: Path, value: object) -> None:
+    """Reject invalid flags and unrelated protocols without writing an export directory."""
+
+    project = Deployed(tmp_path)
+    output = tmp_path / "invalid-quic"
+    before = Snapshot(project.root)
+
+    with pytest.raises(VpnError, match="boolean"):
+        ExportVpnDevice(project, "laptop", "vless-reality", output, allow_quic=value)  # type: ignore[arg-type]
+
+    with pytest.raises(VpnError, match="only for VLESS"):
+        ExportVpnDevice(project, "laptop", "amneziawg", output, allow_quic=True)
+
+    assert not output.exists()
+    assert Snapshot(project.root) == before
+
+
+@pytest.mark.parametrize("case", [
+    "malformed", "root", "outbounds-type", "non-object", "none", "duplicate", "wrong-security",
+    "wrong-network", "multiple-destinations", "multiple-users", "wrong-flow", "missing-flow", "invalid-host",
+])
+def test_QuicExportRejectsAmbiguousOrUnsupportedClients(case: str) -> None:
+    """Refuse ambiguous client changes and redact malformed credential material from errors."""
+
+    data = json.loads(json.dumps({"outbounds": [{
+        "protocol": "vless", "streamSettings": {"network": "tcp", "security": "reality"},
+        "settings": {"vnext": [{"address": "192.0.2.10", "users": [{
+            "id": "fixture-secret", "flow": "xtls-rprx-vision",
+        }]}]},
+    }]}))
+    outbound = data["outbounds"][0]
+
+    if case == "root":
+        data = []
+
+    elif case == "outbounds-type":
+        data["outbounds"] = {}
+
+    elif case == "non-object":
+        data["outbounds"].append(None)
+
+    elif case == "none":
+        data["outbounds"] = []
+
+    elif case == "duplicate":
+        data["outbounds"].append(outbound)
+
+    elif case == "wrong-security":
+        outbound["streamSettings"]["security"] = "none"
+
+    elif case == "wrong-network":
+        outbound["streamSettings"]["network"] = "ws"
+
+    elif case == "multiple-destinations":
+        outbound["settings"]["vnext"] *= 2
+
+    elif case == "multiple-users":
+        outbound["settings"]["vnext"][0]["users"] *= 2
+
+    elif case == "wrong-flow":
+        outbound["settings"]["vnext"][0]["users"][0]["flow"] = "other"
+
+    elif case == "missing-flow":
+        del outbound["settings"]["vnext"][0]["users"][0]["flow"]
+
+    elif case == "invalid-host":
+        outbound["settings"]["vnext"][0]["address"] = ""
+
+    value = b"fixture-secret" if case == "malformed" else json.dumps(data).encode()
+
+    with pytest.raises(VpnError) as caught:
+        _AllowQuicVlessClient(value)
+
+    assert "fixture-secret" not in str(caught.value)

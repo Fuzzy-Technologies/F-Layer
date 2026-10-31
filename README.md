@@ -165,6 +165,19 @@ This version routes **IPv4**; disable IPv6 on the client/device to prevent bypas
 The project's IPv6 setting does not change your device settings.
 Keep client files and QR codes private: they grant access to your VPN.
 
+If a network disrupts the direct VLESS Reality handshake, export a client profile
+with `flayer vpn export --project ~/flayer-vpn --device laptop --protocol vless-reality --output ~/flayer-export-fragment --tls-fragment`
+and import the resulting `amnezia.vpn`. This changes only the exported client;
+existing keys, server settings and source artifacts remain unchanged.
+This export contains `client.json` and `amnezia.vpn`; it omits `import.txt`
+because a plain VLESS URI cannot carry the fragmentation policy.
+
+Vision normally intercepts UDP 443 so applications fall back to TCP. If an
+application requires QUIC, add `--allow-quic` to the VLESS export command.
+This selects `xtls-rprx-vision-udp443` only in the exported client, preserves
+the existing server and keys, and can be combined with `--tls-fragment` and `--qr`.
+Derived exports contain the complete native profile and omit `import.txt`.
+
 See the [client walkthrough](https://fuzzy-technologies.github.io/F-Layer/en/guide/#4-connect-a-device)
 for protocol-specific checks and import details.
 

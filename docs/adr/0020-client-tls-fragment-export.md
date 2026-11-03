@@ -20,8 +20,8 @@ Retain device credentials, endpoints, DNS, routing, and the other outbounds.
 Reject existing proxy chains instead of replacing them implicitly.
 
 Also expose the independent opt-in `--allow-quic` option for existing Vision
-clients. Vision's default client flow intercepts UDP 443; this can prevent
-applications that require QUIC from loading media even when HTTPS checks pass.
+clients. Vision's default client flow intercepts UDP 443; application fallback
+and QUIC media transport can behave differently even when HTTPS checks pass.
 Select the documented `xtls-rprx-vision-udp443` client flow without changing the
 server's Vision setting. Preserve the default export behavior and all other
 authentication, routing, DNS, and transport fields. Allow composition with TLS
@@ -41,6 +41,33 @@ repeated exports, and refusal to overwrite differently selected outputs.
 QUIC tests verify exact flow-only changes, independent and combined options,
 CLI exposure, input validation, and unchanged source credentials and policy.
 Network acceptance remains an explicit operator action outside the test gate.
+
+## Intermediate playback checkpoint
+
+Task: [#114](https://github.com/Fuzzy-Technologies/F-Layer/issues/114).
+On 2026-11-03, an operator-reported Android browser check found that ordinary
+YouTube videos played after selecting a derived client with the following policy:
+
+- Reality over TCP with the `xtls-rprx-vision` client flow; UDP 443 remains intercepted.
+- The `tls-fragment` Freedom chain uses `packets = tlshello`, `length = 100-200`,
+  and `interval = 10-20`.
+- IPv4-only client routing and DNS through `1.1.1.1`, with `queryStrategy = UseIPv4`.
+- Existing credentials, endpoint, Reality parameters, routes and client log policy retained.
+- The existing server continued using Vision, IPv4 DNS and Freedom egress,
+  with access and error logging disabled; no server change accompanied the test.
+
+Shorts still failed. The preceding QUIC-enabled client had intermittently played
+ordinary videos before losing playback, so this observation does not establish
+QUIC as the sole cause or demonstrate sustained reliability. It provides a
+reproducible client policy for the next acceptance checks, not Windows acceptance
+or a completed YouTube fix. The ADR remains proposed.
+
+Reproduce the client policy from an original prepared Vision bundle using
+`flayer vpn export --tls-fragment --qr`, with the project's declared device and
+a separate private output directory. Do not add `--allow-quic` for this baseline.
+Keep previously exported profiles for comparison. Native-envelope and QR tests
+pin the TCP fallback and fragmentation parameters using synthetic credentials;
+they cannot establish live playback.
 
 ## Consequences
 

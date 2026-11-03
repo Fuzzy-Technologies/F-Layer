@@ -178,6 +178,20 @@ This selects `xtls-rprx-vision-udp443` only in the exported client, preserves
 the existing server and keys, and can be combined with `--tls-fragment` and `--qr`.
 Derived exports contain the complete native profile and omit `import.txt`.
 
+For a TCP fallback from the project's original Vision client, export with TLS
+fragmentation and leave QUIC disabled:
+
+```bash
+flayer vpn export --project ~/flayer-vpn --device laptop --protocol vless-reality --output ~/flayer-export-tcp --tls-fragment --qr
+```
+
+This keeps `xtls-rprx-vision` and adds TLS ClientHello fragmentation; applications
+can fall back to TCP for UDP 443 traffic. Import the complete `amnezia.vpn` or
+scan its native QR frames. The export retains the existing server and keys.
+An Android browser check restored ordinary video playback with this combination;
+Shorts remain unresolved. See the [intermediate validation checkpoint](docs/adr/0020-client-tls-fragment-export.md#intermediate-playback-checkpoint)
+for the tested policy and limits. This is not a general playback guarantee.
+
 See the [client walkthrough](https://fuzzy-technologies.github.io/F-Layer/en/guide/#4-connect-a-device)
 for protocol-specific checks and import details.
 

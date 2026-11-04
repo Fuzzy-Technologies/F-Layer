@@ -20,7 +20,7 @@ only the required pytest coverage plugin is loaded by the full wrapper.
 The full gate runs sequentially and stops on the first error:
 
 1. Force-compile `src`, `tests`, and `tools` with `compileall`.
-2. Run Ruff lint checks and strict mypy checks.
+2. Enforce Python naming with `tools.python_naming`, then run Ruff and strict mypy checks.
 3. Discover and run every test stage with pytest and branch measurement.
 4. Require at least 80% overall statement-plus-branch coverage and independently
    at least 80% branch coverage for `flayer`. A package with no branches has no

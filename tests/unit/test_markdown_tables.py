@@ -11,13 +11,13 @@ def test_TableAlignmentPreservesEscapedPipesInsideCode() -> None:
 
     text = "| Cell | Note |\n| :--- | ---: |\n| `left\\|right` | escaped \\| pipe |\n"
     aligned = AlignMarkdown(text)
-    aligned_rows = [SplitRow(line) for line in aligned.splitlines()]
+    alignedRows = [SplitRow(line) for line in aligned.splitlines()]
 
-    assert aligned_rows[0] == ["Cell", "Note"]
-    assert aligned_rows[2] == ["`left\\|right`", "escaped \\| pipe"]
-    assert aligned_rows[1] is not None
-    assert aligned_rows[1][0].startswith(":")
-    assert aligned_rows[1][1].endswith(":")
+    assert alignedRows[0] == ["Cell", "Note"]
+    assert alignedRows[2] == ["`left\\|right`", "escaped \\| pipe"]
+    assert alignedRows[1] is not None
+    assert alignedRows[1][0].startswith(":")
+    assert alignedRows[1][1].endswith(":")
     assert AlignMarkdown(aligned) == aligned, "A second formatting pass must have no changes"
 
 

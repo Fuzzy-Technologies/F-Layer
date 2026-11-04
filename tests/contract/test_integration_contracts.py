@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, replace
+from dataclasses import fields, replace
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from flayer.core.contracts import StackIdentity
+from flayer.core.contracts import StackIdentity, _WireDict
 from flayer.diagnostics import DiagnosticStatus
 from flayer.integrations import (
     CheckEvidence,
@@ -52,10 +52,10 @@ def test_VersionOneSyntheticExamplesRoundTrip(operation: IntegrationOperation) -
     """Every published F-Layer-side example retains schema, identity, and request correlation."""
 
     stem = operation.value
-    request_text = (EXAMPLES / f"{stem}-request.json").read_text(encoding="utf-8")
-    result_text = (EXAMPLES / f"{stem}-result.json").read_text(encoding="utf-8")
-    request = ParseRequest(request_text, IDENTITY)
-    result = ParseResult(result_text, request)
+    requestText = (EXAMPLES / f"{stem}-request.json").read_text(encoding="utf-8")
+    resultText = (EXAMPLES / f"{stem}-result.json").read_text(encoding="utf-8")
+    request = ParseRequest(requestText, IDENTITY)
+    result = ParseResult(resultText, request)
 
     assert request.operation is operation, "Example operation disagrees with its fixture name"
     assert ParseRequest(SerializeRequest(request), IDENTITY) == request, \
@@ -65,11 +65,11 @@ def test_VersionOneSyntheticExamplesRoundTrip(operation: IntegrationOperation) -
     assert SerializeResult(result) == SerializeResult(result), "Wire serialization is nondeterministic"
 
 
-@pytest.mark.parametrize("field", list(asdict(IDENTITY)))
-def test_AllIdentityFieldsMustMatchCallerContext(field: str) -> None:
+@pytest.mark.parametrize("field,pythonField", [(wireField, item.name) for wireField, item in zip(_WireDict(IDENTITY), fields(IDENTITY))])
+def test_AllIdentityFieldsMustMatchCallerContext(field: str, pythonField: str) -> None:
     """Stack names alone cannot route evidence across projects, owners, providers, or scopes."""
 
-    foreign = replace(IDENTITY, **{field: "foreign"})
+    foreign = replace(IDENTITY, **{pythonField: "foreign"})
 
     with pytest.raises(IntegrationError):
         ParseRequest(SerializeRequest(Request()), foreign)
@@ -81,7 +81,7 @@ def test_AllIdentityFieldsMustMatchCallerContext(field: str) -> None:
         ParseResult(json.dumps(data), Request())
 
 
-@pytest.mark.parametrize("field, value", [
+@pytest.mark.parametrize('field,value', [
     ("request_id", "different"), ("operation", "health"), ("schema_version", 2),
 ])
 def test_ResultMustMatchExactOriginatingRequest(field: str, value: object) -> None:
@@ -105,7 +105,7 @@ def test_MutationRequestsAreRejectedWithoutDispatch(operation: str) -> None:
         ParseRequest(json.dumps(data), IDENTITY)
 
 
-@pytest.mark.parametrize("field, value", [
+@pytest.mark.parametrize('field,value', [
     ("schema_version", True), ("schema_version", "1"), ("schema_version", 0),
     ("request_id", ""), ("request_id", "a" * 65), ("request_id", "https://fixture.invalid"),
     ("request_id", False), ("operation", {}), ("envelope", "result"),
@@ -140,7 +140,7 @@ def test_UntrustedJsonIsBoundedAndErrorOutputIsSafe(payload: str) -> None:
     assert "fixture-sensitive-marker" not in str(error.value), "JSON errors exposed private input"
 
 
-@pytest.mark.parametrize("location, field, value", [
+@pytest.mark.parametrize('location,field,value', [
     ("result", "authorization", "fixture-sensitive-marker"),
     ("evidence", "messages", ["fixture-sensitive-marker"]),
     ("evidence", "status", "ok-but-private"),
@@ -211,7 +211,7 @@ def test_ValidEvidenceRoundTripsIncludingHistoricalMutationOutcomes(evidence: An
         "Valid evidence lost information during its strict wire round trip"
 
 
-@pytest.mark.parametrize("operation, evidence", [
+@pytest.mark.parametrize('operation,evidence', [
     (IntegrationOperation.STATE, {"resource_count": True}),
     (IntegrationOperation.STATE, {"resource_count": 4097}),
     (IntegrationOperation.STATE, {"resource_count": 0, "resource_id": "fixture"}),

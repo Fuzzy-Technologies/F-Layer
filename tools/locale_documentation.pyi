@@ -17,7 +17,7 @@ class CanonicalUnit:
 
     identifier: str
     kind: str
-    source_path: str
+    sourcePath: str
     signature: str
     body: str
 
@@ -34,17 +34,17 @@ def CanonicalHash(unit: CanonicalUnit) -> str:
     ...
 
 def DiscoverCanonicalUnits(
-    project_root: Path,
-    project_manifest: dict[str, Any],
-    known_page_ids: dict[str, str] | None = ...,
+    projectRoot: Path,
+    projectManifest: dict[str, Any],
+    knownPageIds: dict[str, str] | None = ...,
 ) -> tuple[CanonicalUnit, ...]:
     """Discover authored English pages and statically declared API symbols."""
 
     ...
 
 def ValidateLocales(
-    project_root: Path = ...,
-    project_manifest_path: Path | None = ...,
+    projectRoot: Path = ...,
+    projectManifestPath: Path | None = ...,
 ) -> ValidationReport:
     """Validate hashes, review evidence, terminology, and explicit missing states."""
 
@@ -61,13 +61,13 @@ def Main(arguments: Sequence[str] | None = ...) -> int:
     ...
 
 
-def _AuthoredUnits(module_name: str, source_path: Path, project_root: Path) -> tuple[CanonicalUnit, ...]:
+def _AuthoredUnits(moduleName: str, sourcePath: Path, projectRoot: Path) -> tuple[CanonicalUnit, ...]:
     """Discover exact public authored contracts for generated-reference translation."""
 
     ...
 
 
-def _NodeUnit(identifier: str, source_path: str, node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef) -> CanonicalUnit:
+def _NodeUnit(identifier: str, sourcePath: str, node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef) -> CanonicalUnit:
     """Bind statically rendered constructor prose to its exact callable signature."""
 
     ...

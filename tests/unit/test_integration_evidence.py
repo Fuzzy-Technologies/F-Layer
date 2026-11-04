@@ -91,22 +91,22 @@ def test_AdaptersOmitAllNonAllowlistedSourceData() -> None:
         assert ParseResult(payload, result.request) == result, "Safe adapter output is not parseable"
 
     assert results[0].evidence.Status is DiagnosticStatus.STALE, "Sanitization hid stale evidence"
-    assert results[1].evidence.resource_count == 1, "Owned resource summary lost its count"
-    assert results[2].evidence.recovery_required, "Lifecycle recovery requirement was hidden"
+    assert results[1].evidence.resourceCount == 1, "Owned resource summary lost its count"
+    assert results[2].evidence.recoveryRequired, "Lifecycle recovery requirement was hidden"
 
 
 def test_LocalSubclassFieldsCannotExpandWireAllowlist() -> None:
     """Generic dataclass dumping must not disclose new identity or evidence fields."""
 
     identity = ExtendedIdentity("example", "sandbox", "fake", "scope-example", "example-owner")
-    state_request = IntegrationRequest(identity, "example-001", IntegrationOperation.STATE)
-    lifecycle_request = IntegrationRequest(
+    stateRequest = IntegrationRequest(identity, "example-001", IntegrationOperation.STATE)
+    lifecycleRequest = IntegrationRequest(
         identity, "example-001", IntegrationOperation.LIFECYCLE_REPORT,
     )
     payloads = (
-        SerializeRequest(state_request),
-        SerializeResult(IntegrationResult(state_request, ExtendedStateEvidence(0))),
-        SerializeResult(IntegrationResult(lifecycle_request, ExtendedLifecycleEvidence(
+        SerializeRequest(stateRequest),
+        SerializeResult(IntegrationResult(stateRequest, ExtendedStateEvidence(0))),
+        SerializeResult(IntegrationResult(lifecycleRequest, ExtendedLifecycleEvidence(
             "status", "complete", False, (),
         ))),
     )
@@ -117,7 +117,7 @@ def test_LocalSubclassFieldsCannotExpandWireAllowlist() -> None:
         assert "payload" not in payload, "Evidence subclass expanded the strict wire schema"
 
 
-@pytest.mark.parametrize("adapter, source, operation", [
+@pytest.mark.parametrize('adapter,source,operation', [
     (AdaptDiagnostics, DiagnosticReport("status", ()), IntegrationOperation.STATUS),
     (AdaptLifecycle, LifecycleReport("status", "complete"), IntegrationOperation.LIFECYCLE_REPORT),
 ])
@@ -127,7 +127,7 @@ def test_SourceIdentityBindingRequiresIndependentCallerContext(
     """Caller binding matches every field but does not attest where an observation came from."""
 
     with pytest.raises(IntegrationError):
-        adapter(Request(operation), source, replace(IDENTITY, owner_id="foreign"))
+        adapter(Request(operation), source, replace(IDENTITY, ownerId="foreign"))
 
 
 @pytest.mark.parametrize("report", [
@@ -177,7 +177,7 @@ def test_LifecycleRejectsMalformedAndUnboundedSourceEvidence(report: Any) -> Non
         AdaptLifecycle(Request(IntegrationOperation.LIFECYCLE_REPORT), report, IDENTITY)
 
 
-@pytest.mark.parametrize("name, value", [
+@pytest.mark.parametrize('name,value', [
     ("private", "fixture"), ("duration_seconds", None), ("duration_seconds", -1),
     ("duration_seconds", 31), ("duration_seconds", float("nan")),
     ("duration_seconds", float("inf")), ("duration_seconds", True),
@@ -191,7 +191,7 @@ def test_MetricsRequireBoundedFiniteNonSecretValues(name: str, value: Any) -> No
         Metric(name, value)
 
 
-@pytest.mark.parametrize("model, values", [
+@pytest.mark.parametrize('model,values', [
     (IntegrationRequest, (None, "example", IntegrationOperation.STATUS)),
     (IntegrationRequest, (IDENTITY, "example", "status")),
     (CheckEvidence, ("ok", ())),

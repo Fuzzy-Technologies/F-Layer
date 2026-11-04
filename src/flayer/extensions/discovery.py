@@ -50,14 +50,14 @@ def ReadMetadataFile(path: Path, maximum: int = MAX_METADATA_BYTES) -> bytes:
                 raise ExtensionError("Extension metadata or source must be a bounded regular file")
 
             content = stream.read(maximum + 1)
-            final_receipt = os.fstat(stream.fileno())
+            finalReceipt = os.fstat(stream.fileno())
 
             if (
                 len(content) > maximum or len(content) != receipt.st_size
                 or (receipt.st_ino, receipt.st_size, receipt.st_mtime_ns, receipt.st_ctime_ns)
                 != (
-                    final_receipt.st_ino, final_receipt.st_size,
-                    final_receipt.st_mtime_ns, final_receipt.st_ctime_ns,
+                    finalReceipt.st_ino, finalReceipt.st_size,
+                    finalReceipt.st_mtime_ns, finalReceipt.st_ctime_ns,
                 )
             ):
                 raise ExtensionError("Extension metadata or source changed during its bounded read")
@@ -92,21 +92,21 @@ def ReadMetadataSnapshot(directory: Path) -> tuple[tuple[bytes, ...], str]:
     return contents, digest.hexdigest()
 
 
-def DiscoverExtensions(metadata_directories: Sequence[Path]) -> tuple[ExtensionDescriptor, ...]:
+def DiscoverExtensions(metadataDirectories: Sequence[Path]) -> tuple[ExtensionDescriptor, ...]:
     """Parse selected metadata without importing code, calling finders, or searching paths."""
 
     if (
-        not isinstance(metadata_directories, (tuple, list))
-        or len(metadata_directories) > MAX_METADATA_DIRECTORIES
-        or any(not isinstance(directory, Path) for directory in metadata_directories)
-        or len(set(metadata_directories)) != len(metadata_directories)
+        not isinstance(metadataDirectories, (tuple, list))
+        or len(metadataDirectories) > MAX_METADATA_DIRECTORIES
+        or any(not isinstance(directory, Path) for directory in metadataDirectories)
+        or len(set(metadataDirectories)) != len(metadataDirectories)
     ):
         raise ExtensionError("Discovery requires bounded unique explicit metadata directories")
 
     descriptors: list[ExtensionDescriptor] = []
     identities: set[tuple[ExtensionKind, str]] = set()
 
-    for directory in metadata_directories:
+    for directory in metadataDirectories:
         contents, digest = ReadMetadataSnapshot(directory)
 
         try:
@@ -134,11 +134,11 @@ def DiscoverExtensions(metadata_directories: Sequence[Path]) -> tuple[ExtensionD
 
                 kind = ExtensionKind.PROVIDER if group == PROVIDER_GROUP else ExtensionKind.PROFILE
 
-                for plugin_id, target in parser.items(group):
+                for pluginId, target in parser.items(group):
                     descriptor = ExtensionDescriptor(
-                        kind, plugin_id, distribution, version, group, target, directory, digest,
+                        kind, pluginId, distribution, version, group, target, directory, digest,
                     )
-                    identity = (kind, plugin_id)
+                    identity = (kind, pluginId)
 
                     if identity in identities or len(descriptors) >= MAX_EXTENSIONS:
                         raise ExtensionError("Extension metadata contains duplicate or excess identities")
@@ -149,4 +149,4 @@ def DiscoverExtensions(metadata_directories: Sequence[Path]) -> tuple[ExtensionD
         except (UnicodeError, configparser.Error, ValueError):
             raise ExtensionError("Extension metadata is malformed or incompatible") from None
 
-    return tuple(sorted(descriptors, key=lambda item: (item.kind.value, item.plugin_id)))
+    return tuple(sorted(descriptors, key=lambda item: (item.kind.value, item.pluginId)))

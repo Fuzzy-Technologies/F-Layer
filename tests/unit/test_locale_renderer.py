@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from tools import locale_renderer
+from tools import locale_renderer as localeRenderer
 from tools.locale_documentation import (
     CanonicalHash,
     CanonicalUnit,
@@ -22,8 +22,8 @@ from tools.markdown_tables import AlignMarkdown
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
-@pytest.fixture
-def locale_project(tmp_path: Path) -> Path:
+@pytest.fixture(name='localeProject')
+def LocaleProjectFixture(tmp_path: Path) -> Path:
     """Copy canonical documents and metadata into an isolated locale project."""
 
     shutil.copytree(PROJECT_ROOT / "docs", tmp_path / "docs")
@@ -33,42 +33,46 @@ def locale_project(tmp_path: Path) -> Path:
     return tmp_path
 
 
-def test_ApprovedPagesRecordActualAiReview(locale_project: Path) -> None:
+def test_ApprovedPagesRecordActualAiReview(localeProject: Path) -> None:
     """Approved authored pages identify AI provenance without invented human reviews."""
 
-    registry = tomllib.loads((locale_project / "docs/i18n/units.toml").read_text())
-    report = ValidateLocales(locale_project)
+    registry = tomllib.loads((localeProject / "docs/i18n/units.toml").read_text())
+    report = ValidateLocales(localeProject)
 
     assert not report.diagnostics, "Actual reviewed sources must pass the locale contract"
 
     for record in registry["units"]:
+        expectedReviewer = "Codex" if record["id"] in {
+            "page:development", "page:guide.configuration", "page:guide.first-deployment",
+        } else "AIna-Dev"
+
         for translation in record["translations"].values():
             if translation["state"] == "approved":
                 assert translation["basedOnSourceHash"] == record["sourceHash"]
                 assert {review["role"] for review in translation["reviews"]} == {
                     "editorial", "technical",
                 }
-                assert all(review["reviewerType"] == "ai" and review["reviewer"] == "AIna-Dev"
+                assert all(review["reviewerType"] == "ai" and review["reviewer"] == expectedReviewer
                            for review in translation["reviews"])
 
             else:
                 assert "reviews" not in translation, "Missing translations have no reviews"
 
 
-def test_RefreshingCanonicalHashCannotHideStaleDraft(locale_project: Path) -> None:
+def test_RefreshingCanonicalHashCannotHideStaleDraft(localeProject: Path) -> None:
     """Updating the English registry cannot silently bless an outdated translated draft."""
 
-    page = locale_project / "docs/site/content/en/guide/cli.md"
+    page = localeProject / "docs/site/content/en/guide/cli.md"
     body = page.read_text() + "\nAdditional canonical evidence.\n"
     page.write_text(body)
-    registry = locale_project / "docs/i18n/units.toml"
+    registry = localeProject / "docs/i18n/units.toml"
     content = registry.read_text()
     record = next(item for item in tomllib.loads(content)["units"] if item["id"] == "page:guide.cli")
-    current_hash = CanonicalHash(CanonicalUnit(record["id"], "page", record["sourcePath"], "", body))
+    currentHash = CanonicalHash(CanonicalUnit(record["id"], "page", record["sourcePath"], "", body))
     content = content.replace(f'sourceHash = "{record["sourceHash"]}"',
-                              f'sourceHash = "{current_hash}"')
+                              f'sourceHash = "{currentHash}"')
     registry.write_text(content)
-    report = ValidateLocales(locale_project)
+    report = ValidateLocales(localeProject)
 
     assert report.states[record["id"]] == {"ru": "stale", "zh-CN": "stale"}
     assert any("set state=stale" in item for item in report.diagnostics)
@@ -81,17 +85,17 @@ def test_RefreshingCanonicalHashCannotHideStaleDraft(locale_project: Path) -> No
     registry.write_text(content.replace(section[0], section[0].replace('state = "approved"',
                                                                       'state = "stale"')))
 
-    assert not ValidateLocales(locale_project).diagnostics, "Explicit stale state must permit fallback"
+    assert not ValidateLocales(localeProject).diagnostics, "Explicit stale state must permit fallback"
 
 
-def test_TranslationsCannotEscapeTheirLocale(locale_project: Path) -> None:
+def test_TranslationsCannotEscapeTheirLocale(localeProject: Path) -> None:
     """A tracked translation cannot be confused with canonical or other locale source."""
 
-    registry = locale_project / "docs/i18n/units.toml"
+    registry = localeProject / "docs/i18n/units.toml"
     registry.write_text(registry.read_text().replace('path = "docs/site/content/ru/architecture.md"',
                                                      'path = "docs/site/content/en/architecture.md"'))
 
-    assert any("inside its locale" in item for item in ValidateLocales(locale_project).diagnostics)
+    assert any("inside its locale" in item for item in ValidateLocales(localeProject).diagnostics)
 
 
 def test_LocalizedConfigPreservesEnvironmentTagAndExactRoutes(tmp_path: Path) -> None:
@@ -101,7 +105,7 @@ def test_LocalizedConfigPreservesEnvironmentTagAndExactRoutes(tmp_path: Path) ->
               'theme:\n  language: en\nnav:\n  - Overview: index.md\n'
               '  - API reference: [{"Index": "api/index.md"}, {"flayer": "api/flayer.md"}]\n'
               'plugins:\n  - mkdocstrings:\n      paths: [!ENV FLAYER_INSTALLED_PACKAGES]\n')
-    localized = locale_renderer.LocalizeConfig(config, "ru", tmp_path / "ru", tmp_path / "site",
+    localized = localeRenderer.LocalizeConfig(config, "ru", tmp_path / "ru", tmp_path / "site",
                                               {"Overview": "Localized overview"}, "https://example.com")
 
     assert '"Localized overview": index.md' in localized
@@ -109,132 +113,132 @@ def test_LocalizedConfigPreservesEnvironmentTagAndExactRoutes(tmp_path: Path) ->
     assert "!ENV FLAYER_INSTALLED_PACKAGES" in localized
     assert "site_url: https://example.com/ru/" in localized
 
-    chinese = locale_renderer.LocalizeConfig(config, "zh-CN", tmp_path / "zh-CN",
+    chinese = localeRenderer.LocalizeConfig(config, "zh-CN", tmp_path / "zh-CN",
                                             tmp_path / "chinese-site", {}, "https://example.com")
 
     assert "  language: zh\n" in chinese, "Material uses zh for Simplified Chinese UI templates"
     assert "site_url: https://example.com/zh-CN/" in chinese
 
 
-def test_PreparedPagesRetainApprovedProvenanceAndFallbackNotices(locale_project: Path) -> None:
+def test_PreparedPagesRetainApprovedProvenanceAndFallbackNotices(localeProject: Path) -> None:
     """Localized prose and absent API pages render with distinct honest states."""
 
-    project = tomllib.loads((locale_project / "docs/i18n/project.toml").read_text())
-    registry = tomllib.loads((locale_project / project["unitManifest"]).read_text())
-    notices = tomllib.loads((locale_project / "docs/i18n/fallbacks.toml").read_text())
-    states = ValidateLocales(locale_project).states
+    project = tomllib.loads((localeProject / "docs/i18n/project.toml").read_text())
+    registry = tomllib.loads((localeProject / project["unitManifest"]).read_text())
+    notices = tomllib.loads((localeProject / "docs/i18n/fallbacks.toml").read_text())
+    states = ValidateLocales(localeProject).states
     states["page:api"]["ru"] = "missing"
 
     for record in registry["units"]:
         if record["id"] == "page:api":
             record["translations"]["ru"] = {"state": "missing"}
 
-    build_root = locale_project / "_build/api-reference"
-    shutil.copytree(locale_project / "docs/site/content/en", build_root / "content/en")
-    restored_locale = build_root / "content/ru"
-    restored_locale.mkdir()
-    (restored_locale / "stale-generated-page.md").write_text("Stale restored output")
-    content_root, evidence = locale_renderer._PrepareLocale(
-        locale_project, build_root, "ru", project, registry, states,
+    buildRoot = localeProject / "_build/api-reference"
+    shutil.copytree(localeProject / "docs/site/content/en", buildRoot / "content/en")
+    restoredLocale = buildRoot / "content/ru"
+    restoredLocale.mkdir()
+    (restoredLocale / "stale-generated-page.md").write_text("Stale restored output")
+    contentRoot, evidence = localeRenderer._PrepareLocale(
+        localeProject, buildRoot, "ru", project, registry, states,
         notices["ru"], "https://fuzzy-technologies.github.io/F-Layer",
     )
 
     assert evidence["guide/cli.md"]["state"] == "approved"
     assert evidence["api/index.md"]["renderedContent"] == "english-fallback"
 
-    approved_page = (content_root / "guide/cli.md").read_text()
+    approvedPage = (contentRoot / "guide/cli.md").read_text()
 
-    assert '<aside hidden data-translation-state="approved"' in approved_page
-    assert 'class="fl-translation-notice"' not in approved_page
-    assert "Черновик перевода" not in approved_page
-    assert 'data-translation-state="missing"' in (content_root / "api/index.md").read_text()
-    assert not (content_root / "stale-generated-page.md").exists(), "Stale generated inputs must be replaced"
+    assert '<aside hidden data-translation-state="approved"' in approvedPage
+    assert 'class="fl-translation-notice"' not in approvedPage
+    assert "Черновик перевода" not in approvedPage
+    assert 'data-translation-state="missing"' in (contentRoot / "api/index.md").read_text()
+    assert not (contentRoot / "stale-generated-page.md").exists(), "Stale generated inputs must be replaced"
 
-    status = (content_root / "translation-status/index.md").read_text()
+    status = (contentRoot / "translation-status/index.md").read_text()
 
     assert AlignMarkdown(status) == status, "Generated status tables must retain content padding"
 
 
-def test_StaleTranslationRendersCurrentEnglishInsteadOfOldProse(locale_project: Path) -> None:
+def test_StaleTranslationRendersCurrentEnglishInsteadOfOldProse(localeProject: Path) -> None:
     """An explicitly stale page remains buildable while displaying canonical English."""
 
-    project = tomllib.loads((locale_project / "docs/i18n/project.toml").read_text())
-    registry = tomllib.loads((locale_project / project["unitManifest"]).read_text())
-    notices = tomllib.loads((locale_project / "docs/i18n/fallbacks.toml").read_text())
-    states = ValidateLocales(locale_project).states
+    project = tomllib.loads((localeProject / "docs/i18n/project.toml").read_text())
+    registry = tomllib.loads((localeProject / project["unitManifest"]).read_text())
+    notices = tomllib.loads((localeProject / "docs/i18n/fallbacks.toml").read_text())
+    states = ValidateLocales(localeProject).states
     states["page:guide.cli"]["ru"] = "stale"
-    build_root = locale_project / "_build/api-reference"
-    shutil.copytree(locale_project / "docs/site/content/en", build_root / "content/en")
-    content_root, evidence = locale_renderer._PrepareLocale(
-        locale_project, build_root, "ru", project, registry, states, notices["ru"],
+    buildRoot = localeProject / "_build/api-reference"
+    shutil.copytree(localeProject / "docs/site/content/en", buildRoot / "content/en")
+    contentRoot, evidence = localeRenderer._PrepareLocale(
+        localeProject, buildRoot, "ru", project, registry, states, notices["ru"],
         "https://fuzzy-technologies.github.io/F-Layer",
     )
-    page = (content_root / "guide/cli.md").read_text()
+    page = (contentRoot / "guide/cli.md").read_text()
 
     assert "# CLI and diagnostic results" in page
     assert 'data-translation-state="stale"' in page
     assert evidence["guide/cli.md"]["renderedContent"] == "english-fallback"
 
 
-def test_UnregisteredLocalePageFails(locale_project: Path) -> None:
+def test_UnregisteredLocalePageFails(localeProject: Path) -> None:
     """Unregistered translations cannot bypass per-unit state or source-basis review."""
 
-    (locale_project / "docs/site/content/ru/unregistered.md").write_text("# Unexpected overlay")
+    (localeProject / "docs/site/content/ru/unregistered.md").write_text("# Unexpected overlay")
 
-    assert any("lacks explicit unit state" in item for item in ValidateLocales(locale_project).diagnostics)
+    assert any("lacks explicit unit state" in item for item in ValidateLocales(localeProject).diagnostics)
 
 
-def test_UntrackedOverlayCannotEnterReproducibleSite(locale_project: Path) -> None:
+def test_UntrackedOverlayCannotEnterReproducibleSite(localeProject: Path) -> None:
     """Locale rendering requires reproducible tracked translation inputs."""
 
-    subprocess.run(["git", "init", "--quiet", str(locale_project)], check=True)
-    registry = tomllib.loads((locale_project / "docs/i18n/units.toml").read_text())
+    subprocess.run(["git", "init", "--quiet", str(localeProject)], check=True)
+    registry = tomllib.loads((localeProject / "docs/i18n/units.toml").read_text())
 
     with pytest.raises(ValueError, match="Untracked locale overlay"):
-        locale_renderer.VerifyTrackedTranslations(locale_project, registry)
+        localeRenderer.VerifyTrackedTranslations(localeProject, registry)
 
 
 def test_RenderedLocaleMustExposeBannerAndReachability(tmp_path: Path) -> None:
     """A generated overlay must have the promised state and be reachable from locale entry."""
 
-    locale_root = tmp_path / "ru"
-    locale_root.mkdir()
-    (locale_root / "index.html").write_text('<a href="guide/">Guide</a>')
-    (locale_root / "guide").mkdir()
-    page = locale_root / "guide/index.html"
+    localeRoot = tmp_path / "ru"
+    localeRoot.mkdir()
+    (localeRoot / "index.html").write_text('<a href="guide/">Guide</a>')
+    (localeRoot / "guide").mkdir()
+    page = localeRoot / "guide/index.html"
     page.write_text('<aside data-translation-state="draft" data-documentation-unit="page:guide">')
     evidence = {"guide/index.md": {"state": "draft", "unitId": "page:guide"}}
-    locale_renderer.VerifyRenderedLocale(tmp_path, "ru", evidence)
-    (locale_root / "index.html").write_text("<h1>Entry</h1>")
+    localeRenderer.VerifyRenderedLocale(tmp_path, "ru", evidence)
+    (localeRoot / "index.html").write_text("<h1>Entry</h1>")
 
     with pytest.raises(ValueError, match="Unreachable locale pages"):
-        locale_renderer.VerifyRenderedLocale(tmp_path, "ru", evidence)
+        localeRenderer.VerifyRenderedLocale(tmp_path, "ru", evidence)
 
     page.write_text('<aside data-translation-state="approved">')
 
     with pytest.raises(ValueError, match="Missing actual review-state banner"):
-        locale_renderer.VerifyRenderedLocale(tmp_path, "ru", evidence)
+        localeRenderer.VerifyRenderedLocale(tmp_path, "ru", evidence)
 
 
 def test_LocalizedExamplesRemainExactCanonicalCode() -> None:
     """Translated user guides never alter commands, API identifiers, or Python examples."""
 
-    for canonical_path in (PROJECT_ROOT / "docs/site/content/en/guide").glob("*.md"):
-        canonical_blocks = re.findall(r"^```.*?^```", canonical_path.read_text(), re.MULTILINE | re.DOTALL)
+    for canonicalPath in (PROJECT_ROOT / "docs/site/content/en/guide").glob("*.md"):
+        canonicalBlocks = re.findall(r"^```.*?^```", canonicalPath.read_text(), re.MULTILINE | re.DOTALL)
 
         for locale in ("ru", "zh-CN"):
-            localized_path = PROJECT_ROOT / "docs/site/content" / locale / "guide" / canonical_path.name
-            translated_blocks = re.findall(r"^```.*?^```", localized_path.read_text(),
+            localizedPath = PROJECT_ROOT / "docs/site/content" / locale / "guide" / canonicalPath.name
+            translatedBlocks = re.findall(r"^```.*?^```", localizedPath.read_text(),
                                            re.MULTILINE | re.DOTALL)
 
-            assert translated_blocks == canonical_blocks, "Code examples must preserve canonical contracts"
+            assert translatedBlocks == canonicalBlocks, "Code examples must preserve canonical contracts"
 
 
-def test_RendererRejectsUnownedBuildRoot(locale_project: Path, tmp_path: Path) -> None:
+def test_RendererRejectsUnownedBuildRoot(localeProject: Path, tmp_path: Path) -> None:
     """Locale fallback replacement is confined to the verified owned generated site."""
 
     with pytest.raises(ValueError, match="owned verified canonical"):
-        locale_renderer.RenderLocaleSites(locale_project, tmp_path / "unowned", tmp_path / "config",
+        localeRenderer.RenderLocaleSites(localeProject, tmp_path / "unowned", tmp_path / "config",
                                          tmp_path / "python", {})
 
 
@@ -242,27 +246,27 @@ def test_FallbackLinksPreserveLocalizedLabelsAndCanonicalAnchors(tmp_path: Path)
     """A missing translation still links to the exact local fallback route and fragment."""
 
     source = tmp_path / "content/ru/guide/configuration.md"
-    canonical_root = tmp_path / "content/en"
+    canonicalRoot = tmp_path / "content/en"
     text = "[API](../../en/api/index.md#flayer) ![Brand](../../en/assets/brand.svg)"
 
-    assert locale_renderer.RewriteFallbackLinks(text, source, canonical_root) == (
+    assert localeRenderer.RewriteFallbackLinks(text, source, canonicalRoot) == (
         "[API](../api/index.md#flayer) ![Brand](../assets/brand.svg)"
     ), "Locale routing must preserve labels, fragments, and existing generated fallback targets"
 
 
 @pytest.mark.parametrize("locale", ["ru", "zh-CN"])
 def test_PreparedAuthoredPagesRouteRepositoryGuidesWithinTheirLocale(
-    locale_project: Path, locale: str,
+    localeProject: Path, locale: str,
 ) -> None:
     """Root and nested authored overlays resolve their real source links into local generated pages."""
 
-    project = tomllib.loads((locale_project / "docs/i18n/project.toml").read_text())
-    registry = tomllib.loads((locale_project / project["unitManifest"]).read_text())
-    notices = tomllib.loads((locale_project / "docs/i18n/fallbacks.toml").read_text())
-    build_root = locale_project / "_build/api-reference"
-    shutil.copytree(locale_project / "docs/site/content/en", build_root / "content/en")
-    content_root, _ = locale_renderer._PrepareLocale(
-        locale_project, build_root, locale, project, registry, ValidateLocales(locale_project).states,
+    project = tomllib.loads((localeProject / "docs/i18n/project.toml").read_text())
+    registry = tomllib.loads((localeProject / project["unitManifest"]).read_text())
+    notices = tomllib.loads((localeProject / "docs/i18n/fallbacks.toml").read_text())
+    buildRoot = localeProject / "_build/api-reference"
+    shutil.copytree(localeProject / "docs/site/content/en", buildRoot / "content/en")
+    contentRoot, _ = localeRenderer._PrepareLocale(
+        localeProject, buildRoot, locale, project, registry, ValidateLocales(localeProject).states,
         notices[locale], "https://fuzzy-technologies.github.io/F-Layer",
     )
     destinations = {
@@ -278,12 +282,12 @@ def test_PreparedAuthoredPagesRouteRepositoryGuidesWithinTheirLocale(
     }
 
     for source, targets in destinations.items():
-        rendered = content_root / source
+        rendered = contentRoot / source
         body = rendered.read_text()
 
         for target in targets:
             assert f"]({target})" in body, f"{locale}/{source} lost local destination {target}"
-            assert (rendered.parent / target).resolve().is_relative_to(content_root)
+            assert (rendered.parent / target).resolve().is_relative_to(contentRoot)
 
 
 def test_RepositoryOverlayLinksKeepQueryFragmentAndExplicitSourceFiles(tmp_path: Path) -> None:
@@ -295,14 +299,14 @@ def test_RepositoryOverlayLinksKeepQueryFragmentAndExplicitSourceFiles(tmp_path:
     body = ("[Схема](../../../../architecture/reference.md?view=compact#composition) "
             "[Настройки](../../../../../pyproject.toml) "
             "[Облако](https://yandex.cloud/ru/docs/cli/quickstart)")
-    mapped = locale_renderer.RewriteFallbackLinks(body, source, canonical, root)
+    mapped = localeRenderer.RewriteFallbackLinks(body, source, canonical, root)
 
     assert "[Схема](../repository/docs/architecture/reference.md?view=compact#composition)" in mapped
     assert "[Настройки](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/pyproject.toml)" in mapped
     assert "[Облако](https://yandex.cloud/ru/docs/cli/quickstart)" in mapped
 
 
-def test_ApiLocaleInventoryIncludesCallableAndConditionalContracts(locale_project: Path) -> None:
+def test_ApiLocaleInventoryIncludesCallableAndConditionalContracts(localeProject: Path) -> None:
     """Disposable API locale units match supported callable and conditional public anchors."""
 
     source = ('"""A fixture package contract."""\n'
@@ -322,35 +326,35 @@ def test_ApiLocaleInventoryIncludesCallableAndConditionalContracts(locale_projec
               '                    """Return a source-only implementation value."""\n\n'
               '                    return "safe"\n\n'
               '                return Nested()\n')
-    (locale_project / "src/flayer/__init__.py").write_text(source)
-    project = tomllib.loads((locale_project / "docs/i18n/project.toml").read_text())
-    units = DiscoverCanonicalUnits(locale_project, project)
-    symbol_ids = {unit.identifier for unit in units if unit.kind == "symbol"}
+    (localeProject / "src/flayer/__init__.py").write_text(source)
+    project = tomllib.loads((localeProject / "docs/i18n/project.toml").read_text())
+    units = DiscoverCanonicalUnits(localeProject, project)
+    symbolIds = {unit.identifier for unit in units if unit.kind == "symbol"}
 
-    assert symbol_ids == {"symbol:flayer.Callback", "symbol:flayer.Callback.__call__",
+    assert symbolIds == {"symbol:flayer.Callback", "symbol:flayer.Callback.__call__",
                           "symbol:flayer.Callback.Inspect"}, "Locale units must match public API scopes"
 
 
-@pytest.mark.parametrize("manifest_value", [None, '["human"]', '["robot"]', '"ai"'])
-def test_AiReviewRequiresExplicitProjectAuthority(locale_project: Path, manifest_value: str | None) -> None:
+@pytest.mark.parametrize('manifestValue', [None, '["human"]', '["robot"]', '"ai"'])
+def test_AiReviewRequiresExplicitProjectAuthority(localeProject: Path, manifestValue: str | None) -> None:
     """AI records fail under the unchanged human-only default or invalid authority."""
 
-    manifest = locale_project / "docs/i18n/project.toml"
-    replacement = "" if manifest_value is None else f"reviewerTypes = {manifest_value}"
+    manifest = localeProject / "docs/i18n/project.toml"
+    replacement = "" if manifestValue is None else f"reviewerTypes = {manifestValue}"
     manifest.write_text(manifest.read_text().replace('reviewerTypes = ["human", "ai"]', replacement))
 
-    assert ValidateLocales(locale_project).diagnostics, "AI approval requires explicit valid opt-in"
+    assert ValidateLocales(localeProject).diagnostics, "AI approval requires explicit valid opt-in"
 
 
-@pytest.mark.parametrize("change", ["translation", "hash", "identity", "role"])
-def test_AiApprovalCannotSurviveChangedEvidence(locale_project: Path, change: str) -> None:
+@pytest.mark.parametrize("change", ["translation", "hash", "identity", "role", "reviewer", "timestamp", "source-hash"])
+def test_AiApprovalCannotSurviveChangedEvidence(localeProject: Path, change: str) -> None:
     """Changed localized bytes or missing review evidence cannot retain valid approval."""
 
-    registry = locale_project / "docs/i18n/units.toml"
+    registry = localeProject / "docs/i18n/units.toml"
     content = registry.read_text()
 
     if change == "translation":
-        page = locale_project / "docs/site/content/ru/guide/cli.md"
+        page = localeProject / "docs/site/content/ru/guide/cli.md"
         page.write_text(page.read_text() + "\nUnreviewed translated change.\n")
 
     elif change == "hash":
@@ -359,11 +363,21 @@ def test_AiApprovalCannotSurviveChangedEvidence(locale_project: Path, change: st
     elif change == "identity":
         content = content.replace('reviewerType = "ai"', 'reviewerType = "robot"', 1)
 
+    elif change == "reviewer":
+        content = re.sub(r'^reviewer = .*$', 'reviewer = ""', content, count=1, flags=re.MULTILINE)
+
+    elif change == "timestamp":
+        content = re.sub(r'^reviewedAt = .*$', 'reviewedAt = "invalid"', content, count=1, flags=re.MULTILINE)
+
+    elif change == "source-hash":
+        content = re.sub(r'^reviewedSourceHash = .*$', 'reviewedSourceHash = "sha256:' + "0" * 64 + '"',
+                         content, count=1, flags=re.MULTILINE)
+
     else:
         content = content.replace('role = "editorial"', 'role = "technical"', 1)
 
     registry.write_text(content)
-    report = ValidateLocales(locale_project)
+    report = ValidateLocales(localeProject)
 
     assert report.diagnostics, "Changed review evidence must block approval"
 

@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/ecosystem-integration.md"
-sourceHash = "sha256:faca1fad3be7840fe77c508e3c532929b4c1d1b1d578db725b24dd0447419998"
-reviewedTranslationHash = "sha256:ea76cf34fb07c59c259b7aeac086be6b6c150a3bb0193b55abbe03ba6c6fa800"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:c499a12af8df9657e558674d45fccc12644f4f4d103c235da31ecda654ec1093"
+reviewedTranslationHash = "sha256:a5073559decb426ef9323de1f7336fa909873f13a463b790ca9420484d43a0e5"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # 生态系统集成
@@ -34,10 +34,10 @@ MCP 应用是客户端。模型、解析后的消息、能力声明或适配器�
 `identity` 包含 `project`、`stack`、`provider`、`scope_id` 和 `owner_id`，
 全部必须匹配调用方独立持有的预期值。状态投影验证 `StackState` 保存的身份。
 诊断和生命周期报告没有身份字段，其适配器要求选定来源的宿主显式提供
-`observed_identity`。这只验证契约绑定，不是远端证明，也无法核实来源真实性。
+`observedIdentity`。这只验证契约绑定，不是远端证明，也无法核实来源真实性。
 
-`ParseRequest(payload, expected_identity)` 返回验证后的请求。
-`ParseResult(payload, expected_request)` 还要求操作、请求 ID、版本、范围和
+`ParseRequest(payload, expectedIdentity)` 返回验证后的请求。
+`ParseResult(payload, expectedRequest)` 还要求操作、请求 ID、版本、范围和
 归属完全一致。结果关联不认证发送者、不建立时效、不防重放，也不证明客户机就绪。
 解析后的请求和结果仍是不可信表示。宿主必须认证传输并独立授权结果来源的访问。
 

@@ -46,7 +46,7 @@ Local CLI parser rejection is a bounded exception. With exit code 1 and empty
 stdout, the adapter recognizes only the exact missing-port security-group error
 and an exact unknown-flag error naming an argument in this create command. These
 pre-RPC signatures were reproduced with `yc` 1.40.0 against an unreachable
-loopback endpoint. They return `outcome_unknown=False`, allowing the existing
+loopback endpoint. They return `outcomeUnknown=False`, allowing the existing
 core rollback to remove only this operation's verified creations. A successful
 `rolled-back` result permits a later explicit deployment attempt; incomplete
 rollback retains its journal for `recover --rollback`. Raw CLI output is discarded.

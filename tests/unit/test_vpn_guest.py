@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from flayer import _vpn_guest
+from flayer import _vpn_guest as _vpnGuest
 from flayer.core.contracts import StackIdentity
 from flayer.guest import GuestResult, SshGuestProvisioner, SubprocessGuestRunner, WritePrivate
 from flayer.profiles.artifacts import Artifact, ArtifactBundle
@@ -40,11 +40,11 @@ class FakeRunner:
         return self.result
 
 
-def Provisioner(tmp_path: Path, runner: FakeRunner | None = None) -> SshGuestProvisioner:
+def Provisioner(tmpPath: Path, runner: FakeRunner | None = None) -> SshGuestProvisioner:
     """Provide explicit private key and independently obtained public host pin fixture files."""
 
-    identity = tmp_path / "identity-key"
-    trust = tmp_path / "known-hosts.txt"
+    identity = tmpPath / "identity-key"
+    trust = tmpPath / "known-hosts.txt"
     WritePrivate(identity, b"fixture-identity-key")
     WritePrivate(trust, b"203.0.113.20 ssh-ed25519 fixture-public-key\n")
 
@@ -105,7 +105,7 @@ def test_InstallerRejectsAmbiguousOrNonprivateBundlesBeforeSsh(tmp_path: Path, c
         "duplicate": (("amneziawg", bundle), ("amneziawg", bundle)),
         "public": (("amneziawg", replace(bundle, files=(Artifact("server.conf", PRIVATE_PAYLOAD, False),))),),
         "device": (("amneziawg", replace(bundle, kind="device")),),
-        "foreign": (("amneziawg", bundle), ("vless-reality", replace(bundle, identity=replace(IDENTITY, scope_id="other")))),
+        "foreign": (("amneziawg", bundle), ("vless-reality", replace(bundle, identity=replace(IDENTITY, scopeId="other")))),
     }
 
     with pytest.raises(VpnError):
@@ -201,7 +201,7 @@ def test_RemoteDecoderRejectsUnsafeRequestBeforeCreatingFiles(case: str) -> None
         data["bundles"].append(data["bundles"][0])
 
     with pytest.raises(ValueError):
-        _vpn_guest.DecodeRequest(json.dumps(data).encode())
+        _vpnGuest.DecodeRequest(json.dumps(data).encode())
 
 
 def test_RemoteInstallerUsesPrivateRootStageAndCleansOnlyItsTemporaryDirectory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -233,11 +233,11 @@ def test_RemoteInstallerUsesPrivateRootStageAndCleansOnlyItsTemporaryDirectory(t
 
         return subprocess.CompletedProcess(command, 0)
 
-    monkeypatch.setattr(_vpn_guest.os, "geteuid", lambda: 0)
-    monkeypatch.setattr(_vpn_guest.tempfile, "mkdtemp", Stage)
-    monkeypatch.setattr(_vpn_guest.subprocess, "run", Run)
-    bundles = _vpn_guest.DecodeRequest(json.dumps(Request()).encode())
-    _vpn_guest.Install(bundles)
+    monkeypatch.setattr(_vpnGuest.os, "geteuid", lambda: 0)
+    monkeypatch.setattr(_vpnGuest.tempfile, "mkdtemp", Stage)
+    monkeypatch.setattr(_vpnGuest.subprocess, "run", Run)
+    bundles = _vpnGuest.DecodeRequest(json.dumps(Request()).encode())
+    _vpnGuest.Install(bundles)
 
     assert len(calls) == 2 and calls[1][-1] == "--check"
     assert all(not stage.exists() for stage in stages)
@@ -249,7 +249,7 @@ def test_RemoteInstallerStopsBeforeExecutionWithoutRoot(monkeypatch: pytest.Monk
     monkeypatch.setattr(os, "geteuid", lambda: 1000)
 
     with pytest.raises(ValueError, match="Root privileges"):
-        _vpn_guest.Install(_vpn_guest.DecodeRequest(json.dumps(Request()).encode()))
+        _vpnGuest.Install(_vpnGuest.DecodeRequest(json.dumps(Request()).encode()))
 
 
 @pytest.mark.parametrize("transport", ["amneziawg", "vless-reality"])

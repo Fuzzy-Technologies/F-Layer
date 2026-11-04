@@ -14,12 +14,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.guest.GuestResult"
 sourcePath = "src/flayer/guest.py"
-sourceHash = "sha256:c464998bde7323cbb25987c97fedbd2c68f31dec7d8d9494cc85271f275e1c11"
+sourceHash = "sha256:102fdb2fcebe00775bb4f5b51a5b44255ab60a9c9a3f3d7c629ad192f95dca9b"
 body = "Временный вывод подпроцесса, исключённый из представления объекта и сообщений об ошибках."
 reviewedTranslationHash = "sha256:88a20960c205e7acab0180c7058c8c299210fc41c3be909c115ecd84135ef373"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.487837+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -135,12 +135,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.guest.SshGuestProvisioner.__init__"
 sourcePath = "src/flayer/guest.py"
-sourceHash = "sha256:ec682592d445b33b7d7ecc6a091c5b937639124d88a67d333507a920e8063d54"
+sourceHash = "sha256:480ae961441eac2246f7e75a656f5c42fc74eb3622869cbfb756864b93c96bdc"
 body = "Проверяет пути к закрытому ключу и файлу с доверенным ключом сервера до формирования аргументов SSH."
 reviewedTranslationHash = "sha256:5f4459471756bda8d68089f6c6294de288b4fdd4b3db166dc0cd6ce97c1f60d8"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.488021+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -157,23 +157,23 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.CloudPlacement"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:9a9c778a47295f5d64b7e1081f60cfdda9420c282fc198d834218bb1c51733a6"
+sourceHash = "sha256:74d0c6dcbd0b6e690766cee90f601307327044df2eb48e7223984ed44da46267"
 body = "Публичные настройки размещения и строго ограниченный административный доступ к одной гостевой Ubuntu."
 reviewedTranslationHash = "sha256:8d1d8c867d242acfce29e92904727300c730404c4f830e691d958648008779ba"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.488113+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.vpn_project.VpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:32e33303eedcc2567f27e7d99dadfa2f28902549b5600a8c0ecad76af7b1ed32"
+sourceHash = "sha256:621b5b1ed88e4131c480a3e64ae50e8f97d8d4e984f61b01cd539d6896e2f279"
 body = "Проверенные публичные настройки проекта с явными ссылками на закрытое локальное хранилище."
 reviewedTranslationHash = "sha256:64005de575d0ce0887b3c2f082ea8ef55c8f5b20f05f436449c276acdf7cdd98"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-10T18:28:30Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -201,12 +201,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.VpnProjectReport"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:1b3e9135233b373da1de90f80dd768637e76713d1804ffc7b91d137fc21729e7"
+sourceHash = "sha256:ba25c3729e38ca382de993baff6707d22fcdf162733f57aa01dde0d585bd2364"
 body = "Очищенные результаты управления ресурсами и проверки гостевой системы без данных VPN и вывода провайдера."
 reviewedTranslationHash = "sha256:525919f0127aef3ad90f116b16436514ee3b43dd631d24d1dc197fe110aeef6e"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-10T00:23:17.699567+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -289,12 +289,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.RunVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:f79b32890a8bf62c1e3cbebe1ccce4279ee32ba6a84cb916cb13723fcd692e29"
+sourceHash = "sha256:e8927c328b77ea0e5195005bebe89e4fb7bf657c3400e5e9b1324b8f19df6ab3"
 body = "Объединяет явное разрешение облачных операций, надёжное состояние ресурсов, аутентифицированную установку и экспорт клиентских файлов."
 reviewedTranslationHash = "sha256:2c0d58d8fc153bc386028d72b95417875bd2376babba6aa645af8a3be6667915"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.488388+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -320,10 +320,10 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_export.ExportVpnDevice"
 sourcePath = "src/flayer/vpn_export.py"
-sourceHash = "sha256:a5f203fd253d63501b5733eb5df7b7acbdb86c9c94b0efd7938b398b36b979cf"
+sourceHash = "sha256:76be8c0d73a293f6a4f24f94a1a3e86d5f41d27afc6f364a6ad796d047232ae0"
 body = "Копирует файлы одного устройства после проверки манифеста, без обращений к облаку, генерации ключей или записи в исходные файлы."
 reviewedTranslationHash = "sha256:01a0b8bdf9ab862809db78265ca86a49784b7c9b8b7603a9af20c2cc17df411e"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-11T00:07:22.749054+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]

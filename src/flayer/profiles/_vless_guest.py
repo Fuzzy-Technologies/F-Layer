@@ -44,7 +44,7 @@ def _Digest(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
-def _Read(path: Path, limit: int, *, root_owned: bool = False) -> bytes:
+def _Read(path: Path, limit: int, *, rootOwned: bool = False) -> bytes:
     """Read a bounded regular non-linked file, keeping filesystem errors private."""
 
     descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
@@ -58,7 +58,7 @@ def _Read(path: Path, limit: int, *, root_owned: bool = False) -> bytes:
         if path.name == "server.json" and stat.S_IMODE(info.st_mode) != 0o600:
             raise GuestError("Server credential files must use private mode 0600")
 
-        if root_owned and (info.st_uid != _ROOT_UID or info.st_mode & 0o022):
+        if rootOwned and (info.st_uid != _ROOT_UID or info.st_mode & 0o022):
             raise GuestError("Managed files must be root-owned and not writable by other users")
 
         with os.fdopen(descriptor, "rb", closefd=False) as stream:
@@ -131,13 +131,13 @@ def _DownloadBinary() -> bytes:
     if architecture not in ARCHIVES:
         raise GuestError("Xray deployment supports only amd64 and arm64 guests")
 
-    filename, expected_hash = ARCHIVES[architecture]
+    filename, expectedHash = ARCHIVES[architecture]
     url = f"https://github.com/XTLS/Xray-core/releases/download/v{XRAY_VERSION}/{filename}"
 
     with urllib.request.urlopen(url, timeout=60) as response:
         content = response.read(MAX_ARCHIVE_BYTES + 1)
 
-    if len(content) > MAX_ARCHIVE_BYTES or _Digest(content) != expected_hash:
+    if len(content) > MAX_ARCHIVE_BYTES or _Digest(content) != expectedHash:
         raise GuestError("Xray archive does not match the pinned release checksum")
 
     with zipfile.ZipFile(io.BytesIO(content)) as archive:
@@ -217,7 +217,7 @@ def _Existing(root: Path, service: Path, owner: str) -> dict[str, Any] | None:
         return None
 
     _Directory(root)
-    receipt = json.loads(_Read(root / "owner.json", 4096, root_owned=True))
+    receipt = json.loads(_Read(root / "owner.json", 4096, rootOwned=True))
 
     if not isinstance(receipt, dict) or set(receipt) != {"owner", "files", "xray_version"} or receipt["owner"] != owner:
         raise GuestError("Existing deployment does not belong to the requested stack")
@@ -234,7 +234,7 @@ def _Existing(root: Path, service: Path, owner: str) -> dict[str, Any] | None:
         raise GuestError("Existing deployment contains untracked or interrupted files")
 
     for name, path in (("xray", root / "xray"), ("server.json", root / "server.json"), ("service", service)):
-        if _Digest(_Read(path, MAX_BINARY_BYTES, root_owned=True)) != hashes[name]:
+        if _Digest(_Read(path, MAX_BINARY_BYTES, rootOwned=True)) != hashes[name]:
             raise GuestError("Existing deployment changed outside F-Layer; refusing replacement")
 
     if stat.S_IMODE((root / "server.json").stat().st_mode) != 0o600:
@@ -250,13 +250,13 @@ def _TargetHealth(config: bytes) -> None:
     try:
         settings = json.loads(config)["inbounds"][0]["streamSettings"]["realitySettings"]
         host, port = settings["target"].rsplit(":", 1)
-        server_name = settings["serverNames"][0]
+        serverName = settings["serverNames"][0]
         context = ssl.create_default_context()
         context.minimum_version = ssl.TLSVersion.TLSv1_3
         context.set_alpn_protocols(["h2"])
 
         with socket.create_connection((host, int(port)), timeout=10) as connection:
-            with context.wrap_socket(connection, server_hostname=server_name) as channel:
+            with context.wrap_socket(connection, server_hostname=serverName) as channel:
                 if channel.version() != "TLSv1.3" or channel.selected_alpn_protocol() != "h2":
                     raise GuestError("Reality target must support TLS 1.3 and HTTP/2")
 
@@ -269,7 +269,7 @@ def _TargetHealth(config: bytes) -> None:
 def _Health(root: Path, service: Path, port: int) -> None:
     """Check daemon syntax, systemd state, and a loopback listener without claiming tunnel health."""
 
-    _TargetHealth(_Read(root / "server.json", 1048576, root_owned=True))
+    _TargetHealth(_Read(root / "server.json", 1048576, rootOwned=True))
     _Command([str(root / "xray"), "run", "-test", "-config", str(root / "server.json")])
     _Command(["systemctl", "is-active", "--quiet", service.name])
 

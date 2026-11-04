@@ -38,7 +38,7 @@ def Profile() -> VpnProfile:
 ])
 def test_RealPinnedXrayRoutesDualStackNamesWithoutAllowingPrivateTargets(
     tmp_path: Path, destination: str, allowed: bool,
-    loopback_connection: Callable[[int], socket.socket],
+    loopbackConnection: Callable[[int], socket.socket],
 ) -> None:
     """Exercise the real router offline; dual-stack DNS must not block public IPv4."""
 
@@ -75,7 +75,7 @@ def test_RealPinnedXrayRoutesDualStackNamesWithoutAllowingPrivateTargets(
 
         while True:
             try:
-                connection = loopback_connection(port)
+                connection = loopbackConnection(port)
                 break
 
             except OSError:

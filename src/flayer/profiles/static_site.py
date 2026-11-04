@@ -61,7 +61,7 @@ def _Integer(value: object, minimum: int, maximum: int, label: str) -> int:
     return value
 
 
-def _Cidr(value: object, minimum_prefix: int, label: str) -> str:
+def _Cidr(value: object, minimumPrefix: int, label: str) -> str:
     """Require an explicit canonical IPv4 network without host bits or IPv6."""
 
     if not isinstance(value, str):
@@ -73,19 +73,19 @@ def _Cidr(value: object, minimum_prefix: int, label: str) -> str:
     except ValueError:
         raise StaticSiteError(f"{label} must be a canonical IPv4 CIDR") from None
 
-    if str(network) != value or network.prefixlen < minimum_prefix:
-        raise StaticSiteError(f"{label} must use canonical prefix /{minimum_prefix} or narrower")
+    if str(network) != value or network.prefixlen < minimumPrefix:
+        raise StaticSiteError(f"{label} must use canonical prefix /{minimumPrefix} or narrower")
 
     return value
 
 
-def _Cidrs(value: object, minimum_prefix: int, label: str) -> tuple[str, ...]:
+def _Cidrs(value: object, minimumPrefix: int, label: str) -> tuple[str, ...]:
     """Bound rule expansion and reject duplicate or overlapping source networks."""
 
     if not isinstance(value, tuple) or not 1 <= len(value) <= 16:
         raise StaticSiteError(f"{label} must contain 1..16 immutable CIDRs")
 
-    cidrs = tuple(_Cidr(item, minimum_prefix, label) for item in value)
+    cidrs = tuple(_Cidr(item, minimumPrefix, label) for item in value)
     networks = tuple(ipaddress.IPv4Network(item) for item in cidrs)
 
     if any(left.overlaps(right) for index, left in enumerate(networks)
@@ -153,51 +153,51 @@ class StaticSiteProfile:
     """Explicit Yandex placement and one escaped static page with separate SSH authority."""
 
     identity: StackIdentity
-    zone_id: str
-    image_id: str
-    subnet_cidr: str
-    admin_username: str
-    admin_public_key: str = field(repr=False)
-    admin_source_cidrs: tuple[str, ...]
-    http_source_cidrs: tuple[str, ...]
+    zoneId: str
+    imageId: str
+    subnetCidr: str
+    adminUsername: str
+    adminPublicKey: str = field(repr=False)
+    adminSourceCidrs: tuple[str, ...]
+    httpSourceCidrs: tuple[str, ...]
     title: str = field(repr=False)
     body: str = field(repr=False)
     cores: int = 2
-    memory_gib: int = 2
-    boot_disk_gib: int = 20
-    schema_version: int = 1
-    guest_contract: str = GUEST_CONTRACT
+    memoryGib: int = 2
+    bootDiskGib: int = 20
+    schemaVersion: int = 1
+    guestContract: str = GUEST_CONTRACT
 
     def __post_init__(self) -> None:
         """Keep direct construction as strict as the versioned TOML input boundary."""
 
-        ValidateSchemaVersion(self.schema_version)
+        ValidateSchemaVersion(self.schemaVersion)
 
         if not isinstance(self.identity, StackIdentity) or self.identity.provider != "yandex-cloud":
             raise StaticSiteError("identity must explicitly select the supported yandex-cloud provider")
 
-        if self.guest_contract != GUEST_CONTRACT:
+        if self.guestContract != GUEST_CONTRACT:
             raise StaticSiteError("guest_contract must select ubuntu-24.04-cloud-init")
 
-        ValidateIdentifier(self.zone_id, "zone_id")
-        ValidateIdentifier(self.image_id, "image_id")
-        network = ipaddress.IPv4Network(_Cidr(self.subnet_cidr, 16, "subnet_cidr"))
-        private_ranges = tuple(ipaddress.IPv4Network(value) for value in (
+        ValidateIdentifier(self.zoneId, "zone_id")
+        ValidateIdentifier(self.imageId, "image_id")
+        network = ipaddress.IPv4Network(_Cidr(self.subnetCidr, 16, "subnet_cidr"))
+        privateRanges = tuple(ipaddress.IPv4Network(value) for value in (
             "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16",
         ))
 
-        if network.prefixlen > 28 or not any(network.subnet_of(item) for item in private_ranges):
+        if network.prefixlen > 28 or not any(network.subnet_of(item) for item in privateRanges):
             raise StaticSiteError("subnet_cidr must be RFC1918 with prefix /16../28")
 
-        _Username(self.admin_username)
-        _PublicKey(self.admin_public_key)
-        _Cidrs(self.admin_source_cidrs, 24, "admin source CIDRs")
-        _Cidrs(self.http_source_cidrs, 0, "HTTP source CIDRs")
+        _Username(self.adminUsername)
+        _PublicKey(self.adminPublicKey)
+        _Cidrs(self.adminSourceCidrs, 24, "admin source CIDRs")
+        _Cidrs(self.httpSourceCidrs, 0, "HTTP source CIDRs")
         _Text(self.title, 160, "site title")
         _Text(self.body, 8192, "site body", multiline=True)
         _Integer(self.cores, 2, 32, "cores")
-        _Integer(self.memory_gib, 1, 64, "memory_gib")
-        _Integer(self.boot_disk_gib, 10, 256, "boot_disk_gib")
+        _Integer(self.memoryGib, 1, 64, "memory_gib")
+        _Integer(self.bootDiskGib, 10, 256, "boot_disk_gib")
 
 
 def ParseStaticSiteProfile(data: Mapping[str, object]) -> StaticSiteProfile:
@@ -226,18 +226,18 @@ def ParseStaticSiteProfile(data: Mapping[str, object]) -> StaticSiteProfile:
 
         return StaticSiteProfile(
             identity=ParseIdentity(data["identity"]),
-            zone_id=ValidateIdentifier(placement["zone_id"], "zone_id"),
-            image_id=ValidateIdentifier(placement["image_id"], "image_id"),
-            subnet_cidr=_Cidr(placement["subnet_cidr"], 16, "subnet_cidr"),
-            admin_username=_Username(admin["username"]),
-            admin_public_key=_PublicKey(admin["public_key"]),
-            admin_source_cidrs=tuple(admin["source_cidrs"]),
-            http_source_cidrs=tuple(site["http_source_cidrs"]),
+            zoneId=ValidateIdentifier(placement["zone_id"], "zone_id"),
+            imageId=ValidateIdentifier(placement["image_id"], "image_id"),
+            subnetCidr=_Cidr(placement["subnet_cidr"], 16, "subnet_cidr"),
+            adminUsername=_Username(admin["username"]),
+            adminPublicKey=_PublicKey(admin["public_key"]),
+            adminSourceCidrs=tuple(admin["source_cidrs"]),
+            httpSourceCidrs=tuple(site["http_source_cidrs"]),
             title=_Text(site["title"], 160, "site title"),
             body=_Text(site["body"], 8192, "site body", multiline=True),
             cores=_Integer(placement.get("cores", 2), 2, 32, "cores"),
-            memory_gib=_Integer(placement.get("memory_gib", 2), 1, 64, "memory_gib"),
-            boot_disk_gib=_Integer(placement.get("boot_disk_gib", 20), 10, 256, "boot_disk_gib"),
+            memoryGib=_Integer(placement.get("memory_gib", 2), 1, 64, "memory_gib"),
+            bootDiskGib=_Integer(placement.get("boot_disk_gib", 20), 10, 256, "boot_disk_gib"),
         )
 
     except ContractError as error:
@@ -250,12 +250,12 @@ def LoadStaticSiteProfile(path: str | Path) -> StaticSiteProfile:
     descriptor: int | None = None
 
     try:
-        profile_path = Path(path).absolute()
+        profilePath = Path(path).absolute()
 
-        if ".." in profile_path.parts or any(item.is_symlink() for item in (profile_path, *profile_path.parents)):
+        if ".." in profilePath.parts or any(item.is_symlink() for item in (profilePath, *profilePath.parents)):
             raise StaticSiteError("Profile paths must not contain traversal or symlinks")
 
-        descriptor = os.open(profile_path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+        descriptor = os.open(profilePath, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
                              | getattr(os, "O_NONBLOCK", 0))
         info = os.fstat(descriptor)
 
@@ -299,8 +299,8 @@ def CompileStaticSite(profile: StaticSiteProfile) -> StaticSitePlan:
 
     plan = StaticSitePlan(profile)
 
-    for logical_id in ("network", "subnet", "firewall", "address", "boot-disk", "instance", "plan"):
-        ValidateName(profile.identity.stack + "-" + logical_id, "resource or bundle name")
+    for logicalId in ("network", "subnet", "firewall", "address", "boot-disk", "instance", "plan"):
+        ValidateName(profile.identity.stack + "-" + logicalId, "resource or bundle name")
 
     return plan
 
@@ -329,10 +329,10 @@ def _Firewall(profile: StaticSiteProfile) -> str:
         "    udp sport 67 udp dport 68 accept",
     ]
 
-    for cidr in profile.admin_source_cidrs:
+    for cidr in profile.adminSourceCidrs:
         lines.append(f"    ip saddr {cidr} tcp dport 22 accept")
 
-    for cidr in profile.http_source_cidrs:
+    for cidr in profile.httpSourceCidrs:
         lines.append(f"    ip saddr {cidr} tcp dport 80 accept")
 
     lines.extend([
@@ -346,17 +346,17 @@ def _Firewall(profile: StaticSiteProfile) -> str:
 def _CloudInit(profile: StaticSiteProfile) -> bytes:
     """Generate only fixed nonsecret guest operations and escaped publishable page text."""
 
-    ssh_configuration = "\n".join([
+    sshConfiguration = "\n".join([
         "Port 22", "UsePAM yes", "PermitRootLogin no", "PasswordAuthentication no",
         "KbdInteractiveAuthentication no", "PubkeyAuthentication yes", "StrictModes yes",
         "AuthorizedKeysFile /etc/ssh/f-layer-static-admin-keys", "AuthorizedKeysCommand none",
         "TrustedUserCAKeys none", "AuthorizedPrincipalsFile none", "AuthenticationMethods publickey",
-        "AllowUsers " + " ".join(f"{profile.admin_username}@{cidr}" for cidr in profile.admin_source_cidrs),
+        "AllowUsers " + " ".join(f"{profile.adminUsername}@{cidr}" for cidr in profile.adminSourceCidrs),
         "MaxAuthTries 3", "LoginGraceTime 30", "X11Forwarding no", "AllowAgentForwarding no",
         "AllowTcpForwarding no", "AllowStreamLocalForwarding no", "PermitTunnel no",
         "GatewayPorts no", "PermitUserRC no", "",
     ])
-    nginx_configuration = "\n".join([
+    nginxConfiguration = "\n".join([
         "user www-data;", "worker_processes auto;", "pid /run/nginx.pid;",
         "events { worker_connections 128; }", "http {", "    default_type text/html;",
         "    server_tokens off;", "    access_log off;", "    server {", "        listen 80 default_server;",
@@ -367,7 +367,7 @@ def _CloudInit(profile: StaticSiteProfile) -> bytes:
         "        location = /index.html { try_files /index.html =404; }",
         "        location / { return 404; }", "    }", "}", "",
     ])
-    sysctl_configuration = "\n".join([
+    sysctlConfiguration = "\n".join([
         "net.ipv4.ip_forward=0", "net.ipv4.conf.all.accept_redirects=0",
         "net.ipv4.conf.default.accept_redirects=0", "net.ipv4.conf.all.send_redirects=0",
         "net.ipv4.conf.default.send_redirects=0", "net.ipv4.conf.all.accept_source_route=0",
@@ -388,18 +388,18 @@ def _CloudInit(profile: StaticSiteProfile) -> bytes:
         "systemctl restart nginx.service", "",
     ])
     files = [
-        ("/etc/ssh/sshd_config", "0644", ssh_configuration),
-        ("/etc/ssh/f-layer-static-admin-keys", "0644", profile.admin_public_key + "\n"),
-        ("/etc/nginx/nginx.conf", "0644", nginx_configuration),
+        ("/etc/ssh/sshd_config", "0644", sshConfiguration),
+        ("/etc/ssh/f-layer-static-admin-keys", "0644", profile.adminPublicKey + "\n"),
+        ("/etc/nginx/nginx.conf", "0644", nginxConfiguration),
         ("/var/www/f-layer-static/index.html", "0644", _Page(profile)),
-        ("/etc/sysctl.d/90-f-layer-static.conf", "0644", sysctl_configuration),
+        ("/etc/sysctl.d/90-f-layer-static.conf", "0644", sysctlConfiguration),
         ("/etc/nftables.conf", "0644", _Firewall(profile)),
         ("/usr/local/sbin/f-layer-static-bootstrap", "0700", bootstrap),
     ]
     data = {
         "ssh_pwauth": False, "disable_root": True,
         "users": [{
-            "name": profile.admin_username, "groups": ["sudo"], "shell": "/bin/bash",
+            "name": profile.adminUsername, "groups": ["sudo"], "shell": "/bin/bash",
             "lock_passwd": True, "sudo": "ALL=(ALL) NOPASSWD:ALL",
         }],
         "package_update": True, "package_upgrade": False,
@@ -423,21 +423,21 @@ def BuildStaticSiteBundle(profile: StaticSiteProfile) -> ArtifactBundle:
     ))
 
 
-def RenderStaticSitePlan(plan: StaticSitePlan, *, user_data_file: str | Path) -> str:
+def RenderStaticSitePlan(plan: StaticSitePlan, *, userDataFile: str | Path) -> str:
     """Bind the existing six-resource lifecycle contract to verified owned initialization."""
 
     if not isinstance(plan, StaticSitePlan):
         raise StaticSiteError("plan must be a StaticSitePlan")
 
     profile = plan.profile
-    artifact_path = Path(user_data_file)
+    artifactPath = Path(userDataFile)
     expected = _CloudInit(profile)
 
-    if artifact_path.name != CLOUD_INIT_FILENAME:
+    if artifactPath.name != CLOUD_INIT_FILENAME:
         raise StaticSiteError("Initialization must reference the exact static-site artifact filename")
 
     try:
-        actual = ReadOwnedArtifactFile(artifact_path, profile.identity, kind="server",
+        actual = ReadOwnedArtifactFile(artifactPath, profile.identity, kind="server",
                                        name=profile.identity.stack)
 
     except ContractError:
@@ -453,17 +453,23 @@ def RenderStaticSitePlan(plan: StaticSitePlan, *, user_data_file: str | Path) ->
 
     lines = ["schema_version = 1", f"profile = {Quote(PROFILE_NAME)}", "", "[identity]"]
 
+    identityData = {
+        "project": profile.identity.project, "stack": profile.identity.stack,
+        "provider": profile.identity.provider, "scope_id": profile.identity.scopeId,
+        "owner_id": profile.identity.ownerId,
+    }
+
     for key in sorted(IDENTITY_FIELDS):
-        lines.append(f"{key} = {Quote(getattr(profile.identity, key))}")
+        lines.append(f"{key} = {Quote(identityData[key])}")
 
     def AddResource(
-        logical_id: str, kind: str, dependencies: tuple[str, ...], parameters: Mapping[str, object],
+        logicalId: str, kind: str, dependencies: tuple[str, ...], parameters: Mapping[str, object],
     ) -> None:
         """Render deterministic scalar resource intent without observed cloud identifiers."""
 
         lines.extend([
-            "", "[[resources]]", f"logical_id = {Quote(logical_id)}", f"kind = {Quote(kind)}",
-            f"name = {Quote(ValidateName(profile.identity.stack + '-' + logical_id, 'resource name'))}",
+            "", "[[resources]]", f"logical_id = {Quote(logicalId)}", f"kind = {Quote(kind)}",
+            f"name = {Quote(ValidateName(profile.identity.stack + '-' + logicalId, 'resource name'))}",
             "dependencies = [" + ", ".join(Quote(item) for item in dependencies) + "]",
             "[resources.parameters]",
         ])
@@ -482,12 +488,12 @@ def RenderStaticSitePlan(plan: StaticSitePlan, *, user_data_file: str | Path) ->
 
     AddResource("network", "network", (), {})
     AddResource("subnet", "subnet", ("network",), {
-        "zone_id": profile.zone_id, "ipv4_cidr": profile.subnet_cidr,
+        "zone_id": profile.zoneId, "ipv4_cidr": profile.subnetCidr,
         "network_dependency": "network",
     })
     AddResource("firewall", "security-group", ("network",), {"network_dependency": "network"})
 
-    for port, cidrs in ((22, profile.admin_source_cidrs), (80, profile.http_source_cidrs)):
+    for port, cidrs in ((22, profile.adminSourceCidrs), (80, profile.httpSourceCidrs)):
         for cidr in cidrs:
             lines.extend([
                 "[[resources.parameters.rules]]", 'direction = "ingress"', 'protocol = "tcp"',
@@ -498,16 +504,16 @@ def RenderStaticSitePlan(plan: StaticSitePlan, *, user_data_file: str | Path) ->
         "[[resources.parameters.rules]]", 'direction = "egress"', 'protocol = "any"',
         'cidr = "0.0.0.0/0"',
     ])
-    AddResource("address", "address", (), {"zone_id": profile.zone_id})
+    AddResource("address", "address", (), {"zone_id": profile.zoneId})
     AddResource("boot-disk", "disk", (), {
-        "zone_id": profile.zone_id, "image_id": profile.image_id, "size_gib": profile.boot_disk_gib,
+        "zone_id": profile.zoneId, "image_id": profile.imageId, "size_gib": profile.bootDiskGib,
     })
     AddResource("instance", "instance", ("subnet", "firewall", "address", "boot-disk"), {
-        "zone_id": profile.zone_id, "cores": profile.cores, "memory_gib": profile.memory_gib,
+        "zone_id": profile.zoneId, "cores": profile.cores, "memory_gib": profile.memoryGib,
         "boot_disk_dependency": "boot-disk", "subnet_dependency": "subnet",
         "security_group_dependency": "firewall", "address_dependency": "address",
-        "ssh_public_key": profile.admin_public_key, "ssh_username": profile.admin_username,
-        "user_data_file": str(artifact_path.absolute()),
+        "ssh_public_key": profile.adminPublicKey, "ssh_username": profile.adminUsername,
+        "user_data_file": str(artifactPath.absolute()),
         "user_data_sha256": hashlib.sha256(expected).hexdigest(),
     })
 
@@ -518,68 +524,68 @@ def RenderStaticSitePlan(plan: StaticSitePlan, *, user_data_file: str | Path) ->
 class StaticSitePreparation:
     """Local bundle references for a prepared plan; deployment and readiness remain unverified."""
 
-    server_directory: Path
-    plan_directory: Path
+    serverDirectory: Path
+    planDirectory: Path
 
     @property
     def PlanFile(self) -> Path:
         """Locate the prepared TOML inside its separately owned private plan bundle."""
 
-        return self.plan_directory / PLAN_FILENAME
+        return self.planDirectory / PLAN_FILENAME
 
 
-def PrepareStaticSite(profile: StaticSiteProfile, *, artifact_root: str | Path) -> StaticSitePreparation:
+def PrepareStaticSite(profile: StaticSiteProfile, *, artifactRoot: str | Path) -> StaticSitePreparation:
     """Publish exclusive owned bundles; preserve a verified plan after publication failure."""
 
     plan = CompileStaticSite(profile)
-    server_bundle = BuildStaticSiteBundle(profile)
-    server_directory = WriteArtifactBundle(artifact_root, server_bundle)
-    plan_text: str | None = None
+    serverBundle = BuildStaticSiteBundle(profile)
+    serverDirectory = WriteArtifactBundle(artifactRoot, serverBundle)
+    planText: str | None = None
 
     try:
-        plan_text = RenderStaticSitePlan(plan, user_data_file=server_directory / CLOUD_INIT_FILENAME)
-        plan_directory = WriteArtifactBundle(artifact_root, ArtifactBundle(
+        planText = RenderStaticSitePlan(plan, userDataFile=serverDirectory / CLOUD_INIT_FILENAME)
+        planDirectory = WriteArtifactBundle(artifactRoot, ArtifactBundle(
             profile.identity, "server", profile.identity.stack + "-plan", (
-                Artifact(PLAN_FILENAME, plan_text.encode("utf-8"), sensitive=False),
+                Artifact(PLAN_FILENAME, planText.encode("utf-8"), sensitive=False),
             ),
         ))
 
     except BaseException:
-        published_plan = False
+        publishedPlan = False
 
-        if plan_text is not None:
+        if planText is not None:
             try:
                 actual = ReadOwnedArtifactFile(
-                    Path(artifact_root) / ("server-" + profile.identity.stack + "-plan") / PLAN_FILENAME,
+                    Path(artifactRoot) / ("server-" + profile.identity.stack + "-plan") / PLAN_FILENAME,
                     profile.identity, kind="server", name=profile.identity.stack + "-plan",
                 )
-                published_plan = actual == plan_text.encode("utf-8")
+                publishedPlan = actual == planText.encode("utf-8")
 
             except ContractError:
                 pass
 
-        if not published_plan:
+        if not publishedPlan:
             RemoveArtifactBundle(
-                artifact_root, profile.identity, kind="server", name=profile.identity.stack,
-                expected_bundle=server_bundle,
+                artifactRoot, profile.identity, kind="server", name=profile.identity.stack,
+                expectedBundle=serverBundle,
             )
 
         raise
 
-    return StaticSitePreparation(server_directory, plan_directory)
+    return StaticSitePreparation(serverDirectory, planDirectory)
 
 
 def Main(argv: Sequence[str] | None = None) -> int:
     """Prepare bounded local artifacts only; never instantiate or invoke a cloud provider."""
 
     parser = argparse.ArgumentParser(description="Prepare an owned static-site lifecycle plan locally")
-    parser.add_argument("profile_file", help="Explicit version-one static-site TOML profile")
-    parser.add_argument("--artifact-root", required=True, help="Private POSIX artifact root")
+    parser.add_argument("profileFile", metavar="profile_file", help="Explicit version-one static-site TOML profile")
+    parser.add_argument("--artifact-root", required=True, help="Private POSIX artifact root", dest='artifactRoot')
     arguments = parser.parse_args(argv)
 
     try:
-        prepared = PrepareStaticSite(LoadStaticSiteProfile(arguments.profile_file),
-                                     artifact_root=arguments.artifact_root)
+        prepared = PrepareStaticSite(LoadStaticSiteProfile(arguments.profileFile),
+                                     artifactRoot=arguments.artifactRoot)
 
     except ContractError:
         print(json.dumps({"status": "failed", "reason": "Profile or owned artifact preparation failed"}))

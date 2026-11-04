@@ -66,7 +66,7 @@ from flayer.providers.contracts import ResourceKind
 from flayer.providers.yandex import YandexCloudProvider, YandexCloudSettings
 
 provider = YandexCloudProvider(
-    YandexCloudSettings(folder_id="example-folder", profile="example")
+    YandexCloudSettings(folderId="example-folder", profile="example")
 )
 status = provider.CheckAuthentication()
 

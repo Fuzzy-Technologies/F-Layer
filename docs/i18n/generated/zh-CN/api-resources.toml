@@ -14,10 +14,10 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.VpnResources"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:0a871598e32b8e6bd5d1ffb0fa7593da73d54a953efbd9c2b934cc75c240aa93"
+sourceHash = "sha256:ee1e8dbace46d8f1087f8b9635e0b34ae733bae53c6b3aa2e9e35962001ef9cd"
 body = "显式的新服务器资源设置；省略时保留旧项目契约。"
 reviewedTranslationHash = "sha256:f13fcda7911487f53bbce051156ba621d2b959a56b3909601e3292de205024f6"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-10T18:28:30Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]

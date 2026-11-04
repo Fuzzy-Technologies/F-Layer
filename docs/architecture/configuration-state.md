@@ -65,7 +65,7 @@ and avoid committing private paths.
 from flayer.core.config import LoadConfig
 
 config = LoadConfig("./stack.toml")
-ownership_labels = config.identity.OwnershipLabels()
+ownershipLabels = config.identity.OwnershipLabels()
 ```
 
 The resulting models are frozen dataclasses. Direct construction uses the
@@ -75,7 +75,7 @@ logical names, without externally assigned resource IDs.
 ## Owned state
 
 `StackState` records a complete `StackIdentity` and a tuple of
-`ResourceState(logical_id, kind, resource_id)` values. The snapshot can hold
+`ResourceState(logicalId, kind, resourceId)` values. The snapshot can hold
 only the resources acquired so far in an interrupted deployment; no missing
 locator is inferred. Provider locators must be unique within their kind,
 and logical IDs must be unique across the inventory.
@@ -87,8 +87,8 @@ state = StackState(
     identity=config.identity,
     resources=(ResourceState("gateway", "instance", "example-instance"),),
 )
-SaveState("./runtime/state.json", state, expected_identity=config.identity)
-loaded_state = LoadState("./runtime/state.json", expected_identity=config.identity)
+SaveState("./runtime/state.json", state, expectedIdentity=config.identity)
+loadedState = LoadState("./runtime/state.json", expectedIdentity=config.identity)
 ```
 
 The JSON schema has exactly `schema_version`, `identity`, and `resources`.
@@ -109,7 +109,7 @@ Before an actual cloud operation, a provider adapter must independently
 check the provider scope and live resource labels. A state file alone never
 authorizes modifying infrastructure.
 
-`RemoveState(path, expected_identity)` removes only a matching local snapshot
+`RemoveState(path, expectedIdentity)` removes only a matching local snapshot
 and returns whether a file was removed. It is idempotent for an absent file
 and does not delete any cloud resource. Lifecycle code must decide when
 discarding a local inventory is safe after provider cleanup.

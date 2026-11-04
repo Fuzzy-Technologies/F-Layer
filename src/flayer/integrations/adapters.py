@@ -30,11 +30,11 @@ from .contracts import (
 
 
 def AdaptDiagnostics(
-    request: IntegrationRequest, report: DiagnosticReport, observed_identity: StackIdentity,
+    request: IntegrationRequest, report: DiagnosticReport, observedIdentity: StackIdentity,
 ) -> IntegrationResult:
     """Bind selected status, health, or benchmark observations and omit arbitrary source text."""
 
-    RequireIdentity(observed_identity, request.identity)
+    RequireIdentity(observedIdentity, request.identity)
 
     if (
         request.operation not in {
@@ -66,11 +66,11 @@ def AdaptState(request: IntegrationRequest, state: StackState) -> IntegrationRes
 
 
 def AdaptLifecycle(
-    request: IntegrationRequest, report: LifecycleReport, observed_identity: StackIdentity,
+    request: IntegrationRequest, report: LifecycleReport, observedIdentity: StackIdentity,
 ) -> IntegrationResult:
     """Summarize supplied lifecycle evidence with caller-bound scope, never remote attestation."""
 
-    RequireIdentity(observed_identity, request.identity)
+    RequireIdentity(observedIdentity, request.identity)
 
     if (
         request.operation is not IntegrationOperation.LIFECYCLE_REPORT
@@ -85,7 +85,7 @@ def AdaptLifecycle(
 
     counts = Counter(resource.status for resource in report.resources)
     evidence = LifecycleEvidence(
-        report.action, report.status, report.recovery_required,
+        report.action, report.status, report.recoveryRequired,
         tuple(ResourceCount(status, count) for status, count in sorted(counts.items())),
     )
 

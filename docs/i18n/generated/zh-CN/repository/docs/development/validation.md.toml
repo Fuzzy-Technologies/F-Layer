@@ -18,7 +18,7 @@ python tools/validate.py
 完整检查按顺序执行，遇到第一个错误即停止：
 
 1. 使用 `compileall` 强制编译 `src`、`tests` 和 `tools`。
-2. 运行 Ruff 检查和严格的 mypy 类型检查。
+2. 先运行 `python -m tools.python_naming` 检查自有标识符，再运行 Ruff 和严格的 mypy 类型检查。变量、参数和字段使用 camelCase，函数和类型使用 PascalCase，常量使用 UPPER_SNAKE_CASE；外部接口和 pytest 注入夹具保留规定名称。
 3. 使用 pytest 发现并运行所有测试层级，同时测量分支覆盖率。
 4. 要求语句与分支的综合覆盖率至少为 80%，并独立要求 `flayer` 的分支覆盖率至少为 80%。没有分支的包不承担分支覆盖要求；空白或无效的测量结果视为失败。
 5. 使用隔离解释器导入此工作副本中的包。
@@ -53,9 +53,9 @@ python tools/validate.py
 
 CI 与本地开发调用相同的完整验证脚本。此后修改受跟踪文件会使之前的结果失效，需要重新运行完整检查。
 '''
-sourceHash = "sha256:77f567e1e8aa145a5bf769cfdfdfa5e7397213e51e1bdff6cee31ee534483f1a"
-reviewedTranslationHash = "sha256:90bc68d14b72731a9d477657a30c3b3cca5a7d0522dad6e6ec0bc3bfe92ddae9"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:5cd68f8e1e9e3db0a7a0ad58de0e5c0ad42d807fc328113cd63c1ed4a8cd7848"
+reviewedTranslationHash = "sha256:e81d800b8a5490709dc9006776845e9fe6b532634cdc99d268fffa0f5427e37b"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:54Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]

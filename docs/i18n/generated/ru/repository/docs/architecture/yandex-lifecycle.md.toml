@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/yandex-lifecycle.md"
-sourceHash = "sha256:24a145662327d26f80845b583ca9666cf4b48e9edf577dd5c11a320118fb3f1d"
-reviewedTranslationHash = "sha256:d4f175cac5f0674c039f6ecfe5165fe456d1eccaa169f91d125eb7a61ea35c20"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:0325f53bb74360d7fb77cfeb5aebfe443a6aaf9e26f632c53ab4311464c3aef7"
+reviewedTranslationHash = "sha256:d06b5e181e5f20c2949eee77cbc87bb6e97888f653b0e4e0ae0933ee8b4694cf"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-11T00:25:19Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # Адаптер жизненного цикла Yandex
@@ -91,7 +91,7 @@ ID операции — случайный 32-символьный шестна�
 и пустом stdout адаптер распознаёт только точное сообщение об отсутствии портов
 в правиле группы безопасности и точное сообщение о неизвестном флаге, который
 есть в аргументах этой команды создания. Эти отказы до RPC воспроизведены с `yc`
-1.40.0 на недоступном loopback-адресе. Они возвращают `outcome_unknown=False`,
+1.40.0 на недоступном loopback-адресе. Они возвращают `outcomeUnknown=False`,
 позволяя штатному откату удалить только подтверждённые ресурсы текущей операции.
 После `rolled-back` допустима новая явная попытка деплоя; незавершённый откат
 сохраняет журнал для `recover --rollback`. Исходный вывод CLI не сохраняется.

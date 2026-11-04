@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/configuration-state.md"
-sourceHash = "sha256:0ddf3296f37c020cbf7512b06f0518c1ea9c371b47f3b2690c28156c84d17759"
-reviewedTranslationHash = "sha256:099bd181a1d931e475756b36bd5d32f7c73115fd980d689de1e636b1331a7c94"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:4e8c02b380813ca3eda05ffe4deb2a188438963a2073688e59cec807a4013b22"
+reviewedTranslationHash = "sha256:f206f3c238e5397abbf4b0b9d731e5e30f745d76b60659f87e6b453acac7c4e3"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:55:03Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # Конфигурация и состояние
@@ -73,7 +73,7 @@ ID ресурсов и имена учётных записей должны б�
 from flayer.core.config import LoadConfig
 
 config = LoadConfig("./stack.toml")
-ownership_labels = config.identity.OwnershipLabels()
+ownershipLabels = config.identity.OwnershipLabels()
 ```
 
 Полученные модели — неизменяемые dataclass. При прямом создании объектов
@@ -83,7 +83,7 @@ ownership_labels = config.identity.OwnershipLabels()
 ## Состояние ресурсов развёртывания
 
 `StackState` хранит полный `StackIdentity` и кортеж значений
-`ResourceState(logical_id, kind, resource_id)`. После прерывания снимок может
+`ResourceState(logicalId, kind, resourceId)`. После прерывания снимок может
 содержать только успевшие появиться ресурсы; отсутствующие ID не угадываются.
 ID провайдера должны быть уникальны внутри типа, логические ID — во всём списке.
 
@@ -94,8 +94,8 @@ state = StackState(
     identity=config.identity,
     resources=(ResourceState("gateway", "instance", "example-instance"),),
 )
-SaveState("./runtime/state.json", state, expected_identity=config.identity)
-loaded_state = LoadState("./runtime/state.json", expected_identity=config.identity)
+SaveState("./runtime/state.json", state, expectedIdentity=config.identity)
+loadedState = LoadState("./runtime/state.json", expectedIdentity=config.identity)
 ```
 
 JSON содержит ровно `schema_version`, `identity` и `resources`. В нём нет ссылок
@@ -115,7 +115,7 @@ JSON содержит ровно `schema_version`, `identity` и `resources`. В
 Перед реальным облачным изменением адаптер отдельно проверяет каталог и текущие
 метки ресурса. Сам файл состояния не даёт права менять инфраструктуру.
 
-`RemoveState(path, expected_identity)` удаляет только совпадающий локальный
+`RemoveState(path, expectedIdentity)` удаляет только совпадающий локальный
 снимок и возвращает признак удаления. Отсутствие файла не считается ошибкой;
 облачные ресурсы не удаляются. Когда можно безопасно удалить список после
 очистки облака, решает код жизненного цикла.

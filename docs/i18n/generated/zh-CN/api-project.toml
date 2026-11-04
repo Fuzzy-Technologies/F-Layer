@@ -14,12 +14,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.guest.GuestResult"
 sourcePath = "src/flayer/guest.py"
-sourceHash = "sha256:c464998bde7323cbb25987c97fedbd2c68f31dec7d8d9494cc85271f275e1c11"
+sourceHash = "sha256:102fdb2fcebe00775bb4f5b51a5b44255ab60a9c9a3f3d7c629ad192f95dca9b"
 body = "临时的子进程输出，不包含在对象表示或错误信息中。"
 reviewedTranslationHash = "sha256:3cb4dcf04c57afd363887102e3bac81d2732d91adbc52ba59f191d13a7dfc1c2"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.489171+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -135,12 +135,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.guest.SshGuestProvisioner.__init__"
 sourcePath = "src/flayer/guest.py"
-sourceHash = "sha256:ec682592d445b33b7d7ecc6a091c5b937639124d88a67d333507a920e8063d54"
+sourceHash = "sha256:480ae961441eac2246f7e75a656f5c42fc74eb3622869cbfb756864b93c96bdc"
 body = "构造任何 SSH 参数之前，先校验私钥和信任文件路径。"
 reviewedTranslationHash = "sha256:c11d36852c56307c8d0547b0431bf5085d924df25ac3c5c84657c2833532ba52"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.489448+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -157,23 +157,23 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.CloudPlacement"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:9a9c778a47295f5d64b7e1081f60cfdda9420c282fc198d834218bb1c51733a6"
+sourceHash = "sha256:74d0c6dcbd0b6e690766cee90f601307327044df2eb48e7223984ed44da46267"
 body = "单台 Ubuntu 虚拟机的非敏感部署参数，以及严格限定的管理员入站访问规则。"
 reviewedTranslationHash = "sha256:e340db8e00f33c07a3fc8b763e219112b5ab41c265bfd94b88f61de18e2fdb17"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.vpn_project.VpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:32e33303eedcc2567f27e7d99dadfa2f28902549b5600a8c0ecad76af7b1ed32"
+sourceHash = "sha256:621b5b1ed88e4131c480a3e64ae50e8f97d8d4e984f61b01cd539d6896e2f279"
 body = "经校验且不含密钥等敏感数据的项目配置，明确引用私有本地存储位置。"
 reviewedTranslationHash = "sha256:84f80e7c0da3630504c109b4f4f23b6c442cd628c68bc2e134d321f952b66838"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-10T18:28:30Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -201,12 +201,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.VpnProjectReport"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:1b3e9135233b373da1de90f80dd768637e76713d1804ffc7b91d137fc21729e7"
+sourceHash = "sha256:ba25c3729e38ca382de993baff6707d22fcdf162733f57aa01dde0d585bd2364"
 body = "经过脱敏的生命周期及来宾系统观测结果，不包含传输凭据材料或提供方原始输出。"
 reviewedTranslationHash = "sha256:f95b2d695087856cee1ed7b7617bc0587aeb39c7f42decf249cb30c5fffbf950"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-10T00:23:17.700958+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -289,12 +289,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.RunVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:f79b32890a8bf62c1e3cbebe1ccce4279ee32ba6a84cb916cb13723fcd692e29"
+sourceHash = "sha256:e8927c328b77ea0e5195005bebe89e4fb7bf657c3400e5e9b1324b8f19df6ab3"
 body = "整合明确的云操作许可、持久资源状态、经过身份验证的来宾安装和客户端文件导出。"
 reviewedTranslationHash = "sha256:04bd903e5aa4223dd0a341d458493347328fccd7c2e0a16e580ed0addf900df8"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.489683+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -320,10 +320,10 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_export.ExportVpnDevice"
 sourcePath = "src/flayer/vpn_export.py"
-sourceHash = "sha256:a5f203fd253d63501b5733eb5df7b7acbdb86c9c94b0efd7938b398b36b979cf"
+sourceHash = "sha256:76be8c0d73a293f6a4f24f94a1a3e86d5f41d27afc6f364a6ad796d047232ae0"
 body = "验证归属清单后复制一个设备的文件，不调用云端、不生成密钥，也不修改源文件。"
 reviewedTranslationHash = "sha256:5da0317fdcc86463bdd9f8f643c41e1f7585cd1a1adf60f8b864f03c11d3c098"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-11T00:07:22.749054+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]

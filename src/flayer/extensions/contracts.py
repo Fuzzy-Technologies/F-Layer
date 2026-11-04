@@ -42,13 +42,13 @@ class ExtensionDescriptor:
     """A static identity; external metadata snapshots are not package authenticity proof."""
 
     kind: ExtensionKind
-    plugin_id: str
+    pluginId: str
     distribution: str
     version: str
     group: str
     target: str
-    metadata_directory: Path | None = field(default=None, repr=False)
-    metadata_sha256: str | None = field(default=None, repr=False)
+    metadataDirectory: Path | None = field(default=None, repr=False)
+    metadataSha256: str | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         """Validate direct construction as strictly as statically decoded metadata."""
@@ -56,7 +56,7 @@ class ExtensionDescriptor:
         if not isinstance(self.kind, ExtensionKind):
             raise ExtensionError("Extension kind must be an ExtensionKind member")
 
-        ValidateName(self.plugin_id, "extension.plugin_id")
+        ValidateName(self.pluginId, "extension.plugin_id")
 
         if (
             not isinstance(self.distribution, str) or len(self.distribution) > 128
@@ -66,9 +66,9 @@ class ExtensionDescriptor:
         ):
             raise ExtensionError("Extension distribution and stable release version are invalid")
 
-        expected_group = PROVIDER_GROUP if self.kind is ExtensionKind.PROVIDER else PROFILE_GROUP
+        expectedGroup = PROVIDER_GROUP if self.kind is ExtensionKind.PROVIDER else PROFILE_GROUP
 
-        if self.group != expected_group:
+        if self.group != expectedGroup:
             raise ExtensionError("Extension group uses an unsupported contract version")
 
         if (
@@ -77,16 +77,16 @@ class ExtensionDescriptor:
         ):
             raise ExtensionError("Extension target must be an exact module:attribute without extras")
 
-        if self.metadata_directory is None:
-            if self.distribution != "f-layer" or self.metadata_sha256 is not None:
+        if self.metadataDirectory is None:
+            if self.distribution != "f-layer" or self.metadataSha256 is not None:
                 raise ExtensionError("Only F-Layer built-ins may omit the metadata snapshot")
 
         elif (
-            not isinstance(self.metadata_directory, Path)
-            or not self.metadata_directory.is_absolute()
-            or not self.metadata_directory.name.endswith(".dist-info")
-            or not isinstance(self.metadata_sha256, str)
-            or SHA256_PATTERN.fullmatch(self.metadata_sha256) is None
+            not isinstance(self.metadataDirectory, Path)
+            or not self.metadataDirectory.is_absolute()
+            or not self.metadataDirectory.name.endswith(".dist-info")
+            or not isinstance(self.metadataSha256, str)
+            or SHA256_PATTERN.fullmatch(self.metadataSha256) is None
             or self.distribution == "f-layer"
             or self.target.split(":", 1)[0].split(".", 1)[0] == "flayer"
         ):
@@ -97,23 +97,23 @@ class ExtensionDescriptor:
 class ProviderContext:
     """Explicit scope, external CLI authentication reference, and bounded execution limits."""
 
-    scope_id: str
-    authentication_reference: str
-    command_timeout: float = 45.0
-    inventory_limit: int = 10000
+    scopeId: str
+    authenticationReference: str
+    commandTimeout: float = 45.0
+    inventoryLimit: int = 10000
 
     def __post_init__(self) -> None:
         """Reject credential bytes, malformed references, and unbounded execution settings."""
 
-        ValidateIdentifier(self.scope_id)
-        ValidateIdentifier(self.authentication_reference)
+        ValidateIdentifier(self.scopeId)
+        ValidateIdentifier(self.authenticationReference)
 
         if (
-            isinstance(self.command_timeout, bool)
-            or not isinstance(self.command_timeout, (int, float))
-            or not math.isfinite(self.command_timeout)
-            or not 0 < self.command_timeout <= 300
-            or type(self.inventory_limit) is not int or not 1 <= self.inventory_limit <= 100000
+            isinstance(self.commandTimeout, bool)
+            or not isinstance(self.commandTimeout, (int, float))
+            or not math.isfinite(self.commandTimeout)
+            or not 0 < self.commandTimeout <= 300
+            or type(self.inventoryLimit) is not int or not 1 <= self.inventoryLimit <= 100000
         ):
             raise ExtensionError("Provider context requires bounded timeout and inventory limits")
 
@@ -172,7 +172,7 @@ class CompiledProfile(Protocol):
 
         ...
 
-    def RenderPlan(self, *, user_data_file: str | Path) -> str:
+    def RenderPlan(self, *, userDataFile: str | Path) -> str:
         """Render lifecycle TOML after verifying the exact owned server artifact."""
 
         ...

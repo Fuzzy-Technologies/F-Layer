@@ -22,7 +22,7 @@ from flayer.diagnostics import (
 )
 
 
-@pytest.mark.parametrize("status, code", [
+@pytest.mark.parametrize('status,code', [
     (DiagnosticStatus.OK, 0), (DiagnosticStatus.WARNING, 1),
     (DiagnosticStatus.FAILED, 1), (DiagnosticStatus.STALE, 3),
     (DiagnosticStatus.UNSUPPORTED, 4),
@@ -99,7 +99,7 @@ def test_RunChecksCapturesStructuredResultsAndSuppressesExceptions() -> None:
     assert RunChecks(())[0].status is DiagnosticStatus.UNSUPPORTED, "Empty probes imply no support"
 
 
-@pytest.mark.parametrize("state, status", [
+@pytest.mark.parametrize('state,status', [
     ("ready", DiagnosticStatus.OK), ("pending", DiagnosticStatus.WARNING),
     ("failed", DiagnosticStatus.FAILED), ("absent", DiagnosticStatus.FAILED),
     ("unexpected", DiagnosticStatus.FAILED),
@@ -114,7 +114,7 @@ def test_ProviderStatusRequiresAnExplicitObservation(state: str, status: Diagnos
     assert ProviderStatus().status is DiagnosticStatus.UNSUPPORTED, "No provider was selected"
 
 
-@pytest.mark.parametrize("report, expected", [
+@pytest.mark.parametrize('report,expected', [
     (None, DiagnosticStatus.UNSUPPORTED),
     ({"schema_version": 2}, DiagnosticStatus.UNSUPPORTED),
     ({"schema_version": True}, DiagnosticStatus.UNSUPPORTED),
@@ -132,19 +132,19 @@ def test_HealthFreshnessContracts(report: dict[str, object] | None,
                                 expected: DiagnosticStatus) -> None:
     """Expired, malformed, failed, and unsupported health evidence remain distinct."""
 
-    result = EvaluateHealthReport(report, max_age_seconds=20, current_time=100)
+    result = EvaluateHealthReport(report, maxAgeSeconds=20, currentTime=100)
 
     assert result.status is expected, "Freshness or reported outcome was misclassified"
 
 
-@pytest.mark.parametrize("max_age, now", [
+@pytest.mark.parametrize('maxAge,now', [
     (0, 1), (float("inf"), 1), (1, float("nan")), (True, 1), (1, False), ("bad", 1), (1, "bad")
 ])
-def test_HealthRejectsUnboundedFreshness(max_age: float, now: float) -> None:
+def test_HealthRejectsUnboundedFreshness(maxAge: float, now: float) -> None:
     """Freshness validation must not accept nonfinite evidence boundaries."""
 
     with pytest.raises(ValueError):
-        EvaluateHealthReport(None, max_age, now)
+        EvaluateHealthReport(None, maxAge, now)
 
 
 def test_HealthUsesCurrentTime(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -166,7 +166,7 @@ def test_RuntimeOnlyDescribesLocalExecution(monkeypatch: pytest.MonkeyPatch) -> 
     assert RuntimeChecks()[0].status is DiagnosticStatus.FAILED, "Unsupported runtime passed"
 
 
-@pytest.mark.parametrize("arguments, code, outcome", [
+@pytest.mark.parametrize('arguments,code,outcome', [
     (["check", "--format", "json"], 0, "ok"),
     (["status", "--format", "json"], 4, "unsupported"),
     (["health", "--format", "json"], 4, "unsupported"),
@@ -180,10 +180,10 @@ def test_CliOfflineAndInvalidInput(arguments: list[str], code: int, outcome: str
                                   capsys: pytest.CaptureFixture[str]) -> None:
     """Offline defaults and invalid inputs produce truthful output without network work."""
 
-    exit_code = Main(arguments)
+    exitCode = Main(arguments)
     output = capsys.readouterr().out
 
-    assert exit_code == code, "CLI exit code differs from requested diagnostic outcome"
+    assert exitCode == code, "CLI exit code differs from requested diagnostic outcome"
     assert json.loads(output)["status"] == outcome, "CLI outcome was lost in JSON"
     assert "fixture-secret" not in output, "Input validation echoed a sensitive URL"
 

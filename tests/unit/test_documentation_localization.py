@@ -10,12 +10,13 @@ from typing import Any
 
 import pytest
 
-from tools import documentation_coverage, generated_localization
+from tools import documentation_coverage as documentationCoverage
+from tools import generated_localization as generatedLocalization
 from tools.locale_documentation import CanonicalHash, CanonicalUnit
 
 
-@pytest.fixture
-def generated_project(tmp_path: Path) -> Path:
+@pytest.fixture(name='generatedProject')
+def GeneratedProjectFixture(tmp_path: Path) -> Path:
     """Create a tracked miniature repository with prose and a static public API."""
 
     subprocess.run(["git", "init", "--quiet", str(tmp_path)], check=True)
@@ -49,9 +50,9 @@ def generated_project(tmp_path: Path) -> Path:
 def ReviewRecord(unit: CanonicalUnit, body: str) -> dict[str, Any]:
     """Construct attributable fixture evidence independently of production validators."""
 
-    return {"schemaVersion": 1, "id": unit.identifier, "sourcePath": unit.source_path,
+    return {"schemaVersion": 1, "id": unit.identifier, "sourcePath": unit.sourcePath,
             "sourceHash": CanonicalHash(unit), "body": body,
-            "reviewedTranslationHash": generated_localization.TextHash(body),
+            "reviewedTranslationHash": generatedLocalization.TextHash(body),
             "reviewer": "Fixture reviewer", "reviewerType": "ai",
             "reviewedAt": "2026-10-09T07:00:00Z", "reviewRoles": ["editorial", "technical"]}
 
@@ -69,38 +70,38 @@ def WriteCatalog(root: Path, unit: CanonicalUnit, body: str) -> Path:
     return path
 
 
-def test_GeneratedDiscoveryIncludesActualNarrativesAndSourceBoundSymbols(generated_project: Path) -> None:
+def test_GeneratedDiscoveryIncludesActualNarrativesAndSourceBoundSymbols(generatedProject: Path) -> None:
     """Prose, module docstrings, and supported definitions are translation units without imports."""
 
-    units = generated_localization.DiscoverGeneratedUnits(generated_project)
+    units = generatedLocalization.DiscoverGeneratedUnits(generatedProject)
 
     assert {"repository:docs/guide.md", "module:flayer", "symbol:flayer.Inspect"} <= units.keys()
     assert units["symbol:flayer.Inspect"].signature == "def Inspect() -> str"
     assert any(identifier.startswith("coverage:") for identifier in units)
 
 
-def test_GeneratedCatalogReviewBindsBothExactSourceAndTranslation(generated_project: Path) -> None:
+def test_GeneratedCatalogReviewBindsBothExactSourceAndTranslation(generatedProject: Path) -> None:
     """Changing source signatures or translated bytes invalidates a previous review."""
 
-    unit = generated_localization.DiscoverGeneratedUnits(generated_project)["symbol:flayer.Inspect"]
+    unit = generatedLocalization.DiscoverGeneratedUnits(generatedProject)["symbol:flayer.Inspect"]
     record = ReviewRecord(unit, "Reviewed callable description.")
 
-    assert generated_localization.ValidateTranslation(unit, record, ["human", "ai"]).state == "approved"
+    assert generatedLocalization.ValidateTranslation(unit, record, ["human", "ai"]).state == "approved"
 
-    changed = CanonicalUnit(unit.identifier, unit.kind, unit.source_path, "def Inspect() -> int", unit.body)
+    changed = CanonicalUnit(unit.identifier, unit.kind, unit.sourcePath, "def Inspect() -> int", unit.body)
 
-    assert generated_localization.ValidateTranslation(changed, record, ["human", "ai"]).state == "stale"
+    assert generatedLocalization.ValidateTranslation(changed, record, ["human", "ai"]).state == "stale"
 
     record["body"] += " Changed afterward."
 
-    assert generated_localization.ValidateTranslation(unit, record, ["human", "ai"]).state == "stale"
+    assert generatedLocalization.ValidateTranslation(unit, record, ["human", "ai"]).state == "stale"
 
 
 @pytest.mark.parametrize("change", ["reviewer", "roles", "timezone", "authority", "copied-source"])
-def test_GeneratedReviewRequiresActualAttributionAndAuthority(generated_project: Path, change: str) -> None:
+def test_GeneratedReviewRequiresActualAttributionAndAuthority(generatedProject: Path, change: str) -> None:
     """Incomplete reviews and copied English cannot acquire approved translation status."""
 
-    unit = generated_localization.DiscoverGeneratedUnits(generated_project)["symbol:flayer.Inspect"]
+    unit = generatedLocalization.DiscoverGeneratedUnits(generatedProject)["symbol:flayer.Inspect"]
     record = ReviewRecord(unit, "Reviewed description.")
     authority = ["human", "ai"]
 
@@ -120,7 +121,7 @@ def test_GeneratedReviewRequiresActualAttributionAndAuthority(generated_project:
         record["body"] = unit.body
 
     with pytest.raises(ValueError):
-        generated_localization.ValidateTranslation(unit, record, authority)
+        generatedLocalization.ValidateTranslation(unit, record, authority)
 
 
 def test_GeneratedCatalogCannotAlterRunnableExamples() -> None:
@@ -131,7 +132,7 @@ def test_GeneratedCatalogCannotAlterRunnableExamples() -> None:
     record = ReviewRecord(unit, "# Reviewed guide\n\n```bash\nflayer destroy\n```\n")
 
     with pytest.raises(ValueError, match="changed code examples"):
-        generated_localization.ValidateTranslation(unit, record, ["ai"])
+        generatedLocalization.ValidateTranslation(unit, record, ["ai"])
 
 
 @pytest.mark.parametrize("change", ["labels", "node", "arrow", "direction", "state-id",
@@ -166,44 +167,44 @@ def test_DiagramTranslationPreservesTopologyAndExecutableExamples(change: str) -
     record = ReviewRecord(unit, translated)
 
     if change == "labels":
-        assert generated_localization.ValidateTranslation(unit, record, ["ai"]).state == "approved"
+        assert generatedLocalization.ValidateTranslation(unit, record, ["ai"]).state == "approved"
 
     else:
         with pytest.raises(ValueError, match="changed code examples"):
-            generated_localization.ValidateTranslation(unit, record, ["ai"])
+            generatedLocalization.ValidateTranslation(unit, record, ["ai"])
 
 
-def test_TrackedCatalogsDoNotConcealNewMissingContracts(generated_project: Path) -> None:
+def test_TrackedCatalogsDoNotConcealNewMissingContracts(generatedProject: Path) -> None:
     """Approved catalog entries never imply coverage of newly discovered source units."""
 
-    units = generated_localization.DiscoverGeneratedUnits(generated_project)
+    units = generatedLocalization.DiscoverGeneratedUnits(generatedProject)
     unit = units["symbol:flayer.Inspect"]
-    WriteCatalog(generated_project, unit, "Reviewed callable description.")
-    translations = generated_localization.LoadTranslations(generated_project, units)
-    states = generated_localization.TranslationStates(units, translations)
+    WriteCatalog(generatedProject, unit, "Reviewed callable description.")
+    translations = generatedLocalization.LoadTranslations(generatedProject, units)
+    states = generatedLocalization.TranslationStates(units, translations)
 
     assert states[unit.identifier] == {"ru": "approved", "zh-CN": "missing"}
 
     with pytest.raises(ValueError, match="Documentation translation is incomplete"):
-        generated_localization.RequireComplete(states)
+        generatedLocalization.RequireComplete(states)
 
 
-def test_UntrackedAndUnknownCatalogsFailClosed(generated_project: Path) -> None:
+def test_UntrackedAndUnknownCatalogsFailClosed(generatedProject: Path) -> None:
     """Local files and unknown source identities cannot enter reproducible translations."""
 
-    units = generated_localization.DiscoverGeneratedUnits(generated_project)
-    path = WriteCatalog(generated_project, units["symbol:flayer.Inspect"], "Reviewed description.")
-    subprocess.run(["git", "rm", "--cached", str(path)], cwd=generated_project, check=True,
+    units = generatedLocalization.DiscoverGeneratedUnits(generatedProject)
+    path = WriteCatalog(generatedProject, units["symbol:flayer.Inspect"], "Reviewed description.")
+    subprocess.run(["git", "rm", "--cached", str(path)], cwd=generatedProject, check=True,
                    capture_output=True)
 
     with pytest.raises(ValueError, match="Untracked or redirected"):
-        generated_localization.LoadTranslations(generated_project, units)
+        generatedLocalization.LoadTranslations(generatedProject, units)
 
-    subprocess.run(["git", "add", "."], cwd=generated_project, check=True)
+    subprocess.run(["git", "add", "."], cwd=generatedProject, check=True)
     path.write_text(path.read_text().replace("symbol:flayer.Inspect", "symbol:flayer.Invented"))
 
     with pytest.raises(ValueError, match="Unknown or repeated"):
-        generated_localization.LoadTranslations(generated_project, units)
+        generatedLocalization.LoadTranslations(generatedProject, units)
 
 
 def test_TranslatedHeadingsKeepCanonicalLinksAndRejectOmittedSections() -> None:
@@ -212,17 +213,17 @@ def test_TranslatedHeadingsKeepCanonicalLinksAndRejectOmittedSections() -> None:
     pytest.importorskip("markdown")
     canonical = "# Setup\n\n## Runtime options\n\n## Runtime options\n"
     target = "# Installation\n\n## Supported settings\n\n## Repeated settings\n"
-    result = generated_localization.CanonicalHeadingAnchors(canonical, target)
+    result = generatedLocalization.CanonicalHeadingAnchors(canonical, target)
 
     assert "# Installation {#setup}" in result
     assert "## Supported settings {#runtime-options}" in result
     assert "## Repeated settings {#runtime-options_1}" in result
 
     with pytest.raises(ValueError, match="preserve every heading"):
-        generated_localization.CanonicalHeadingAnchors(canonical, "# Incomplete guide\n")
+        generatedLocalization.CanonicalHeadingAnchors(canonical, "# Incomplete guide\n")
 
 
-def test_GriffeChangesOnlyDocumentationObjects(generated_project: Path, tmp_path: Path) -> None:
+def test_GriffeChangesOnlyDocumentationObjects(generatedProject: Path, tmp_path: Path) -> None:
     """Real static extraction localizes prose while preserving code and avoiding runtime imports."""
 
     griffe = pytest.importorskip("griffe")
@@ -230,7 +231,7 @@ def test_GriffeChangesOnlyDocumentationObjects(generated_project: Path, tmp_path
 
     overlay = tmp_path / "overlay.json"
     overlay.write_text(json.dumps({"flayer.Inspect": "Reviewed callable description."}))
-    module = griffe.load("flayer", search_paths=[generated_project / "src"], allow_inspection=False,
+    module = griffe.load("flayer", search_paths=[generatedProject / "src"], allow_inspection=False,
                          extensions=griffe.Extensions(TranslatedDocstrings(str(overlay))))
 
     assert module["Inspect"].docstring.value == "Reviewed callable description."
@@ -238,11 +239,11 @@ def test_GriffeChangesOnlyDocumentationObjects(generated_project: Path, tmp_path
     assert 'return "unchanged"' in module["Inspect"].source
 
 
-def test_CoverageLocalizationKeepsExactFilePathsAndMachineDispositions(generated_project: Path) -> None:
+def test_CoverageLocalizationKeepsExactFilePathsAndMachineDispositions(generatedProject: Path) -> None:
     """Coverage is rendered from the real inventory while only natural-language cells change."""
 
-    files = documentation_coverage.InventoryFiles(generated_project)
-    localized = documentation_coverage.RenderInventory(files, [], lambda value: "Reviewed " + value)
+    files = documentationCoverage.InventoryFiles(generatedProject)
+    localized = documentationCoverage.RenderInventory(files, [], lambda value: "Reviewed " + value)
 
     assert "[docs/guide.md](../repository/docs/guide.md)" in localized
     assert "`rendered-markdown`" in localized
@@ -250,7 +251,7 @@ def test_CoverageLocalizationKeepsExactFilePathsAndMachineDispositions(generated
 
 
 def test_MkdocsLoadsTheExactLocaleExtensionWithoutImportingRuntime(
-    generated_project: Path, tmp_path: Path,
+    generatedProject: Path, tmp_path: Path,
 ) -> None:
     """A one-page strict build proves the actual handler loads reviewed prose and keeps API anchors."""
 
@@ -260,8 +261,8 @@ def test_MkdocsLoadsTheExactLocaleExtensionWithoutImportingRuntime(
     content = tmp_path / "content"
     content.mkdir()
     (content / "index.md").write_text("# API\n\n::: flayer\n", encoding="utf-8")
-    module_path = generated_project / "src/flayer/__init__.py"
-    module_path.write_text(module_path.read_text() + (
+    modulePath = generatedProject / "src/flayer/__init__.py"
+    modulePath.write_text(modulePath.read_text() + (
         '\nclass Client:\n    """Canonical class description."""\n'
         '    def __init__(self) -> None:\n        """Canonical constructor description."""\n'
         '        self.value = 1\n'
@@ -271,9 +272,9 @@ def test_MkdocsLoadsTheExactLocaleExtensionWithoutImportingRuntime(
                                    "flayer.Inspect": "Reviewed callable description.",
                                    "flayer.Client": "Reviewed class description.",
                                    "flayer.Client.__init__": "Reviewed constructor description."}))
-    project_root = Path(__file__).resolve().parents[2]
-    extension = project_root / "tools/translated_docstrings.py"
-    templates = generated_localization.WriteApiTemplates(project_root, tmp_path, "ru")
+    projectRoot = Path(__file__).resolve().parents[2]
+    extension = projectRoot / "tools/translated_docstrings.py"
+    templates = generatedLocalization.WriteApiTemplates(projectRoot, tmp_path, "ru")
     config = tmp_path / "mkdocs.yml"
     config.write_text(
         "site_name: Fixture\nstrict: true\ntheme:\n  name: material\n  language: ru\n"
@@ -282,7 +283,7 @@ def test_MkdocsLoadsTheExactLocaleExtensionWithoutImportingRuntime(
         "plugins:\n  - mkdocstrings:\n"
         f"      custom_templates: {json.dumps(str(templates))}\n"
         "      handlers:\n        python:\n"
-        f"          paths: [{json.dumps(str(generated_project / 'src'))}]\n"
+        f"          paths: [{json.dumps(str(generatedProject / 'src'))}]\n"
         "          options:\n            extensions: "
         + json.dumps([{str(extension): {"translations_path": str(overlay)}}]) + "\n"
         "            allow_inspection: false\n            show_source: true\n"
@@ -300,12 +301,12 @@ def test_MkdocsLoadsTheExactLocaleExtensionWithoutImportingRuntime(
     assert "Reviewed class description." in rendered
     assert "Reviewed constructor description." in rendered
 
-    labels = tomllib.loads((project_root / "docs/i18n/api-labels.toml").read_text())["ru"]
+    labels = tomllib.loads((projectRoot / "docs/i18n/api-labels.toml").read_text())["ru"]
 
     assert labels["Source code in"] in rendered
     assert "Source code in" not in rendered
     assert 'id="flayer.Inspect"' in rendered
-    assert "Runtime import must never happen" in (generated_project / "src/flayer/__init__.py").read_text()
+    assert "Runtime import must never happen" in (generatedProject / "src/flayer/__init__.py").read_text()
 
 
 def test_ApprovedMarkerCannotSubstituteForRenderedApiProse(tmp_path: Path) -> None:
@@ -313,22 +314,22 @@ def test_ApprovedMarkerCannotSubstituteForRenderedApiProse(tmp_path: Path) -> No
 
     pytest.importorskip("markdown")
     unit = CanonicalUnit("symbol:flayer.Inspect", "symbol", "src/flayer/__init__.py", "def Inspect()", "English.")
-    entry = generated_localization.ValidateTranslation(unit, ReviewRecord(unit, "Reviewed prose."), ["ai"])
+    entry = generatedLocalization.ValidateTranslation(unit, ReviewRecord(unit, "Reviewed prose."), ["ai"])
     page = tmp_path / "ru/api/modules/flayer/index.html"
     page.parent.mkdir(parents=True)
     page.write_text('<aside data-translation-state="approved"></aside><pre>Reviewed prose.</pre><p>English.</p>')
 
     with pytest.raises(ValueError, match="was not rendered"):
-        generated_localization.VerifyApiProse(tmp_path, "ru", {unit.identifier: unit}, {unit.identifier: entry})
+        generatedLocalization.VerifyApiProse(tmp_path, "ru", {unit.identifier: unit}, {unit.identifier: entry})
 
     page.write_text('<p>Reviewed prose.</p><pre>English.</pre>')
-    generated_localization.VerifyApiProse(tmp_path, "ru", {unit.identifier: unit}, {unit.identifier: entry})
+    generatedLocalization.VerifyApiProse(tmp_path, "ru", {unit.identifier: unit}, {unit.identifier: entry})
 
 
-def test_NestedPublicConstructorsRemainTranslationRequirements(generated_project: Path) -> None:
+def test_NestedPublicConstructorsRemainTranslationRequirements(generatedProject: Path) -> None:
     """Nested class prose must not disappear while private and function-local classes stay source-only."""
 
-    path = generated_project / "src/flayer/__init__.py"
+    path = generatedProject / "src/flayer/__init__.py"
     path.write_text(path.read_text() + (
         '\nclass Outer:\n    """Public outer class."""\n'
         '    class Inner:\n        """Public nested class."""\n'
@@ -337,7 +338,7 @@ def test_NestedPublicConstructorsRemainTranslationRequirements(generated_project
         '    class _Private:\n        def __init__(self) -> None:\n'
         '            """Private constructor."""\n            pass\n'
     ))
-    units = generated_localization.DiscoverGeneratedUnits(generated_project)
+    units = generatedLocalization.DiscoverGeneratedUnits(generatedProject)
 
     assert "symbol:flayer.Outer.Inner.__init__" in units
     assert not any("_Private" in identifier for identifier in units)

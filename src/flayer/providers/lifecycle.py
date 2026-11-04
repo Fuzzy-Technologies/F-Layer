@@ -55,7 +55,7 @@ def _ValidateValue(value: JsonValue, depth: int, remaining: list[int]) -> None:
 class ResourceSpec:
     """A desired logical resource with immutable options and explicit dependencies."""
 
-    logical_id: str
+    logicalId: str
     kind: ResourceKind
     name: str
     parameters: tuple[tuple[str, JsonValue], ...] = field(default=(), repr=False)
@@ -64,7 +64,7 @@ class ResourceSpec:
     def __post_init__(self) -> None:
         """Reject malformed, mutable, duplicate or cyclic direct request fields."""
 
-        ValidateName(self.logical_id, "resource.logical_id")
+        ValidateName(self.logicalId, "resource.logical_id")
         ValidateName(self.name, "resource.name")
 
         if not isinstance(self.kind, ResourceKind):
@@ -92,19 +92,19 @@ class ResourceSpec:
             or len(self.dependencies) > 128
             or any(not isinstance(value, str) for value in self.dependencies)
             or len(set(self.dependencies)) != len(self.dependencies)
-            or self.logical_id in self.dependencies
+            or self.logicalId in self.dependencies
         ):
             raise ValueError("Resource dependencies require unique immutable logical IDs")
 
-        for logical_id in self.dependencies:
-            ValidateName(logical_id, "resource.dependency")
+        for logicalId in self.dependencies:
+            ValidateName(logicalId, "resource.dependency")
 
     def OwnershipLabels(self, identity: StackIdentity) -> tuple[tuple[str, str], ...]:
         """Bind one logical resource to the complete stack ownership boundary."""
 
         labels = identity.OwnershipLabels()
-        labels[LOGICAL_ID_LABEL] = self.logical_id
-        content = (self.logical_id, self.kind.value, self.name, self.parameters, self.dependencies)
+        labels[LOGICAL_ID_LABEL] = self.logicalId
+        content = (self.logicalId, self.kind.value, self.name, self.parameters, self.dependencies)
         digest = hashlib.sha256(json.dumps(content, sort_keys=True).encode("utf-8")).hexdigest()
         labels[SPEC_DIGEST_LABEL] = digest[:40]
 
@@ -115,16 +115,16 @@ class MutationError(ProviderError):
     """A sanitized mutation failure that distinguishes an uncertain remote outcome."""
 
     def __init__(
-        self, code: ProviderErrorCode, operation: str, outcome_unknown: bool
+        self, code: ProviderErrorCode, operation: str, outcomeUnknown: bool
     ) -> None:
         """Retain only a stable failure category and whether submission may have occurred."""
 
-        if type(outcome_unknown) is not bool:
+        if type(outcomeUnknown) is not bool:
             raise ValueError("Mutation outcome uncertainty requires a boolean")
 
-        self.outcome_unknown = outcome_unknown
+        self.outcomeUnknown = outcomeUnknown
         super().__init__(code, operation)
-        self.retryable = self.retryable and not outcome_unknown
+        self.retryable = self.retryable and not outcomeUnknown
 
 
 @runtime_checkable
@@ -162,15 +162,15 @@ class LifecycleProvider(Protocol):
 
     def CreateResource(
         self, spec: ResourceSpec, identity: StackIdentity,
-        dependencies: Mapping[str, ProviderResource], operation_id: str,
+        dependencies: Mapping[str, ProviderResource], operationId: str,
     ) -> ProviderResource:
         """Create once from validated owned dependencies; never retry uncertain creation."""
 
         ...
 
     def DeleteResource(
-        self, reference: ResourceReference, identity: StackIdentity, logical_id: str,
-        operation_id: str | None = None,
+        self, reference: ResourceReference, identity: StackIdentity, logicalId: str,
+        operationId: str | None = None,
     ) -> None:
         """Re-read exact scope and complete ownership immediately before deleting by ID."""
 

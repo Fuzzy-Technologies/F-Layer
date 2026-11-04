@@ -12,7 +12,7 @@ import subprocess
 import time
 import tomllib
 from collections.abc import Callable, Mapping
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import cast
 
@@ -23,6 +23,7 @@ from flayer.core.contracts import (
     ValidateIdentifier,
     ValidateName,
     ValidateSchemaVersion,
+    _WireDict,
 )
 from flayer.core.lifecycle import DeploymentPlan, LifecycleEngine, LifecycleReport
 from flayer.core.state import LoadState
@@ -74,88 +75,41 @@ from flayer.providers.yandex_lifecycle import ValidateComputeShape, YandexLifecy
 
 ADMIN_USERNAME = "flayer-admin"
 MAX_SERIAL_BYTES = 1024 * 1024
-PROJECT_TEMPLATE = '''# Edit the folder, image, management address, and Reality target before preparation.
-# Project files contain private keys and must remain outside Git and shared directories.
-schema_version = 1
-
-[identity]
-project = "my-vpn"
-stack = "gateway"
-provider = "yandex-cloud"
-scope_id = "replace-with-folder-id"
-owner_id = "my-team"
-
-[cloud]
-yc_profile = "default"
-zone_id = "ru-central1-a"
-image_id = "replace-with-ubuntu-2404-amd64-image-id"
-subnet_cidr = "10.42.0.0/24"
-management_cidrs = ["198.51.100.42/32"] # Replace with your current public IPv4 address.
-
-# Optional explicit sizing: uncomment the entire block before prepare.
-# Confirm regional availability and image minimum disk size first.
-# [resources]
-# platform_id = "standard-v3"
-# cores = 2
-# core_fraction = 50
-# memory_gib = 2
-# disk_size_gib = 10
-# disk_type = "network-hdd"
-
-[routes]
-mode = "full"
-ipv4_cidrs = ["0.0.0.0/0"]
-dns_servers = ["1.1.1.1"]
-ipv6_policy = "disabled" # Disable client IPv6 to prevent traffic bypass.
-
-[[devices]]
-device_id = "laptop"
-ipv4_address = "10.66.0.2"
-
-[amneziawg]
-port = 51820
-tunnel_cidr = "10.66.0.0/24"
-
-[vless]
-port = 443
-# Example only: choose an accessible TLS 1.3 / HTTP/2 site for your server location.
-target_host = "www.microsoft.com"
-server_name = "www.microsoft.com"
-'''
+PROJECT_TEMPLATE = '# Edit the folder, image, management address, and Reality target before preparation.\n# Project files contain private keys and must remain outside Git and shared directories.\nschema_version = 1\n\n[identity]\nproject = "my-vpn"\nstack = "gateway"\nprovider = "yandex-cloud"\nscope_id = "replace-with-folder-id"\nowner_id = "my-team"\n\n[cloud]\nyc_profile = "default"\nzone_id = "ru-central1-a"\nimage_id = "replace-with-ubuntu-2404-amd64-image-id"\nsubnet_cidr = "10.42.0.0/24"\nmanagement_cidrs = ["198.51.100.42/32"] # Replace with your current public IPv4 address.\n\n# Optional explicit sizing: uncomment the entire block before prepare.\n# Confirm regional availability and image minimum disk size first.\n# [resources]\n# platform_id = "standard-v3"\n# cores = 2\n# core_fraction = 50\n# memory_gib = 2\n# disk_size_gib = 10\n# disk_type = "network-hdd"\n\n[routes]\nmode = "full"\nipv4_cidrs = ["0.0.0.0/0"]\ndns_servers = ["1.1.1.1"]\nipv6_policy = "disabled" # Disable client IPv6 to prevent traffic bypass.\n\n[[devices]]\ndevice_id = "laptop"\nipv4_address = "10.66.0.2"\n\n[amneziawg]\nport = 51820\ntunnel_cidr = "10.66.0.0/24"\n\n[vless]\nport = 443\n# Example only: choose an accessible TLS 1.3 / HTTP/2 site for your server location.\ntarget_host = "www.microsoft.com"\nserver_name = "www.microsoft.com"\n'
 
 
 @dataclass(frozen=True, slots=True)
 class CloudPlacement:
     """Public placement and narrowly scoped administrator ingress for one Ubuntu guest."""
 
-    yc_profile: str
-    zone_id: str
-    image_id: str
-    subnet_cidr: str
-    management_cidrs: tuple[str, ...]
+    ycProfile: str
+    zoneId: str
+    imageId: str
+    subnetCidr: str
+    managementCidrs: tuple[str, ...]
 
     def __post_init__(self) -> None:
         """Reject placeholders, public subnet ranges, and broadly exposed administration."""
 
-        for value in (self.yc_profile, self.zone_id, self.image_id):
+        for value in (self.ycProfile, self.zoneId, self.imageId):
             ValidateIdentifier(value, "cloud setting")
 
             if value.startswith("replace-with-"):
                 raise VpnError("Replace the example cloud identifiers in project.toml before preparation")
 
         try:
-            network = ipaddress.IPv4Network(self.subnet_cidr, strict=True)
+            network = ipaddress.IPv4Network(self.subnetCidr, strict=True)
             private = tuple(ipaddress.IPv4Network(item) for item in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"))
 
-            if str(network) != self.subnet_cidr or not 16 <= network.prefixlen <= 28 or not any(network.subnet_of(item) for item in private):
+            if str(network) != self.subnetCidr or not 16 <= network.prefixlen <= 28 or not any(network.subnet_of(item) for item in private):
                 raise ValueError
 
-            if not isinstance(self.management_cidrs, tuple) or not 1 <= len(self.management_cidrs) <= 16:
+            if not isinstance(self.managementCidrs, tuple) or not 1 <= len(self.managementCidrs) <= 16:
                 raise ValueError
 
-            sources = tuple(ipaddress.IPv4Network(item, strict=True) for item in self.management_cidrs)
+            sources = tuple(ipaddress.IPv4Network(item, strict=True) for item in self.managementCidrs)
 
-            if any(str(network) != item or network.prefixlen < 24 for network, item in zip(sources, self.management_cidrs, strict=True)):
+            if any(str(network) != item or network.prefixlen < 24 for network, item in zip(sources, self.managementCidrs, strict=True)):
                 raise ValueError
 
             if any(left.overlaps(right) for index, left in enumerate(sources) for right in sources[index + 1:]):
@@ -190,26 +144,26 @@ def _PublicKey(content: bytes) -> str:
 class VpnResources:
     """Explicit initial server sizing; absence preserves the legacy project contract."""
 
-    platform_id: str
+    platformId: str
     cores: int
-    core_fraction: int
-    memory_gib: int
-    disk_size_gib: int
-    disk_type: str
+    coreFraction: int
+    memoryGib: int
+    diskSizeGib: int
+    diskType: str
 
     def __post_init__(self) -> None:
         """Reject unsupported resource requests before key generation or cloud access."""
 
         try:
             ValidateComputeShape({
-                "platform_id": self.platform_id, "cores": self.cores,
-                "core_fraction": self.core_fraction, "memory_gib": self.memory_gib,
+                "platform_id": self.platformId, "cores": self.cores,
+                "core_fraction": self.coreFraction, "memory_gib": self.memoryGib,
             })
 
-            if type(self.disk_size_gib) is not int or not 10 <= self.disk_size_gib <= 1024:
+            if type(self.diskSizeGib) is not int or not 10 <= self.diskSizeGib <= 1024:
                 raise ValueError("disk_size_gib must be an integer between 10 and 1024")
 
-            if self.disk_type not in ("network-hdd", "network-ssd"):
+            if self.diskType not in ("network-hdd", "network-ssd"):
                 raise ValueError("disk_type must be network-hdd or network-ssd")
 
         except ValueError as error:
@@ -225,20 +179,20 @@ class VpnProject:
     cloud: CloudPlacement
     amneziawg: AmneziaWgSettings
     vless: VlessRealitySettings
-    ssh_public_key: str = field(repr=False)
+    sshPublicKey: str = field(repr=False)
     resources: VpnResources | None = None
 
     def Fingerprint(self) -> str:
         """Bind prepared material to all public project settings without persisting secrets."""
 
         payload: dict[str, object] = {
-            "vpn": asdict(self.vpn), "cloud": asdict(self.cloud),
-            "amneziawg": asdict(self.amneziawg), "vless": asdict(self.vless),
-            "ssh_public_key": self.ssh_public_key,
+            "vpn": _WireDict(self.vpn), "cloud": _WireDict(self.cloud),
+            "amneziawg": _WireDict(self.amneziawg), "vless": _WireDict(self.vless),
+            "ssh_public_key": self.sshPublicKey,
         }
 
         if self.resources is not None:
-            payload["resources"] = asdict(self.resources)
+            payload["resources"] = _WireDict(self.resources)
 
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
 
@@ -255,12 +209,12 @@ class VpnProjectReport:
 
     action: str
     status: str
-    cloud_status: str = "not-requested"
-    guest_status: str = "not-requested"
-    client_exports: tuple[str, ...] = ()
-    recovery_required: bool = False
+    cloudStatus: str = "not-requested"
+    guestStatus: str = "not-requested"
+    clientExports: tuple[str, ...] = ()
+    recoveryRequired: bool = False
     details: str = ""
-    connectivity_status: str = "not-verified"
+    connectivityStatus: str = "not-verified"
 
     def ExitCode(self) -> int:
         """Treat incomplete cloud or guest operations as unsuccessful without claiming connectivity."""
@@ -333,7 +287,7 @@ def LoadVpnProject(directory: str | Path) -> VpnProject:
         vless = _Table(data, "vless", frozenset({"port", "target_host", "server_name"}))
         identity = ParseIdentity(data["identity"])
 
-        if identity.provider != "yandex-cloud" or identity.scope_id.startswith("replace-with-"):
+        if identity.provider != "yandex-cloud" or identity.scopeId.startswith("replace-with-"):
             raise VpnError("Project requires an explicit Yandex Cloud folder ID")
 
         if not isinstance(cloud["management_cidrs"], list) or any(
@@ -374,12 +328,12 @@ def LoadVpnProject(directory: str | Path) -> VpnProject:
                 cast(int, sizing["disk_size_gib"]), cast(str, sizing["disk_type"]),
             )
 
-            if placement.zone_id.startswith("kz1-") and resources.platform_id != "standard-v3":
+            if placement.zoneId.startswith("kz1-") and resources.platformId != "standard-v3":
                 raise VpnError("Kazakhstan VPN deployments require platform_id standard-v3")
 
         settings = AmneziaWgSettings(awg["tunnel_cidr"])
 
-        if ipaddress.IPv4Network(settings.tunnel_cidr).overlaps(ipaddress.IPv4Network(placement.subnet_cidr)):
+        if ipaddress.IPv4Network(settings.tunnelCidr).overlaps(ipaddress.IPv4Network(placement.subnetCidr)):
             raise VpnError("VPN tunnel and cloud subnet must not overlap")
 
         return VpnProject(
@@ -427,9 +381,9 @@ def _MaterialBundle(project: VpnProject) -> ArtifactBundle:
     proof = (project.Fingerprint() + "\n").encode("ascii")
 
     if directory.exists() or directory.is_symlink():
-        existing_proof = ReadOwnedArtifactFile(directory / "project.sha256", project.vpn.identity, kind="server", name=name)
+        existingProof = ReadOwnedArtifactFile(directory / "project.sha256", project.vpn.identity, kind="server", name=name)
 
-        if existing_proof != proof:
+        if existingProof != proof:
             raise VpnError("Project settings changed after preparation. Restore the old settings for destroy, then initialize a new private project")
 
         files = tuple(Artifact(filename, ReadOwnedArtifactFile(
@@ -469,15 +423,15 @@ def _Bootstrap(project: VpnProject) -> ArtifactBundle:
         "    udp sport 67 udp dport 68 accept", "    ip protocol icmp limit rate 10/second accept",
     ]
 
-    for cidr in project.cloud.management_cidrs:
+    for cidr in project.cloud.managementCidrs:
         firewall.append(f"    ip saddr {cidr} tcp dport 22 accept")
 
     for listener in project.vpn.listeners:
-        for cidr in listener.source_cidrs:
+        for cidr in listener.sourceCidrs:
             firewall.append(f"    ip saddr {cidr} {listener.protocol} dport {listener.port} accept")
 
     firewall.extend(["  }", "}", ""])
-    ssh_config = "\n".join((
+    sshConfig = "\n".join((
         "Port 22", "UsePAM yes", "PermitRootLogin no", "PasswordAuthentication no", "KbdInteractiveAuthentication no",
         "PubkeyAuthentication yes", "AuthenticationMethods publickey", "AllowUsers " + ADMIN_USERNAME,
         "AuthorizedKeysFile /etc/ssh/flayer-admin-keys", "AuthorizedKeysCommand none", "TrustedUserCAKeys none",
@@ -494,8 +448,8 @@ def _Bootstrap(project: VpnProject) -> ArtifactBundle:
         "cut -d ' ' -f 1,2 /etc/ssh/ssh_host_ed25519_key.pub", "",
     ))
     files = (
-        ("/etc/ssh/sshd_config", "0644", ssh_config),
-        ("/etc/ssh/flayer-admin-keys", "0644", project.ssh_public_key + "\n"),
+        ("/etc/ssh/sshd_config", "0644", sshConfig),
+        ("/etc/ssh/flayer-admin-keys", "0644", project.sshPublicKey + "\n"),
         ("/etc/nftables.conf", "0644", "\n".join(firewall)),
         ("/etc/sysctl.d/90-flayer-vpn.conf", "0644", "net.ipv4.ip_forward=0\nnet.ipv6.conf.all.disable_ipv6=1\nnet.ipv6.conf.default.disable_ipv6=1\n"),
         ("/usr/local/sbin/flayer-bootstrap", "0700", bootstrap),
@@ -503,7 +457,7 @@ def _Bootstrap(project: VpnProject) -> ArtifactBundle:
     document = {
         "ssh_pwauth": False, "disable_root": True,
         "users": [{"name": ADMIN_USERNAME, "groups": ["sudo"], "shell": "/bin/bash", "lock_passwd": True,
-                   "sudo": "ALL=(ALL) NOPASSWD:ALL", "ssh_authorized_keys": [project.ssh_public_key]}],
+                   "sudo": "ALL=(ALL) NOPASSWD:ALL", "ssh_authorized_keys": [project.sshPublicKey]}],
         "package_update": True, "package_upgrade": False,
         "packages": ["nftables", "python3", "ca-certificates"],
         "write_files": [{"path": path, "owner": "root:root", "permissions": permissions, "content": content}
@@ -528,7 +482,7 @@ def _VerifyAdministrationKey(project: VpnProject) -> None:
             stdin=subprocess.DEVNULL, capture_output=True, check=False, timeout=10,
         )
 
-        if result.returncode != 0 or _PublicKey(result.stdout) != project.ssh_public_key:
+        if result.returncode != 0 or _PublicKey(result.stdout) != project.sshPublicKey:
             raise VpnError("Administration key does not match admin-key.pub; restore the original project key pair")
 
     except (OSError, subprocess.TimeoutExpired):
@@ -546,7 +500,7 @@ def PrepareVpnProject(project: VpnProject) -> VpnProjectReport:
     _Publish(project, material)
 
     for transport in transports:
-        _Publish(project, transport.server_bundle)
+        _Publish(project, transport.serverBundle)
 
     _Publish(project, bootstrap)
 
@@ -581,36 +535,36 @@ def CompileVpnProject(project: VpnProject) -> DeploymentPlan:
 
     resources: list[ResourceSpec] = []
 
-    def Add(logical_id: str, kind: ResourceKind, dependencies: tuple[str, ...], options: dict[str, object]) -> None:
+    def Add(logicalId: str, kind: ResourceKind, dependencies: tuple[str, ...], options: dict[str, object]) -> None:
         """Append one exact typed resource to the owned dependency graph."""
 
-        resources.append(ResourceSpec(logical_id, kind, ValidateName(project.vpn.identity.stack + "-" + logical_id, "resource name"),
+        resources.append(ResourceSpec(logicalId, kind, ValidateName(project.vpn.identity.stack + "-" + logicalId, "resource name"),
                                       tuple((key, _Freeze(value)) for key, value in options.items()), dependencies))
 
     Add("network", ResourceKind.NETWORK, (), {})
     Add("subnet", ResourceKind.SUBNET, ("network",), {
-        "zone_id": project.cloud.zone_id, "ipv4_cidr": project.cloud.subnet_cidr, "network_dependency": "network",
+        "zone_id": project.cloud.zoneId, "ipv4_cidr": project.cloud.subnetCidr, "network_dependency": "network",
     })
     rules: list[object] = [{"direction": "ingress", "protocol": "tcp", "from_port": 22, "to_port": 22, "cidr": cidr}
-                           for cidr in project.cloud.management_cidrs]
+                           for cidr in project.cloud.managementCidrs]
     rules.extend({"direction": "ingress", "protocol": listener.protocol, "from_port": listener.port,
-                  "to_port": listener.port, "cidr": cidr} for listener in project.vpn.listeners for cidr in listener.source_cidrs)
+                  "to_port": listener.port, "cidr": cidr} for listener in project.vpn.listeners for cidr in listener.sourceCidrs)
     rules.append({"direction": "egress", "protocol": "any", "cidr": "0.0.0.0/0"})
     Add("firewall", ResourceKind.SECURITY_GROUP, ("network",), {"network_dependency": "network", "rules": rules})
-    Add("address", ResourceKind.ADDRESS, (), {"zone_id": project.cloud.zone_id})
-    disk: dict[str, object] = {"zone_id": project.cloud.zone_id, "image_id": project.cloud.image_id, "size_gib": 20}
+    Add("address", ResourceKind.ADDRESS, (), {"zone_id": project.cloud.zoneId})
+    disk: dict[str, object] = {"zone_id": project.cloud.zoneId, "image_id": project.cloud.imageId, "size_gib": 20}
     instance: dict[str, object] = {
-        "zone_id": project.cloud.zone_id, "cores": 2, "memory_gib": 2, "boot_disk_dependency": "boot-disk",
+        "zone_id": project.cloud.zoneId, "cores": 2, "memory_gib": 2, "boot_disk_dependency": "boot-disk",
         "subnet_dependency": "subnet", "security_group_dependency": "firewall", "address_dependency": "address",
-        "ssh_public_key": project.ssh_public_key, "ssh_username": ADMIN_USERNAME, "user_data_file": str(path),
+        "ssh_public_key": project.sshPublicKey, "ssh_username": ADMIN_USERNAME, "user_data_file": str(path),
         "user_data_sha256": hashlib.sha256(actual).hexdigest(),
     }
 
     if project.resources is not None:
         sizing = project.resources
-        disk.update(size_gib=sizing.disk_size_gib, type=sizing.disk_type)
-        instance.update(cores=sizing.cores, memory_gib=sizing.memory_gib,
-                        platform_id=sizing.platform_id, core_fraction=sizing.core_fraction)
+        disk.update(size_gib=sizing.diskSizeGib, type=sizing.diskType)
+        instance.update(cores=sizing.cores, memory_gib=sizing.memoryGib,
+                        platform_id=sizing.platformId, core_fraction=sizing.coreFraction)
 
     Add("boot-disk", ResourceKind.DISK, (), disk)
     Add("instance", ResourceKind.INSTANCE, ("subnet", "firewall", "address", "boot-disk"), instance)
@@ -629,7 +583,7 @@ class VpnYandexProvider(YandexLifecycleProvider):
         if observed.reference != instance.reference or observed.labels != instance.labels:
             raise VpnError("Instance ownership changed before authenticated host-key retrieval")
 
-        payload = self._ReadJson(("compute", "instance", "get-serial-port-output", "--id", instance.reference.resource_id, "--port", "1"), "guest-host-key")
+        payload = self._ReadJson(("compute", "instance", "get-serial-port-output", "--id", instance.reference.resourceId, "--port", "1"), "guest-host-key")
 
         if not isinstance(payload, dict) or not isinstance(payload.get("contents"), str):
             raise VpnError("Authenticated serial-console response is unavailable or malformed")
@@ -662,24 +616,24 @@ def _OwnedEndpoints(project: VpnProject, provider: VpnYandexProvider) -> tuple[P
 
     observed = {}
 
-    for logical_id, kind in (("instance", ResourceKind.INSTANCE), ("address", ResourceKind.ADDRESS)):
-        locator = next((item for item in state.resources if item.logical_id == logical_id), None)
+    for logicalId, kind in (("instance", ResourceKind.INSTANCE), ("address", ResourceKind.ADDRESS)):
+        locator = next((item for item in state.resources if item.logicalId == logicalId), None)
 
         if locator is None or locator.kind != kind.value:
             raise VpnError("Required cloud instance or reserved address is not recorded")
 
-        reference = ResourceReference(project.vpn.identity.provider, project.vpn.identity.scope_id, kind, locator.resource_id)
+        reference = ResourceReference(project.vpn.identity.provider, project.vpn.identity.scopeId, kind, locator.resourceId)
         resource = provider.GetResource(reference)
-        labels = tuple(sorted({**project.vpn.identity.OwnershipLabels(), "flayer-resource": logical_id}.items()))
+        labels = tuple(sorted({**project.vpn.identity.OwnershipLabels(), "flayer-resource": logicalId}.items()))
 
         if resource.reference != reference or not resource.HasLabels(labels):
             raise VpnError("Observed VPN endpoint does not match the exact persisted ownership")
 
-        observed[logical_id] = resource
+        observed[logicalId] = resource
 
-    address = observed["address"].public_addresses
+    address = observed["address"].publicAddresses
 
-    if len(address) != 1 or observed["instance"].public_addresses != address:
+    if len(address) != 1 or observed["instance"].publicAddresses != address:
         raise VpnError("Guest public IPv4 must match the exact owned reserved address")
 
     VpnEndpoint(address[0], 22)
@@ -720,7 +674,7 @@ def _HostTrust(
 def _Incomplete(action: str, report: LifecycleReport) -> VpnProjectReport:
     """Preserve truthful cloud progress and recovery requirements after an interrupted operation."""
 
-    return VpnProjectReport(action, "incomplete", report.status, recovery_required=report.recovery_required,
+    return VpnProjectReport(action, "incomplete", report.status, recoveryRequired=report.recoveryRequired,
                             details="Cloud operation did not finish; retained state is required for recovery")
 
 
@@ -729,10 +683,10 @@ def _CheckCloudAccess(provider: VpnYandexProvider) -> None:
 
     status = provider.CheckAuthentication()
 
-    if status.available and status.authenticated is True and status.error_code is None:
+    if status.available and status.authenticated is True and status.errorCode is None:
         return
 
-    code = status.error_code or ProviderErrorCode.COMMAND_FAILED
+    code = status.errorCode or ProviderErrorCode.COMMAND_FAILED
     guidance = {
         ProviderErrorCode.AUTHENTICATION: "Reauthenticate the project.toml [cloud].yc_profile using the official local sign-in flow; keep credentials out of chat.",
         ProviderErrorCode.PERMISSION_DENIED: "Verify the configured profile and its read permission for identity.scope_id; do not change IAM automatically.",
@@ -744,9 +698,9 @@ def _CheckCloudAccess(provider: VpnYandexProvider) -> None:
 
 
 def RunVpnProject(
-    project: VpnProject, action: str, *, allow_mutation: bool = False, scope_confirm: str = "",
+    project: VpnProject, action: str, *, allowMutation: bool = False, scopeConfirm: str = "",
     rollback: bool = False, provider: VpnYandexProvider | None = None,
-    guest_factory: Callable[..., SshGuestProvisioner] = SshGuestProvisioner,
+    guestFactory: Callable[..., SshGuestProvisioner] = SshGuestProvisioner,
 ) -> VpnProjectReport:
     """Compose explicit cloud consent, durable resources, authenticated guest install, and client export."""
 
@@ -758,22 +712,22 @@ def RunVpnProject(
     if action == "prepare":
         return PrepareVpnProject(project)
 
-    if action in {"deploy", "destroy", "recover"} and (not allow_mutation or scope_confirm != project.vpn.identity.scope_id):
+    if action in {"deploy", "destroy", "recover"} and (not allowMutation or scopeConfirm != project.vpn.identity.scopeId):
         raise VpnError("Cloud mutation requires --allow-mutation and exact --scope-confirm folder ID")
 
     if action == "deploy":
         state = LoadState(project.root / "state.json", project.vpn.identity)
-        old_trust = project.Artifacts / f"server-{project.vpn.identity.stack}-trust"
-        old_exports = tuple(project.Artifacts / f"device-{device.device_id}-{listener.transport}"
+        oldTrust = project.Artifacts / f"server-{project.vpn.identity.stack}-trust"
+        oldExports = tuple(project.Artifacts / f"device-{device.deviceId}-{listener.transport}"
                             for device in project.vpn.devices for listener in project.vpn.listeners)
 
-        if (state is None or not state.resources) and any(path.exists() or path.is_symlink() for path in (old_trust, *old_exports)):
+        if (state is None or not state.resources) and any(path.exists() or path.is_symlink() for path in (oldTrust, *oldExports)):
             raise VpnError("Previous server trust or client exports remain after cloud cleanup. Initialize a new private project before another deployment")
 
         PrepareVpnProject(project)
 
     plan = CompileVpnProject(project)
-    provider = provider or VpnYandexProvider(YandexCloudSettings(project.vpn.identity.scope_id, project.cloud.yc_profile))
+    provider = provider or VpnYandexProvider(YandexCloudSettings(project.vpn.identity.scopeId, project.cloud.ycProfile))
     engine = LifecycleEngine(plan, provider, project.root / "state.json")
     _CheckCloudAccess(provider)
 
@@ -802,13 +756,13 @@ def RunVpnProject(
     trust = _HostTrust(project, provider, instance, endpoint, wait=action == "deploy")
     material = _MaterialBundle(project)
     transports = _Transports(project, material, endpoint)
-    guest = guest_factory(VpnEndpoint(endpoint, 22), ADMIN_USERNAME, project.root / "admin-key", trust)
+    guest = guestFactory(VpnEndpoint(endpoint, 22), ADMIN_USERNAME, project.root / "admin-key", trust)
 
     if action == "deploy":
         for transport in transports:
-            _Publish(project, transport.server_bundle)
+            _Publish(project, transport.serverBundle)
 
-        guest.Install(tuple((item.capabilities.transport, item.server_bundle) for item in transports))
+        guest.Install(tuple((item.capabilities.transport, item.serverBundle) for item in transports))
 
     services = (AmneziaWgServiceName(project.vpn) + ".service", VlessServiceName(project.vpn))
     observations = guest.ServiceStatus(services)
@@ -820,7 +774,7 @@ def RunVpnProject(
 
     if action == "deploy":
         for transport in transports:
-            for bundle in transport.device_bundles:
+            for bundle in transport.deviceBundles:
                 directory = _Publish(project, bundle)
                 exports.append(str(directory.relative_to(project.root)))
 

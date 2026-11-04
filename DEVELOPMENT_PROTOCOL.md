@@ -95,12 +95,15 @@ Important invariants:
 
 - functions and methods use `PascalCase`;
 - classes/protocols/enums use `PascalCase`;
-- variables, parameters, and fields use `snake_case`;
+- variables, parameters, and fields use `camelCase`;
 - constants use `UPPER_SNAKE_CASE`;
 - source code, comments, docstrings, tests, and assertion messages are English-only;
 - `ruff format` is not the canonical formatter and must not be used as a project-wide formatting gate.
 
 External naming contracts take precedence over cosmetic normalization.
+The owner confirmed this naming contract on 2026-11-04. The previous
+`snake_case` variable rule in the original foundation was incorrect.
+The canonical gate enforces the contract through `tools.python_naming`.
 
 ## 8. Architecture and ADRs
 
@@ -147,6 +150,7 @@ Bootstrap may start with `tests/unit/`. Infrastructure, cleanup, rollback, resou
 
 ```bash
 python -m compileall -q src tests tools
+python -m tools.python_naming
 python -m ruff check .
 python -m mypy
 python -m pytest

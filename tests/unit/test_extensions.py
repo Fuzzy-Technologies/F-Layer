@@ -56,12 +56,12 @@ def WriteRecord(directory: Path, sources: tuple[Path, ...]) -> None:
 
 
 def Metadata(
-    tmp_path: Path, *, entries: str | None = None, source: str | None = None,
+    tmpPath: Path, *, entries: str | None = None, source: str | None = None,
 ) -> Path:
     """Build exact fixture metadata and source with a factory execution sentinel."""
 
-    directory = tmp_path / "example_plugin-1.2.3.dist-info"
-    package = tmp_path / "example_plugin"
+    directory = tmpPath / "example_plugin-1.2.3.dist-info"
+    package = tmpPath / "example_plugin"
     directory.mkdir()
     package.mkdir()
     (directory / "METADATA").write_text("Metadata-Version: 2.1\nName: example-plugin\nVersion: 1.2.3\n")
@@ -93,8 +93,8 @@ def Metadata(
     return directory
 
 
-@pytest.fixture(autouse=True)
-def isolated_plugin_modules() -> None:
+@pytest.fixture(autouse=True, name='isolatedPluginModules')
+def IsolatedPluginModulesFixture() -> None:
     """Remove only synthetic fixture modules so plugin tests never share execution state."""
 
     for name in ("example_plugin.plugin", "example_plugin"):
@@ -228,13 +228,13 @@ def test_DuplicateRegistryIdentitiesAndInventedBuiltinsAreRejected(tmp_path: Pat
         ExtensionRegistry((external, external))
 
     with pytest.raises(ExtensionError, match="Duplicate"):
-        ExtensionRegistry((replace(external, plugin_id="yandex-read-only"),))
+        ExtensionRegistry((replace(external, pluginId="yandex-read-only"),))
 
     with pytest.raises(ExtensionError, match="invented"):
-        ExtensionRegistry((replace(BuiltinDescriptors()[0], plugin_id="invented"),))
+        ExtensionRegistry((replace(BuiltinDescriptors()[0], pluginId="invented"),))
 
     with pytest.raises(ExtensionError):
-        ExtensionRegistry((external,) * 257, include_builtins=False)
+        ExtensionRegistry((external,) * 257, includeBuiltins=False)
 
 
 def test_ExternalLoadRequiresExactPinAndUsesOwnedSource(tmp_path: Path) -> None:
@@ -300,15 +300,15 @@ def test_ParentImportsUseVerifiedSnapshotsInsteadOfStaleBytecode(tmp_path: Path)
     directory = Metadata(tmp_path)
     parent = tmp_path / "example_plugin/__init__.py"
     plugin = tmp_path / "example_plugin/plugin.py"
-    selected_source = plugin.read_text()
-    stale_source = selected_source.replace("'executed'", "'obsolete'")
+    selectedSource = plugin.read_text()
+    staleSource = selectedSource.replace("'executed'", "'obsolete'")
 
-    assert len(stale_source) == len(selected_source), "Stale bytecode fixture must preserve source size"
+    assert len(staleSource) == len(selectedSource), "Stale bytecode fixture must preserve source size"
 
-    plugin.write_text(stale_source)
+    plugin.write_text(staleSource)
     timestamp = plugin.stat()
     py_compile.compile(str(plugin), doraise=True)
-    plugin.write_text(selected_source)
+    plugin.write_text(selectedSource)
     os.utime(plugin, ns=(timestamp.st_atime_ns, timestamp.st_mtime_ns))
     parent.write_text(
         '"""Synthetic parent importing a selected child before the explicit load loop."""\n'
@@ -341,10 +341,10 @@ def test_LoaderOwnedModuleReceiptsPermitExactReuseAndRejectSourceDrift(tmp_path:
     plugin = tmp_path / "example_plugin/plugin.py"
     plugin.write_text(plugin.read_text() + "\nchanged = True\n")
     WriteRecord(directory, (tmp_path / "example_plugin/__init__.py", plugin))
-    changed_descriptor = DiscoverExtensions((directory,))[0]
+    changedDescriptor = DiscoverExtensions((directory,))[0]
 
     with pytest.raises(ExtensionError, match="unverified"):
-        ExtensionRegistry((changed_descriptor,)).Load(changed_descriptor, allowed=(changed_descriptor,))
+        ExtensionRegistry((changedDescriptor,)).Load(changedDescriptor, allowed=(changedDescriptor,))
 
 
 @pytest.mark.parametrize("filename", ["METADATA", "entry_points.txt", "RECORD"])
@@ -413,7 +413,10 @@ def test_SourceOwnershipAndIntegrityAreRequiredBeforeExecution(tmp_path: Path, c
     'class Plugin:\n    """No extension methods are implemented."""\n',
     '"""An identity-mismatched fixture contract."""\n'
     'class Plugin:\n    """Expose a malformed identity."""\n\n'
-    '    Descriptor = None\n\n'
+    '    @property\n'
+    '    def Descriptor(self):\n'
+    '        """Return a deliberately malformed external contract identity."""\n\n'
+    '        return None\n\n'
     '    def CreateProvider(self, context):\n'
     '        """Provide a fixture method for structural checks."""\n\n'
     '        return None\n',
@@ -460,15 +463,15 @@ def test_FailureCleanupCannotInvokePackageAttributeHooks(tmp_path: Path) -> None
 
 
 @pytest.mark.parametrize("values", [
-    {"kind": "provider"}, {"plugin_id": "Upper"}, {"distribution": "Upper"},
+    {"kind": "provider"}, {'pluginId': "Upper"}, {"distribution": "Upper"},
     {"version": "1.0"}, {"group": "flayer.providers.v2"}, {"target": "plugin:Factory [extra]"},
-    {"metadata_sha256": "a" * 64}, {"distribution": "third-party"},
+    {'metadataSha256': "a" * 64}, {"distribution": "third-party"},
 ])
 def test_DescriptorConstructionCannotBypassValidation(values: dict[str, object]) -> None:
     """Direct construction receives the same strict validation as metadata discovery."""
 
     arguments: dict[str, object] = {
-        "kind": ExtensionKind.PROVIDER, "plugin_id": "example", "distribution": "f-layer",
+        "kind": ExtensionKind.PROVIDER, 'pluginId': "example", "distribution": "f-layer",
         "version": "1.2.3", "group": PROVIDER_GROUP, "target": "flayer.example:Factory",
     }
     arguments.update(values)
@@ -478,14 +481,14 @@ def test_DescriptorConstructionCannotBypassValidation(values: dict[str, object])
 
 
 @pytest.mark.parametrize("values", [
-    {"scope_id": b"credential-bytes"}, {"authentication_reference": b"credential-bytes"},
-    {"command_timeout": True}, {"command_timeout": float("inf")}, {"command_timeout": 301},
-    {"inventory_limit": True}, {"inventory_limit": 0}, {"inventory_limit": 100001},
+    {'scopeId': b"credential-bytes"}, {'authenticationReference': b"credential-bytes"},
+    {'commandTimeout': True}, {'commandTimeout': float("inf")}, {'commandTimeout': 301},
+    {'inventoryLimit': True}, {'inventoryLimit': 0}, {'inventoryLimit': 100001},
 ])
 def test_ProviderContextRejectsCredentialBytesAndUnboundedLimits(values: dict[str, object]) -> None:
     """Context stores identifiers and bounded limits rather than resolved credential payloads."""
 
-    arguments: dict[str, object] = {"scope_id": "folder", "authentication_reference": "profile"}
+    arguments: dict[str, object] = {'scopeId': "folder", 'authenticationReference': "profile"}
     arguments.update(values)
 
     with pytest.raises(ValueError):
@@ -497,23 +500,23 @@ def test_BuiltinProvidersKeepReadOnlyAndLifecycleCapabilitiesSeparate() -> None:
 
     registry = ExtensionRegistry()
     context = ProviderContext("example-folder", "external-profile")
-    read_only = registry.Load(registry.Get(ExtensionKind.PROVIDER, "yandex-read-only"))
+    readOnly = registry.Load(registry.Get(ExtensionKind.PROVIDER, "yandex-read-only"))
     lifecycle = registry.Load(registry.Get(ExtensionKind.PROVIDER, "yandex-lifecycle"))
 
-    assert isinstance(read_only, ProviderExtension), "Read-only extension lost its provider factory"
-    assert not isinstance(read_only, LifecycleProviderExtension), "Read-only factory requires mutation"
+    assert isinstance(readOnly, ProviderExtension), "Read-only extension lost its provider factory"
+    assert not isinstance(readOnly, LifecycleProviderExtension), "Read-only factory requires mutation"
 
-    provider = read_only.CreateProvider(context)
+    provider = readOnly.CreateProvider(context)
 
     assert ProviderCapability.CREATE_RESOURCE not in provider.Capabilities, "Read-only provider mutates"
     assert not hasattr(provider, "CreateResource"), "Read-only construction selected lifecycle adapter"
     assert isinstance(lifecycle, LifecycleProviderExtension), "Lifecycle extension lost optional factory"
 
-    mutation_provider = lifecycle.CreateLifecycleProvider(context)
+    mutationProvider = lifecycle.CreateLifecycleProvider(context)
 
-    assert isinstance(mutation_provider, LifecycleProvider), "Lifecycle extension did not return real adapter"
-    assert ProviderCapability.CREATE_RESOURCE in mutation_provider.Capabilities
-    assert provider.Identity.scope_id == mutation_provider.Identity.scope_id == "example-folder"
+    assert isinstance(mutationProvider, LifecycleProvider), "Lifecycle extension did not return real adapter"
+    assert ProviderCapability.CREATE_RESOURCE in mutationProvider.Capabilities
+    assert provider.Identity.scopeId == mutationProvider.Identity.scopeId == "example-folder"
 
 
 def test_BuiltinGatewayCompilesExportsAndRendersRealOwnedPlan(tmp_path: Path) -> None:
@@ -532,10 +535,10 @@ def test_BuiltinGatewayCompilesExportsAndRendersRealOwnedPlan(tmp_path: Path) ->
 
     bundle = compiled.BuildServerBundle()
     directory = WriteArtifactBundle(tmp_path / "artifacts", bundle)
-    server_file = directory / bundle.files[0].name
-    plan_path = tmp_path / "plan.toml"
-    plan_path.write_text(compiled.RenderPlan(user_data_file=server_file))
-    plan = LoadDeploymentPlan(plan_path)
+    serverFile = directory / bundle.files[0].name
+    planPath = tmp_path / "plan.toml"
+    planPath.write_text(compiled.RenderPlan(userDataFile=serverFile))
+    plan = LoadDeploymentPlan(planPath)
 
     assert plan.identity == IDENTITY, "Rendered plan discarded profile ownership"
     assert len(plan.resources) == 6, "Adapter did not preserve the real gateway resource graph"
@@ -550,10 +553,10 @@ def test_BuiltinGatewayCompilesExportsAndRendersRealOwnedPlan(tmp_path: Path) ->
     with pytest.raises(ExtensionError, match="ownership"):
         extension.CompileProfile(altered, ProfileContext(IDENTITY))
 
-    server_file.write_bytes(b"changed")
+    serverFile.write_bytes(b"changed")
 
     with pytest.raises(ValueError):
-        compiled.RenderPlan(user_data_file=server_file)
+        compiled.RenderPlan(userDataFile=serverFile)
 
 
 def test_RegistryLookupAndInvalidContextsFailBeforeOperations() -> None:
@@ -578,23 +581,23 @@ def test_RegistryLookupAndInvalidContextsFailBeforeOperations() -> None:
     with pytest.raises(ExtensionError):
         ProfileContext(None)  # type: ignore[arg-type]
 
-    provider_extension = registry.Load(descriptor)
+    providerExtension = registry.Load(descriptor)
 
-    assert isinstance(provider_extension, ProviderExtension)
-
-    with pytest.raises(ExtensionError):
-        provider_extension.CreateProvider(None)  # type: ignore[arg-type]
-
-    lifecycle_extension = registry.Load(registry.Get(ExtensionKind.PROVIDER, "yandex-lifecycle"))
-
-    assert isinstance(lifecycle_extension, LifecycleProviderExtension)
+    assert isinstance(providerExtension, ProviderExtension)
 
     with pytest.raises(ExtensionError):
-        lifecycle_extension.CreateLifecycleProvider(None)  # type: ignore[arg-type]
+        providerExtension.CreateProvider(None)  # type: ignore[arg-type]
 
-    profile_extension = registry.Load(registry.Get(ExtensionKind.PROFILE, "secure-gateway"))
+    lifecycleExtension = registry.Load(registry.Get(ExtensionKind.PROVIDER, "yandex-lifecycle"))
 
-    assert isinstance(profile_extension, ProfileExtension)
+    assert isinstance(lifecycleExtension, LifecycleProviderExtension)
 
     with pytest.raises(ExtensionError):
-        profile_extension.CompileProfile({}, None)  # type: ignore[arg-type]
+        lifecycleExtension.CreateLifecycleProvider(None)  # type: ignore[arg-type]
+
+    profileExtension = registry.Load(registry.Get(ExtensionKind.PROFILE, "secure-gateway"))
+
+    assert isinstance(profileExtension, ProfileExtension)
+
+    with pytest.raises(ExtensionError):
+        profileExtension.CompileProfile({}, None)  # type: ignore[arg-type]

@@ -40,10 +40,10 @@ def Decode(connection: bytes) -> tuple[bytes, dict[str, object]]:
     return compressed, json.loads(raw)
 
 
-def Deployed(tmp_path: Path, mode: str = "full") -> VpnProject:
+def Deployed(tmpPath: Path, mode: str = "full") -> VpnProject:
     """Use real renderers and owned artifacts with synthetic cloud/guest boundaries."""
 
-    project = Project(tmp_path)
+    project = Project(tmpPath)
     vpn = replace(project.vpn, devices=(VpnDevice("laptop", "10.66.0.2"), VpnDevice("phone", "10.66.0.3")),
                   routes=VpnRoutes(mode, ("0.0.0.0/0",) if mode == "full" else ("1.1.1.1/32", "8.8.8.8/32"),
                                    ("1.1.1.1", "8.8.8.8"), "disabled"))
@@ -64,14 +64,14 @@ def test_ExportRoundtripPreservesCredentialsRoutesAndPermissions(
     project = Deployed(tmp_path, mode)
     before = Snapshot(project.root)
     report = ExportVpnDevice(project, "laptop", protocol, tmp_path / "exports", qr=qr)
-    destination = Path(report.client_exports[0])
+    destination = Path(report.clientExports[0])
     _, profile = Decode((destination / "amnezia.vpn").read_bytes())
     container = profile["containers"][0]  # type: ignore[index]
     source = project.Artifacts / f"device-laptop-{protocol}"
 
     assert Snapshot(project.root) == before, "Export changed source state or credentials"
-    assert report.cloud_status == report.guest_status == "not-requested"
-    assert report.connectivity_status == "not-verified"
+    assert report.cloudStatus == report.guestStatus == "not-requested"
+    assert report.connectivityStatus == "not-verified"
     assert stat.S_IMODE(destination.parent.stat().st_mode) == 0o700
     assert stat.S_IMODE(destination.stat().st_mode) == 0o700
     assert all(stat.S_IMODE(path.stat().st_mode) == 0o600 for path in destination.iterdir())
@@ -91,7 +91,7 @@ def test_ExportRoundtripPreservesCredentialsRoutesAndPermissions(
         assert values["client_priv_key"] == parser["Interface"]["PrivateKey"]
         assert values["server_pub_key"] == parser["Peer"]["PublicKey"]
         assert values["client_ip"] == "10.66.0.2"
-        assert values["allowed_ips"] == list(project.vpn.routes.ipv4_cidrs)
+        assert values["allowed_ips"] == list(project.vpn.routes.ipv4Cidrs)
         assert values["mtu"] == "1280" and values["persistent_keep_alive"] == "25"
 
         for key in ("Jc", "Jmin", "Jmax", "S1", "S2", "S3", "S4", "H1", "H2", "H3", "H4", "HeaderProtectionKey", "ContentPaddingAddition", "RandomTrailers"):
@@ -205,7 +205,7 @@ def test_ExportPreservesUnsafeOrChangedOutput(tmp_path: Path, case: str) -> None
 
     if case in {"different", "extra", "root-permissions", "symlink"}:
         report = ExportVpnDevice(project, "laptop", "amneziawg", output)
-        destination = Path(report.client_exports[0])
+        destination = Path(report.clientExports[0])
 
         if case == "different":
             (destination / "amnezia.vpn").write_bytes(b"foreign-fixture")
@@ -322,9 +322,9 @@ def test_ChangingExportSelectionDoesNotModifyExistingFiles(tmp_path: Path) -> No
     assert Snapshot(tmp_path) == before
 
 
-@pytest.mark.parametrize("output_format", ["text", "json"])
+@pytest.mark.parametrize('outputFormat', ["text", "json"])
 def test_CliMissingDeviceFilesExplainsLocalExportFailure(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str], output_format: str,
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], outputFormat: str,
 ) -> None:
     """Explain an absent owned source without misleading cloud-access advice."""
 
@@ -333,7 +333,7 @@ def test_CliMissingDeviceFilesExplainsLocalExportFailure(
 
     assert Main(["vpn", "export", "--project", str(project.root), "--device", "laptop",
                  "--protocol", "amneziawg", "--output", str(tmp_path / "exports"),
-                 "--format", output_format]) == 2
+                 "--format", outputFormat]) == 2
 
     printed = capsys.readouterr().out
 

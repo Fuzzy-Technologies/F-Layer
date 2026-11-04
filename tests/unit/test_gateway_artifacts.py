@@ -35,10 +35,10 @@ def Bundle() -> ArtifactBundle:
     ))
 
 
-def Save(tmp_path: Path) -> tuple[Path, Path]:
+def Save(tmpPath: Path) -> tuple[Path, Path]:
     """Publish an explicit private bundle for ownership and cleanup scenarios."""
 
-    root = tmp_path / "artifacts"
+    root = tmpPath / "artifacts"
     directory = WriteArtifactBundle(root, Bundle())
 
     return root, directory
@@ -53,7 +53,7 @@ def test_PrivateManifestExcludesSensitiveBytesAndCleanupIsExplicit(tmp_path: Pat
     assert stat.S_IMODE(root.stat().st_mode) == 0o700
     assert stat.S_IMODE(directory.stat().st_mode) == 0o700
     assert all(stat.S_IMODE(item.stat().st_mode) == 0o600 for item in directory.iterdir())
-    assert data["identity"]["owner_id"] == IDENTITY.owner_id
+    assert data["identity"]["owner_id"] == IDENTITY.ownerId
     assert SYNTHETIC_SECRET not in (directory / "manifest.json").read_bytes()
     assert SYNTHETIC_SECRET.decode() not in repr(Bundle())
     assert SYNTHETIC_SECRET.decode() not in repr(Bundle().files[0])
@@ -69,44 +69,44 @@ def test_ExpectedBundleAuthorizesExactCleanupContent(tmp_path: Path) -> None:
 
     root, directory = Save(tmp_path)
 
-    assert RemoveArtifactBundle(root, IDENTITY, kind="device", name="laptop", expected_bundle=Bundle()), "Exact expected bundle content must authorize verified cleanup"
+    assert RemoveArtifactBundle(root, IDENTITY, kind="device", name="laptop", expectedBundle=Bundle()), "Exact expected bundle content must authorize verified cleanup"
     assert not directory.exists(), "Expected-content cleanup must remove the complete matching bundle"
 
 
-@pytest.mark.parametrize("replacement_files", [
+@pytest.mark.parametrize('replacementFiles', [
     (Artifact("client.conf", b"coherent-replacement"), Artifact("transport.json", b"{}")),
     (Artifact("client.conf", SYNTHETIC_SECRET),),
     (Artifact("client.conf", SYNTHETIC_SECRET), Artifact("transport.json", b"{}"), Artifact("added.json", b"{}")),
     (Artifact("transport.json", b"{}"), Artifact("client.conf", SYNTHETIC_SECRET)),
     (Artifact("client.conf", SYNTHETIC_SECRET, sensitive=False), Artifact("transport.json", b"{}")),
 ])
-def test_ExpectedBundlePreservesValidDifferentOwnedContent(tmp_path: Path, replacement_files: tuple[Artifact, ...]) -> None:
+def test_ExpectedBundlePreservesValidDifferentOwnedContent(tmp_path: Path, replacementFiles: tuple[Artifact, ...]) -> None:
     """Reject coherent same-identity replacement bytes, membership, order, or sensitivity metadata."""
 
     root = tmp_path / "artifacts"
-    replacement = replace(Bundle(), files=replacement_files)
+    replacement = replace(Bundle(), files=replacementFiles)
     directory = WriteArtifactBundle(root, replacement)
     before = {path.name: path.read_bytes() for path in directory.iterdir()}
 
     with pytest.raises(ArtifactError):
-        RemoveArtifactBundle(root, IDENTITY, kind="device", name="laptop", expected_bundle=Bundle())
+        RemoveArtifactBundle(root, IDENTITY, kind="device", name="laptop", expectedBundle=Bundle())
 
     assert {path.name: path.read_bytes() for path in directory.iterdir()} == before, "Expected-content refusal must preserve every replacement file and manifest"
     assert not (root / ".device-laptop.lock").exists(), "Rejected cleanup must release only its own operation lock"
-    assert RemoveArtifactBundle(root, IDENTITY, kind="device", name="laptop", expected_bundle=replacement), "Preserved replacement must remain a complete valid owned bundle"
+    assert RemoveArtifactBundle(root, IDENTITY, kind="device", name="laptop", expectedBundle=replacement), "Preserved replacement must remain a complete valid owned bundle"
 
 
-@pytest.mark.parametrize("expected_bundle", [
-    "invalid", replace(Bundle(), identity=replace(IDENTITY, owner_id="foreign")),
+@pytest.mark.parametrize('expectedBundle', [
+    "invalid", replace(Bundle(), identity=replace(IDENTITY, ownerId="foreign")),
     replace(Bundle(), kind="server"), replace(Bundle(), name="different"),
 ])
-def test_ExpectedBundleRequiresExactRequestedOwnership(tmp_path: Path, expected_bundle: object) -> None:
+def test_ExpectedBundleRequiresExactRequestedOwnership(tmp_path: Path, expectedBundle: object) -> None:
     """Reject malformed or foreign expected intent before authorizing a removal lock."""
 
     root, directory = Save(tmp_path)
 
     with pytest.raises(ArtifactError):
-        RemoveArtifactBundle(root, IDENTITY, kind="device", name="laptop", expected_bundle=expected_bundle)  # type: ignore[arg-type]
+        RemoveArtifactBundle(root, IDENTITY, kind="device", name="laptop", expectedBundle=expectedBundle)  # type: ignore[arg-type]
 
     assert (directory / "client.conf").read_bytes() == SYNTHETIC_SECRET, "Invalid expected ownership must not alter current bundle content"
     assert not (root / ".device-laptop.lock").exists(), "Invalid expected intent must not leave an operation lock"
@@ -253,7 +253,7 @@ def test_ForeignIdentityAndUnownedExtrasBlockAllCleanup(tmp_path: Path) -> None:
     """Validate complete ownership and the full directory before deleting the first file."""
 
     root, directory = Save(tmp_path)
-    foreign = replace(IDENTITY, owner_id="foreign-owner")
+    foreign = replace(IDENTITY, ownerId="foreign-owner")
 
     with pytest.raises(ArtifactError):
         RemoveArtifactBundle(root, foreign, kind="device", name="laptop")
@@ -425,9 +425,9 @@ def test_FileWriteFailureClosesDescriptorAndUnlinksPartial(tmp_path: Path, monke
     root = tmp_path / "artifacts"
     root.mkdir(mode=0o700)
     descriptor = os.open(root, os.O_RDONLY | os.O_DIRECTORY)
-    original_write = artifacts.os.write
+    originalWrite = artifacts.os.write
 
-    def ZeroWrite(file_descriptor: int, content: object) -> int:
+    def ZeroWrite(fileDescriptor: int, content: object) -> int:
         """Simulate a filesystem refusing forward progress."""
 
         return 0
@@ -441,7 +441,7 @@ def test_FileWriteFailureClosesDescriptorAndUnlinksPartial(tmp_path: Path, monke
         assert list(root.iterdir()) == []
 
     finally:
-        monkeypatch.setattr(artifacts.os, "write", original_write)
+        monkeypatch.setattr(artifacts.os, "write", originalWrite)
         os.close(descriptor)
 
 
@@ -606,8 +606,8 @@ def test_RollbackPreservesReplacedPreviouslyCreatedFile(tmp_path: Path, monkeypa
     assert path.with_name("original.conf").read_bytes() == SYNTHETIC_SECRET
 
 
-@pytest.mark.parametrize("replace_inode", [False, True])
-def test_RemoveRechecksChangesAfterCompleteValidation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, replace_inode: bool) -> None:
+@pytest.mark.parametrize('replaceInode', [False, True])
+def test_RemoveRechecksChangesAfterCompleteValidation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, replaceInode: bool) -> None:
     """Stop before any deletion when a validated file is modified or substituted."""
 
     root, directory = Save(tmp_path)
@@ -619,7 +619,7 @@ def test_RemoveRechecksChangesAfterCompleteValidation(tmp_path: Path, monkeypatc
 
         result = original(descriptor, identity, kind, name)
 
-        if replace_inode:
+        if replaceInode:
             path.rename(path.with_name("original.conf"))
 
         path.write_bytes(b"foreign-replacement")

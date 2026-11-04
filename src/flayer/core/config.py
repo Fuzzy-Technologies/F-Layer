@@ -63,14 +63,14 @@ class SecretReference:
 class DesiredResource:
     """Provider-independent logical resource identity before an external resource exists."""
 
-    logical_id: str
+    logicalId: str
     kind: str
     name: str
 
     def __post_init__(self) -> None:
         """Reject ambiguous logical identifiers and malformed names."""
 
-        ValidateName(self.logical_id, "resources.logical_id")
+        ValidateName(self.logicalId, "resources.logical_id")
         ValidateName(self.kind, "resources.kind")
         ValidateName(self.name, "resources.name")
 
@@ -83,12 +83,12 @@ class DesiredConfig:
     profile: str
     resources: tuple[DesiredResource, ...] = ()
     credentials: tuple[SecretReference, ...] = ()
-    schema_version: int = SCHEMA_VERSION
+    schemaVersion: int = SCHEMA_VERSION
 
     def __post_init__(self) -> None:
         """Preserve model invariants when callers construct plans directly."""
 
-        ValidateSchemaVersion(self.schema_version)
+        ValidateSchemaVersion(self.schemaVersion)
 
         if not isinstance(self.identity, StackIdentity):
             raise ContractError("identity must be a StackIdentity")
@@ -100,7 +100,7 @@ class DesiredConfig:
         ):
             raise ContractError("resources must be a tuple of DesiredResource values")
 
-        if len({resource.logical_id for resource in self.resources}) != len(self.resources):
+        if len({resource.logicalId for resource in self.resources}) != len(self.resources):
             raise ContractError("resources.logical_id values must be unique")
 
         if not isinstance(self.credentials, tuple) or any(
@@ -125,7 +125,7 @@ def _ParseResources(value: object) -> tuple[DesiredResource, ...]:
         ValidateFields(table, frozenset({"logical_id", "kind", "name"}), frozenset(), "resources")
         resources.append(
             DesiredResource(
-                logical_id=ValidateName(table["logical_id"], "resources.logical_id"),
+                logicalId=ValidateName(table["logical_id"], "resources.logical_id"),
                 kind=ValidateName(table["kind"], "resources.kind"),
                 name=ValidateName(table["name"], "resources.name"),
             )

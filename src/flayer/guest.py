@@ -25,7 +25,7 @@ _SERVICE = re.compile(r"[a-z][a-z0-9-]{0,79}\.service\Z")
 class GuestResult:
     """Transient subprocess output excluded from object representations and error messages."""
 
-    return_code: int
+    returnCode: int
     stdout: bytes = field(default=b"", repr=False)
     stderr: bytes = field(default=b"", repr=False)
 
@@ -158,8 +158,8 @@ class SshGuestProvisioner:
     """Connect only to an explicit IPv4 endpoint using an independently pinned Ed25519 host key."""
 
     def __init__(
-        self, endpoint: VpnEndpoint, username: str, identity_file: Path,
-        known_hosts_file: Path, runner: GuestRunner | None = None,
+        self, endpoint: VpnEndpoint, username: str, identityFile: Path,
+        knownHostsFile: Path, runner: GuestRunner | None = None,
     ) -> None:
         """Validate private key/trust paths before constructing any SSH argument vector."""
 
@@ -174,21 +174,21 @@ class SshGuestProvisioner:
         if not isinstance(username, str) or re.fullmatch(r"[a-z][a-z0-9-]{0,31}", username) is None or username == "root":
             raise VpnError("Guest administration requires an explicit non-root username")
 
-        identity_file = PrivatePath(identity_file)
-        known_hosts_file = PrivatePath(known_hosts_file)
+        identityFile = PrivatePath(identityFile)
+        knownHostsFile = PrivatePath(knownHostsFile)
 
-        ValidateSshPathSyntax(identity_file)
-        ValidateSshPathSyntax(known_hosts_file)
+        ValidateSshPathSyntax(identityFile)
+        ValidateSshPathSyntax(knownHostsFile)
 
-        if not ReadPrivate(known_hosts_file).strip():
+        if not ReadPrivate(knownHostsFile).strip():
             raise VpnError("Guest provisioning requires an independently authenticated host-key pin")
 
         self.runner = runner or SubprocessGuestRunner()
         self.command = (
-            "ssh", "-F", "/dev/null", "-T", "-p", str(endpoint.port), "-i", str(identity_file),
+            "ssh", "-F", "/dev/null", "-T", "-p", str(endpoint.port), "-i", str(identityFile),
             "-o", "BatchMode=yes", "-o", "IdentityAgent=none", "-o", "IdentitiesOnly=yes",
             "-o", "StrictHostKeyChecking=yes", "-o", "GlobalKnownHostsFile=/dev/null",
-            "-o", f'UserKnownHostsFile="{known_hosts_file}"', "-o", "UpdateHostKeys=no",
+            "-o", f'UserKnownHostsFile="{knownHostsFile}"', "-o", "UpdateHostKeys=no",
             "-o", "VerifyHostKeyDNS=no", "-o", "HostKeyAlgorithms=ssh-ed25519",
             "-o", "ConnectTimeout=15", "-o", "ConnectionAttempts=1",
             "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=3",
@@ -232,7 +232,7 @@ class SshGuestProvisioner:
         command = "sudo -n /usr/bin/python3 -c " + shlex.quote(files("flayer").joinpath("_vpn_guest.py").read_text(encoding="utf-8"))
         result = self.runner.Run((*self.command, command), payload, 3700)
 
-        if result.return_code != 0 or result.stdout.strip() != b"FLAYER_GUEST_INSTALL_OK":
+        if result.returnCode != 0 or result.stdout.strip() != b"FLAYER_GUEST_INSTALL_OK":
             receipt = result.stdout.strip() if len(result.stdout) <= 128 else b""
             match = re.fullmatch(rb"FLAYER_GUEST_FAILED (amneziawg|vless-reality) (stage|install|check)", receipt)
 
@@ -262,9 +262,9 @@ class SshGuestProvisioner:
             command = "sudo -n /usr/bin/systemctl is-active --quiet " + shlex.quote(service)
             observed = self.runner.Run((*self.command, command), b"", 30)
 
-            if observed.return_code not in {0, 3}:
+            if observed.returnCode not in {0, 3}:
                 raise VpnError("Unable to observe the owned guest service")
 
-            result.append((service, observed.return_code == 0))
+            result.append((service, observed.returnCode == 0))
 
         return tuple(result)

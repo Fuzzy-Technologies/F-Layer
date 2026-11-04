@@ -25,29 +25,29 @@ import flayer.core.state as state
 from flayer.core.contracts import StackIdentity
 
 identity = StackIdentity("example", "sandbox", "fake", "folder-test", "test-owner")
-state_path = Path(sys.argv[1])
+statePath = Path(sys.argv[1])
 mode = sys.argv[2]
 plan = lifecycle.DeploymentPlan(identity, ())
 
 if mode == "state":
-    state.SaveState(state_path, state.StackState(identity), identity)
+    state.SaveState(statePath, state.StackState(identity), identity)
     module = state
-    target = state_path
+    target = statePath
 
 else:
-    lifecycle._WriteJournal(state_path, lifecycle._Journal(
-        identity, plan.Fingerprint(), "create", (), operation_id="a" * 32,
+    lifecycle._WriteJournal(statePath, lifecycle._Journal(
+        identity, plan.Fingerprint(), "create", (), operationId="a" * 32,
     ))
     module = lifecycle
-    target = lifecycle._JournalPath(state_path)
+    target = lifecycle._JournalPath(statePath)
 
-original_validator = module._ValidatePath
+originalValidator = module._ValidatePath
 
 
 def SwapAfterValidation(path):
     """Substitute a FIFO only after the existing regular-file check succeeded."""
 
-    original_validator(path)
+    originalValidator(path)
 
     if path == target:
         path.unlink()
@@ -58,10 +58,10 @@ module._ValidatePath = SwapAfterValidation
 
 try:
     if mode == "state":
-        state.LoadState(state_path, identity)
+        state.LoadState(statePath, identity)
 
     else:
-        lifecycle._LoadJournal(state_path, plan)
+        lifecycle._LoadJournal(statePath, plan)
 
 except (state.StateError, lifecycle.LifecycleError):
     print("blocked")

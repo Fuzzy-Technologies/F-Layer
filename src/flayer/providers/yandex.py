@@ -45,16 +45,16 @@ ERROR_MARKERS: tuple[tuple[ProviderErrorCode, tuple[str, ...]], ...] = (
 class YandexCloudSettings:
     """Explicit folder/profile configuration with no stored tokens or secret keys."""
 
-    folder_id: str
+    folderId: str
     profile: str = "default"
     executable: str = "yc"
-    command_timeout: float = 45.0
-    inventory_limit: int = 10000
+    commandTimeout: float = 45.0
+    inventoryLimit: int = 10000
 
     def __post_init__(self) -> None:
         """Reject unsafe scope selectors and unbounded subprocess parameters."""
 
-        ValidateIdentifier(self.folder_id)
+        ValidateIdentifier(self.folderId)
         ValidateIdentifier(self.profile)
 
         if (
@@ -65,19 +65,19 @@ class YandexCloudSettings:
             raise ValueError("Yandex CLI executable must be a non-empty executable path or name")
 
         if (
-            isinstance(self.command_timeout, bool)
-            or not isinstance(self.command_timeout, (int, float))
-            or not math.isfinite(self.command_timeout)
-            or not 0 < self.command_timeout <= 300
+            isinstance(self.commandTimeout, bool)
+            or not isinstance(self.commandTimeout, (int, float))
+            or not math.isfinite(self.commandTimeout)
+            or not 0 < self.commandTimeout <= 300
         ):
             raise ValueError(
                 "Provider command timeout must be finite and between 0 and 300 seconds"
             )
 
         if (
-            isinstance(self.inventory_limit, bool)
-            or not isinstance(self.inventory_limit, int)
-            or not 1 <= self.inventory_limit <= 100000
+            isinstance(self.inventoryLimit, bool)
+            or not isinstance(self.inventoryLimit, int)
+            or not 1 <= self.inventoryLimit <= 100000
         ):
             raise ValueError("Provider inventory limit must be an integer between 1 and 100000")
 
@@ -86,7 +86,7 @@ class YandexCloudSettings:
 class CommandResult:
     """An ephemeral command result whose representation omits potentially secret output."""
 
-    return_code: int
+    returnCode: int
     stdout: str = field(default="", repr=False)
     stderr: str = field(default="", repr=False)
 
@@ -131,7 +131,7 @@ class YandexCloudProvider:
 
         self._settings = settings
         self._runner = runner if runner is not None else SubprocessCommandRunner()
-        self._identity = ProviderIdentity(PROVIDER_ID, settings.folder_id, "cli-profile")
+        self._identity = ProviderIdentity(PROVIDER_ID, settings.folderId, "cli-profile")
 
     @property
     def Identity(self) -> ProviderIdentity:
@@ -152,7 +152,7 @@ class YandexCloudProvider:
             self._Run(("--version",), "availability", scoped=False)
 
         except ProviderError as error:
-            return ProviderStatus(self.Identity, False, error_code=error.code)
+            return ProviderStatus(self.Identity, False, errorCode=error.code)
 
         return ProviderStatus(self.Identity, True)
 
@@ -161,11 +161,11 @@ class YandexCloudProvider:
 
         try:
             payload = self._ReadJson(
-                ("resource-manager", "folder", "get", "--id", self._settings.folder_id),
+                ("resource-manager", "folder", "get", "--id", self._settings.folderId),
                 "authentication",
             )
 
-            if not isinstance(payload, dict) or payload.get("id") != self._settings.folder_id:
+            if not isinstance(payload, dict) or payload.get("id") != self._settings.folderId:
                 raise ProviderError(ProviderErrorCode.SCOPE_MISMATCH, "authentication")
 
         except ProviderError as error:
@@ -179,7 +179,7 @@ class YandexCloudProvider:
         """Read one resource kind, rejecting malformed or possibly truncated inventory."""
 
         command = self._CommandForKind(kind)
-        limit = min(self._settings.inventory_limit, MAX_CLI_LIST_LIMIT)
+        limit = min(self._settings.inventoryLimit, MAX_CLI_LIST_LIMIT)
         payload = self._ReadJson(
             (*command, "list", "--limit", str(limit)), "list"
         )
@@ -192,22 +192,22 @@ class YandexCloudProvider:
 
         resources = tuple(self._NormalizeResource(item, kind, "list") for item in payload)
 
-        if len({resource.reference.resource_id for resource in resources}) != len(resources):
+        if len({resource.reference.resourceId for resource in resources}) != len(resources):
             raise ProviderError(ProviderErrorCode.INVALID_RESPONSE, "list")
 
-        return tuple(sorted(resources, key=lambda item: item.reference.resource_id))
+        return tuple(sorted(resources, key=lambda item: item.reference.resourceId))
 
     def GetResource(self, reference: ResourceReference) -> ProviderResource:
         """Read by ID and revalidate returned scope because vendor ID lookup is global."""
 
         if (
-            reference.provider_id != self.Identity.provider_id
-            or reference.scope_id != self.Identity.scope_id
+            reference.providerId != self.Identity.providerId
+            or reference.scopeId != self.Identity.scopeId
         ):
             raise ProviderError(ProviderErrorCode.SCOPE_MISMATCH, "get")
 
         command = self._CommandForKind(reference.kind)
-        payload = self._ReadJson((*command, "get", "--id", reference.resource_id), "get")
+        payload = self._ReadJson((*command, "get", "--id", reference.resourceId), "get")
         resource = self._NormalizeResource(payload, reference.kind, "get")
 
         if resource.reference != reference:
@@ -241,28 +241,28 @@ class YandexCloudProvider:
 
         flags = (
             "--profile", self._settings.profile,
-            "--folder-id", self._settings.folder_id,
+            "--folder-id", self._settings.folderId,
             "--format", "json",
             "--no-browser",
             "--retry", "0",
         ) if scoped else ()
         command = (self._settings.executable, *arguments, *flags)
 
-        failure_code: ProviderErrorCode | None = None
+        failureCode: ProviderErrorCode | None = None
 
         try:
-            result = self._runner.Run(command, self._settings.command_timeout)
+            result = self._runner.Run(command, self._settings.commandTimeout)
 
         except subprocess.TimeoutExpired:
-            failure_code = ProviderErrorCode.TIMEOUT
+            failureCode = ProviderErrorCode.TIMEOUT
 
         except OSError:
-            failure_code = ProviderErrorCode.UNAVAILABLE
+            failureCode = ProviderErrorCode.UNAVAILABLE
 
-        if failure_code is not None:
-            raise ProviderError(failure_code, operation)
+        if failureCode is not None:
+            raise ProviderError(failureCode, operation)
 
-        if result.return_code != 0:
+        if result.returnCode != 0:
             error = self._CommandFailure(arguments, result, operation)
             del result
 
@@ -311,20 +311,20 @@ class YandexCloudProvider:
         if not isinstance(payload, dict):
             raise ProviderError(ProviderErrorCode.INVALID_RESPONSE, operation)
 
-        if payload.get("folder_id") != self.Identity.scope_id:
+        if payload.get("folder_id") != self.Identity.scopeId:
             raise ProviderError(ProviderErrorCode.SCOPE_MISMATCH, operation)
 
-        resource_id = payload.get("id")
+        resourceId = payload.get("id")
         name = payload.get("name", "")
         status = payload.get("status", "UNKNOWN")
-        zone_id = payload.get("zone_id")
+        zoneId = payload.get("zone_id")
         labels = payload.get("labels", {})
 
         if (
-            not isinstance(resource_id, str)
+            not isinstance(resourceId, str)
             or not isinstance(name, str)
             or not isinstance(status, str)
-            or (zone_id is not None and not isinstance(zone_id, str))
+            or (zoneId is not None and not isinstance(zoneId, str))
             or not isinstance(labels, dict)
             or not all(
                 isinstance(key, str) and isinstance(value, str) for key, value in labels.items()
@@ -333,10 +333,10 @@ class YandexCloudProvider:
             raise ProviderError(ProviderErrorCode.INVALID_RESPONSE, operation)
 
         try:
-            reference = ResourceReference(PROVIDER_ID, self.Identity.scope_id, kind, resource_id)
-            public_addresses = self._PublicAddresses(payload, kind)
+            reference = ResourceReference(PROVIDER_ID, self.Identity.scopeId, kind, resourceId)
+            publicAddresses = self._PublicAddresses(payload, kind)
             resource = ProviderResource(
-                reference, name, status, zone_id, tuple(sorted(labels.items())), public_addresses
+                reference, name, status, zoneId, tuple(sorted(labels.items())), publicAddresses
             )
 
         except (ValueError, TypeError, AttributeError):

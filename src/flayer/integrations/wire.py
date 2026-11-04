@@ -91,34 +91,34 @@ def _Decode(payload: str) -> object:
         raise IntegrationError("Unable to parse a valid bounded integration envelope") from None
 
 
-def _Request(value: object, expected_identity: StackIdentity, envelope: str) -> IntegrationRequest:
+def _Request(value: object, expectedIdentity: StackIdentity, envelope: str) -> IntegrationRequest:
     """Bind decoded metadata to caller context with an exact envelope schema."""
 
     table = RequireTable(value, "integration envelope")
-    extra_fields = frozenset({"evidence"}) if envelope == "result" else frozenset()
-    ValidateFields(table, ENVELOPE_FIELDS | extra_fields, frozenset(), "integration envelope")
+    extraFields = frozenset({"evidence"}) if envelope == "result" else frozenset()
+    ValidateFields(table, ENVELOPE_FIELDS | extraFields, frozenset(), "integration envelope")
 
     if table["envelope"] != envelope:
         raise IntegrationError("Integration envelope kind is unsupported")
 
     identity = ParseIdentity(table["identity"])
-    RequireIdentity(identity, expected_identity)
-    request_id = table["request_id"]
+    RequireIdentity(identity, expectedIdentity)
+    requestId = table["request_id"]
     operation = table["operation"]
 
-    if not isinstance(request_id, str) or not isinstance(operation, str):
+    if not isinstance(requestId, str) or not isinstance(operation, str):
         raise IntegrationError("Integration correlation and operation require strings")
 
     return IntegrationRequest(
-        identity, request_id, IntegrationOperation(operation), cast(int, table["schema_version"]),
+        identity, requestId, IntegrationOperation(operation), cast(int, table["schema_version"]),
     )
 
 
-def ParseRequest(payload: str, expected_identity: StackIdentity) -> IntegrationRequest:
+def ParseRequest(payload: str, expectedIdentity: StackIdentity) -> IntegrationRequest:
     """Validate untrusted read-only intent without invoking any operation or permission check."""
 
     try:
-        return _Request(_Decode(payload), expected_identity, "request")
+        return _Request(_Decode(payload), expectedIdentity, "request")
 
     except ValueError:
         raise IntegrationError("Unable to parse a valid owned integration request") from None
@@ -177,17 +177,17 @@ def _ParseLifecycle(value: object) -> LifecycleEvidence:
     )
 
 
-def ParseResult(payload: str, expected_request: IntegrationRequest) -> IntegrationResult:
+def ParseResult(payload: str, expectedRequest: IntegrationRequest) -> IntegrationResult:
     """Bind an untrusted representation to its request without asserting authenticity."""
 
     try:
-        if not isinstance(expected_request, IntegrationRequest):
+        if not isinstance(expectedRequest, IntegrationRequest):
             raise IntegrationError("Integration result requires an originating request")
 
         value = _Decode(payload)
-        request = _Request(value, expected_request.identity, "result")
+        request = _Request(value, expectedRequest.identity, "result")
 
-        if request != expected_request:
+        if request != expectedRequest:
             raise IntegrationError("Integration result does not match the originating request")
 
         table = RequireTable(value, "integration result")
@@ -211,13 +211,13 @@ def _Metadata(request: IntegrationRequest, envelope: str) -> dict[str, object]:
     """Represent validated non-secret routing metadata without consumer-specific fields."""
 
     return {
-        "schema_version": request.schema_version, "envelope": envelope,
+        "schema_version": request.schemaVersion, "envelope": envelope,
         "identity": {
             "project": request.identity.project, "stack": request.identity.stack,
-            "provider": request.identity.provider, "scope_id": request.identity.scope_id,
-            "owner_id": request.identity.owner_id,
+            "provider": request.identity.provider, "scope_id": request.identity.scopeId,
+            "owner_id": request.identity.ownerId,
         },
-        "request_id": request.request_id,
+        "request_id": request.requestId,
         "operation": request.operation.value,
     }
 
@@ -260,12 +260,12 @@ def SerializeResult(result: IntegrationResult) -> str:
         }
 
     elif isinstance(evidence, StateEvidence):
-        value["evidence"] = {"resource_count": evidence.resource_count}
+        value["evidence"] = {"resource_count": evidence.resourceCount}
 
     else:
         value["evidence"] = {
             "action": evidence.action, "status": evidence.status,
-            "recovery_required": evidence.recovery_required,
+            "recovery_required": evidence.recoveryRequired,
             "resources": [{"status": resource.status, "count": resource.count}
                           for resource in evidence.resources],
         }

@@ -75,33 +75,33 @@ def ValidateIdentifier(value: str) -> None:
 class ProviderIdentity:
     """Non-secret provider and explicit scope identity; credentials remain external."""
 
-    provider_id: str
-    scope_id: str
-    authentication_source: str
+    providerId: str
+    scopeId: str
+    authenticationSource: str
 
     def __post_init__(self) -> None:
         """Validate immutable identity fields before they can define a resource scope."""
 
-        ValidateIdentifier(self.provider_id)
-        ValidateIdentifier(self.scope_id)
-        ValidateIdentifier(self.authentication_source)
+        ValidateIdentifier(self.providerId)
+        ValidateIdentifier(self.scopeId)
+        ValidateIdentifier(self.authenticationSource)
 
 
 @dataclass(frozen=True, slots=True)
 class ResourceReference:
     """A resource key bound to one provider, one scope and one resource kind."""
 
-    provider_id: str
-    scope_id: str
+    providerId: str
+    scopeId: str
     kind: ResourceKind
-    resource_id: str
+    resourceId: str
 
     def __post_init__(self) -> None:
         """Reject malformed identities and unrecognized resource kinds."""
 
-        ValidateIdentifier(self.provider_id)
-        ValidateIdentifier(self.scope_id)
-        ValidateIdentifier(self.resource_id)
+        ValidateIdentifier(self.providerId)
+        ValidateIdentifier(self.scopeId)
+        ValidateIdentifier(self.resourceId)
 
         if not isinstance(self.kind, ResourceKind):
             raise ValueError("Resource kind must be a ResourceKind member")
@@ -114,9 +114,9 @@ class ProviderResource:
     reference: ResourceReference
     name: str
     status: str = "UNKNOWN"
-    zone_id: str | None = None
+    zoneId: str | None = None
     labels: tuple[tuple[str, str], ...] = ()
-    public_addresses: tuple[str, ...] = ()
+    publicAddresses: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         """Require immutable labels and endpoint collections from provider adapters."""
@@ -127,8 +127,8 @@ class ProviderResource:
         if not isinstance(self.name, str) or not isinstance(self.status, str):
             raise ValueError("Resource names and statuses must be strings")
 
-        if self.zone_id is not None:
-            ValidateIdentifier(self.zone_id)
+        if self.zoneId is not None:
+            ValidateIdentifier(self.zoneId)
 
         if (
             not isinstance(self.labels, tuple)
@@ -142,8 +142,8 @@ class ProviderResource:
         ):
             raise ValueError("Resource labels must be immutable unique string pairs")
 
-        if not isinstance(self.public_addresses, tuple) or not all(
-            isinstance(address, str) for address in self.public_addresses
+        if not isinstance(self.publicAddresses, tuple) or not all(
+            isinstance(address, str) for address in self.publicAddresses
         ):
             raise ValueError("Public addresses must be an immutable string tuple")
 
@@ -162,7 +162,7 @@ class ProviderStatus:
     identity: ProviderIdentity
     available: bool
     authenticated: bool | None = None
-    error_code: ProviderErrorCode | None = None
+    errorCode: ProviderErrorCode | None = None
 
 
 @runtime_checkable

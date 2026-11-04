@@ -46,11 +46,11 @@ class FakeCommandRunner:
         return result
 
 
-def ResourcePayload(resource_id: str = "resource-1", **values: object) -> dict[str, object]:
+def ResourcePayload(resourceId: str = "resource-1", **values: object) -> dict[str, object]:
     """Build public synthetic provider observations, never private infrastructure data."""
 
     payload: dict[str, object] = {
-        "id": resource_id,
+        "id": resourceId,
         "folder_id": "test-folder",
         "name": "example-resource",
         "labels": {"project": "example"},
@@ -72,25 +72,25 @@ def ProviderWithPayload(payload: object) -> tuple[YandexCloudProvider, FakeComma
 @pytest.mark.parametrize(
     "values",
     [
-        {"folder_id": "--other-folder"},
+        {'folderId': "--other-folder"},
         {"profile": "profile with spaces"},
         {"executable": ""},
         {"executable": "yc\x00"},
-        {"command_timeout": 0},
-        {"command_timeout": 301},
-        {"command_timeout": float("nan")},
-        {"command_timeout": True},
-        {"command_timeout": "45"},
-        {"inventory_limit": 0},
-        {"inventory_limit": 100001},
-        {"inventory_limit": True},
-        {"inventory_limit": 1.5},
+        {'commandTimeout': 0},
+        {'commandTimeout': 301},
+        {'commandTimeout': float("nan")},
+        {'commandTimeout': True},
+        {'commandTimeout': "45"},
+        {'inventoryLimit': 0},
+        {'inventoryLimit': 100001},
+        {'inventoryLimit': True},
+        {'inventoryLimit': 1.5},
     ],
 )
 def test_SettingsRejectUnboundedOrUnsafeValues(values: dict[str, object]) -> None:
     """Settings require safe selectors, finite timeouts and a bounded integer limit."""
 
-    arguments: dict[str, object] = {"folder_id": "test-folder"}
+    arguments: dict[str, object] = {'folderId': "test-folder"}
     arguments.update(values)
 
     with pytest.raises(ValueError):
@@ -104,9 +104,9 @@ def test_ConstructingProviderHasNoImplicitInfrastructureAccess() -> None:
     provider = YandexCloudProvider(YandexCloudSettings("test-folder"), runner)
 
     assert isinstance(provider, CloudProvider), "Yandex adapter violates the provider protocol"
-    assert provider.Identity.provider_id == "yandex-cloud", "Unexpected provider identity"
-    assert provider.Identity.scope_id == "test-folder", "Explicit provider scope was lost"
-    assert provider.Identity.authentication_source == "cli-profile", "Unexpected credential source"
+    assert provider.Identity.providerId == "yandex-cloud", "Unexpected provider identity"
+    assert provider.Identity.scopeId == "test-folder", "Explicit provider scope was lost"
+    assert provider.Identity.authenticationSource == "cli-profile", "Unexpected credential source"
     assert provider.Capabilities == {
         ProviderCapability.INVENTORY, ProviderCapability.RESOURCE_LOOKUP
     }, "Provider advertised unimplemented mutation capabilities"
@@ -118,7 +118,7 @@ def test_DefaultRunnerCanBeConstructedWithoutExecutingIt() -> None:
 
     provider = YandexCloudProvider(YandexCloudSettings("test-folder"))
 
-    assert provider.Identity.scope_id == "test-folder", "Production provider lost its folder scope"
+    assert provider.Identity.scopeId == "test-folder", "Production provider lost its folder scope"
 
 
 def test_SubprocessRunnerUsesNoShellAndBoundsExecution(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -149,7 +149,7 @@ def test_AvailabilityChecksOnlyCliVersion() -> None:
     """CLI availability distinguishes a local executable from authenticated cloud access."""
 
     runner = FakeCommandRunner([CommandResult(0, "Yandex Cloud CLI example-version")])
-    provider = YandexCloudProvider(YandexCloudSettings("test-folder", command_timeout=9), runner)
+    provider = YandexCloudProvider(YandexCloudSettings("test-folder", commandTimeout=9), runner)
     status = provider.CheckAvailability()
 
     assert status.available and status.authenticated is None, "Availability implied authentication"
@@ -174,7 +174,7 @@ def test_AvailabilityFailuresAreSanitized(
     provider = YandexCloudProvider(YandexCloudSettings("test-folder"), runner)
     status = provider.CheckAvailability()
 
-    assert not status.available and status.error_code == code, "Incorrect availability failure"
+    assert not status.available and status.errorCode == code, "Incorrect availability failure"
     assert status.authenticated is None, "Failed local check guessed credential validity"
     assert "synthetic-secret" not in repr(status), "Availability status leaked external details"
 
@@ -202,7 +202,7 @@ def test_AuthenticationRejectsUnverifiedScope(payload: object) -> None:
     status = provider.CheckAuthentication()
 
     assert status.authenticated is False, "Authentication accepted an unverified folder"
-    assert status.error_code == ProviderErrorCode.SCOPE_MISMATCH, (
+    assert status.errorCode == ProviderErrorCode.SCOPE_MISMATCH, (
         "Folder mismatch lost its category"
     )
 
@@ -216,7 +216,7 @@ def test_AuthenticationReportsMissingLocalAdapter() -> None:
     assert not status.available and status.authenticated is False, (
         "Missing CLI was treated as ready"
     )
-    assert status.error_code == ProviderErrorCode.UNAVAILABLE, "Missing CLI lost its failure code"
+    assert status.errorCode == ProviderErrorCode.UNAVAILABLE, "Missing CLI lost its failure code"
 
 
 @pytest.mark.parametrize(
@@ -289,15 +289,15 @@ def test_ListResourcesNormalizesAndSortsOnlyPublicContractFields() -> None:
     resources = provider.ListResources(ResourceKind.INSTANCE)
     command, _ = runner.calls[0]
 
-    assert [resource.reference.resource_id for resource in resources] == ["vm-1", "vm-2"], (
+    assert [resource.reference.resourceId for resource in resources] == ["vm-1", "vm-2"], (
         "Inventory ordering depends on vendor response order"
     )
     assert resources[0].status == "RUNNING", "VM state was lost during normalization"
-    assert resources[0].zone_id == "example-zone-a", "VM zone was lost during normalization"
+    assert resources[0].zoneId == "example-zone-a", "VM zone was lost during normalization"
     assert resources[0].labels == (("managed-by", "f-layer"), ("project", "example")), (
         "Ownership labels were not normalized deterministically"
     )
-    assert resources[0].public_addresses == ("203.0.113.10",), "External address was lost"
+    assert resources[0].publicAddresses == ("203.0.113.10",), "External address was lost"
     assert resources[1].status == "UNKNOWN", "Missing vendor state was guessed"
     assert "synthetic-secret" not in repr(resources), "Raw instance metadata leaked into resources"
     assert command == (
@@ -315,7 +315,7 @@ def test_ReservedAddressUsesExternalIpv4Field() -> None:
     ])
     resources = provider.ListResources(ResourceKind.ADDRESS)
 
-    assert resources[0].public_addresses == ("203.0.113.20",), "Reserved address was not translated"
+    assert resources[0].publicAddresses == ("203.0.113.20",), "Reserved address was not translated"
 
 
 def test_InstanceWithoutNatHasNoPublicEndpoint() -> None:
@@ -326,7 +326,7 @@ def test_InstanceWithoutNatHasNoPublicEndpoint() -> None:
     )])
     resources = provider.ListResources(ResourceKind.INSTANCE)
 
-    assert resources[0].public_addresses == (), "Private address was exposed as a public endpoint"
+    assert resources[0].publicAddresses == (), "Private address was exposed as a public endpoint"
 
 
 def test_EmptyInventoryIsSuccessful() -> None:
@@ -338,13 +338,13 @@ def test_EmptyInventoryIsSuccessful() -> None:
 
 
 @pytest.mark.parametrize("kind", list(ResourceKind))
-@pytest.mark.parametrize("configured_limit", [7, 1000, 10000, 100000])
-def test_ListRespectsCloudPageMaximum(kind: ResourceKind, configured_limit: int) -> None:
+@pytest.mark.parametrize('configuredLimit', [7, 1000, 10000, 100000])
+def test_ListRespectsCloudPageMaximum(kind: ResourceKind, configuredLimit: int) -> None:
     """Configured inventory ceilings cannot exceed the API request page-size bound."""
 
     runner = FakeCommandRunner([CommandResult(0, "[]")])
     provider = YandexCloudProvider(
-        YandexCloudSettings("test-folder", inventory_limit=configured_limit), runner
+        YandexCloudSettings("test-folder", inventoryLimit=configuredLimit), runner
     )
 
     assert provider.ListResources(kind) == (), "Empty inventory must remain discoverable"
@@ -353,22 +353,22 @@ def test_ListRespectsCloudPageMaximum(kind: ResourceKind, configured_limit: int)
     limit = int(command[command.index("--limit") + 1])
 
     assert 1 <= limit <= 1000, "CLI limit violates the cloud page_size maximum"
-    assert limit <= configured_limit, "CLI request exceeded the caller's smaller ceiling"
+    assert limit <= configuredLimit, "CLI request exceeded the caller's smaller ceiling"
 
 
-@pytest.mark.parametrize("configured_limit", [1000, 10000, 100000])
-@pytest.mark.parametrize("row_count", [999, 1000, 1001])
-def test_CloudPageSaturationRemainsIncomplete(configured_limit: int, row_count: int) -> None:
+@pytest.mark.parametrize('configuredLimit', [1000, 10000, 100000])
+@pytest.mark.parametrize('rowCount', [999, 1000, 1001])
+def test_CloudPageSaturationRemainsIncomplete(configuredLimit: int, rowCount: int) -> None:
     """A full cloud-sized page must not silently hide resources from ownership discovery."""
 
-    payload = [ResourcePayload(f"resource-{index}") for index in range(row_count)]
+    payload = [ResourcePayload(f"resource-{index}") for index in range(rowCount)]
     runner = FakeCommandRunner([CommandResult(0, json.dumps(payload))])
     provider = YandexCloudProvider(
-        YandexCloudSettings("test-folder", inventory_limit=configured_limit), runner
+        YandexCloudSettings("test-folder", inventoryLimit=configuredLimit), runner
     )
 
-    if row_count < 1000:
-        assert len(provider.ListResources(ResourceKind.NETWORK)) == row_count, (
+    if rowCount < 1000:
+        assert len(provider.ListResources(ResourceKind.NETWORK)) == rowCount, (
             "A non-saturated valid response was rejected"
         )
 
@@ -473,7 +473,7 @@ def test_InventoryLimitSaturationFailsInsteadOfReturningPartialState() -> None:
     """A response at the vendor limit is potentially truncated and cannot claim completeness."""
 
     runner = FakeCommandRunner([CommandResult(0, json.dumps([ResourcePayload()]))])
-    provider = YandexCloudProvider(YandexCloudSettings("test-folder", inventory_limit=1), runner)
+    provider = YandexCloudProvider(YandexCloudSettings("test-folder", inventoryLimit=1), runner)
 
     with pytest.raises(ProviderError) as error:
         provider.ListResources(ResourceKind.NETWORK)
@@ -493,14 +493,14 @@ def test_UnsupportedKindCannotInjectCommands() -> None:
 
 
 @pytest.mark.parametrize(
-    ("provider_id", "scope_id"), [("foreign-cloud", "test-folder"), ("yandex-cloud", "foreign")]
+    ('providerId', 'scopeId'), [("foreign-cloud", "test-folder"), ("yandex-cloud", "foreign")]
 )
-def test_GetRejectsForeignReferencesBeforeExecution(provider_id: str, scope_id: str) -> None:
+def test_GetRejectsForeignReferencesBeforeExecution(providerId: str, scopeId: str) -> None:
     """A reference from another provider or folder cannot trigger even a read operation."""
 
     runner = FakeCommandRunner([])
     provider = YandexCloudProvider(YandexCloudSettings("test-folder"), runner)
-    reference = ResourceReference(provider_id, scope_id, ResourceKind.INSTANCE, "vm-1")
+    reference = ResourceReference(providerId, scopeId, ResourceKind.INSTANCE, "vm-1")
 
     with pytest.raises(ProviderError) as error:
         provider.GetResource(reference)

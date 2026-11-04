@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/static-site.md"
-sourceHash = "sha256:7e870f42ef1575a404c26ca7dd03bc5df3d5de290960efa2b8824cb190ba31f1"
-reviewedTranslationHash = "sha256:f11803b81c5dbe24d06131423339ce96031ea8342445ff4cd9a7287b2dff2a2e"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:f23629a1c7b463a852e7e7c5685de73e7d489464d24b857f8591dc376b4a6f6b"
+reviewedTranslationHash = "sha256:afec87bd44d78a452910e5c3b290bb68e7ae7e1f507a978d3684a9fcd862ccd8"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # 静态网站配置
@@ -74,7 +74,7 @@ from flayer.core.lifecycle import LoadDeploymentPlan
 from flayer.profiles.static_site import LoadStaticSiteProfile, PrepareStaticSite
 
 profile = LoadStaticSiteProfile("site.toml")
-prepared = PrepareStaticSite(profile, artifact_root="generated-artifacts")
+prepared = PrepareStaticSite(profile, artifactRoot="generated-artifacts")
 plan = LoadDeploymentPlan(prepared.PlanFile)
 ```
 

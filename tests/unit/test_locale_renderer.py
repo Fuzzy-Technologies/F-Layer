@@ -42,13 +42,17 @@ def test_ApprovedPagesRecordActualAiReview(localeProject: Path) -> None:
     assert not report.diagnostics, "Actual reviewed sources must pass the locale contract"
 
     for record in registry["units"]:
+        expectedReviewer = "Codex" if record["id"] in {
+            "page:development", "page:guide.configuration", "page:guide.first-deployment",
+        } else "AIna-Dev"
+
         for translation in record["translations"].values():
             if translation["state"] == "approved":
                 assert translation["basedOnSourceHash"] == record["sourceHash"]
                 assert {review["role"] for review in translation["reviews"]} == {
                     "editorial", "technical",
                 }
-                assert all(review["reviewerType"] == "ai" and review["reviewer"] == "AIna-Dev"
+                assert all(review["reviewerType"] == "ai" and review["reviewer"] == expectedReviewer
                            for review in translation["reviews"])
 
             else:
@@ -342,7 +346,7 @@ def test_AiReviewRequiresExplicitProjectAuthority(localeProject: Path, manifestV
     assert ValidateLocales(localeProject).diagnostics, "AI approval requires explicit valid opt-in"
 
 
-@pytest.mark.parametrize("change", ["translation", "hash", "identity", "role"])
+@pytest.mark.parametrize("change", ["translation", "hash", "identity", "role", "reviewer", "timestamp", "source-hash"])
 def test_AiApprovalCannotSurviveChangedEvidence(localeProject: Path, change: str) -> None:
     """Changed localized bytes or missing review evidence cannot retain valid approval."""
 
@@ -358,6 +362,16 @@ def test_AiApprovalCannotSurviveChangedEvidence(localeProject: Path, change: str
 
     elif change == "identity":
         content = content.replace('reviewerType = "ai"', 'reviewerType = "robot"', 1)
+
+    elif change == "reviewer":
+        content = re.sub(r'^reviewer = .*$', 'reviewer = ""', content, count=1, flags=re.MULTILINE)
+
+    elif change == "timestamp":
+        content = re.sub(r'^reviewedAt = .*$', 'reviewedAt = "invalid"', content, count=1, flags=re.MULTILINE)
+
+    elif change == "source-hash":
+        content = re.sub(r'^reviewedSourceHash = .*$', 'reviewedSourceHash = "sha256:' + "0" * 64 + '"',
+                         content, count=1, flags=re.MULTILINE)
 
     else:
         content = content.replace('role = "editorial"', 'role = "technical"', 1)

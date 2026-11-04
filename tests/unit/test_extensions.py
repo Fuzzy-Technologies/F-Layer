@@ -413,7 +413,10 @@ def test_SourceOwnershipAndIntegrityAreRequiredBeforeExecution(tmp_path: Path, c
     'class Plugin:\n    """No extension methods are implemented."""\n',
     '"""An identity-mismatched fixture contract."""\n'
     'class Plugin:\n    """Expose a malformed identity."""\n\n'
-    '    Descriptor = None\n\n'
+    '    @property\n'
+    '    def Descriptor(self):\n'
+    '        """Return a deliberately malformed external contract identity."""\n\n'
+    '        return None\n\n'
     '    def CreateProvider(self, context):\n'
     '        """Provide a fixture method for structural checks."""\n\n'
     '        return None\n',

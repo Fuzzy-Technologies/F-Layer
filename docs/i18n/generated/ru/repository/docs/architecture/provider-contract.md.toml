@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/provider-contract.md"
-sourceHash = "sha256:cb01f193ac1fac2dfee1f127210a9f819a45e6896e7e92f4bff81934d1a08cef"
-reviewedTranslationHash = "sha256:89b71f3bb22825cf2127da4206fedc22507c6a381519830cfbf1213b69d66162"
+sourceHash = "sha256:86e97400ba7244c962c82dc915e3f6012269ddc3ecac2b0fb9c1a0993253c119"
+reviewedTranslationHash = "sha256:3ae9dbc2e63e9d97e15ec5bff05dba84d66308c756f7684252db8ab504d0b4a5"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T19:31:45Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # Интерфейс провайдера
@@ -108,7 +108,7 @@ from flayer.providers.contracts import ResourceKind
 from flayer.providers.yandex import YandexCloudProvider, YandexCloudSettings
 
 provider = YandexCloudProvider(
-    YandexCloudSettings(folder_id="example-folder", profile="example")
+    YandexCloudSettings(folderId="example-folder", profile="example")
 )
 
 # These calls access the selected account; construction alone does not.

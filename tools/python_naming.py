@@ -7,6 +7,7 @@ import ast
 import json
 import re
 import subprocess
+import textwrap
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -71,6 +72,14 @@ EXTERNAL_METHODS: dict[tuple[str, str], str] = {
     ('tools/python_naming.py', 'FindViolations.Visitor.visit_Attribute'): "ast.NodeVisitor dispatch contract",
     ('tools/python_naming.py', 'FindViolations.Visitor.visit_ExceptHandler'): "ast.NodeVisitor dispatch contract",
     ('tools/python_naming.py', 'FindViolations.Visitor.visit_alias'): "ast.NodeVisitor dispatch contract",
+    ('tools/python_naming.py', 'FindViolations.Visitor.visit_Call'): "ast.NodeVisitor dispatch contract",
+    ('tools/python_naming.py', 'FindViolations.Visitor.visit_MatchAs'): "ast.NodeVisitor dispatch contract",
+    ('tools/python_naming.py', 'FindViolations.Visitor.visit_MatchStar'): "ast.NodeVisitor dispatch contract",
+    ('tools/python_naming.py', 'FindViolations.Visitor.visit_MatchMapping'): "ast.NodeVisitor dispatch contract",
+    ('tools/python_naming.py', 'FindViolations.Visitor.visit_Global'): "ast.NodeVisitor dispatch contract",
+    ('tools/python_naming.py', 'FindViolations.Visitor.visit_Nonlocal'): "ast.NodeVisitor dispatch contract",
+    ('tools/python_naming.py', 'FindViolations.Visitor.visit_Lambda'): "ast.NodeVisitor dispatch contract",
+    ('tools/build_api_reference.py', 'FLayerImportGuard.find_spec'): "Generated importlib MetaPathFinder hook",
 }
 EXTERNAL_PARAMETERS: dict[tuple[str, str, str], str] = {
     ('tests/unit/test_vless_profile.py', 'test_RealityTargetRequiresValidatedTlsAndHttp2.Context.wrap_socket', 'server_hostname'): 'External protocol callback or exact standard-library test double interface',
@@ -134,6 +143,16 @@ def FindViolations(source: str, sourcePath: str = "<source>") -> tuple[Violation
     failures: list[Violation] = []
     parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
     functionNames = {node.name for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
+    namespaceNames = {
+        node.arg for node in ast.walk(tree) if isinstance(node, ast.arg) and (
+            isinstance(node.annotation, ast.Attribute) and node.annotation.attr == "Namespace"
+            or isinstance(node.annotation, ast.Name) and node.annotation.id == "Namespace"
+        )
+    }
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and node.value.func.attr == "parse_args":
+            namespaceNames.update(target.id for target in node.targets if isinstance(target, ast.Name))
 
     class Visitor(ast.NodeVisitor):
         """Track qualified definitions so exceptions cannot suppress unrelated identifiers."""
@@ -211,6 +230,26 @@ def FindViolations(source: str, sourcePath: str = "<source>") -> tuple[Violation
 
             self.generic_visit(node)
 
+        def visit_Lambda(self, node: ast.Lambda) -> None:
+            """Do not inherit pytest fixture injection for ordinary lambda parameters."""
+
+            previous = self.pytestParameters
+            self.pytestParameters = False
+            self.generic_visit(node)
+            self.pytestParameters = previous
+
+        def visit_Global(self, node: ast.Global) -> None:
+            """Check explicit references to module-owned bindings."""
+
+            for name in node.names:
+                self.Check(node, name, "global binding")
+
+        def visit_Nonlocal(self, node: ast.Nonlocal) -> None:
+            """Check explicit references to enclosing owned bindings."""
+
+            for name in node.names:
+                self.Check(node, name, "nonlocal binding")
+
         def visit_Name(self, node: ast.Name) -> None:
             """Check assignment, loop, comprehension and context-manager bindings."""
 
@@ -236,6 +275,9 @@ def FindViolations(source: str, sourcePath: str = "<source>") -> tuple[Violation
                 if not (methodPatch and CALLABLE.fullmatch(node.attr)):
                     self.Check(node, node.attr, "field")
 
+            elif isinstance(node.value, ast.Name) and node.value.id in namespaceNames:
+                self.Check(node, node.attr, "CLI field")
+
             self.generic_visit(node)
 
         def visit_ExceptHandler(self, node: ast.ExceptHandler) -> None:
@@ -252,30 +294,166 @@ def FindViolations(source: str, sourcePath: str = "<source>") -> tuple[Violation
             if node.asname and node.asname != node.name:
                 self.Check(node, node.asname, "import alias")
 
+        def visit_Call(self, node: ast.Call) -> None:
+            """Check owned argparse destinations and reflected namespace fields."""
+
+            if isinstance(node.func, ast.Attribute) and node.func.attr == "add_argument":
+                destination = next((item.value for item in node.keywords if item.arg == "dest"), None)
+
+                if isinstance(destination, ast.Constant) and isinstance(destination.value, str):
+                    self.Check(destination, destination.value, "CLI destination")
+
+                elif node.args:
+                    flags = [item for item in node.args if isinstance(item, ast.Constant) and isinstance(item.value, str)]
+                    argument = next((item for item in flags if isinstance(item.value, str) and item.value.startswith("--")), flags[0] if flags else None)
+
+                    if argument is None:
+                        self.generic_visit(node)
+
+                        return
+
+                    assert isinstance(argument.value, str)
+                    option = argument.value
+
+                    if option.startswith("--"):
+                        self.Check(argument, option[2:].replace("-", "_"), "implicit CLI destination")
+
+                    elif not option.startswith("-"):
+                        self.Check(argument, option, "positional CLI destination")
+
+            if isinstance(node.func, ast.Name) and node.func.id in {"getattr", "setattr", "delattr"} and len(node.args) > 1:
+                receiver, attribute = node.args[:2]
+
+                if isinstance(receiver, ast.Name) and receiver.id in namespaceNames and isinstance(attribute, ast.Constant) and isinstance(attribute.value, str):
+                    self.Check(attribute, attribute.value, "reflected CLI field")
+
+            self.generic_visit(node)
+
+        def visit_MatchAs(self, node: ast.MatchAs) -> None:
+            """Check Python pattern-capture bindings."""
+
+            if node.name:
+                self.Check(node, node.name, "pattern binding")
+
+            self.generic_visit(node)
+
+        def visit_MatchStar(self, node: ast.MatchStar) -> None:
+            """Check starred pattern-capture bindings."""
+
+            if node.name:
+                self.Check(node, node.name, "pattern binding")
+
+        def visit_MatchMapping(self, node: ast.MatchMapping) -> None:
+            """Check the rest binding of a mapping pattern."""
+
+            if node.rest:
+                self.Check(node, node.rest, "pattern binding")
+
+            self.generic_visit(node)
+
     Visitor().visit(tree)
 
     return tuple(sorted(set(failures), key=lambda item: (item.path, item.line, item.name, item.kind)))
 
 
-def Inventory(root: Path) -> tuple[Path, ...]:
-    """Include tracked and newly authored Python sources without traversing ignored storage."""
+def _Paths(root: Path) -> tuple[Path, ...]:
+    """Enumerate authored repository files without entering ignored/private storage."""
 
     result = subprocess.run(
         ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
         cwd=root, capture_output=True, check=True, timeout=30,
     )
 
-    return tuple(root / name for name in sorted(set(result.stdout.decode().split("\0")))
-                 if name and Path(name).suffix in {".py", ".pyi"})
+    return tuple(root / name for name in sorted(set(result.stdout.decode().split("\0"))) if name)
+
+
+def Inventory(root: Path) -> tuple[Path, ...]:
+    """Include tracked and newly authored Python modules and stubs."""
+
+    return tuple(path for path in _Paths(root) if path.suffix in {".py", ".pyi"})
+
+
+def PythonBlocks(source: str, suffix: str) -> tuple[tuple[int, str], ...]:
+    """Extract explicit Markdown Python fences and workflow Python heredocs."""
+
+    blocks = []
+    lines = source.splitlines()
+    start = 0
+    closing = ""
+
+    for index, line in enumerate(lines):
+        if closing:
+            if line.strip() == closing:
+                blocks.append((start + 1, textwrap.dedent("\n".join(lines[start:index]))))
+                closing = ""
+
+        elif suffix in {".md", ".toml"}:
+            match = re.match(r"\s*(`{3,}|~{3,})\s*(?:python|py)\s*$", line)
+
+            if match:
+                start, closing = index + 1, match[1]
+
+        if not closing:
+            match = re.search(r"\bpython(?:3)?\s+-\s*<<\s*['\"]?([A-Za-z_][A-Za-z_0-9]*)['\"]?\s*$", line)
+
+            if match:
+                start, closing = index + 1, match[1]
+
+    return tuple(blocks)
+
+
+def EmbeddedSources(source: str) -> tuple[tuple[int, str], ...]:
+    """Inventory parseable embedded modules without mistaking TOML or JSON fixtures for Python."""
+
+    blocks = []
+    tree = ast.parse(source)
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Constant) or not isinstance(node.value, str) or "\n" not in node.value:
+            continue
+
+        code = textwrap.dedent(node.value)
+
+        try:
+            embedded = ast.parse(code)
+
+        except SyntaxError:
+            continue
+
+        if any(isinstance(item, (ast.Import, ast.ImportFrom, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+               for item in ast.walk(embedded)):
+            blocks.append((node.lineno, code))
+
+    return tuple(blocks)
 
 
 def Audit(root: Path) -> tuple[Violation, ...]:
-    """Check every repository Python module and stub with deterministic ordering."""
+    """Check owned source, embedded modules, documentation examples and workflow heredocs."""
 
     failures: list[Violation] = []
 
-    for path in Inventory(root):
-        failures.extend(FindViolations(path.read_text(encoding="utf-8-sig"), path.relative_to(root).as_posix()))
+    for path in _Paths(root):
+        name = path.relative_to(root).as_posix()
+        source = path.read_text(encoding="utf-8-sig") if path.suffix in {".py", ".pyi", ".md", ".yml", ".yaml", ".toml"} else ""
+        blocks: tuple[tuple[int, str], ...] = ()
+
+        if path.suffix in {".py", ".pyi"}:
+            failures.extend(FindViolations(source, name))
+
+            # This validator's test strings are deliberately invalid data, never executable fixtures.
+            if name != "tests/unit/test_python_naming.py":
+                try:
+                    blocks = EmbeddedSources(source)
+
+                except SyntaxError:
+                    pass  # FindViolations already reports the original syntax failure.
+
+        elif path.suffix in {".md", ".yml", ".yaml"} or name.startswith("docs/i18n/generated/") and path.suffix == ".toml":
+            blocks = PythonBlocks(source, path.suffix)
+
+        for firstLine, code in blocks:
+            failures.extend(Violation(name, firstLine + item.line - 1, item.name, item.kind)
+                            for item in FindViolations(code, name))
 
     return tuple(failures)
 

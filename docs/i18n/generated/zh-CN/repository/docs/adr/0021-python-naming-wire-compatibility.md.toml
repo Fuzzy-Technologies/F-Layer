@@ -1,0 +1,44 @@
+schemaVersion = 1
+sourcePath = "docs/adr/0021-python-naming-wire-compatibility.md"
+body = '''
+# ADR 0021：Python 命名与稳定的数据格式
+
+- 状态：提议中
+- 日期：2026-11-04
+- 任务：[#116](https://github.com/Fuzzy-Technologies/F-Layer/issues/116)
+
+## 背景
+
+所有者要求自有变量、参数和字段使用 camelCase，函数、方法和类型使用
+PascalCase，常量使用 UPPER_SNAKE_CASE。初始规则错误地规定变量使用
+snake_case，CI 也未检查预期约定。dataclass 字段名还参与 JSON、私有归属
+清单和项目指纹；仅重命名 Python 属性会破坏持久化契约。
+
+## 决策
+
+根据所有者明确指示，仅纠正策略中的命名条款。一致重构 Python 绑定、字段和
+关键字调用，包括测试、存根、夹具及文档示例。导入的外部名称、已注册的框架
+钩子、外部关键字参数及 CLI/TOML/JSON 名称保留规定的外部拼写。
+
+保留全部既有数据交换格式与归属指纹。序列化边界使用内部 dataclass 适配器，
+将自有 camelCase 字段映射回既定 snake_case 名称。普通字典的键保持不变，
+包括协议原生的 camelCase 键。公共解析器和编解码接口仍是受支持的持久化入口。
+直接使用 Python 关键字或属性的调用方迁移到新名称；明确记录这一源码兼容性
+变化。
+
+在本地与 CI 的完整检查中加入确定性的 AST 命名阶段。外部例外按准确路径和
+完整定义名称审查，不使用整个路径或下划线的宽泛豁免。测试违规与例外，并将
+序列化结果与独立的重构前记录比较。
+
+## 影响
+
+这是全仓库源码重构，不改变部署、网络、密钥或 VPN 配置。独立 PR 必须在准确
+修订上通过完整 Linux 质量、分发包和文档检查，再提交评审。重构本身不代表
+合并、发布或生产验收。
+'''
+sourceHash = "sha256:3c2c74fea9d50301188e6f693b3375fe91691038ee6831912f9c9cbb7e9c0948"
+reviewedTranslationHash = "sha256:4f85c34b192fefafbaf3a76ba9aa9721bdc9df5b0af4c80fc0904f09dced16f5"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-04T10:34:46Z"
+reviewRoles = ["editorial", "technical"]

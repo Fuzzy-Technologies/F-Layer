@@ -59,10 +59,12 @@ python -m ruff check .
 ```
 
 The canonical gate also runs `python -m tools.python_naming`. This checks all
-tracked and newly authored Python modules and stubs without importing them.
+tracked and newly authored Python modules and stubs without importing them,
+plus embedded modules, Markdown examples and workflow Python heredocs.
 External overrides are identified by exact file and qualified definition in
 the validator; unrelated names receive no exemption. Built-in pytest fixture
-parameters retain their registered injection names.
+parameters retain their registered injection names. The validator's intentionally
+invalid test strings are data; their containing test module is still checked.
 
 Formatting-only changes must not rename protected interfaces, modify behavior, or collapse logical blocks.
 
@@ -72,6 +74,7 @@ Typical repository gates:
 
 ```bash
 python -m compileall -q src tests
+python -m tools.python_naming
 python -m ruff check .
 python -m mypy
 python -m pytest

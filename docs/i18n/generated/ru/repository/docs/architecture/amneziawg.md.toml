@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/amneziawg.md"
-sourceHash = "sha256:b74479e7e1ef685b8615c94c8ceba826e70f5d1ad3baae67ab94ac36e3ce97e7"
-reviewedTranslationHash = "sha256:5d6911c2434a3a66befbf16f1e1891402e0e612f9c925ec2e27ef9ccaf9841ad"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:d2d295d3588b06ea069c8ee1df4a947feea290c57ce4b549089c899ebcad440f"
+reviewedTranslationHash = "sha256:a36410a1f7170d70449ca5d03d5e60a546d41eaf89bb393ebde3113cae263860"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T10:31:00+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # Профиль развёртывания AmneziaWG
@@ -72,7 +72,7 @@ WireGuard и старые версии AmneziaWG не читают все нас
 Для добавления или удаления устройства измените открытые настройки и вызовите
 `GenerateAmneziaWgSecrets(profile, previous)` с сохранёнными ключами. У прежних
 устройств и сервера ключи сохранятся. Для замены одного скомпрометированного
-ключа явно передайте `rotate_device_ids=("phone",)`.
+ключа явно передайте `rotateDeviceIds=("phone",)`.
 Одна подготовка не отзывает устройство. Первый установщик принимает только
 новое развёртывание или полностью одинаковый повтор. Изменённый существующий
 набор отклоняется, пока весь процесс не поддерживает явное подтверждение

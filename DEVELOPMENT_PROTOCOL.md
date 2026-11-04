@@ -150,6 +150,7 @@ Bootstrap may start with `tests/unit/`. Infrastructure, cleanup, rollback, resou
 
 ```bash
 python -m compileall -q src tests tools
+python -m tools.python_naming
 python -m ruff check .
 python -m mypy
 python -m pytest

@@ -75,7 +75,7 @@ from flayer.core.lifecycle import LoadDeploymentPlan
 from flayer.profiles.static_site import LoadStaticSiteProfile, PrepareStaticSite
 
 profile = LoadStaticSiteProfile("site.toml")
-prepared = PrepareStaticSite(profile, artifact_root="generated-artifacts")
+prepared = PrepareStaticSite(profile, artifactRoot="generated-artifacts")
 plan = LoadDeploymentPlan(prepared.PlanFile)
 ```
 

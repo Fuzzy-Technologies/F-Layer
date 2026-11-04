@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/configuration-state.md"
-sourceHash = "sha256:0ddf3296f37c020cbf7512b06f0518c1ea9c371b47f3b2690c28156c84d17759"
-reviewedTranslationHash = "sha256:bb9d780dda83fb5508201e19982a82994b5a764ff483770c3178382c50c4e47d"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:4e8c02b380813ca3eda05ffe4deb2a188438963a2073688e59cec807a4013b22"
+reviewedTranslationHash = "sha256:370b2a1f6dd3a21484e2da8b2850d0bd5c40781213b1fa4e2a64168d28c53ff8"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:42:11Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # 配置和状态
@@ -66,7 +66,7 @@ reference = "EXAMPLE_AUTH"
 from flayer.core.config import LoadConfig
 
 config = LoadConfig("./stack.toml")
-ownership_labels = config.identity.OwnershipLabels()
+ownershipLabels = config.identity.OwnershipLabels()
 ```
 
 返回模型是冻结的 dataclass。直接构造对象时执行与解码相同的字段及唯一性检查。
@@ -75,7 +75,7 @@ ownership_labels = config.identity.OwnershipLabels()
 ## 所属资源状态
 
 `StackState` 保存完整 `StackIdentity` 和
-`ResourceState(logical_id, kind, resource_id)` 元组。中断部署的快照可以只包含
+`ResourceState(logicalId, kind, resourceId)` 元组。中断部署的快照可以只包含
 已经取得的资源，不推测缺失的引用。提供方 ID 在同种资源内唯一，逻辑 ID 在整个
 清单中唯一。
 
@@ -86,8 +86,8 @@ state = StackState(
     identity=config.identity,
     resources=(ResourceState("gateway", "instance", "example-instance"),),
 )
-SaveState("./runtime/state.json", state, expected_identity=config.identity)
-loaded_state = LoadState("./runtime/state.json", expected_identity=config.identity)
+SaveState("./runtime/state.json", state, expectedIdentity=config.identity)
+loadedState = LoadState("./runtime/state.json", expectedIdentity=config.identity)
 ```
 
 JSON 格式仅有 `schema_version`、`identity` 和 `resources`。不保存凭据引用或
@@ -102,7 +102,7 @@ JSON 格式仅有 `schema_version`、`identity` 和 `resources`。不保存凭�
 `flayer-stack` 和 `flayer-owner`。真实云操作前，适配器必须独立验证提供方范围
 及实时资源标签。状态文件本身不能授权修改基础设施。
 
-`RemoveState(path, expected_identity)` 只删除匹配的本地快照，并返回是否删除。
+`RemoveState(path, expectedIdentity)` 只删除匹配的本地快照，并返回是否删除。
 文件不存在时保持幂等，不删除任何云资源。生命周期代码负责判断云清理后何时可以
 安全丢弃本地清单。
 

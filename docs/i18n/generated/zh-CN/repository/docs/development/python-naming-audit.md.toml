@@ -1,0 +1,55 @@
+schemaVersion = 1
+sourcePath = "docs/development/python-naming-audit.md"
+body = '''
+# Python 命名审计与迁移
+
+任务：[#116](https://github.com/Fuzzy-Technologies/F-Layer/issues/116)。
+
+所有者于 2026-11-04 确认自有变量、参数和字段使用 camelCase。函数、方法和类
+继续使用 PascalCase，常量继续使用 UPPER_SNAKE_CASE。
+
+## 审计范围与问题来源
+
+审计基于 `develop` 的 `e8561f5`，涵盖 `src`、`tools` 及所有测试层级中
+全部 92 个受跟踪的 Python 模块和存根。初始绑定清单在 78 个文件中发现
+1374 处 snake_case 绑定，共 503 个不同候选名称。这些原始计数包括合法的
+pytest 及外部接口名称，并非违规总数。
+
+冲突的 snake_case 变量规则来自 2026-10-04 的初始提交 `57c9260`，同时存在于
+开发协议与风格指南中。Ruff 当时检查语法、导入和部分正确性问题，但未执行
+这项自定义命名约定。专用的 `tools.python_naming` 阶段补上该缺口。
+
+重构涵盖绑定、字段、参数、关键字调用、导入别名、夹具注册及相关嵌入示例。
+重写 argparse、configparser、importlib、HTMLParser、Griffe、SSL 等外部接口的
+函数保留接口要求的拼写。验证器按准确文件和完整定义名称记录这些例外。
+
+## Python 调用方迁移
+
+Python 调用方现在使用 `CloudPlacement.ycProfile`、`project.cloud.zoneId`、
+`settings.commandTimeout` 和 `expectedIdentity=`。原有 snake_case 字段及
+关键字拼写需要更新。`LoadVpnProject()` 等方法保持 PascalCase。测试函数保留
+`test_` 前缀，pytest 内置夹具参数保留注入名称。
+
+CLI 选项、项目 TOML 键、Yandex/API 字段、集成封装、持久状态、归属清单与
+协议 JSON 保持外部拼写。例如 `project.toml` 仍包含 `yc_profile`，
+`subprocess.run` 仍接收 `capture_output`。
+
+在数据交换及指纹边界，dataclass 序列化将自有 camelCase 字段显式转回既定的
+snake_case 名称，同时保留普通字典的键。因此，Python 属性重命名不会静默
+改变现有项目指纹或持久状态格式。直接调用 `dataclasses.asdict()` 会反映
+新的 Python 字段名；生成持久化或集成数据时应使用现有公共编解码接口。
+
+## 验证
+
+专用 PR 在准确修订上运行完整检查，包括命名检查。命名测试覆盖拒绝违规、
+框架例外和全仓库文件发现；数据回归测试固定重构前的序列化与哈希契约。
+分发包及文档仍需完整验证；原生 Windows 的测试子集不能替代 Linux 结果。
+
+此变更不修改已部署资源、凭据、网络或 VPN 配置。VPN 实验与此重构保持分离。
+'''
+sourceHash = "sha256:d62bcfdd22aa1611d3ddaca4f47f6f6529cb079e41638120590d10e9db871a66"
+reviewedTranslationHash = "sha256:e09c9f1ddd6b18cb86f9ba870f0ecd684635a12b024c3d82e203ba719cb8b397"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-04T10:34:46Z"
+reviewRoles = ["editorial", "technical"]

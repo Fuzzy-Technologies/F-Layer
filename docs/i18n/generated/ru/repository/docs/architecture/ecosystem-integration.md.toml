@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/ecosystem-integration.md"
-sourceHash = "sha256:faca1fad3be7840fe77c508e3c532929b4c1d1b1d578db725b24dd0447419998"
-reviewedTranslationHash = "sha256:c7f50350cb62c89f85647cfeffb201c021bd843b201d1f980e13cf3bfef97b11"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:c499a12af8df9657e558674d45fccc12644f4f4d103c235da31ecda654ec1093"
+reviewedTranslationHash = "sha256:d75a7978e2589b39524172d7b545d11ffc59a4c57f8bc1b5aa2c45141b717553"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:58:35Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # Интеграция с экосистемой
@@ -38,12 +38,12 @@ body = '''
 Все пять должны совпадать с независимо выбранными ожидаемыми значениями.
 Адаптер состояния сверяет идентификаторы из `StackState`. Отчёты диагностики
 и жизненного цикла не содержат identity, поэтому их адаптеры требуют
-`observed_identity` от приложения, выбравшего источник. Это проверяет привязку
+`observedIdentity` от приложения, выбравшего источник. Это проверяет привязку
 формата к проекту, но не является удалённой аттестацией и не подтверждает
 происхождение данных.
 
-`ParseRequest(payload, expected_identity)` возвращает проверенный запрос.
-`ParseResult(payload, expected_request)` дополнительно требует совпадения
+`ParseRequest(payload, expectedIdentity)` возвращает проверенный запрос.
+`ParseResult(payload, expectedRequest)` дополнительно требует совпадения
 операции, ID запроса, версии, каталога и владельца. Сопоставление ответа
 не аутентифицирует отправителя, не подтверждает свежесть, не предотвращает
 повторное воспроизведение и не доказывает готовность сервера. Прочитанные

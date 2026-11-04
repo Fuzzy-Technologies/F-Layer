@@ -579,13 +579,13 @@ def Main(argv: Sequence[str] | None = None) -> int:
     """Prepare bounded local artifacts only; never instantiate or invoke a cloud provider."""
 
     parser = argparse.ArgumentParser(description="Prepare an owned static-site lifecycle plan locally")
-    parser.add_argument("profile_file", help="Explicit version-one static-site TOML profile")
+    parser.add_argument("profileFile", metavar="profile_file", help="Explicit version-one static-site TOML profile")
     parser.add_argument("--artifact-root", required=True, help="Private POSIX artifact root", dest='artifactRoot')
     arguments = parser.parse_args(argv)
 
     try:
-        prepared = PrepareStaticSite(LoadStaticSiteProfile(arguments.profile_file),
-                                     artifactRoot=arguments.artifact_root)
+        prepared = PrepareStaticSite(LoadStaticSiteProfile(arguments.profileFile),
+                                     artifactRoot=arguments.artifactRoot)
 
     except ContractError:
         print(json.dumps({"status": "failed", "reason": "Profile or owned artifact preparation failed"}))

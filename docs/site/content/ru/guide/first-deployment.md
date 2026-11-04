@@ -81,15 +81,15 @@ from flayer.profiles import (
 os.umask(0o077)
 profile = LoadGatewayProfile("gateway.toml")
 directory = WriteArtifactBundle("generated-artifacts", BuildServerBundle(profile))
-plan_text = RenderPlan(
-    CompileGateway(profile), user_data_file=directory / "server-cloud-init.json",
+planText = RenderPlan(
+    CompileGateway(profile), userDataFile=directory / "server-cloud-init.json",
 )
-plan_path = Path("generated-artifacts/plan.toml")
+planPath = Path("generated-artifacts/plan.toml")
 
-with plan_path.open("x", encoding="utf-8") as stream:
-    stream.write(plan_text)
+with planPath.open("x", encoding="utf-8") as stream:
+    stream.write(planText)
 
-print(plan_path)
+print(planPath)
 PY
 ```
 
@@ -146,9 +146,9 @@ from flayer.profiles import BuildSshDeviceBundle, LoadGatewayProfile, WriteArtif
 profile = LoadGatewayProfile("gateway.toml")
 bundle = BuildSshDeviceBundle(
     profile, "laptop", endpoint="203.0.113.42",
-    identity_file="/path/to/laptop-key",
-    known_hosts_file="/path/to/trusted-known-hosts",
-    local_ports=(8443,),
+    identityFile="/path/to/laptop-key",
+    knownHostsFile="/path/to/trusted-known-hosts",
+    localPorts=(8443,),
 )
 directory = WriteArtifactBundle("generated-artifacts", bundle)
 print(directory / "ssh-client.conf")

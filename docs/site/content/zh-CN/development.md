@@ -9,6 +9,7 @@ F-Layer 使用 `master` 进行稳定发布，使用 `develop` 进行集成，并
 ```bash
 python -m pip install -e ".[dev]"
 python -m compileall -q src tests tools
+python -m tools.python_naming
 python -m ruff check .
 python -m mypy
 python -m pytest

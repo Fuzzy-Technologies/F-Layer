@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/adr/README.md"
-sourceHash = "sha256:293703c6a55b2bfb536b3d9f23b36dddc841060e17ae52f4f16220101eabecd6"
-reviewedTranslationHash = "sha256:aa7630a6dfa8cb6d8ed89b28031366fea173ac0f07ebf52b7fc0aae7df4f0f18"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:10247d5cdfadcc360d54e6f68ffc1f4d50c3b30620df1b907a7759206afba4cf"
+reviewedTranslationHash = "sha256:04f1852a247fcad7700857232cb1e38126ef00f6c3a38bdae542cf71f9b1baab"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:58:01.346904+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # Архитектурные решения
@@ -62,4 +62,5 @@ F-Layer ведёт записи архитектурных решений (ADR),
 | [ADR 0017](0017-package-installation.md)                 | Установка пакета и необязательная зависимость для VPN                     |
 | [ADR 0018](0018-generated-documentation-translations.md) | Проверенные переводы сгенерированной документации                         |
 | [ADR 0019](0019-private-vpn-project-workflow.md)         | Приватные VPN-проекты и настройка гостевой системы по проверенному каналу |
+| [ADR 0021](0021-python-naming-wire-compatibility.md)     | Имена Python с сохранением внешних форматов данных                         |
 '''

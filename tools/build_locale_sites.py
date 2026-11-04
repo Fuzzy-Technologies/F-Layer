@@ -26,7 +26,7 @@ def Main(arguments: Sequence[str] | None = None) -> int:
     parser.add_argument("--require-complete-translations", action="store_true", dest='requireCompleteTranslations')
     options = parser.parse_args(arguments)
     environmentPython, environment, configPath = buildApiReference.BuildReference(
-        options.environment_python,
+        options.environmentPython,
     )
     localeEvidence = RenderLocaleSites(
         buildApiReference.PROJECT_ROOT, buildApiReference.BUILD_ROOT, configPath,
@@ -44,7 +44,7 @@ def Main(arguments: Sequence[str] | None = None) -> int:
     version, _ = ReadProjectVersion(buildApiReference.PROJECT_ROOT, requireSource=True)
     releaseMajor = int(version.split(".")[0])
 
-    if options.require_complete_translations or releaseMajor >= 2:
+    if options.requireCompleteTranslations or releaseMajor >= 2:
         states = {page: {locale: data["pages"][page]["state"] for locale, data in localeEvidence.items()}
                   for page in localeEvidence["ru"]["pages"]}
         generatedLocalization.RequireComplete(states)

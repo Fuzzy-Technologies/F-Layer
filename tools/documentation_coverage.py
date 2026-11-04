@@ -311,14 +311,14 @@ def Main(arguments: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project-root", type=Path, default=Path(__file__).resolve().parents[1], dest='projectRoot')
     options = parser.parse_args(arguments)
-    diagnostics = CheckRepositoryCoverage(options.project_root)
+    diagnostics = CheckRepositoryCoverage(options.projectRoot)
 
     if diagnostics:
         print("\n".join(diagnostics))
 
         return 1
 
-    print(f"Repository documentation coverage: PASS ({len(InventoryFiles(options.project_root))} files)")
+    print(f"Repository documentation coverage: PASS ({len(InventoryFiles(options.projectRoot))} files)")
 
     return 0
 

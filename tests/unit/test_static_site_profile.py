@@ -371,7 +371,7 @@ def test_ChangedServerDuringFailedPreparationIsPreserved(tmp_path: Path, monkeyp
     def FailRender(*arguments: object, **options: object) -> str:
         """Replace the just-published artifact and emulate a preparation failure."""
 
-        path = Path(options["user_data_file"])  # type: ignore[arg-type]
+        path = Path(options["userDataFile"])  # type: ignore[arg-type]
         path.write_bytes(b"changed-by-other-writer")
 
         raise StaticSiteError("Synthetic preparation failure")

@@ -36,7 +36,7 @@ if mode == "state":
 
 else:
     lifecycle._WriteJournal(statePath, lifecycle._Journal(
-        identity, plan.Fingerprint(), "create", (), operation_id="a" * 32,
+        identity, plan.Fingerprint(), "create", (), operationId="a" * 32,
     ))
     module = lifecycle
     target = lifecycle._JournalPath(statePath)

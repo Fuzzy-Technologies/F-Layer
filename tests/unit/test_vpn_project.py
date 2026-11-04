@@ -143,7 +143,7 @@ def test_SizingSchemaAndRegionFailClosed(tmp_path: Path, change: str) -> None:
     text = config.read_text()
 
     if change == "missing":
-        text = text.replace('diskType = "network-hdd"\n', "")
+        text = text.replace('disk_type = "network-hdd"\n', "")
 
     elif change == "unknown":
         text += "preemptible = true\n"

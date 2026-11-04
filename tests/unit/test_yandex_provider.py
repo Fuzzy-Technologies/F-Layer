@@ -278,7 +278,7 @@ def test_ListResourcesNormalizesAndSortsOnlyPublicContractFields() -> None:
         ResourcePayload(
             "vm-1",
             status="RUNNING",
-            zoneId="example-zone-a",
+            zone_id="example-zone-a",
             labels={"project": "example", "managed-by": "f-layer"},
             network_interfaces=[{
                 "primary_v4_address": {"one_to_one_nat": {"address": "203.0.113.10"}}
@@ -391,7 +391,7 @@ def test_CloudPageSaturationRemainsIncomplete(configuredLimit: int, rowCount: in
         [ResourcePayload(id="--malformed")],
         [ResourcePayload(name=None)],
         [ResourcePayload(status=1)],
-        [ResourcePayload(zoneId="--malformed")],
+        [ResourcePayload(zone_id="--malformed")],
         [ResourcePayload(labels=[])],
         [ResourcePayload(labels={"project": 1})],
         [ResourcePayload(network_interfaces={})],
@@ -461,7 +461,7 @@ def test_JsonErrorsCannotExposeResponseText(output: str) -> None:
 def test_ListRejectsForeignFolderResponse() -> None:
     """Explicit command scope must also match every returned resource's observed folder."""
 
-    provider, _ = ProviderWithPayload([ResourcePayload(folderId="foreign-folder")])
+    provider, _ = ProviderWithPayload([ResourcePayload(folder_id="foreign-folder")])
 
     with pytest.raises(ProviderError) as error:
         provider.ListResources(ResourceKind.NETWORK)
@@ -523,7 +523,7 @@ def test_GetResourceReturnsNormalizedMatchingIdentity() -> None:
 
 
 @pytest.mark.parametrize(
-    "payload", [ResourcePayload("other-vm"), ResourcePayload("vm-1", folderId="foreign")]
+    "payload", [ResourcePayload("other-vm"), ResourcePayload("vm-1", folder_id="foreign")]
 )
 def test_GetRechecksObservedScopeAndIdentity(payload: object) -> None:
     """Vendor global ID lookup cannot return a resource outside the reference scope."""

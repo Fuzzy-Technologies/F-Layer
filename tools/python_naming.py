@@ -74,11 +74,21 @@ EXTERNAL_METHODS: dict[tuple[str, str], str] = {
 }
 EXTERNAL_PARAMETERS: dict[tuple[str, str, str], str] = {
     ('tests/unit/test_vless_profile.py', 'test_RealityTargetRequiresValidatedTlsAndHttp2.Context.wrap_socket', 'server_hostname'): 'External protocol callback or exact standard-library test double interface',
+    ("tests/unit/test_core_state.py", "test_TemporaryCleanupFailureRaisesStateErrorWithRecoveryEvidence.RejectTemporaryCleanup", "missing_ok"): "Path.unlink test double keyword",
+    ("tests/unit/test_core_state.py", "test_LockCleanupFailureIsReportedAfterSuccessfulCommit.RejectLockCleanup", "missing_ok"): "Path.unlink test double keyword",
+    ("tests/unit/test_core_state.py", "test_RemoveFailurePreservesSnapshotAndReleasesLock.RejectSnapshotRemoval", "missing_ok"): "Path.unlink test double keyword",
+    ("tests/unit/test_lifecycle.py", "test_CompletedOperationWithUnclearableJournalRecoversWithoutDuplication.FailedJournalUnlink", "missing_ok"): "Path.unlink test double keyword",
+    ("tests/unit/test_lifecycle.py", "test_UnavailableStorageAndUnreleasableLockFailExplicitly.FailedMkdir", "exist_ok"): "Path.mkdir test double keyword",
+    ("tests/unit/test_lifecycle.py", "test_UnavailableStorageAndUnreleasableLockFailExplicitly.FailedLockUnlink", "missing_ok"): "Path.unlink test double keyword",
+    ("tests/unit/test_lifecycle.py", "test_TemporaryJournalCleanupFailureBlocksCloudWork.FailedTemporaryUnlink", "missing_ok"): "Path.unlink test double keyword",
+    ("tests/unit/test_gateway_artifacts.py", "test_PartialRemovalFailurePreservesManifestForRecovery.FailSecond", "dir_fd"): "os.unlink test double keyword",
 }
 EXTERNAL_ATTRIBUTES: dict[tuple[str, str, str], str] = {
     ("src/flayer/profiles/_vless_guest.py", "_TargetHealth", "minimum_version"): "ssl.SSLContext setting",
     ("tests/contract/test_release_validation.py", "test_ZipAndTarLinksRejected", "external_attr"): "zipfile.ZipInfo metadata",
     ("tests/contract/test_release_validation.py", "test_WheelRejectsAllSpecialUnixMemberTypes", "external_attr"): "zipfile.ZipInfo metadata",
+    ("tests/contract/test_release_validation.py", "test_ZipAndTarLinksRejected", "create_system"): "zipfile.ZipInfo metadata",
+    ("tests/contract/test_release_validation.py", "test_WheelRejectsAllSpecialUnixMemberTypes", "create_system"): "zipfile.ZipInfo metadata",
     ("tests/unit/test_vless_profile.py", "Archive", "external_attr"): "zipfile.ZipInfo metadata",
 }
 

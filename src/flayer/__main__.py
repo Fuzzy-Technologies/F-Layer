@@ -114,7 +114,7 @@ def _Lifecycle(args: argparse.Namespace) -> int:
             raise LifecycleError("CLI lifecycle provider is unsupported")
 
         if args.action != "status" and (
-            not args.allow_mutation or args.scope_confirm != plan.identity.scopeId
+            not args.allowMutation or args.scopeConfirm != plan.identity.scopeId
         ):
             raise LifecycleError("Mutation requires explicit opt-in and exact scope confirmation")
 
@@ -173,8 +173,8 @@ def _VpnProject(args: argparse.Namespace) -> int:
         else:
             report = RunVpnProject(
                 project, args.action,
-                allowMutation=getattr(args, "allow_mutation", False),
-                scopeConfirm=getattr(args, "scope_confirm", ""),
+                allowMutation=getattr(args, "allowMutation", False),
+                scopeConfirm=getattr(args, "scopeConfirm", ""),
                 rollback=getattr(args, "rollback", False),
             )
 

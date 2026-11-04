@@ -68,7 +68,7 @@ def test_MissingParentRemovalCreatesNoStorage(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("field", "value"),
     [("project", "other"), ("stack", "other"), ("provider", "other"),
-     ("scope_id", "other-scope"), ("owner_id", "other-owner")],
+     ("scopeId", "other-scope"), ("ownerId", "other-owner")],
 )
 def test_EveryIdentityDimensionGuardsReadSaveAndRemove(
     tmp_path: Path, field: str, value: str
@@ -455,13 +455,13 @@ def test_TemporaryCleanupFailureRaisesStateErrorWithRecoveryEvidence(
 
         raise OSError("synthetic replacement failure")
 
-    def RejectTemporaryCleanup(self: Path, missingOk: bool = False) -> None:
+    def RejectTemporaryCleanup(self: Path, missing_ok: bool = False) -> None:
         """Allow lock release while denying deletion of the temporary snapshot."""
 
         if self.suffix == ".tmp":
             raise OSError("synthetic temporary cleanup failure")
 
-        originalUnlink(self, missing_ok=missingOk)
+        originalUnlink(self, missing_ok=missing_ok)
 
     monkeypatch.setattr("flayer.core.state.os.replace", RejectReplace)
     monkeypatch.setattr(Path, "unlink", RejectTemporaryCleanup)
@@ -484,13 +484,13 @@ def test_LockCleanupFailureIsReportedAfterSuccessfulCommit(
     path = tmp_path / "state.json"
     originalUnlink = Path.unlink
 
-    def RejectLockCleanup(self: Path, missingOk: bool = False) -> None:
+    def RejectLockCleanup(self: Path, missing_ok: bool = False) -> None:
         """Deny writer lock removal while allowing other storage cleanup."""
 
         if self.name == ".state.json.lock":
             raise OSError("synthetic lock cleanup failure")
 
-        originalUnlink(self, missing_ok=missingOk)
+        originalUnlink(self, missing_ok=missing_ok)
 
     monkeypatch.setattr(Path, "unlink", RejectLockCleanup)
 
@@ -515,13 +515,13 @@ def test_RemoveFailurePreservesSnapshotAndReleasesLock(
     SaveState(path, state, state.identity)
     originalUnlink = Path.unlink
 
-    def RejectSnapshotRemoval(self: Path, missingOk: bool = False) -> None:
+    def RejectSnapshotRemoval(self: Path, missing_ok: bool = False) -> None:
         """Allow lock cleanup while failing the owned snapshot removal."""
 
         if self == path:
             raise OSError("synthetic snapshot removal failure")
 
-        originalUnlink(self, missing_ok=missingOk)
+        originalUnlink(self, missing_ok=missing_ok)
 
     monkeypatch.setattr(Path, "unlink", RejectSnapshotRemoval)
 

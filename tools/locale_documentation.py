@@ -964,14 +964,14 @@ def Main(arguments=None):
     """Run deterministic locale validation or print canonical inventory."""
 
     options = ParseArguments(arguments)
-    projectManifestPath = options.project_manifest or (
-        options.project_root / "docs" / "i18n" / "project.toml"
+    projectManifestPath = options.projectManifest or (
+        options.projectRoot / "docs" / "i18n" / "project.toml"
     )
 
     if options.command == "inventory":
         try:
             projectManifest = _LoadProjectManifest(projectManifestPath)
-            unitManifestPath = options.project_root / projectManifest["unitManifest"]
+            unitManifestPath = options.projectRoot / projectManifest["unitManifest"]
             knownPageIds = {}
 
             if unitManifestPath.is_file():
@@ -983,7 +983,7 @@ def Main(arguments=None):
                 }
 
             units = DiscoverCanonicalUnits(
-                options.project_root,
+                options.projectRoot,
                 projectManifest,
                 knownPageIds,
             )
@@ -1014,7 +1014,7 @@ def Main(arguments=None):
 
         return 0
 
-    report = ValidateLocales(options.project_root, projectManifestPath)
+    report = ValidateLocales(options.projectRoot, projectManifestPath)
 
     if options.output:
         _WriteReport(report, options.output)

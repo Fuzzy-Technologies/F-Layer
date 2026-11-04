@@ -164,7 +164,7 @@ def test_CoverageRejectsImpossibleTotals(
 @pytest.mark.parametrize(
     'failedStage',
     [
-        "compile", "Ruff", "mypy", "pytest", "coverage report", "local source import",
+        "compile", "Python naming", "Ruff", "mypy", "pytest", "coverage report", "local source import",
         "offline package installation", "installed package import", "CLI help",
     ],
 )
@@ -274,7 +274,7 @@ def test_GateRunsWholePlanFromCheckoutRoot(
             "Stage inherited a different checkout's sources"
         )
 
-        if stageName in {"compile", "Ruff", "mypy", "pytest", "coverage report", "CLI help"}:
+        if stageName in {"compile", "Python naming", "Ruff", "mypy", "pytest", "coverage report", "CLI help"}:
             assert workingDirectory == checkoutRoot, "Stage used the caller's cwd"
 
         if stageName == "offline package installation":
@@ -291,7 +291,7 @@ def test_GateRunsWholePlanFromCheckoutRoot(
 
     assert validate.RunGate(Path("checkout")) == 0, "Complete successful gate returned failure"
     assert commandNames == [
-        "compile", "Ruff", "mypy", "pytest", "coverage report", "local source import",
+        "compile", "Python naming", "Ruff", "mypy", "pytest", "coverage report", "local source import",
         "offline package installation", "installed package import",
         *(["CLI help"] if hasCli else []),
     ], "The required validation stages were skipped or reordered"

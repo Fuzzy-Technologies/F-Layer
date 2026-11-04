@@ -546,12 +546,12 @@ def Main(arguments: Sequence[str] | None = None) -> int:
     parser.add_argument("--serve", action="store_true")
     parser.add_argument("--dev-addr", default="127.0.0.1:8000", dest='devAddr')
     options = parser.parse_args(arguments)
-    environmentPython, environment, configPath = BuildReference(options.environment_python)
+    environmentPython, environment, configPath = BuildReference(options.environmentPython)
     print(f"Documentation build: PASS ({BUILD_ROOT / 'site'})")
 
     if options.serve:
         RunCommand([environmentPython, "-m", "mkdocs", "serve", "--strict", "--config-file",
-                    configPath, "--dev-addr", options.dev_addr], cwd=BUILD_ROOT,
+                    configPath, "--dev-addr", options.devAddr], cwd=BUILD_ROOT,
                    environment=environment)
 
     return 0

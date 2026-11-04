@@ -177,15 +177,15 @@ def Main(arguments: Sequence[str] | None = None) -> int:
     options = parser.parse_args(arguments)
 
     if options.write:
-        for path in TrackedMarkdown(options.project_root):
+        for path in TrackedMarkdown(options.projectRoot):
             text = path.read_text(encoding="utf-8")
             aligned = AlignMarkdown(text)
 
             if aligned != text:
                 path.write_text(aligned, encoding="utf-8")
-                print(path.relative_to(options.project_root))
+                print(path.relative_to(options.projectRoot))
 
-    diagnostics = CheckMarkdownTables(options.project_root)
+    diagnostics = CheckMarkdownTables(options.projectRoot)
 
     if diagnostics:
         print("\n".join(diagnostics))

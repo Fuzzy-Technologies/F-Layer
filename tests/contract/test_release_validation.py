@@ -408,7 +408,7 @@ def test_ZipAndTarLinksRejected(tmp_path: Path) -> None:
 
     with zipfile.ZipFile(wheelPath, "w") as archive:
         member = zipfile.ZipInfo("flayer/link.py")
-        member.createSystem = 3
+        member.create_system = 3
         member.external_attr = (stat.S_IFLNK | 0o777) << 16
         archive.writestr(member, "../../private")
 
@@ -752,7 +752,7 @@ def test_WheelRejectsAllSpecialUnixMemberTypes(tmp_path: Path, fileType: int) ->
 
     with zipfile.ZipFile(path, "w") as archive:
         member = zipfile.ZipInfo("flayer/source.py")
-        member.createSystem = 3
+        member.create_system = 3
         member.external_attr = (fileType | 0o600) << 16
         archive.writestr(member, b"fixture")
 

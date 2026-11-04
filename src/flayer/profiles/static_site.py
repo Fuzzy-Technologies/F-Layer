@@ -453,8 +453,14 @@ def RenderStaticSitePlan(plan: StaticSitePlan, *, userDataFile: str | Path) -> s
 
     lines = ["schema_version = 1", f"profile = {Quote(PROFILE_NAME)}", "", "[identity]"]
 
+    identityData = {
+        "project": profile.identity.project, "stack": profile.identity.stack,
+        "provider": profile.identity.provider, "scope_id": profile.identity.scopeId,
+        "owner_id": profile.identity.ownerId,
+    }
+
     for key in sorted(IDENTITY_FIELDS):
-        lines.append(f"{key} = {Quote(getattr(profile.identity, key))}")
+        lines.append(f"{key} = {Quote(identityData[key])}")
 
     def AddResource(
         logicalId: str, kind: str, dependencies: tuple[str, ...], parameters: Mapping[str, object],

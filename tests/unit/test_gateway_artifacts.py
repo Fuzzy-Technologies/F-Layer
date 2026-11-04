@@ -490,13 +490,13 @@ def test_PartialRemovalFailurePreservesManifestForRecovery(tmp_path: Path, monke
     root, directory = Save(tmp_path)
     original = artifacts.os.unlink
 
-    def FailSecond(path: str, *, dirFd: int | None = None) -> None:
+    def FailSecond(path: str, *, dir_fd: int | None = None) -> None:
         """Stop deletion after one verified owned file."""
 
         if path == "transport.json":
             raise OSError("synthetic-secret")
 
-        original(path, dir_fd=dirFd)
+        original(path, dir_fd=dir_fd)
 
     monkeypatch.setattr(artifacts.os, "unlink", FailSecond)
 

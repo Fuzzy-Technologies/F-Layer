@@ -141,7 +141,7 @@ class FakeHttpConnection:
         self.host = host
         self.port = port
         self.timeout = timeout
-        self.status = self.response_status
+        self.status = self.responseStatus
         self.requestArgs: tuple[str, str, dict[str, str]] | None = None
         self.readLimit = 0
         self.closed = False
@@ -152,7 +152,7 @@ class FakeHttpConnection:
 
         self.requestArgs = (method, path, headers)
 
-        if self.raise_request:
+        if self.raiseRequest:
             raise OSError("fixture-private-error")
 
     def getresponse(self) -> FakeHttpConnection:
@@ -184,7 +184,7 @@ def test_HttpDoesNotFollowRedirectsAndCapsResponseReads(
 
     monkeypatch.setattr("flayer.diagnostics.benchmark.http.client.HTTPConnection", FakeHttpConnection)
     monkeypatch.setattr("flayer.diagnostics.benchmark.http.client.HTTPSConnection", FakeHttpConnection)
-    monkeypatch.setattr(FakeHttpConnection, "response_status", status)
+    monkeypatch.setattr(FakeHttpConnection, "responseStatus", status)
     result = HttpMeasurement(f"{scheme}://fixture.invalid:8080/path", 1, 16)
     connection = FakeHttpConnection.instances[-1]
 
@@ -201,7 +201,7 @@ def test_HttpClosesOnFailureAndDefaultsToRoot(monkeypatch: pytest.MonkeyPatch) -
     """Connection cleanup remains guaranteed on failure; root paths are deterministic."""
 
     monkeypatch.setattr("flayer.diagnostics.benchmark.http.client.HTTPConnection", FakeHttpConnection)
-    monkeypatch.setattr(FakeHttpConnection, "raise_request", True)
+    monkeypatch.setattr(FakeHttpConnection, "raiseRequest", True)
 
     with pytest.raises(OSError):
         HttpMeasurement("http://fixture.invalid", 1, 8)

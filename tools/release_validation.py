@@ -600,14 +600,14 @@ def Main(arguments: Sequence[str] | None = None) -> int:
     options = parser.parse_args(arguments)
 
     try:
-        if options.check_milestone is not None:
+        if options.checkMilestone is not None:
             if options.tag is not None or options.publication:
                 raise ValueError("Milestone-only checking cannot request artifacts or publication")
 
             version, _sourceVersion = ReadProjectVersion(REPOSITORY_ROOT, requireSource=True)
             evidence = {"version": version, "published": False,
                         "release_milestone": CheckReleaseMilestone(
-                            REPOSITORY_ROOT, version, options.check_milestone,
+                            REPOSITORY_ROOT, version, options.checkMilestone,
                         )}
 
         else:

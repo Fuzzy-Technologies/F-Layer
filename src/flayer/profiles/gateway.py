@@ -23,6 +23,7 @@ from flayer.core.contracts import (
     ValidateIdentifier,
     ValidateName,
     ValidateSchemaVersion,
+    _WireDict,
 )
 from flayer.profiles.artifacts import Artifact, ArtifactBundle, ReadOwnedArtifactFile
 
@@ -627,9 +628,7 @@ def BuildSshDeviceBundle(
 
     descriptor = {
         "schema_version": 1, "device_id": deviceId, "transport": "ssh-local-forward",
-        "status": "prepared-unverified", "identity": {
-            key: getattr(profile.identity, key) for key in sorted(_IDENTITY_FIELDS)
-        },
+        "status": "prepared-unverified", "identity": _WireDict(profile.identity),
         "public_key_sha256": hashlib.sha256(device.publicKey.encode("ascii")).hexdigest(),
     }
 
@@ -667,8 +666,10 @@ def RenderPlan(plan: GatewayPlan, *, userDataFile: str | Path) -> str:
 
     lines = ["schema_version = 1", f"profile = {Quote(PROFILE_NAME)}", "", "[identity]"]
 
+    identityData = _WireDict(profile.identity)
+
     for key in sorted(_IDENTITY_FIELDS):
-        lines.append(f"{key} = {Quote(getattr(profile.identity, key))}")
+        lines.append(f"{key} = {Quote(str(identityData[key]))}")
 
     def AddResource(
         logicalId: str, kind: str, dependencies: tuple[str, ...], properties: Mapping[str, object],

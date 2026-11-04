@@ -12,8 +12,14 @@ from griffe import Extension, Object
 class TranslatedDocstrings(Extension):
     """Replace reviewed API prose while preserving source listings and symbol identities."""
 
-    def __init__(self, translationsPath: str) -> None:
+    def __init__(self, translationsPath: str | None = None, **options: Any) -> None:
         """Read the renderer's already validated exact locale prose overlay."""
+
+        if translationsPath is None:
+            translationsPath = options.pop("translations_path", None)
+
+        if options or not isinstance(translationsPath, str):
+            raise ValueError("A translations path and no unknown extension options are required")
 
         self.translations: dict[str, str] = json.loads(Path(translationsPath).read_text(encoding="utf-8"))
 

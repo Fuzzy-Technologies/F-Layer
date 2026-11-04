@@ -294,13 +294,13 @@ def Main(arguments: Sequence[str] | None = None) -> int:
     parser.add_argument("--project-root", type=Path, default=Path(__file__).resolve().parents[1], dest='projectRoot')
     parser.add_argument("--site-root", type=Path, dest='siteRoot')
     options = parser.parse_args(arguments)
-    diagnostics = [*CheckSourceLinks(options.project_root), *CheckGeneratedPolicy(options.project_root),
-                   *CheckMarkdownTables(options.project_root),
-                   *documentationCoverage.CheckRepositoryCoverage(options.project_root)]
+    diagnostics = [*CheckSourceLinks(options.projectRoot), *CheckGeneratedPolicy(options.projectRoot),
+                   *CheckMarkdownTables(options.projectRoot),
+                   *documentationCoverage.CheckRepositoryCoverage(options.projectRoot)]
 
-    if options.site_root:
-        diagnostics.extend(CheckRenderedLinks(options.site_root.resolve()))
-        diagnostics.extend(CheckMarkdownReachability(options.project_root, options.site_root.resolve()))
+    if options.siteRoot:
+        diagnostics.extend(CheckRenderedLinks(options.siteRoot.resolve()))
+        diagnostics.extend(CheckMarkdownReachability(options.projectRoot, options.siteRoot.resolve()))
 
     if diagnostics:
         print("\n".join(diagnostics))

@@ -859,13 +859,13 @@ def test_CompletedOperationWithUnclearableJournalRecoversWithoutDuplication(
 
     actualUnlink = Path.unlink
 
-    def FailedJournalUnlink(path: Path, missingOk: bool = False) -> None:
+    def FailedJournalUnlink(path: Path, missing_ok: bool = False) -> None:
         """Keep the journal after creation while allowing locks and temporary files to clean up."""
 
         if path.name.endswith(".operation.json"):
             raise OSError("Synthetic cleanup failure")
 
-        actualUnlink(path, missing_ok=missingOk)
+        actualUnlink(path, missing_ok=missing_ok)
 
     provider = FakeProvider()
     engine = Engine(tmp_path, provider)
@@ -889,7 +889,7 @@ def test_UnavailableStorageAndUnreleasableLockFailExplicitly(
 
     actualMkdir = Path.mkdir
 
-    def FailedMkdir(path: Path, parents: bool = False, existOk: bool = False) -> None:
+    def FailedMkdir(path: Path, parents: bool = False, exist_ok: bool = False) -> None:
         """Inject unavailable caller-owned local storage."""
 
         raise OSError("Synthetic directory allocation failure")
@@ -903,13 +903,13 @@ def test_UnavailableStorageAndUnreleasableLockFailExplicitly(
     monkeypatch.setattr(Path, "mkdir", actualMkdir)
     actualUnlink = Path.unlink
 
-    def FailedLockUnlink(path: Path, missingOk: bool = False) -> None:
+    def FailedLockUnlink(path: Path, missing_ok: bool = False) -> None:
         """Inject failure to release the exclusive operation lock."""
 
         if path.name.endswith(".operation.lock"):
             raise OSError("Synthetic lock cleanup failure")
 
-        actualUnlink(path, missing_ok=missingOk)
+        actualUnlink(path, missing_ok=missing_ok)
 
     monkeypatch.setattr(Path, "unlink", FailedLockUnlink)
 
@@ -935,13 +935,13 @@ def test_TemporaryJournalCleanupFailureBlocksCloudWork(
 
         raise OSError("Synthetic stream allocation failure")
 
-    def FailedTemporaryUnlink(path: Path, missingOk: bool = False) -> None:
+    def FailedTemporaryUnlink(path: Path, missing_ok: bool = False) -> None:
         """Inject cleanup failure for the incomplete private temporary journal only."""
 
         if path.suffix == ".tmp":
             raise OSError("Synthetic temporary cleanup failure")
 
-        actualUnlink(path, missing_ok=missingOk)
+        actualUnlink(path, missing_ok=missing_ok)
 
     provider = FakeProvider()
     monkeypatch.setattr(lifecycle, "_OpenTextStream", FailedStream)
@@ -1033,7 +1033,7 @@ def test_RecoveryDefensivelyRejectsDuplicateEligibilityIfDecoderBypassed(
     )
     locator = ResourceState("network", "network", "id-network")
     journal = lifecycle._Journal(IDENTITY, PLAN.Fingerprint(), "create", (locator,),
-                                 pending="network", operation_id="a" * 32)
+                                 pending="network", operationId="a" * 32)
     monkeypatch.setattr(lifecycle, "_LoadJournal", lambda path, plan: journal)
     engine = Engine(tmp_path, provider)
 

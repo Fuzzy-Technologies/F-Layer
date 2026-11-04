@@ -116,13 +116,13 @@ def BuildImportSmoke(importRoot: Path) -> str:
 
     return (
         "from pathlib import Path\nimport sys\n"
-        f"expected_root = Path({str(importRoot)!r}).resolve()\n"
-        "sys.path.insert(0, str(expected_root))\nimport flayer\n\n"
+        f"expectedRoot = Path({str(importRoot)!r}).resolve()\n"
+        "sys.path.insert(0, str(expectedRoot))\nimport flayer\n\n"
         "assert flayer.__file__ is not None, 'Package has no concrete import location'\n\n"
-        "actual_path = Path(flayer.__file__).resolve()\n\n"
-        "assert actual_path.is_relative_to(expected_root), "
-        "f'Imported package outside expected root: {actual_path}'\n\n"
-        "print(f'Package import: {actual_path}')"
+        "actualPath = Path(flayer.__file__).resolve()\n\n"
+        "assert actualPath.is_relative_to(expectedRoot), "
+        "f'Imported package outside expected root: {actualPath}'\n\n"
+        "print(f'Package import: {actualPath}')"
     )
 
 

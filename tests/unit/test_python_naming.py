@@ -11,6 +11,7 @@ import pytest
 
 from flayer.core.contracts import StackIdentity, _WireDict
 from tools.python_naming import Audit, EmbeddedSources, FindViolations, Main, PythonBlocks
+from tools.validate import BuildImportSmoke
 
 
 @pytest.mark.parametrize("source", [
@@ -73,6 +74,15 @@ def test_ExceptionsAreBoundToExactExternalDefinitions() -> None:
     assert FindViolations(valid.replace("pass", "local_value = message"), "src/flayer/__main__.py")
 
 
+def test_TestPrefixesAreRestrictedToTestModules() -> None:
+    """The framework exception must not excuse owned production callables or parameters."""
+
+    source = "def test_Example(tmp_path):\n    return tmp_path\n"
+
+    assert FindViolations(source, "tests/unit/example.py") == ()
+    assert {item.name for item in FindViolations(source, "src/example.py")} == {"test_Example", "tmp_path"}
+
+
 def test_RepositoryDiscoveryIncludesUntrackedPythonAndStubs(tmp_path: Path) -> None:
     """New source cannot bypass the gate merely because it has not been staged yet."""
 
@@ -114,6 +124,23 @@ def test_RepositoryAuditIncludesDocumentationAndExecutableFixtures(tmp_path: Pat
         ("example.md", 4, "owned_value"), ("fixture.py", 2, "owned_value"),
     }
     assert EmbeddedSources('DATA = """schema_version = 1\\nprofile = \'demo\'\\n"""\n') == ()
+
+
+def test_FormattedEmbeddedModulesAreCheckedWithoutEvaluatingExpressions() -> None:
+    """F-string fixtures cannot hide bindings or execute interpolation during a source audit."""
+
+    source = 'SCRIPT = f"""import os\\nroot = {UntrustedCall()!r}\\nowned_value = 1\\n"""\n'
+    blocks = EmbeddedSources(source)
+
+    assert len(blocks) == 1
+    assert "UntrustedCall" not in blocks[0][1]
+    assert {item.name for item in FindViolations(blocks[0][1])} == {"owned_value"}
+
+
+def test_ImportSmokeGeneratorUsesOwnedCamelCaseNames(tmp_path: Path) -> None:
+    """Check the executable generated smoke test independently of the template extractor."""
+
+    assert FindViolations(BuildImportSmoke(tmp_path)) == ()
 
 
 def test_WireSerializationRetainsExistingNamesAndRawProtocolKeys() -> None:

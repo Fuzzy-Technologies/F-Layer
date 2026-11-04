@@ -174,7 +174,8 @@ def FindViolations(source: str, sourcePath: str = "<source>") -> tuple[Violation
             valid = _Variable(name)
 
             if kind == "function":
-                valid = name in SPECIAL or bool(CALLABLE.fullmatch(name) or TEST.fullmatch(name))
+                testFunction = sourcePath.startswith("tests/") and bool(TEST.fullmatch(name))
+                valid = name in SPECIAL or bool(CALLABLE.fullmatch(name)) or testFunction
 
             elif kind == "class":
                 valid = bool(CALLABLE.fullmatch(name))
@@ -403,16 +404,31 @@ def PythonBlocks(source: str, suffix: str) -> tuple[tuple[int, str], ...]:
 
 
 def EmbeddedSources(source: str) -> tuple[tuple[int, str], ...]:
-    """Inventory parseable embedded modules without mistaking TOML or JSON fixtures for Python."""
+    """Inspect literal and formatted embedded modules without executing interpolated expressions."""
 
     blocks = []
     tree = ast.parse(source)
+    parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
 
     for node in ast.walk(tree):
-        if not isinstance(node, ast.Constant) or not isinstance(node.value, str) or "\n" not in node.value:
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            if isinstance(parents.get(node), ast.JoinedStr):
+                continue
+
+            template = node.value
+
+        elif isinstance(node, ast.JoinedStr):
+            # A neutral expression preserves Python structure without evaluating fixture code.
+            template = "".join(item.value if isinstance(item, ast.Constant) and isinstance(item.value, str)
+                               else "None" for item in node.values)
+
+        else:
             continue
 
-        code = textwrap.dedent(node.value)
+        if "\n" not in template:
+            continue
+
+        code = textwrap.dedent(template)
 
         try:
             embedded = ast.parse(code)

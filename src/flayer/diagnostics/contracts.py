@@ -44,16 +44,16 @@ def Redact(value: object, _depth: int = 0) -> object:
 
         for key, item in value.items():
             sensitive = not isinstance(key, str) or bool(SECRET_KEY.search(key))
-            safe_key = key if isinstance(key, str) and SAFE_KEY.fullmatch(key) else REDACTED
+            safeKey = key if isinstance(key, str) and SAFE_KEY.fullmatch(key) else REDACTED
 
             if sensitive:
-                safe_key = REDACTED
+                safeKey = REDACTED
 
-            candidate = safe_key
+            candidate = safeKey
             suffix = 2
 
             while candidate in sanitized:
-                candidate = f"{safe_key}:{suffix}"
+                candidate = f"{safeKey}:{suffix}"
                 suffix += 1
 
             sanitized[candidate] = REDACTED if sensitive else Redact(item, _depth + 1)

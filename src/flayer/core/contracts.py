@@ -4,12 +4,43 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from copy import deepcopy
+from dataclasses import dataclass, fields, is_dataclass
 
 SCHEMA_VERSION = 1
 MANAGED_BY = "f-layer"
 IDENTITY_FIELDS = frozenset({"project", "stack", "provider", "scope_id", "owner_id"})
 _NAME_PATTERN = re.compile(r"[a-z][a-z0-9-]{0,62}")
+
+
+def _WireValue(value: object) -> object:
+    """Preserve dictionary keys while serializing owned dataclass fields with stable wire names."""
+
+    if is_dataclass(value) and not isinstance(value, type):
+        return _WireDict(value)
+
+    if isinstance(value, tuple):
+        return tuple(_WireValue(item) for item in value)
+
+    if isinstance(value, list):
+        return [_WireValue(item) for item in value]
+
+    if isinstance(value, dict):
+        return {deepcopy(key): _WireValue(item) for key, item in value.items()}
+
+    return deepcopy(value)
+
+
+def _WireDict(value: object) -> dict[str, object]:
+    """Retain the established snake_case JSON and fingerprint contract after Python renaming."""
+
+    if not is_dataclass(value) or isinstance(value, type):
+        raise TypeError("Wire serialization requires a dataclass instance")
+
+    return {
+        re.sub(r"[A-Z]", lambda match: "_" + match[0].lower(), item.name):
+        _WireValue(getattr(value, item.name)) for item in fields(value)
+    }
 
 
 class ContractError(ValueError):
@@ -76,8 +107,8 @@ class StackIdentity:
     project: str
     stack: str
     provider: str
-    scope_id: str
-    owner_id: str
+    scopeId: str
+    ownerId: str
 
     def __post_init__(self) -> None:
         """Validate direct construction as strictly as decoded configuration."""
@@ -85,8 +116,8 @@ class StackIdentity:
         ValidateName(self.project, "identity.project")
         ValidateName(self.stack, "identity.stack")
         ValidateName(self.provider, "identity.provider")
-        ValidateIdentifier(self.scope_id, "identity.scope_id")
-        ValidateName(self.owner_id, "identity.owner_id")
+        ValidateIdentifier(self.scopeId, "identity.scope_id")
+        ValidateName(self.ownerId, "identity.owner_id")
 
     def OwnershipLabels(self) -> dict[str, str]:
         """Return explicit labels for provider adapters to attach and verify."""
@@ -95,7 +126,7 @@ class StackIdentity:
             "managed-by": MANAGED_BY,
             "flayer-project": self.project,
             "flayer-stack": self.stack,
-            "flayer-owner": self.owner_id,
+            "flayer-owner": self.ownerId,
         }
 
 
@@ -109,6 +140,6 @@ def ParseIdentity(value: object) -> StackIdentity:
         project=ValidateName(table["project"], "identity.project"),
         stack=ValidateName(table["stack"], "identity.stack"),
         provider=ValidateName(table["provider"], "identity.provider"),
-        scope_id=ValidateIdentifier(table["scope_id"], "identity.scope_id"),
-        owner_id=ValidateName(table["owner_id"], "identity.owner_id"),
+        scopeId=ValidateIdentifier(table["scope_id"], "identity.scope_id"),
+        ownerId=ValidateName(table["owner_id"], "identity.owner_id"),
     )

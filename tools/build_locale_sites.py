@@ -11,7 +11,9 @@ from pathlib import Path
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tools import build_api_reference, documentation_gates, generated_localization  # noqa: E402
+from tools import build_api_reference as buildApiReference  # noqa: E402
+from tools import documentation_gates as documentationGates
+from tools import generated_localization as generatedLocalization
 from tools.locale_renderer import RenderLocaleSites  # noqa: E402
 from tools.release_validation import ReadProjectVersion  # noqa: E402
 
@@ -20,43 +22,43 @@ def Main(arguments: Sequence[str] | None = None) -> int:
     """Render all locale routes and fail on exact links, anchors, or review-state drift."""
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--environment-python", type=Path)
-    parser.add_argument("--require-complete-translations", action="store_true")
+    parser.add_argument("--environment-python", type=Path, dest='environmentPython')
+    parser.add_argument("--require-complete-translations", action="store_true", dest='requireCompleteTranslations')
     options = parser.parse_args(arguments)
-    environment_python, environment, config_path = build_api_reference.BuildReference(
+    environmentPython, environment, configPath = buildApiReference.BuildReference(
         options.environment_python,
     )
-    locale_evidence = RenderLocaleSites(
-        build_api_reference.PROJECT_ROOT, build_api_reference.BUILD_ROOT, config_path,
-        environment_python, environment,
+    localeEvidence = RenderLocaleSites(
+        buildApiReference.PROJECT_ROOT, buildApiReference.BUILD_ROOT, configPath,
+        environmentPython, environment,
     )
-    diagnostics = documentation_gates.CheckAll(
-        build_api_reference.PROJECT_ROOT, build_api_reference.BUILD_ROOT / "site",
+    diagnostics = documentationGates.CheckAll(
+        buildApiReference.PROJECT_ROOT, buildApiReference.BUILD_ROOT / "site",
     )
 
     if diagnostics:
         raise ValueError("\n".join(diagnostics))
 
-    evidence_path = build_api_reference.BUILD_ROOT / "build-evidence.json"
-    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
-    version, _ = ReadProjectVersion(build_api_reference.PROJECT_ROOT, require_source=True)
-    release_major = int(version.split(".")[0])
+    evidencePath = buildApiReference.BUILD_ROOT / "build-evidence.json"
+    evidence = json.loads(evidencePath.read_text(encoding="utf-8"))
+    version, _ = ReadProjectVersion(buildApiReference.PROJECT_ROOT, requireSource=True)
+    releaseMajor = int(version.split(".")[0])
 
-    if options.require_complete_translations or release_major >= 2:
-        states = {page: {locale: data["pages"][page]["state"] for locale, data in locale_evidence.items()}
-                  for page in locale_evidence["ru"]["pages"]}
-        generated_localization.RequireComplete(states)
-        generated_states = {
+    if options.require_complete_translations or releaseMajor >= 2:
+        states = {page: {locale: data["pages"][page]["state"] for locale, data in localeEvidence.items()}
+                  for page in localeEvidence["ru"]["pages"]}
+        generatedLocalization.RequireComplete(states)
+        generatedStates = {
             identifier: {locale: data["generatedTranslationStates"][identifier]
-                         for locale, data in locale_evidence.items()}
-            for identifier in locale_evidence["ru"]["generatedTranslationStates"]
+                         for locale, data in localeEvidence.items()}
+            for identifier in localeEvidence["ru"]["generatedTranslationStates"]
         }
-        generated_localization.RequireComplete(generated_states)
+        generatedLocalization.RequireComplete(generatedStates)
 
-    evidence["renderedLocales"] = locale_evidence
+    evidence["renderedLocales"] = localeEvidence
     evidence["renderedLinksAndAnchors"] = "pass"
-    evidence_path.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(f"Multilingual documentation build: PASS ({build_api_reference.BUILD_ROOT / 'site'})")
+    evidencePath.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"Multilingual documentation build: PASS ({buildApiReference.BUILD_ROOT / 'site'})")
 
     return 0
 

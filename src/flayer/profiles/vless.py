@@ -9,11 +9,11 @@ import json
 import re
 import secrets
 import uuid
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from importlib.resources import files
 from urllib.parse import quote, urlencode
 
-from flayer.core.contracts import ContractError, ValidateName
+from flayer.core.contracts import ContractError, ValidateName, _WireDict
 from flayer.profiles._amnezia_export import BuildAmneziaArtifacts
 from flayer.profiles.artifacts import Artifact
 from flayer.profiles.vpn import (
@@ -69,19 +69,19 @@ def _Port(value: object) -> int:
 class VlessRealitySettings:
     """Public Reality handshake target and local application-proxy listener settings."""
 
-    target_host: str
-    server_name: str
-    target_port: int = 443
+    targetHost: str
+    serverName: str
+    targetPort: int = 443
     fingerprint: str = "chrome"
-    socks_port: int = 10808
+    socksPort: int = 10808
 
     def __post_init__(self) -> None:
         """Require explicit TLS identities and a supported stable browser fingerprint."""
 
-        _Host(self.target_host)
-        _Host(self.server_name)
-        _Port(self.target_port)
-        _Port(self.socks_port)
+        _Host(self.targetHost)
+        _Host(self.serverName)
+        _Port(self.targetPort)
+        _Port(self.socksPort)
 
         if not isinstance(self.fingerprint, str) or self.fingerprint not in {
             "chrome", "firefox", "safari", "ios", "android", "edge",
@@ -93,21 +93,21 @@ class VlessRealitySettings:
 class VlessDeviceCredential:
     """One revocable per-device VLESS UUID, excluded from object representations."""
 
-    device_id: str
-    user_id: str = field(repr=False)
+    deviceId: str
+    userId: str = field(repr=False)
 
     def __post_init__(self) -> None:
         """Accept only canonical nonzero randomly generated UUID credentials."""
 
-        ValidateName(self.device_id, "device_id")
+        ValidateName(self.deviceId, "device_id")
 
         try:
-            value = uuid.UUID(self.user_id)
+            value = uuid.UUID(self.userId)
 
         except (ValueError, TypeError, AttributeError):
             raise VlessError("VLESS device credential must be a canonical UUID version 4") from None
 
-        if str(value) != self.user_id or value.version != 4:
+        if str(value) != self.userId or value.version != 4:
             raise VlessError("VLESS device credential must be a canonical UUID version 4")
 
 
@@ -115,19 +115,19 @@ class VlessDeviceCredential:
 class VlessMaterial:
     """Explicit secret material retained in private bundles, never generic lifecycle state."""
 
-    server_private_key: bytes = field(repr=False)
-    server_public_key: bytes = field(repr=False)
-    short_id: str = field(repr=False)
+    serverPrivateKey: bytes = field(repr=False)
+    serverPublicKey: bytes = field(repr=False)
+    shortId: str = field(repr=False)
     devices: tuple[VlessDeviceCredential, ...] = field(repr=False)
 
     def __post_init__(self) -> None:
         """Validate material structure without including values in error messages."""
 
         if any(not isinstance(value, bytes) or len(value) != 32 or value == bytes(32)
-               for value in (self.server_private_key, self.server_public_key)):
+               for value in (self.serverPrivateKey, self.serverPublicKey)):
             raise VlessError("Reality keys must contain 32 nonzero raw bytes")
 
-        if not isinstance(self.short_id, str) or re.fullmatch(r"[0-9a-f]{16}", self.short_id) is None:
+        if not isinstance(self.shortId, str) or re.fullmatch(r"[0-9a-f]{16}", self.shortId) is None:
             raise VlessError("Reality short ID must contain 16 lowercase hexadecimal characters")
 
         if not isinstance(self.devices, tuple) or not 1 <= len(self.devices) <= 16 or any(
@@ -135,13 +135,13 @@ class VlessMaterial:
         ):
             raise VlessError("VLESS requires 1..16 immutable per-device credentials")
 
-        if len({item.device_id for item in self.devices}) != len(self.devices) or len({
-            item.user_id for item in self.devices
+        if len({item.deviceId for item in self.devices}) != len(self.devices) or len({
+            item.userId for item in self.devices
         }) != len(self.devices):
             raise VlessError("VLESS device identities and UUID credentials must be unique")
 
 
-def _PublicKey(private_key: bytes) -> bytes:
+def _PublicKey(privateKey: bytes) -> bytes:
     """Derive a raw X25519 public key through the optional audited crypto dependency."""
 
     try:
@@ -150,18 +150,18 @@ def _PublicKey(private_key: bytes) -> bytes:
     except ImportError:
         raise VlessError("Install the f-layer[vpn] extra before preparing VPN credentials") from None
 
-    return X25519PrivateKey.from_private_bytes(private_key).public_key().public_bytes_raw()
+    return X25519PrivateKey.from_private_bytes(privateKey).public_key().public_bytes_raw()
 
 
 def GenerateVlessMaterial(profile: VpnProfile) -> VlessMaterial:
     """Generate fresh server and device credentials only for an explicitly validated profile."""
 
     ValidateVpnTransport(profile, VLESS_CAPABILITIES)
-    private_key = secrets.token_bytes(32)
+    privateKey = secrets.token_bytes(32)
 
     return VlessMaterial(
-        private_key, _PublicKey(private_key), secrets.token_hex(8),
-        tuple(VlessDeviceCredential(device.device_id, str(uuid.uuid4())) for device in profile.devices),
+        privateKey, _PublicKey(privateKey), secrets.token_hex(8),
+        tuple(VlessDeviceCredential(device.deviceId, str(uuid.uuid4())) for device in profile.devices),
     )
 
 
@@ -174,10 +174,10 @@ def EncodeVlessMaterial(material: VlessMaterial) -> bytes:
 
     return _Json({
         "schema_version": 1,
-        "server_private_key": _Encode(material.server_private_key),
-        "server_public_key": _Encode(material.server_public_key),
-        "short_id": material.short_id,
-        "devices": [asdict(item) for item in material.devices],
+        "server_private_key": _Encode(material.serverPrivateKey),
+        "server_public_key": _Encode(material.serverPublicKey),
+        "short_id": material.shortId,
+        "devices": [_WireDict(item) for item in material.devices],
     })
 
 
@@ -222,7 +222,7 @@ def DecodeVlessMaterial(content: bytes) -> VlessMaterial:
 
         material = VlessMaterial(keys[0], keys[1], data["short_id"], tuple(devices))
 
-        if not secrets.compare_digest(_PublicKey(material.server_private_key), material.server_public_key):
+        if not secrets.compare_digest(_PublicKey(material.serverPrivateKey), material.serverPublicKey):
             raise ValueError("Inconsistent keys")
 
         return material
@@ -242,12 +242,12 @@ def _Validate(profile: VpnProfile, settings: VlessRealitySettings, material: Vle
     if not isinstance(material, VlessMaterial):
         raise VlessError("VLESS requires separately supplied private material")
 
-    if {item.device_id for item in material.devices} != {
-        device.device_id for device in profile.devices
+    if {item.deviceId for item in material.devices} != {
+        device.deviceId for device in profile.devices
     }:
         raise VlessError("VLESS credentials must match the declared devices exactly")
 
-    if not secrets.compare_digest(_PublicKey(material.server_private_key), material.server_public_key):
+    if not secrets.compare_digest(_PublicKey(material.serverPrivateKey), material.serverPublicKey):
         raise VlessError("Reality server private and public keys do not form a pair")
 
     return listener.port
@@ -278,19 +278,19 @@ def RenderVlessServer(
 
     return _Json({
         "log": {"loglevel": "none", "access": "none", "error": "none"},
-        "dns": {"servers": list(profile.routes.dns_servers), "queryStrategy": "UseIPv4"},
+        "dns": {"servers": list(profile.routes.dnsServers), "queryStrategy": "UseIPv4"},
         "inbounds": [{
             "tag": "vless-reality", "listen": "0.0.0.0", "port": port, "protocol": "vless",
             "settings": {
-                "clients": [{"id": item.user_id, "flow": VLESS_FLOW} for item in material.devices],
+                "clients": [{"id": item.userId, "flow": VLESS_FLOW} for item in material.devices],
                 "decryption": "none",
             },
             "streamSettings": {
                 "network": "tcp", "security": "reality",
                 "realitySettings": {
-                    "show": False, "target": f"{settings.target_host}:{settings.target_port}",
-                    "xver": 0, "serverNames": [settings.server_name],
-                    "privateKey": _Encode(material.server_private_key), "shortIds": [material.short_id],
+                    "show": False, "target": f"{settings.targetHost}:{settings.targetPort}",
+                    "xver": 0, "serverNames": [settings.serverName],
+                    "privateKey": _Encode(material.serverPrivateKey), "shortIds": [material.shortId],
                 },
             },
         }],
@@ -305,11 +305,11 @@ def RenderVlessServer(
     })
 
 
-def _Credential(material: VlessMaterial, device_id: str) -> VlessDeviceCredential:
+def _Credential(material: VlessMaterial, deviceId: str) -> VlessDeviceCredential:
     """Select one device without exposing other clients' authentication credentials."""
 
     for item in material.devices:
-        if item.device_id == device_id:
+        if item.deviceId == deviceId:
             return item
 
     raise VlessError("Requested device has no VLESS credential")
@@ -317,7 +317,7 @@ def _Credential(material: VlessMaterial, device_id: str) -> VlessDeviceCredentia
 
 def RenderVlessClient(
     profile: VpnProfile, endpoint: VpnEndpoint, settings: VlessRealitySettings,
-    material: VlessMaterial, device_id: str,
+    material: VlessMaterial, deviceId: str,
 ) -> bytes:
     """Render a loopback SOCKS client; split destinations outside the allowlist are rejected."""
 
@@ -326,58 +326,58 @@ def RenderVlessClient(
     if not isinstance(endpoint, VpnEndpoint) or endpoint.port != port:
         raise VlessError("VLESS endpoint must match the declared TCP listener port")
 
-    credential = _Credential(material, device_id)
-    routing_rules: list[dict[str, object]] = [
+    credential = _Credential(material, deviceId)
+    routingRules: list[dict[str, object]] = [
         {"type": "field", "ip": ["::/0"], "outboundTag": "blocked"},
-        {"type": "field", "ip": list(profile.routes.dns_servers), "port": "53",
+        {"type": "field", "ip": list(profile.routes.dnsServers), "port": "53",
          "outboundTag": "vpn"},
-        {"type": "field", "ip": list(profile.routes.ipv4_cidrs), "outboundTag": "vpn"},
+        {"type": "field", "ip": list(profile.routes.ipv4Cidrs), "outboundTag": "vpn"},
         {"type": "field", "network": "tcp,udp", "outboundTag": "blocked"},
     ]
 
     return _Json({
         "log": {"loglevel": "none", "access": "none", "error": "none"},
-        "dns": {"servers": list(profile.routes.dns_servers), "queryStrategy": "UseIPv4"},
+        "dns": {"servers": list(profile.routes.dnsServers), "queryStrategy": "UseIPv4"},
         "inbounds": [{
-            "tag": "local-socks", "listen": "127.0.0.1", "port": settings.socks_port,
+            "tag": "local-socks", "listen": "127.0.0.1", "port": settings.socksPort,
             "protocol": "socks", "settings": {"auth": "noauth", "udp": True, "ip": "127.0.0.1"},
         }],
         "outbounds": [{
             "tag": "vpn", "protocol": "vless",
             "settings": {"vnext": [{
                 "address": endpoint.host, "port": endpoint.port,
-                "users": [{"id": credential.user_id, "encryption": "none", "flow": VLESS_FLOW}],
+                "users": [{"id": credential.userId, "encryption": "none", "flow": VLESS_FLOW}],
             }]},
             "streamSettings": {
                 "network": "tcp", "security": "reality",
                 "realitySettings": {
-                    "fingerprint": settings.fingerprint, "serverName": settings.server_name,
-                    "publicKey": _Encode(material.server_public_key), "shortId": material.short_id,
+                    "fingerprint": settings.fingerprint, "serverName": settings.serverName,
+                    "publicKey": _Encode(material.serverPublicKey), "shortId": material.shortId,
                     "spiderX": "/",
                 },
             },
         }, {"tag": "blocked", "protocol": "blackhole"}],
-        "routing": {"domainStrategy": "IPOnDemand", "rules": routing_rules},
+        "routing": {"domainStrategy": "IPOnDemand", "rules": routingRules},
     })
 
 
 def BuildVlessUri(
     profile: VpnProfile, endpoint: VpnEndpoint, settings: VlessRealitySettings,
-    material: VlessMaterial, device_id: str,
+    material: VlessMaterial, deviceId: str,
 ) -> str:
     """Produce a transport import URI; client route and DNS policy need separate configuration."""
 
-    RenderVlessClient(profile, endpoint, settings, material, device_id)
-    credential = _Credential(material, device_id)
+    RenderVlessClient(profile, endpoint, settings, material, deviceId)
+    credential = _Credential(material, deviceId)
     parameters = urlencode({
         "encryption": "none", "flow": VLESS_FLOW, "security": "reality",
-        "sni": settings.server_name, "fp": settings.fingerprint,
-        "pbk": _Encode(material.server_public_key), "sid": material.short_id,
+        "sni": settings.serverName, "fp": settings.fingerprint,
+        "pbk": _Encode(material.serverPublicKey), "sid": material.shortId,
         "type": "tcp", "headerType": "none", "spx": "/",
     })
-    label = quote(f"{profile.identity.stack}-{device_id}", safe="")
+    label = quote(f"{profile.identity.stack}-{deviceId}", safe="")
 
-    return f"vless://{credential.user_id}@{endpoint.host}:{endpoint.port}?{parameters}#{label}"
+    return f"vless://{credential.userId}@{endpoint.host}:{endpoint.port}?{parameters}#{label}"
 
 
 
@@ -385,7 +385,7 @@ def VlessServiceName(profile: VpnProfile) -> str:
     """Return the deterministic systemd unit for this exact stack ownership identity."""
 
     ValidateVpnTransport(profile, VLESS_CAPABILITIES)
-    owner = hashlib.sha256(_Json(asdict(profile.identity))).hexdigest()
+    owner = hashlib.sha256(_Json(_WireDict(profile.identity))).hexdigest()
 
     return f"flayer-vless-{owner[:24]}.service"
 
@@ -397,26 +397,26 @@ def PrepareVless(
     """Prepare an owned installer and one private import bundle per declared device."""
 
     server = RenderVlessServer(profile, settings, material)
-    identity = asdict(profile.identity)
+    identity = _WireDict(profile.identity)
     owner = hashlib.sha256(_Json(identity)).hexdigest()
     deployment = _Json({
         "schema_version": 1, "owner": owner, "config_sha256": hashlib.sha256(server).hexdigest(),
         "port": endpoint.port, "xray_version": XRAY_VERSION,
     })
     installer = files("flayer.profiles").joinpath("_vless_guest.py").read_bytes().replace(b"\r\n", b"\n")
-    server_bundle = BuildVpnServerBundle(profile, VLESS_TRANSPORT, (
+    serverBundle = BuildVpnServerBundle(profile, VLESS_TRANSPORT, (
         Artifact("server.json", server), Artifact("install.py", installer),
         Artifact("deployment.json", deployment),
     ))
-    device_bundles = tuple(BuildVpnDeviceBundle(profile, VLESS_TRANSPORT, device.device_id, (
-        Artifact("client.json", RenderVlessClient(profile, endpoint, settings, material, device.device_id)),
+    deviceBundles = tuple(BuildVpnDeviceBundle(profile, VLESS_TRANSPORT, device.deviceId, (
+        Artifact("client.json", RenderVlessClient(profile, endpoint, settings, material, device.deviceId)),
         Artifact("import.txt", (BuildVlessUri(
-            profile, endpoint, settings, material, device.device_id,
+            profile, endpoint, settings, material, device.deviceId,
         ) + "\n").encode("utf-8")),
         *BuildAmneziaArtifacts(
-            RenderVlessClient(profile, endpoint, settings, material, device.device_id),
-            endpoint.host, device.device_id, profile.routes.dns_servers,
+            RenderVlessClient(profile, endpoint, settings, material, device.deviceId),
+            endpoint.host, device.deviceId, profile.routes.dnsServers,
         ),
     )) for device in profile.devices)
 
-    return PreparedVpnTransport(profile, VLESS_CAPABILITIES, server_bundle, device_bundles)
+    return PreparedVpnTransport(profile, VLESS_CAPABILITIES, serverBundle, deviceBundles)

@@ -15,7 +15,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from tools import documentation_coverage
+from tools import documentation_coverage as documentationCoverage
 from tools.locale_documentation import CanonicalHash, CanonicalUnit, _AuthoredUnits, _NodeUnit
 
 CATALOG_ROOT = "docs/i18n/generated"
@@ -29,9 +29,9 @@ class ReviewedTranslation:
 
     body: str
     state: str
-    source_hash: str
-    translation_hash: str
-    reviewer_type: str
+    sourceHash: str
+    translationHash: str
+    reviewerType: str
 
 
 def TextHash(body: str) -> str:
@@ -40,33 +40,33 @@ def TextHash(body: str) -> str:
     return "sha256:" + hashlib.sha256(body.encode("utf-8")).hexdigest()
 
 
-def DiscoverGeneratedUnits(project_root: Path) -> dict[str, CanonicalUnit]:
+def DiscoverGeneratedUnits(projectRoot: Path) -> dict[str, CanonicalUnit]:
     """Inventory canonical engineering prose and public API contracts statically."""
 
     units = {}
 
-    for item in documentation_coverage.InventoryFiles(project_root):
-        path = project_root / item.source_path
+    for item in documentationCoverage.InventoryFiles(projectRoot):
+        path = projectRoot / item.sourcePath
 
         if (item.disposition == "rendered-markdown"
-                and not item.source_path.startswith(documentation_coverage.SOURCE_CONTENT_PREFIX)):
-            identifier = "repository:" + item.source_path
-            units[identifier] = CanonicalUnit(identifier, "page", item.source_path, "",
+                and not item.sourcePath.startswith(documentationCoverage.SOURCE_CONTENT_PREFIX)):
+            identifier = "repository:" + item.sourcePath
+            units[identifier] = CanonicalUnit(identifier, "page", item.sourcePath, "",
                                                path.read_text(encoding="utf-8"))
 
         elif item.disposition == "generated-api":
-            module = documentation_coverage.ModuleName(item.source_path)
+            module = documentationCoverage.ModuleName(item.sourcePath)
             identifier = "module:" + module
             syntax = ast.parse(path.read_text(encoding="utf-8"))
-            units[identifier] = CanonicalUnit(identifier, "symbol", item.source_path, "",
+            units[identifier] = CanonicalUnit(identifier, "symbol", item.sourcePath, "",
                                                ast.get_docstring(syntax, clean=False) or "")
 
-            for unit in _AuthoredUnits(module, path, project_root):
+            for unit in _AuthoredUnits(module, path, projectRoot):
                 units[unit.identifier] = unit
 
-            units.update(RenderedConstructors(syntax, module, item.source_path, units))
+            units.update(RenderedConstructors(syntax, module, item.sourcePath, units))
 
-    for message in CoverageMessages(project_root):
+    for message in CoverageMessages(projectRoot):
         identifier = "coverage:" + TextHash(message).removeprefix("sha256:")
         units[identifier] = CanonicalUnit(identifier, "page", "tools/documentation_coverage.py", "", message)
 
@@ -74,7 +74,7 @@ def DiscoverGeneratedUnits(project_root: Path) -> dict[str, CanonicalUnit]:
 
 
 def RenderedConstructors(
-    syntax: ast.Module, module: str, source_path: str, known_units: Mapping[str, CanonicalUnit],
+    syntax: ast.Module, module: str, sourcePath: str, knownUnits: Mapping[str, CanonicalUnit],
 ) -> dict[str, CanonicalUnit]:
     """Include merged constructor prose only inside statically discovered public classes."""
 
@@ -89,14 +89,14 @@ def RenderedConstructors(
         if isinstance(node, ast.ClassDef):
             parent += "." + node.name
 
-            if "symbol:" + parent not in known_units:
+            if "symbol:" + parent not in knownUnits:
                 return
 
             for member in node.body:
                 if (isinstance(member, ast.FunctionDef) and member.name == "__init__"
                         and ast.get_docstring(member)):
                     identifier = f"symbol:{parent}.__init__"
-                    result[identifier] = _NodeUnit(identifier, source_path, member)
+                    result[identifier] = _NodeUnit(identifier, sourcePath, member)
 
         for child in ast.iter_child_nodes(node):
             Visit(child, parent)
@@ -106,17 +106,17 @@ def RenderedConstructors(
     return result
 
 
-def CoverageMessages(project_root: Path) -> tuple[str, ...]:
+def CoverageMessages(projectRoot: Path) -> tuple[str, ...]:
     """Collect every rendered coverage sentence from the canonical renderer itself."""
 
     messages: set[str] = set()
-    files = documentation_coverage.InventoryFiles(project_root)
-    definitions: list[documentation_coverage.DefinitionCoverage] = []
+    files = documentationCoverage.InventoryFiles(projectRoot)
+    definitions: list[documentationCoverage.DefinitionCoverage] = []
 
     for item in files:
         if item.category == "package":
-            syntax = ast.parse((project_root / item.source_path).read_text(encoding="utf-8"))
-            definitions.extend(documentation_coverage.InventoryDefinitions(item.source_path, syntax))
+            syntax = ast.parse((projectRoot / item.sourcePath).read_text(encoding="utf-8"))
+            definitions.extend(documentationCoverage.InventoryDefinitions(item.sourcePath, syntax))
 
     def Collect(message: str) -> str:
         """Retain one canonical sentence while exercising the actual coverage renderer."""
@@ -125,29 +125,29 @@ def CoverageMessages(project_root: Path) -> tuple[str, ...]:
 
         return message
 
-    documentation_coverage.RenderInventory(files, definitions, Collect)
+    documentationCoverage.RenderInventory(files, definitions, Collect)
 
     return tuple(sorted(messages))
 
 
 def RenderCoverage(
-    project_root: Path, translations: Mapping[str, ReviewedTranslation],
+    projectRoot: Path, translations: Mapping[str, ReviewedTranslation],
 ) -> tuple[str, str]:
     """Translate inventory prose only when every message has current attributable review."""
 
-    messages = CoverageMessages(project_root)
+    messages = CoverageMessages(projectRoot)
     entries = {message: translations.get("coverage:" + TextHash(message).removeprefix("sha256:"))
                for message in messages}
     states = [entry.state if entry else "missing" for entry in entries.values()]
     state = ("approved" if all(value == "approved" for value in states)
              else "stale" if "stale" in states else "missing")
-    files = documentation_coverage.InventoryFiles(project_root)
-    definitions: list[documentation_coverage.DefinitionCoverage] = []
+    files = documentationCoverage.InventoryFiles(projectRoot)
+    definitions: list[documentationCoverage.DefinitionCoverage] = []
 
     for item in files:
         if item.category == "package":
-            syntax = ast.parse((project_root / item.source_path).read_text(encoding="utf-8"))
-            definitions.extend(documentation_coverage.InventoryDefinitions(item.source_path, syntax))
+            syntax = ast.parse((projectRoot / item.sourcePath).read_text(encoding="utf-8"))
+            definitions.extend(documentationCoverage.InventoryDefinitions(item.sourcePath, syntax))
 
     def Translate(message: str) -> str:
         """Use translated prose only for a completely reviewed coverage page."""
@@ -156,7 +156,7 @@ def RenderCoverage(
 
         return entry.body if state == "approved" and entry else message
 
-    return documentation_coverage.RenderInventory(files, definitions, Translate), state
+    return documentationCoverage.RenderInventory(files, definitions, Translate), state
 
 
 def CatalogEntries(path: Path) -> tuple[dict[str, Any], ...]:
@@ -179,48 +179,48 @@ def CatalogEntries(path: Path) -> tuple[dict[str, Any], ...]:
 
 
 def ValidateTranslation(
-    unit: CanonicalUnit, record: Mapping[str, Any], reviewer_types: Sequence[str],
+    unit: CanonicalUnit, record: Mapping[str, Any], reviewerTypes: Sequence[str],
 ) -> ReviewedTranslation:
     """Reject malformed reviews and classify source or translated-byte drift as stale."""
 
     body = record.get("body")
-    reviewer_type = record.get("reviewerType")
+    reviewerType = record.get("reviewerType")
 
     if (not isinstance(body, str) or not body.strip() or body == unit.body
-            or record.get("sourcePath") != unit.source_path
-            or reviewer_type not in reviewer_types
+            or record.get("sourcePath") != unit.sourcePath
+            or reviewerType not in reviewerTypes
             or not isinstance(record.get("reviewer"), str) or not record["reviewer"].strip()
             or set(record.get("reviewRoles", ())) != {"editorial", "technical"}):
         raise ValueError(f"Generated translation lacks attributable complete review: {unit.identifier}")
 
     try:
-        reviewed_at = datetime.fromisoformat(record["reviewedAt"].replace("Z", "+00:00"))
+        reviewedAt = datetime.fromisoformat(record["reviewedAt"].replace("Z", "+00:00"))
 
     except (KeyError, TypeError, ValueError, AttributeError) as error:
         raise ValueError(f"Generated translation lacks review timestamp: {unit.identifier}") from error
 
-    if reviewed_at.tzinfo is None:
+    if reviewedAt.tzinfo is None:
         raise ValueError(f"Generated translation review requires timezone: {unit.identifier}")
 
     for field in ("sourceHash", "reviewedTranslationHash"):
         if not re.fullmatch(r"sha256:[0-9a-f]{64}", str(record.get(field, ""))):
             raise ValueError(f"Generated translation lacks {field}: {unit.identifier}")
 
-    source_hash = CanonicalHash(unit)
-    translation_hash = TextHash(body)
+    sourceHash = CanonicalHash(unit)
+    translationHash = TextHash(body)
     state = "approved"
 
-    if (record["sourceHash"] != source_hash
-            or record["reviewedTranslationHash"] != translation_hash):
+    if (record["sourceHash"] != sourceHash
+            or record["reviewedTranslationHash"] != translationHash):
         state = "stale"
 
-    source_code = [DiagramStructure(match.group(0)) for match in CODE_FENCE.finditer(unit.body)]
-    translated_code = [DiagramStructure(match.group(0)) for match in CODE_FENCE.finditer(body)]
+    sourceCode = [DiagramStructure(match.group(0)) for match in CODE_FENCE.finditer(unit.body)]
+    translatedCode = [DiagramStructure(match.group(0)) for match in CODE_FENCE.finditer(body)]
 
-    if source_code != translated_code:
+    if sourceCode != translatedCode:
         raise ValueError(f"Generated translation changed code examples: {unit.identifier}")
 
-    return ReviewedTranslation(body, state, source_hash, translation_hash, str(reviewer_type))
+    return ReviewedTranslation(body, state, sourceHash, translationHash, str(reviewerType))
 
 
 def DiagramStructure(fence: str) -> str:
@@ -242,24 +242,24 @@ def DiagramStructure(fence: str) -> str:
 
 
 def LoadTranslations(
-    project_root: Path, units: Mapping[str, CanonicalUnit],
+    projectRoot: Path, units: Mapping[str, CanonicalUnit],
 ) -> dict[str, dict[str, ReviewedTranslation]]:
     """Read tracked catalogs and reject duplicates, unknown source IDs, or forged reviews."""
 
-    root = project_root / CATALOG_ROOT
+    root = projectRoot / CATALOG_ROOT
     results: dict[str, dict[str, ReviewedTranslation]] = {locale: {} for locale in LOCALES}
 
     if not root.exists():
         return results
 
-    project = tomllib.loads((project_root / "docs/i18n/project.toml").read_text(encoding="utf-8"))
-    reviewer_types = project.get("reviewerTypes", ["human"])
-    tracked = set(documentation_coverage.TrackedFiles(project_root))
+    project = tomllib.loads((projectRoot / "docs/i18n/project.toml").read_text(encoding="utf-8"))
+    reviewerTypes = project.get("reviewerTypes", ["human"])
+    tracked = set(documentationCoverage.TrackedFiles(projectRoot))
 
     for locale in LOCALES:
         for path in sorted((root / locale).rglob("*.toml")):
             if (path.is_symlink() or not path.resolve().is_relative_to(root.resolve())
-                    or path.relative_to(project_root).as_posix() not in tracked):
+                    or path.relative_to(projectRoot).as_posix() not in tracked):
                 raise ValueError(f"Untracked or redirected generated translation: {locale}/{path.name}")
 
             for record in CatalogEntries(path):
@@ -269,7 +269,7 @@ def LoadTranslations(
                     raise ValueError(f"Unknown or repeated generated translation: {locale}:{identifier}")
 
                 results[locale][identifier] = ValidateTranslation(units[identifier], record,
-                                                                 reviewer_types)
+                                                                 reviewerTypes)
 
     return results
 
@@ -341,24 +341,24 @@ def RequireComplete(states: Mapping[str, Mapping[str, str]]) -> None:
 
 
 def WriteApiOverlay(
-    project_root: Path, build_root: Path, locale: str,
+    projectRoot: Path, buildRoot: Path, locale: str,
     translations: Mapping[str, ReviewedTranslation], units: Mapping[str, CanonicalUnit],
 ) -> tuple[Path, Path]:
     """Write validated prose for static Griffe extraction while leaving wheel source intact."""
 
-    target = build_root / f"api-docstrings-{locale}.json"
-    complete_sources = {unit.source_path for unit in units.values() if unit.kind == "symbol"}
+    target = buildRoot / f"api-docstrings-{locale}.json"
+    completeSources = {unit.sourcePath for unit in units.values() if unit.kind == "symbol"}
 
     for identifier, unit in units.items():
         if unit.kind == "symbol" and (identifier not in translations or translations[identifier].state != "approved"):
-            complete_sources.discard(unit.source_path)
+            completeSources.discard(unit.sourcePath)
 
     payload = {identifier.split(":", 1)[1]: entry.body
                for identifier, entry in translations.items()
                if identifier.startswith(("symbol:", "module:")) and entry.state == "approved"
-               and units[identifier].source_path in complete_sources}
+               and units[identifier].sourcePath in completeSources}
     target.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
-    extension = project_root / "tools/translated_docstrings.py"
+    extension = projectRoot / "tools/translated_docstrings.py"
 
     return extension, target
 
@@ -370,14 +370,14 @@ class _ProseParser(html.parser.HTMLParser):
         """Initialize an isolated HTML text collector."""
 
         super().__init__(convert_charrefs=True)
-        self.pre_depth = 0
+        self.preDepth = 0
         self.parts: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         """Respect HTMLParser's callback name and track literal source blocks."""
 
         if tag == "pre":
-            self.pre_depth += 1
+            self.preDepth += 1
 
         elif tag in {"p", "div", "br", "li", "td", "th"}:
             self.parts.append(" ")
@@ -386,7 +386,7 @@ class _ProseParser(html.parser.HTMLParser):
         """Separate prose blocks while keeping inline markup text contiguous."""
 
         if tag == "pre":
-            self.pre_depth -= 1
+            self.preDepth -= 1
 
         elif tag in {"p", "div", "li", "td", "th"}:
             self.parts.append(" ")
@@ -394,7 +394,7 @@ class _ProseParser(html.parser.HTMLParser):
     def handle_data(self, data: str) -> None:
         """Collect visible text outside original Python source listings."""
 
-        if not self.pre_depth:
+        if not self.preDepth:
             self.parts.append(data)
 
     def Text(self) -> str:
@@ -404,41 +404,41 @@ class _ProseParser(html.parser.HTMLParser):
 
 
 def VerifyApiProse(
-    site_root: Path, locale: str, units: Mapping[str, CanonicalUnit],
+    siteRoot: Path, locale: str, units: Mapping[str, CanonicalUnit],
     translations: Mapping[str, ReviewedTranslation],
 ) -> None:
     """Require reviewed prose in real API output, not only an approved-state marker."""
 
     markdown = importlib.import_module("markdown")
 
-    api_units = {identifier: unit for identifier, unit in units.items() if unit.kind == "symbol"}
-    complete_sources = {unit.source_path for unit in api_units.values()}
+    apiUnits = {identifier: unit for identifier, unit in units.items() if unit.kind == "symbol"}
+    completeSources = {unit.sourcePath for unit in apiUnits.values()}
 
-    for identifier, unit in api_units.items():
+    for identifier, unit in apiUnits.items():
         if identifier not in translations or translations[identifier].state != "approved":
-            complete_sources.discard(unit.source_path)
+            completeSources.discard(unit.sourcePath)
 
     displayed: dict[str, str] = {}
 
-    for source_path in sorted(complete_sources):
-        module = documentation_coverage.ModuleName(source_path)
-        page = site_root / locale / "api/modules" / module.replace(".", "-") / "index.html"
+    for sourcePath in sorted(completeSources):
+        module = documentationCoverage.ModuleName(sourcePath)
+        page = siteRoot / locale / "api/modules" / module.replace(".", "-") / "index.html"
         parser = _ProseParser()
         parser.feed(page.read_text(encoding="utf-8"))
-        displayed[source_path] = parser.Text()
+        displayed[sourcePath] = parser.Text()
 
-    for identifier, unit in api_units.items():
-        if unit.source_path not in complete_sources:
+    for identifier, unit in apiUnits.items():
+        if unit.sourcePath not in completeSources:
             continue
 
         expected = _ProseParser()
         expected.feed(markdown.markdown(translations[identifier].body))
 
-        if expected.Text() not in displayed[unit.source_path]:
+        if expected.Text() not in displayed[unit.sourcePath]:
             raise ValueError(f"Reviewed API translation was not rendered: {locale}:{identifier}")
 
 
-def WriteApiTemplates(project_root: Path, build_root: Path, locale: str) -> Path:
+def WriteApiTemplates(projectRoot: Path, buildRoot: Path, locale: str) -> Path:
     """Localize the pinned handler's interface labels without copying its source templates."""
 
     handler = importlib.import_module("mkdocstrings_handlers.python")
@@ -446,15 +446,15 @@ def WriteApiTemplates(project_root: Path, build_root: Path, locale: str) -> Path
     if handler.__file__ is None:
         raise ValueError("Installed API handler has no template source path")
 
-    handler_root = Path(handler.__file__).parent
-    source = (handler_root / "templates/material/_base/languages/en.html.jinja").read_text(encoding="utf-8")
+    handlerRoot = Path(handler.__file__).parent
+    source = (handlerRoot / "templates/material/_base/languages/en.html.jinja").read_text(encoding="utf-8")
     expected = set(re.findall(r'^\s*"([^"\n]+)"\s*:', source, re.MULTILINE))
-    labels = tomllib.loads((project_root / "docs/i18n/api-labels.toml").read_text(encoding="utf-8"))[locale]
+    labels = tomllib.loads((projectRoot / "docs/i18n/api-labels.toml").read_text(encoding="utf-8"))[locale]
 
     if not expected or set(labels) != expected or any(not isinstance(value, str) or not value for value in labels.values()):
         raise ValueError("API interface translations do not match the pinned handler's label inventory")
 
-    root = build_root / "locale-templates" / locale
+    root = buildRoot / "locale-templates" / locale
     language = "zh" if locale == "zh-CN" else locale
     destination = root / "python/material/languages" / f"{language}.html.jinja"
     destination.parent.mkdir(parents=True, exist_ok=True)

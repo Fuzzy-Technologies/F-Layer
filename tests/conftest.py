@@ -17,26 +17,26 @@ TEST_STAGES = frozenset({"unit", "contract", "functional", "integration", "e2e"}
 def pytest_collection_modifyitems(config: pytest.Config, items: Sequence[pytest.Item]) -> None:
     """Assign the stage from the test directory and reject unclassified test paths."""
 
-    tests_root = Path(config.rootpath) / "tests"
+    testsRoot = Path(config.rootpath) / "tests"
 
     for item in items:
-        relative_path = item.path.relative_to(tests_root)
-        stage_name = relative_path.parts[0]
+        relativePath = item.path.relative_to(testsRoot)
+        stageName = relativePath.parts[0]
 
-        if stage_name not in TEST_STAGES:
+        if stageName not in TEST_STAGES:
             raise pytest.UsageError(f"Test must belong to a supported stage: {item.path}")
 
-        item.add_marker(getattr(pytest.mark, stage_name))
+        item.add_marker(getattr(pytest.mark, stageName))
 
 
-def RejectNetwork(*arguments: object, **keyword_arguments: object) -> NoReturn:
+def RejectNetwork(*arguments: object, **keywordArguments: object) -> NoReturn:
     """Require provider tests to use injected fakes rather than live networking."""
 
     raise RuntimeError("Real socket networking is disabled in F-Layer tests; use a fake")
 
 
-@pytest.fixture(autouse=True)
-def deny_network(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.fixture(autouse=True, name='denyNetwork')
+def DenyNetworkFixture(monkeypatch: pytest.MonkeyPatch) -> None:
     """Block socket connections, datagrams, and DNS for the duration of each test."""
 
     monkeypatch.setattr(socket, "create_connection", RejectNetwork)
@@ -46,8 +46,8 @@ def deny_network(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(socket.socket, "sendto", RejectNetwork)
 
 
-@pytest.fixture
-def loopback_connection() -> Callable[[int], socket.socket]:
+@pytest.fixture(name='loopbackConnection')
+def LoopbackConnectionFixture() -> Callable[[int], socket.socket]:
     """Connect only to a repository-defined IPv4 loopback listener without DNS."""
 
     def ConnectLoopback(port: int) -> socket.socket:

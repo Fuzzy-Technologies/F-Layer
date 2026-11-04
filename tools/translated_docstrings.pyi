@@ -5,7 +5,7 @@ from typing import Any
 class TranslatedDocstrings:
     """Replace documentation prose while preserving statically loaded source."""
 
-    def __init__(self, translations_path: str) -> None:
+    def __init__(self, translationsPath: str) -> None:
         """Read the renderer's validated overlay."""
 
         ...

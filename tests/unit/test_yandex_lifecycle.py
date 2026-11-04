@@ -44,9 +44,9 @@ class RecordingRunner:
         self.calls: list[tuple[str, ...]] = []
         self.resources: dict[str, dict[str, object]] = {}
         self.overrides: dict[str, CommandResult | Exception] = {}
-        self.last_user_data: bytes | None = None
-        self.last_temporary_path: str | None = None
-        self.last_temporary_mode: int | None = None
+        self.lastUserData: bytes | None = None
+        self.lastTemporaryPath: str | None = None
+        self.lastTemporaryMode: int | None = None
 
     def Run(self, command: tuple[str, ...], timeout: float) -> CommandResult:
         """Supply fake read/create/delete responses; never invoke a shell, socket or CLI."""
@@ -75,16 +75,16 @@ class RecordingRunner:
             return CommandResult(0, json.dumps(values))
 
         if operation == "get":
-            resource_id = command[command.index("--id") + 1]
+            resourceId = command[command.index("--id") + 1]
 
-            if resource_id not in self.resources:
+            if resourceId not in self.resources:
                 return CommandResult(1, stderr="NOT_FOUND synthetic resource")
 
-            return CommandResult(0, json.dumps(self.resources[resource_id]))
+            return CommandResult(0, json.dumps(self.resources[resourceId]))
 
         if operation == "delete":
-            resource_id = command[command.index("--id") + 1]
-            self.resources.pop(resource_id, None)
+            resourceId = command[command.index("--id") + 1]
+            self.resources.pop(resourceId, None)
 
             return CommandResult(0)
 
@@ -100,9 +100,9 @@ class RecordingRunner:
 
         labels = command[command.index("--labels") + 1]
         name = command[command.index("--name") + 1]
-        resource_id = f"resource-{len(self.resources) + 1}"
+        resourceId = f"resource-{len(self.resources) + 1}"
         row: dict[str, object] = {
-            "id": resource_id, "name": name, "folder_id": "test-folder",
+            "id": resourceId, "name": name, "folder_id": "test-folder",
             "labels": dict(item.split("=", 1) for item in labels.split(",")),
             "test_kind": command[2],
         }
@@ -125,11 +125,11 @@ class RecordingRunner:
         if "--metadata-from-file" in command:
             argument = command[command.index("--metadata-from-file") + 1]
             path = Path(argument.removeprefix("user-data="))
-            self.last_user_data = path.read_bytes()
-            self.last_temporary_path = str(path)
-            self.last_temporary_mode = path.stat().st_mode & 0o777
+            self.lastUserData = path.read_bytes()
+            self.lastTemporaryPath = str(path)
+            self.lastTemporaryMode = path.stat().st_mode & 0o777
 
-        self.resources[resource_id] = row
+        self.resources[resourceId] = row
 
         return CommandResult(0, json.dumps(row))
 
@@ -187,7 +187,7 @@ def CreateDependencies(provider: YandexLifecycleProvider) -> dict[str, object]:
 
     for spec in Specs()[:-1]:
         mapping = {key: resources[key] for key in spec.dependencies}
-        resources[spec.logical_id] = provider.CreateResource(spec, IDENTITY, mapping, OPERATION_ID)  # type: ignore[arg-type]
+        resources[spec.logicalId] = provider.CreateResource(spec, IDENTITY, mapping, OPERATION_ID)  # type: ignore[arg-type]
 
     return resources
 
@@ -215,7 +215,7 @@ def test_CreateAndDeleteSixKindsUseExactOwnedDependencies() -> None:
     instance = provider.CreateResource(spec, IDENTITY, {
         key: resources[key] for key in spec.dependencies
     }, OPERATION_ID)  # type: ignore[arg-type]
-    resources[spec.logical_id] = instance
+    resources[spec.logicalId] = instance
     creates = [command for command in runner.calls if command[3] == "create"]
     command = creates[-1]
 
@@ -226,7 +226,7 @@ def test_CreateAndDeleteSixKindsUseExactOwnedDependencies() -> None:
         ",auto-delete=false"
     ), "Disk lifecycle escaped explicit orchestration"
     assert "ssh-keys=gateway-admin:" in command[command.index("--metadata") + 1], "SSH user was lost"
-    assert instance.public_addresses == ("192.0.2.10",), "Public address observation was lost"
+    assert instance.publicAddresses == ("192.0.2.10",), "Public address observation was lost"
 
     for command in creates:
         assert command[command.index("--folder-id") + 1] == "test-folder", "Mutation lost scope"
@@ -235,8 +235,8 @@ def test_CreateAndDeleteSixKindsUseExactOwnedDependencies() -> None:
         assert "managed-by=f-layer" in command[command.index("--labels") + 1], "Ownership was omitted"
 
     for item in reversed(Specs()):
-        resource = resources[item.logical_id]
-        provider.DeleteResource(resource.reference, IDENTITY, item.logical_id)  # type: ignore[attr-defined]
+        resource = resources[item.logicalId]
+        provider.DeleteResource(resource.reference, IDENTITY, item.logicalId)  # type: ignore[attr-defined]
 
     deletes = [command for command in runner.calls if command[3] == "delete"]
 
@@ -286,9 +286,9 @@ def test_IdempotentOwnedDiscoveryPreventsSecondCreate() -> None:
 
 @pytest.mark.parametrize("stderr", [RULE_REJECTION, "ERROR: execute command: unknown flag: --rule\n"])
 @pytest.mark.parametrize("preexisting", [False, True])
-@pytest.mark.parametrize("cleanup_failure", [False, True])
+@pytest.mark.parametrize('cleanupFailure', [False, True])
 def test_LocalCliRejectionRollsBackOwnedProgressAndAllowsExplicitRetry(
-    tmp_path: Path, stderr: str, preexisting: bool, cleanup_failure: bool,
+    tmp_path: Path, stderr: str, preexisting: bool, cleanupFailure: bool,
 ) -> None:
     """A proven pre-RPC failure must not strand paid resources behind uncertain intent."""
 
@@ -311,23 +311,23 @@ def test_LocalCliRejectionRollsBackOwnedProgressAndAllowsExplicitRetry(
     provider = YandexLifecycleProvider(YandexCloudSettings("test-folder"), runner)
     original = provider.CreateResource(Specs()[0], IDENTITY, {}, "b" * 32) if preexisting else None
 
-    if cleanup_failure:
+    if cleanupFailure:
         runner.overrides["delete"] = subprocess.TimeoutExpired("synthetic-secret-command", 45)
 
-    state_path = tmp_path / "state.json"
-    engine = LifecycleEngine(DeploymentPlan(IDENTITY, Specs()), provider, state_path)
+    statePath = tmp_path / "state.json"
+    engine = LifecycleEngine(DeploymentPlan(IDENTITY, Specs()), provider, statePath)
     report = engine.Create()
 
-    if cleanup_failure:
-        assert report.status == "rollback-incomplete" and report.recovery_required, "Interrupted cleanup lost its recovery intent"
+    if cleanupFailure:
+        assert report.status == "rollback-incomplete" and report.recoveryRequired, "Interrupted cleanup lost its recovery intent"
         runner.overrides.clear()
         report = engine.Recover(rollback=True)
 
-    state = LoadState(state_path, IDENTITY)
+    state = LoadState(statePath, IDENTITY)
 
-    assert report.status == "rolled-back" and not report.recovery_required, "Local parser failure poisoned the journal"
+    assert report.status == "rolled-back" and not report.recoveryRequired, "Local parser failure poisoned the journal"
     assert state is not None and len(state.resources) == int(preexisting), "Rollback did not preserve exactly the preexisting resources"
-    assert not state_path.with_name(".state.json.operation.json").exists(), "Completed rollback retained a pending create"
+    assert not statePath.with_name(".state.json.operation.json").exists(), "Completed rollback retained a pending create"
     assert len(runner.resources) == int(preexisting), "Failed deployment left newly allocated resources"
 
     if original is not None:
@@ -361,7 +361,7 @@ def test_RejectionClassificationRequiresExactLocalEvidence(
     with pytest.raises(MutationError) as caught:
         provider._MutationRun(("vpc", kind, "create", "--rule", "fixture"), "create")
 
-    assert caught.value.outcome_unknown is unknown, "Mutation outcome classification lost its proof boundary"
+    assert caught.value.outcomeUnknown is unknown, "Mutation outcome classification lost its proof boundary"
     assert len(runner.calls) == 1, "Failed mutation was automatically retried"
     assert stderr.strip() not in "".join(traceback.format_exception(caught.value)), "Raw CLI output leaked"
 
@@ -373,7 +373,7 @@ def test_FindRejectsAmbiguousDriftedOrMalformedOwnership(variation: str) -> None
     provider, runner = Provider()
     spec = Specs()[3] if variation == "zone" else Specs()[0]
     resource = provider.CreateResource(spec, IDENTITY, {}, OPERATION_ID)
-    row = runner.resources[resource.reference.resource_id]
+    row = runner.resources[resource.reference.resourceId]
 
     if variation == "duplicate":
         runner.resources["duplicate"] = {**row, "id": "duplicate"}
@@ -401,13 +401,13 @@ def test_DeleteVerifiesEveryOwnershipLabel(field: str) -> None:
     provider, runner = Provider()
     spec = Specs()[0]
     resource = provider.CreateResource(spec, IDENTITY, {}, OPERATION_ID)
-    row = runner.resources[resource.reference.resource_id]
+    row = runner.resources[resource.reference.resourceId]
     row["labels"] = {**dict(row["labels"]), field: "foreign"}  # type: ignore[arg-type]
 
     with pytest.raises(MutationError) as caught:
-        provider.DeleteResource(resource.reference, IDENTITY, spec.logical_id)
+        provider.DeleteResource(resource.reference, IDENTITY, spec.logicalId)
 
-    assert caught.value.outcome_unknown is False, "Ownership refusal was classified as dispatched"
+    assert caught.value.outcomeUnknown is False, "Ownership refusal was classified as dispatched"
     assert caught.value.code == ProviderErrorCode.SCOPE_MISMATCH, "Ownership failure lost its category"
     assert not any(command[3] == "delete" for command in runner.calls), "Foreign resource was deleted"
 
@@ -419,7 +419,7 @@ def test_DeleteMissingResourceIsSafeAndRepeated() -> None:
     spec = Specs()[0]
     resource = provider.CreateResource(spec, IDENTITY, {}, OPERATION_ID)
     runner.resources.clear()
-    provider.DeleteResource(resource.reference, IDENTITY, spec.logical_id)
+    provider.DeleteResource(resource.reference, IDENTITY, spec.logicalId)
 
     assert not any(command[3] == "delete" for command in runner.calls), "Missing resource was mutated"
 
@@ -437,13 +437,13 @@ def test_ExactScopeMismatchPreventsMutation(variation: str) -> None:
         identity = dataclasses.replace(identity, provider="other-provider")
 
     elif variation == "folder":
-        identity = dataclasses.replace(identity, scope_id="other-folder")
+        identity = dataclasses.replace(identity, scopeId="other-folder")
 
     else:
-        runner.resources[resource.reference.resource_id]["folder_id"] = "other-folder"
+        runner.resources[resource.reference.resourceId]["folder_id"] = "other-folder"
 
     with pytest.raises(ProviderError):
-        provider.DeleteResource(resource.reference, identity, spec.logical_id)
+        provider.DeleteResource(resource.reference, identity, spec.logicalId)
 
     assert not any(command[3] == "delete" for command in runner.calls), "Cross-scope deletion occurred"
 
@@ -471,7 +471,7 @@ def test_DispatchedCreateFailureIsUncertainSanitizedAndNeverRetried(
 
     evidence = "".join(traceback.format_exception(caught.value))
 
-    assert caught.value.outcome_unknown is True, "Dispatched create was classified definitely absent"
+    assert caught.value.outcomeUnknown is True, "Dispatched create was classified definitely absent"
     assert "synthetic-secret" not in evidence, "Vendor output or runner exception leaked"
     assert sum(command[3] == "create" for command in runner.calls) == 1, "Uncertain create was retried"
 
@@ -494,7 +494,7 @@ def test_SuccessfulCreatePayloadMustMatchExactScopeAndOwnership(field: str, valu
     with pytest.raises(MutationError) as caught:
         provider.CreateResource(Specs()[0], IDENTITY, {}, OPERATION_ID)
 
-    assert caught.value.outcome_unknown is True, "Bad create response discarded an orphan possibility"
+    assert caught.value.outcomeUnknown is True, "Bad create response discarded an orphan possibility"
 
 
 @pytest.mark.parametrize("failure", ["still-present", "read-denied", "timeout"])
@@ -509,7 +509,7 @@ def test_DeleteRequiresConfirmedAbsenceAndPreservesUncertainty(failure: str) -> 
         runner.overrides["delete"] = subprocess.TimeoutExpired(("yc",), 45)
 
     else:
-        original_run = runner.Run
+        originalRun = runner.Run
 
         def Run(command: tuple[str, ...], timeout: float) -> CommandResult:
             """Inject post-delete observations without affecting the ownership preflight."""
@@ -522,14 +522,14 @@ def test_DeleteRequiresConfirmedAbsenceAndPreservesUncertainty(failure: str) -> 
 
                 return CommandResult(0)
 
-            return original_run(command, timeout)
+            return originalRun(command, timeout)
 
         runner.Run = Run  # type: ignore[method-assign]
 
     with pytest.raises(MutationError) as caught:
-        provider.DeleteResource(resource.reference, IDENTITY, spec.logical_id)
+        provider.DeleteResource(resource.reference, IDENTITY, spec.logicalId)
 
-    assert caught.value.outcome_unknown is True, "Unconfirmed deletion was classified complete"
+    assert caught.value.outcomeUnknown is True, "Unconfirmed deletion was classified complete"
     assert sum(command[3] == "delete" for command in runner.calls) == 1, "Deletion was blindly retried"
 
 
@@ -553,7 +553,7 @@ def test_UnsupportedOptionsFailBeforeAnyInfrastructureAccess(index: int, key: st
     with pytest.raises(MutationError) as caught:
         provider.CreateResource(spec, IDENTITY, {}, OPERATION_ID)
 
-    assert caught.value.outcome_unknown is False, "Pure request rejection was classified as dispatched"
+    assert caught.value.outcomeUnknown is False, "Pure request rejection was classified as dispatched"
     assert runner.calls == [], "Invalid request accessed infrastructure"
 
 
@@ -564,7 +564,7 @@ def test_UnownedOrWrongZoneDependenciesCannotAuthorizeCreate() -> None:
     resources = CreateDependencies(provider)
     spec = Specs()[-1]
     address = resources["address"]
-    runner.resources[address.reference.resource_id]["labels"] = {}  # type: ignore[attr-defined]
+    runner.resources[address.reference.resourceId]["labels"] = {}  # type: ignore[attr-defined]
 
     with pytest.raises(MutationError):
         provider.CreateResource(spec, IDENTITY, {
@@ -574,10 +574,10 @@ def test_UnownedOrWrongZoneDependenciesCannotAuthorizeCreate() -> None:
     assert not any(command[2:4] == ("instance", "create") for command in runner.calls), "Unowned dependency was used"
 
 
-def ArtifactSpec(tmp_path: Path, content: bytes) -> ResourceSpec:
+def ArtifactSpec(tmpPath: Path, content: bytes) -> ResourceSpec:
     """Write a synthetic private nonsecret cloud-init artifact and bind its exact digest."""
 
-    path = tmp_path / "server-cloud-init.json"
+    path = tmpPath / "server-cloud-init.json"
     path.write_bytes(content)
     path.chmod(0o600)
     spec = ReplaceOption(Specs()[-1], "user_data_file", str(path))
@@ -596,13 +596,13 @@ def test_InitializationUsesPrivateCopiedBoundedVerifiedArtifact(tmp_path: Path) 
         key: resources[key] for key in spec.dependencies
     }, OPERATION_ID)  # type: ignore[arg-type]
 
-    assert runner.last_user_data == content, "Initialization bytes changed between validation and CLI"
-    assert runner.last_temporary_path is not None and not Path(
-        runner.last_temporary_path
+    assert runner.lastUserData == content, "Initialization bytes changed between validation and CLI"
+    assert runner.lastTemporaryPath is not None and not Path(
+        runner.lastTemporaryPath
     ).exists(), "Private temporary initialization artifact was retained"
 
     if os.name == "posix":
-        assert runner.last_temporary_mode == 0o600, "CLI input snapshot was world readable"
+        assert runner.lastTemporaryMode == 0o600, "CLI input snapshot was world readable"
 
 
 @pytest.mark.parametrize("variation", [
@@ -664,7 +664,7 @@ def test_UnsafeInitializationNeverAccessesCloud(tmp_path: Path, variation: str) 
     with pytest.raises(MutationError) as caught:
         provider.CreateResource(spec, IDENTITY, {}, OPERATION_ID)
 
-    assert caught.value.outcome_unknown is False, "Invalid local artifact was classified as dispatched"
+    assert caught.value.outcomeUnknown is False, "Invalid local artifact was classified as dispatched"
     assert runner.calls == [], "Invalid local initialization accessed cloud infrastructure"
     assert "synthetic-secret" not in "".join(traceback.format_exception(caught.value)), "Artifact contents leaked"
 
@@ -684,7 +684,7 @@ def test_InitializationTemporaryFileFailureRemainsSafe(tmp_path: Path, monkeypat
             key: resources[key] for key in spec.dependencies
         }, OPERATION_ID)  # type: ignore[arg-type]
 
-    assert caught.value.outcome_unknown is False, "Temporary file failure was classified as dispatched"
+    assert caught.value.outcomeUnknown is False, "Temporary file failure was classified as dispatched"
     assert not any(command[2:4] == ("instance", "create") for command in runner.calls), "Failed file preparation dispatched"
     assert "synthetic-secret" not in "".join(traceback.format_exception(caught.value)), "Local input path leaked"
 
@@ -693,12 +693,12 @@ def test_TimeoutAfterAcceptedCreateRetainsDiscoverableOperationNonce() -> None:
     """An accepted mutation remains uniquely attributable after its response is lost."""
 
     provider, runner = Provider()
-    original_run = runner.Run
+    originalRun = runner.Run
 
     def Run(command: tuple[str, ...], timeout: float) -> CommandResult:
         """Lose only the create response after preserving the fake remote resource."""
 
-        response = original_run(command, timeout)
+        response = originalRun(command, timeout)
 
         if command[3] == "create":
             raise subprocess.TimeoutExpired(("synthetic-secret-command",), timeout)
@@ -713,22 +713,22 @@ def test_TimeoutAfterAcceptedCreateRetainsDiscoverableOperationNonce() -> None:
 
     recovered = provider.FindResource(spec, IDENTITY)
 
-    assert caught.value.outcome_unknown is True, "Accepted mutation was classified absent"
+    assert caught.value.outcomeUnknown is True, "Accepted mutation was classified absent"
     assert recovered is not None, "Stable logical labels cannot reconcile an interrupted create"
     assert dict(recovered.labels)["flayer-operation"] == OPERATION_ID, "Operation attribution was lost"
     assert sum(command[3] == "create" for command in runner.calls) == 1, "Recovery recreated an orphan"
 
 
-@pytest.mark.parametrize("operation_id", ["", "b" * 31, "b" * 33, "z" * 32, True])
-def test_InvalidOperationNonceCannotAccessCloud(operation_id: object) -> None:
+@pytest.mark.parametrize('operationId', ["", "b" * 31, "b" * 33, "z" * 32, True])
+def test_InvalidOperationNonceCannotAccessCloud(operationId: object) -> None:
     """Every mutation requires an explicit bounded journal operation identity."""
 
     provider, runner = Provider()
 
     with pytest.raises(MutationError) as caught:
-        provider.CreateResource(Specs()[0], IDENTITY, {}, operation_id)  # type: ignore[arg-type]
+        provider.CreateResource(Specs()[0], IDENTITY, {}, operationId)  # type: ignore[arg-type]
 
-    assert caught.value.outcome_unknown is False, "Invalid operation was classified submitted"
+    assert caught.value.outcomeUnknown is False, "Invalid operation was classified submitted"
     assert runner.calls == [], "Invalid operation nonce accessed infrastructure"
 
 
@@ -762,22 +762,22 @@ def test_DependencyStructureFreshZoneAndStatusAreRequired(variation: str) -> Non
         mapping["address"] = resources["boot-disk"]
 
     elif variation == "wrong-zone":
-        runner.resources[address.reference.resource_id]["external_ipv4_address"] = {  # type: ignore[attr-defined]
+        runner.resources[address.reference.resourceId]["external_ipv4_address"] = {  # type: ignore[attr-defined]
             "address": "192.0.2.10", "zone_id": "other-zone",
         }
 
     elif variation == "inactive":
-        runner.resources[address.reference.resource_id]["status"] = "DELETING"  # type: ignore[attr-defined]
+        runner.resources[address.reference.resourceId]["status"] = "DELETING"  # type: ignore[attr-defined]
 
     else:
-        runner.resources[address.reference.resource_id]["external_ipv4_address"] = {  # type: ignore[attr-defined]
+        runner.resources[address.reference.resourceId]["external_ipv4_address"] = {  # type: ignore[attr-defined]
             "zone_id": ZONE,
         }
 
     with pytest.raises(MutationError) as caught:
         provider.CreateResource(spec, IDENTITY, mapping, OPERATION_ID)  # type: ignore[arg-type]
 
-    assert caught.value.outcome_unknown is False, "Dependency preflight was classified submitted"
+    assert caught.value.outcomeUnknown is False, "Dependency preflight was classified submitted"
     assert not any(command[2:4] == ("instance", "create") for command in runner.calls), "Invalid dependency was used"
 
 
@@ -843,7 +843,7 @@ def test_UnknownObservedNameAndGetFailuresRemainSanitized() -> None:
     provider, runner = Provider()
     spec = Specs()[0]
     resource = provider.CreateResource(spec, IDENTITY, {}, OPERATION_ID)
-    runner.resources[resource.reference.resource_id]["name"] = "invalid secret name"
+    runner.resources[resource.reference.resourceId]["name"] = "invalid secret name"
 
     with pytest.raises(ProviderError):
         provider.GetResource(resource.reference)
@@ -851,7 +851,7 @@ def test_UnknownObservedNameAndGetFailuresRemainSanitized() -> None:
     runner.overrides["get"] = CommandResult(1, stderr="forbidden synthetic-secret")
 
     with pytest.raises(ProviderError) as caught:
-        provider.DeleteResource(resource.reference, IDENTITY, spec.logical_id)
+        provider.DeleteResource(resource.reference, IDENTITY, spec.logicalId)
 
     assert "synthetic-secret" not in str(caught.value), "Pre-delete vendor error escaped sanitization"
     assert not any(command[3] == "delete" for command in runner.calls), "Failed ownership observation mutated cloud"
@@ -865,7 +865,7 @@ def test_PrivateTemporaryCleanupFailurePreservesRemoteUncertainty(
     provider, runner = Provider()
     resources = CreateDependencies(provider)
     spec = ArtifactSpec(tmp_path, b'{"ssh_pwauth":false}\n')
-    original_unlink = os.unlink
+    originalUnlink = os.unlink
 
     with monkeypatch.context() as context:
         context.setattr("flayer.providers.yandex_lifecycle.os.unlink", Mock(
@@ -877,11 +877,11 @@ def test_PrivateTemporaryCleanupFailurePreservesRemoteUncertainty(
                 key: resources[key] for key in spec.dependencies
             }, OPERATION_ID)  # type: ignore[arg-type]
 
-    assert caught.value.outcome_unknown is True, "Post-mutation cleanup failure lost remote uncertainty"
+    assert caught.value.outcomeUnknown is True, "Post-mutation cleanup failure lost remote uncertainty"
     assert "synthetic-secret" not in "".join(traceback.format_exception(caught.value)), "Cleanup path leaked"
-    assert runner.last_temporary_path is not None, "Fake CLI never received a temporary input"
+    assert runner.lastTemporaryPath is not None, "Fake CLI never received a temporary input"
 
-    original_unlink(runner.last_temporary_path)
+    originalUnlink(runner.lastTemporaryPath)
 
 
 def test_RollbackDeletionRechecksItsExactOperationNonce() -> None:
@@ -892,29 +892,29 @@ def test_RollbackDeletionRechecksItsExactOperationNonce() -> None:
     resource = provider.CreateResource(spec, IDENTITY, {}, "b" * 32)
 
     with pytest.raises(MutationError) as caught:
-        provider.DeleteResource(resource.reference, IDENTITY, spec.logical_id, OPERATION_ID)
+        provider.DeleteResource(resource.reference, IDENTITY, spec.logicalId, OPERATION_ID)
 
-    assert caught.value.outcome_unknown is False, "Nonce mismatch was classified dispatched"
+    assert caught.value.outcomeUnknown is False, "Nonce mismatch was classified dispatched"
     assert not any(command[3] == "delete" for command in runner.calls), "Cross-operation rollback deleted a resource"
 
-    provider.DeleteResource(resource.reference, IDENTITY, spec.logical_id, "b" * 32)
+    provider.DeleteResource(resource.reference, IDENTITY, spec.logicalId, "b" * 32)
 
     assert not runner.resources, "Correctly attributed rollback could not remove its resource"
 
 
-@pytest.mark.parametrize("operation_id", ["invalid", "b" * 31, True])
-def test_InvalidRollbackNonceRejectsBeforeLookup(operation_id: object) -> None:
+@pytest.mark.parametrize('operationId', ["invalid", "b" * 31, True])
+def test_InvalidRollbackNonceRejectsBeforeLookup(operationId: object) -> None:
     """An invalid rollback operation identifier cannot trigger even an exact-ID observation."""
 
     provider, runner = Provider()
     spec = Specs()[0]
     resource = provider.CreateResource(spec, IDENTITY, {}, OPERATION_ID)
-    previous_count = len(runner.calls)
+    previousCount = len(runner.calls)
 
     with pytest.raises(MutationError):
-        provider.DeleteResource(resource.reference, IDENTITY, spec.logical_id, operation_id)  # type: ignore[arg-type]
+        provider.DeleteResource(resource.reference, IDENTITY, spec.logicalId, operationId)  # type: ignore[arg-type]
 
-    assert len(runner.calls) == previous_count, "Malformed rollback nonce accessed infrastructure"
+    assert len(runner.calls) == previousCount, "Malformed rollback nonce accessed infrastructure"
 
 
 def test_AllSixtyFourExplicitTCPRulesFitTheImmutableBudget() -> None:
@@ -949,7 +949,7 @@ def test_PredispatchReadFailureIsDefinitelyNotSubmitted(
     provider, runner = Provider()
     resources = CreateDependencies(provider) if phase == "get" else {}
     spec = Specs()[-1] if phase == "get" else Specs()[0]
-    previous_creates = sum(command[3] == "create" for command in runner.calls)
+    previousCreates = sum(command[3] == "create" for command in runner.calls)
     runner.overrides[phase] = failure
 
     with pytest.raises(MutationError) as caught:
@@ -957,8 +957,8 @@ def test_PredispatchReadFailureIsDefinitelyNotSubmitted(
             key: resources[key] for key in spec.dependencies
         }, OPERATION_ID)  # type: ignore[arg-type]
 
-    assert caught.value.outcome_unknown is False, "Read-only preflight failure was classified submitted"
-    assert sum(command[3] == "create" for command in runner.calls) == previous_creates, "Read failure still dispatched mutation"
+    assert caught.value.outcomeUnknown is False, "Read-only preflight failure was classified submitted"
+    assert sum(command[3] == "create" for command in runner.calls) == previousCreates, "Read failure still dispatched mutation"
     assert "synthetic-secret" not in "".join(traceback.format_exception(caught.value)), "Preflight runner details leaked"
 
 
@@ -975,12 +975,12 @@ def test_UnexpectedReadTransportErrorsAreAlwaysSanitized(phase: str) -> None:
         runner.overrides["list"] = error
 
     elif phase == "delete-after":
-        original_run = runner.Run
+        originalRun = runner.Run
 
         def Run(command: tuple[str, ...], timeout: float) -> CommandResult:
             """Inject a transport exception only after the fake delete was dispatched."""
 
-            response = original_run(command, timeout)
+            response = originalRun(command, timeout)
 
             if command[3] == "delete":
                 runner.overrides["get"] = error
@@ -1000,13 +1000,13 @@ def test_UnexpectedReadTransportErrorsAreAlwaysSanitized(phase: str) -> None:
             provider.GetResource(resource.reference)
 
         else:
-            provider.DeleteResource(resource.reference, IDENTITY, spec.logical_id)
+            provider.DeleteResource(resource.reference, IDENTITY, spec.logicalId)
 
     assert "synthetic-private" not in "".join(traceback.format_exception(caught.value)), "Read transport exception leaked"
     assert sum(command[3] == "delete" for command in runner.calls) == (phase == "delete-after"), "Read failure caused unexpected delete dispatch"
 
     if phase == "delete-after":
-        assert isinstance(caught.value, MutationError) and caught.value.outcome_unknown is True, "Post-delete transport failure lost uncertainty"
+        assert isinstance(caught.value, MutationError) and caught.value.outcomeUnknown is True, "Post-delete transport failure lost uncertainty"
 
 
 @pytest.mark.parametrize("platform,fraction,cores,memory", [
@@ -1057,7 +1057,7 @@ def test_InvalidComputeCombinationsRejectBeforeCloudAccess(changes: dict[str, ob
     with pytest.raises(MutationError) as caught:
         provider.CreateResource(spec, IDENTITY, {}, OPERATION_ID)
 
-    assert caught.value.outcome_unknown is False, "Invalid shape was marked as dispatched"
+    assert caught.value.outcomeUnknown is False, "Invalid shape was marked as dispatched"
     assert not runner.calls, "Invalid compute shape reached the provider transport"
 
 
@@ -1075,22 +1075,14 @@ def test_PublicProjectSizingFlowsThroughRealCompilerAndYandexAdapter(tmp_path: P
     path = directory / "project.toml"
     path.write_text(path.read_text().replace("replace-with-folder-id", "test-folder").replace(
         "replace-with-ubuntu-2404-amd64-image-id", "example-image"
-    ).replace('zone_id = "ru-central1-a"', 'zone_id = "example-zone"') + '''
-[resources]
-platform_id = "standard-v3"
-cores = 2
-core_fraction = 50
-memory_gib = 2
-disk_size_gib = 10
-disk_type = "network-hdd"
-''')
+    ).replace('zone_id = "ru-central1-a"', 'zone_id = "example-zone"') + '\n[resources]\nplatform_id = "standard-v3"\ncores = 2\ncore_fraction = 50\nmemory_gib = 2\ndisk_size_gib = 10\ndisk_type = "network-hdd"\n')
     project = LoadVpnProject(directory)
     PrepareVpnProject(project)
     provider, runner = Provider()
     resources = {}
 
     for spec in CompileVpnProject(project).resources:
-        resources[spec.logical_id] = provider.CreateResource(
+        resources[spec.logicalId] = provider.CreateResource(
             spec, project.vpn.identity, {key: resources[key] for key in spec.dependencies}, OPERATION_ID,
         )
 

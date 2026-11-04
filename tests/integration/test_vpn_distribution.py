@@ -10,11 +10,11 @@ from pathlib import Path
 
 import pytest
 from test_distribution import DistributionArtifacts, _Run
-from test_distribution import distribution_artifacts as distribution_artifacts
+from test_distribution import DistributionArtifactsFixture as DistributionArtifactsFixture
 
 
 def test_InstalledVpnConsoleCreatesAndPreparesPrivateProject(
-    distribution_artifacts: DistributionArtifacts, tmp_path: Path,
+    distributionArtifacts: DistributionArtifacts, tmp_path: Path,
 ) -> None:
     """Exercise project creation and both protocol renderers using an installed wheel outside source."""
 
@@ -23,29 +23,21 @@ def test_InstalledVpnConsoleCreatesAndPreparesPrivateProject(
     if not wheelhouse or os.name != "posix":
         pytest.skip("Installed VPN projects require the CI dependency wheelhouse and a POSIX host")
 
-    environment_root = tmp_path / "project-environment"
-    venv.EnvBuilder(with_pip=False).create(environment_root)
-    python = environment_root / "bin" / "python"
-    console = environment_root / "bin" / "flayer"
+    environmentRoot = tmp_path / "project-environment"
+    venv.EnvBuilder(with_pip=False).create(environmentRoot)
+    python = environmentRoot / "bin" / "python"
+    console = environmentRoot / "bin" / "flayer"
     _Run(
         [sys.executable, "-m", "pip", "--python", str(python), "install", "--no-index",
          "--find-links", str(Path(wheelhouse).resolve()),
-         f"f-layer[vpn] @ {distribution_artifacts.wheel.as_uri()}"], tmp_path,
+         f"f-layer[vpn] @ {distributionArtifacts.wheel.as_uri()}"], tmp_path,
     )
     project = tmp_path / "customer-project"
     _Run([str(console), "project", "init", str(project)], tmp_path)
     configuration = project / "project.toml"
     configuration.write_text(configuration.read_text().replace(
         "replace-with-folder-id", "example-folder"
-    ).replace("replace-with-ubuntu-2404-amd64-image-id", "example-image") + '''
-[resources]
-platform_id = "standard-v3"
-cores = 2
-core_fraction = 50
-memory_gib = 2
-disk_size_gib = 10
-disk_type = "network-hdd"
-''')
+    ).replace("replace-with-ubuntu-2404-amd64-image-id", "example-image") + '\n[resources]\nplatform_id = "standard-v3"\ncores = 2\ncore_fraction = 50\nmemory_gib = 2\ndisk_size_gib = 10\ndisk_type = "network-hdd"\n')
     result = json.loads(_Run(
         [str(console), "vpn", "prepare", "--project", str(project), "--format", "json"], tmp_path,
     ))
@@ -68,14 +60,14 @@ disk_type = "network-hdd"
     assert repeated["status"] == "complete", "A CRLF packaged resource prevented installed project reuse"
     assert before == {path: path.read_bytes() for path in project.rglob("*") if path.is_file()}, "Cross-package retry modified retained project artifacts"
     plan = json.loads(_Run([str(python), "-c", (
-        "import json, sys\n"
-        "from flayer.vpn_project import LoadVpnProject, CompileVpnProject\n"
-        "from flayer.providers.yandex_lifecycle import _Rules\n"
-        "project = LoadVpnProject(sys.argv[1])\n"
-        "plan = {item.logical_id: dict(item.parameters) "
-        "for item in CompileVpnProject(project).resources}\n"
-        "plan['firewall_cli_rules'] = _Rules(plan['firewall']['rules'])\n"
-        "print(json.dumps(plan))\n"
+        """import json, sys
+from flayer.vpn_project import LoadVpnProject, CompileVpnProject
+from flayer.providers.yandex_lifecycle import _Rules
+project = LoadVpnProject(sys.argv[1])
+plan = {item.logicalId: dict(item.parameters) for item in CompileVpnProject(project).resources}
+plan['firewall_cli_rules'] = _Rules(plan['firewall']['rules'])
+print(json.dumps(plan))
+"""
     ), str(project)], tmp_path))
 
     assert (plan["instance"]["platform_id"], plan["instance"]["core_fraction"]) == ("standard-v3", 50), "Installed wheel lost explicit compute sizing"
@@ -102,15 +94,16 @@ disk_type = "network-hdd"
 
     # Seed synthetic device artifacts through installed renderers, without claiming live deployment.
     _Run([str(python), "-c", (
-        "import sys\n"
-        "from flayer.vpn_project import LoadVpnProject, _MaterialBundle, _Transports\n"
-        "from flayer.profiles.artifacts import WriteArtifactBundle\n"
-        "project = LoadVpnProject(sys.argv[1])\n"
-        "for transport in _Transports(project, _MaterialBundle(project), '203.0.113.20'):\n"
-        "    for bundle in transport.device_bundles:\n"
-        "        WriteArtifactBundle(project.Artifacts, bundle)\n"
+        """import sys
+from flayer.vpn_project import LoadVpnProject, _MaterialBundle, _Transports
+from flayer.profiles.artifacts import WriteArtifactBundle
+project = LoadVpnProject(sys.argv[1])
+for transport in _Transports(project, _MaterialBundle(project), '203.0.113.20'):
+    for bundle in transport.deviceBundles:
+        WriteArtifactBundle(project.Artifacts, bundle)
+"""
     ), str(project)], tmp_path)
-    exported_source = {path: path.read_bytes() for path in project.rglob("*") if path.is_file()}
+    exportedSource = {path: path.read_bytes() for path in project.rglob("*") if path.is_file()}
 
     for protocol in ("amneziawg", "vless-reality"):
         result = json.loads(_Run([str(console), "vpn", "export", "--project", str(project),
@@ -124,4 +117,4 @@ disk_type = "network-hdd"
         assert tuple(directory.glob("amnezia-qr-*.svg")), "Installed CLI did not export native scanner frames"
         assert "vpn://" not in json.dumps(result), "CLI printed a private connection key"
 
-    assert exported_source == {path: path.read_bytes() for path in project.rglob("*") if path.is_file()}, "Installed export modified source credentials or state"
+    assert exportedSource == {path: path.read_bytes() for path in project.rglob("*") if path.is_file()}, "Installed export modified source credentials or state"

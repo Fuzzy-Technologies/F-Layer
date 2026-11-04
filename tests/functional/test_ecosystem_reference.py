@@ -77,16 +77,16 @@ def test_ReferenceConsumerReadsExistingSourcesWithoutDispatch(tmp_path: Path) ->
 
         return CheckResult("fixture", DiagnosticStatus.OK, "Synthetic health observation")
 
-    transport_calls: list[tuple[str, float, int]] = []
+    transportCalls: list[tuple[str, float, int]] = []
 
-    def Transport(endpoint: str, timeout_seconds: float, byte_limit: int) -> EndpointMeasurement:
+    def Transport(endpoint: str, timeoutSeconds: float, byteLimit: int) -> EndpointMeasurement:
         """Record host-selected benchmark bounds and produce metrics without HTTP traffic."""
 
-        transport_calls.append((endpoint, timeout_seconds, byte_limit))
+        transportCalls.append((endpoint, timeoutSeconds, byteLimit))
 
-        return EndpointMeasurement(DiagnosticStatus.OK, 0.5, byte_limit, 206)
+        return EndpointMeasurement(DiagnosticStatus.OK, 0.5, byteLimit, 206)
 
-    diagnostic_sources = (
+    diagnosticSources = (
         DiagnosticReport("status", (ProviderStatus(),)),
         DiagnosticReport("health", RunChecks((Probe,))),
         DiagnosticReport("benchmark", RunBenchmark(
@@ -94,7 +94,7 @@ def test_ReferenceConsumerReadsExistingSourcesWithoutDispatch(tmp_path: Path) ->
         )),
     )
 
-    for report in diagnostic_sources:
+    for report in diagnosticSources:
         request = IntegrationRequest(IDENTITY, "example-001", IntegrationOperation(report.command))
         parsed = ParseRequest(SerializeRequest(request), IDENTITY)
         result = AdaptDiagnostics(parsed, report, IDENTITY)
@@ -103,7 +103,7 @@ def test_ReferenceConsumerReadsExistingSourcesWithoutDispatch(tmp_path: Path) ->
             "Reference diagnostic evidence failed consumer correlation"
         assert result.evidence.Status is report.Status, "Integration changed source evidence severity"
 
-    assert transport_calls == [("https://fixture.invalid", 1, 64)], \
+    assert transportCalls == [("https://fixture.invalid", 1, 64)], \
         "Host-selected benchmark transport bounds changed"
 
     spec = ResourceSpec("network", ResourceKind.NETWORK, "example-network")
@@ -112,29 +112,29 @@ def test_ReferenceConsumerReadsExistingSourcesWithoutDispatch(tmp_path: Path) ->
         reference, spec.name, "RUNNING", labels=spec.OwnershipLabels(IDENTITY),
     ))
     state = StackState(IDENTITY, (ResourceState("network", "network", "fixture-resource"),))
-    state_path = tmp_path / "owned-state.json"
-    SaveState(state_path, state, IDENTITY)
-    before = state_path.read_bytes()
-    state_request = IntegrationRequest(IDENTITY, "example-002", IntegrationOperation.STATE)
-    lifecycle_request = IntegrationRequest(
+    statePath = tmp_path / "owned-state.json"
+    SaveState(statePath, state, IDENTITY)
+    before = statePath.read_bytes()
+    stateRequest = IntegrationRequest(IDENTITY, "example-002", IntegrationOperation.STATE)
+    lifecycleRequest = IntegrationRequest(
         IDENTITY, "example-003", IntegrationOperation.LIFECYCLE_REPORT,
     )
-    ParseRequest(SerializeRequest(lifecycle_request), IDENTITY)
+    ParseRequest(SerializeRequest(lifecycleRequest), IDENTITY)
 
     assert provider.lookups == 0, "Parsing dispatched a provider operation"
 
-    loaded = LoadState(state_path, IDENTITY)
-    state_result = AdaptState(state_request, loaded)
-    engine = LifecycleEngine(DeploymentPlan(IDENTITY, (spec,)), provider, state_path)
+    loaded = LoadState(statePath, IDENTITY)
+    stateResult = AdaptState(stateRequest, loaded)
+    engine = LifecycleEngine(DeploymentPlan(IDENTITY, (spec,)), provider, statePath)
     report = engine.Status()
-    lookups_before_adapter = provider.lookups
-    lifecycle_result = AdaptLifecycle(lifecycle_request, report, engine.plan.identity)
+    lookupsBeforeAdapter = provider.lookups
+    lifecycleResult = AdaptLifecycle(lifecycleRequest, report, engine.plan.identity)
 
-    assert state_result.evidence.resource_count == 1, "Recorded ownership summary is incorrect"
-    assert lifecycle_result.evidence.status == "complete", "Present owned resources became incomplete"
-    assert lifecycle_result.evidence.resources[0].status == "present", \
+    assert stateResult.evidence.resourceCount == 1, "Recorded ownership summary is incorrect"
+    assert lifecycleResult.evidence.status == "complete", "Present owned resources became incomplete"
+    assert lifecycleResult.evidence.resources[0].status == "present", \
         "Lifecycle observation category was lost"
-    assert provider.lookups == lookups_before_adapter == 1, "Evidence adapter dispatched provider work"
-    assert state_path.read_bytes() == before, "Read-only reference workflow changed persisted state"
-    assert ParseResult(SerializeResult(lifecycle_result), lifecycle_request) == lifecycle_result, \
+    assert provider.lookups == lookupsBeforeAdapter == 1, "Evidence adapter dispatched provider work"
+    assert statePath.read_bytes() == before, "Read-only reference workflow changed persisted state"
+    assert ParseResult(SerializeResult(lifecycleResult), lifecycleRequest) == lifecycleResult, \
         "Lifecycle reference evidence failed the consumer wire round trip"

@@ -57,8 +57,8 @@ def PreparedFiles(profile: VpnProfile | None = None) -> tuple[dict[str, str], di
     )
 
     return (
-        {item.name: item.content.decode() for item in prepared.server_bundle.files},
-        {item.name: item.files[0].content.decode() for item in prepared.device_bundles},
+        {item.name: item.content.decode() for item in prepared.serverBundle.files},
+        {item.name: item.files[0].content.decode() for item in prepared.deviceBundles},
     )
 
 
@@ -79,14 +79,14 @@ def test_PeersShareOnlyRequiredServerAndObfuscationKeys() -> None:
     laptop = ParseClient(clients["laptop-amneziawg"])
     phone = ParseClient(clients["phone-amneziawg"])
     interface, peers = server["server.conf"].split("\n[Peer]", 1)
-    server_config = ParseClient(interface)
+    serverConfig = ParseClient(interface)
 
     assert laptop["Interface"]["PrivateKey"] != phone["Interface"]["PrivateKey"]
     assert laptop["Interface"]["PrivateKey"] not in server["server.conf"]
     assert phone["Interface"]["PrivateKey"] not in server["server.conf"]
-    assert server_config["Interface"]["PrivateKey"] not in clients["laptop-amneziawg"]
+    assert serverConfig["Interface"]["PrivateKey"] not in clients["laptop-amneziawg"]
     assert laptop["Peer"]["PublicKey"] == phone["Peer"]["PublicKey"]
-    assert laptop["Interface"]["HeaderProtectionKey"] == server_config["Interface"]["HeaderProtectionKey"]
+    assert laptop["Interface"]["HeaderProtectionKey"] == serverConfig["Interface"]["HeaderProtectionKey"]
     assert "AllowedIPs = 10.66.0.2/32" in peers
     assert "AllowedIPs = 10.66.0.3/32" in peers
     assert laptop["Peer"]["Endpoint"] == "vpn.example.com:51820"
@@ -102,10 +102,10 @@ def test_RepeatedPreparationPreservesExactBytesAndRedactsRepr() -> None:
     second = PrepareAmneziaWg(*arguments)
 
     assert first == second
-    assert values.server_private_key not in repr(values)
-    assert values.header_protection_key not in repr(first)
-    assert values.device_private_keys[0].private_key not in repr(values.device_private_keys[0])
-    assert all(item.sensitive for item in first.server_bundle.files)
+    assert values.serverPrivateKey not in repr(values)
+    assert values.headerProtectionKey not in repr(first)
+    assert values.devicePrivateKeys[0].privateKey not in repr(values.devicePrivateKeys[0])
+    assert all(item.sensitive for item in first.serverBundle.files)
 
 
 def test_DeviceRotationAndRemovalDoNotReissueUnchangedPeers() -> None:
@@ -113,15 +113,15 @@ def test_DeviceRotationAndRemovalDoNotReissueUnchangedPeers() -> None:
 
     profile = Profile()
     original = GenerateAmneziaWgSecrets(profile)
-    rotated = GenerateAmneziaWgSecrets(profile, original, rotate_device_ids=("phone",))
+    rotated = GenerateAmneziaWgSecrets(profile, original, rotateDeviceIds=("phone",))
     smaller = replace(profile, devices=profile.devices[:1])
     removed = GenerateAmneziaWgSecrets(smaller, rotated)
 
-    assert original.server_private_key == rotated.server_private_key == removed.server_private_key
-    assert original.header_protection_key == removed.header_protection_key
-    assert original.device_private_keys[0] == rotated.device_private_keys[0]
-    assert original.device_private_keys[1] != rotated.device_private_keys[1]
-    assert removed.device_private_keys == original.device_private_keys[:1]
+    assert original.serverPrivateKey == rotated.serverPrivateKey == removed.serverPrivateKey
+    assert original.headerProtectionKey == removed.headerProtectionKey
+    assert original.devicePrivateKeys[0] == rotated.devicePrivateKeys[0]
+    assert original.devicePrivateKeys[1] != rotated.devicePrivateKeys[1]
+    assert removed.devicePrivateKeys == original.devicePrivateKeys[:1]
 
 
 def test_AddDeviceRetainsExistingIdentities() -> None:
@@ -132,8 +132,8 @@ def test_AddDeviceRetainsExistingIdentities() -> None:
     expanded = replace(profile, devices=profile.devices + (VpnDevice("tablet", "10.66.0.4"),))
     current = GenerateAmneziaWgSecrets(expanded, previous)
 
-    assert current.device_private_keys[:2] == previous.device_private_keys
-    assert current.device_private_keys[2].device_id == "tablet"
+    assert current.devicePrivateKeys[:2] == previous.devicePrivateKeys
+    assert current.devicePrivateKeys[2].deviceId == "tablet"
 
 
 def test_SplitAndFullPoliciesHaveNoUnreachableIpv6Route() -> None:
@@ -163,12 +163,12 @@ def test_InstallerUsesPinnedSourcesOwnedPathsAndNoPrivateKeys() -> None:
     profile = Profile()
     values = GenerateAmneziaWgSecrets(profile)
     prepared = PrepareAmneziaWg(profile, VpnEndpoint("vpn.example.com", 51820), AmneziaWgSettings(), values)
-    files = {item.name: item.content.decode() for item in prepared.server_bundle.files}
+    files = {item.name: item.content.decode() for item in prepared.serverBundle.files}
     installer = files["install.sh"]
 
     for content in (installer, files["network.sh"], files["service.service"], files["firewall.nft"]):
-        assert values.server_private_key not in content
-        assert values.header_protection_key not in content
+        assert values.serverPrivateKey not in content
+        assert values.headerProtectionKey not in content
 
     assert AMNEZIAWG_GO_REVISION in installer
     assert AMNEZIAWG_TOOLS_REVISION in installer
@@ -199,7 +199,7 @@ def test_OwnershipChangesSeparateGuestServices() -> None:
     """Same stack display name in another account cannot select the first account's files."""
 
     profile = Profile()
-    other = replace(profile, identity=replace(profile.identity, scope_id="another-example-scope"))
+    other = replace(profile, identity=replace(profile.identity, scopeId="another-example-scope"))
 
     assert AmneziaWgServiceName(profile) != AmneziaWgServiceName(other)
     assert AmneziaWgServiceName(profile) == AmneziaWgServiceName(replace(profile, devices=profile.devices[:1]))
@@ -264,13 +264,13 @@ def test_KeysAndRotationAreStrictlyBounded() -> None:
     values = GenerateAmneziaWgSecrets(profile)
 
     with pytest.raises(VpnError, match="distinct"):
-        AmneziaWgSecrets(values.server_private_key, values.server_private_key, values.device_private_keys)
+        AmneziaWgSecrets(values.serverPrivateKey, values.serverPrivateKey, values.devicePrivateKeys)
 
     with pytest.raises(VpnError, match="currently declared"):
-        GenerateAmneziaWgSecrets(profile, values, rotate_device_ids=("missing",))
+        GenerateAmneziaWgSecrets(profile, values, rotateDeviceIds=("missing",))
 
     with pytest.raises(VpnError, match="1..16 unique"):
-        replace(values, device_private_keys=(values.device_private_keys[0],) * 2)
+        replace(values, devicePrivateKeys=(values.devicePrivateKeys[0],) * 2)
 
 
 def test_PrivateMaterialRoundTripsForDeferredEndpointPreparation() -> None:
@@ -320,4 +320,4 @@ def test_PublicExampleCanPrepareSeparateDeviceImports() -> None:
         GenerateAmneziaWgSecrets(profile),
     )
 
-    assert {item.name for item in prepared.device_bundles} == {"laptop-amneziawg", "phone-amneziawg"}
+    assert {item.name for item in prepared.deviceBundles} == {"laptop-amneziawg", "phone-amneziawg"}

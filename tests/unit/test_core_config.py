@@ -43,19 +43,14 @@ def test_LoadExplicitConfigWithoutReadingCredentials(
 
     path = tmp_path / "stack.toml"
     path.write_text(
-        'schema_version = 1\nprofile = "secure-gateway"\n'
-        '[identity]\nproject = "example"\nstack = "demo"\nprovider = "example-cloud"\n'
-        'scope_id = "example-scope"\nowner_id = "example-owner"\n'
-        '[[resources]]\nlogical_id = "gateway"\nkind = "instance"\nname = "demo-gateway"\n'
-        '[[credentials]]\nname = "cloud-auth"\nsource = "env"\nreference = "EXAMPLE_AUTH"\n'
-        '[[credentials]]\nname = "ssh-auth"\nsource = "file"\nreference = "./missing-key"\n',
+        'schema_version = 1\nprofile = "secure-gateway"\n[identity]\nproject = "example"\nstack = "demo"\nprovider = "example-cloud"\nscope_id = "example-scope"\nowner_id = "example-owner"\n[[resources]]\nlogical_id = "gateway"\nkind = "instance"\nname = "demo-gateway"\n[[credentials]]\nname = "cloud-auth"\nsource = "env"\nreference = "EXAMPLE_AUTH"\n[[credentials]]\nname = "ssh-auth"\nsource = "file"\nreference = "./missing-key"\n',
         encoding="utf-8",
     )
     monkeypatch.setenv("EXAMPLE_AUTH", "synthetic-secret-must-not-be-loaded")
     config = LoadConfig(path)
 
     assert config.identity.provider == "example-cloud", "Provider identity was changed"
-    assert config.resources[0].logical_id == "gateway", "Logical resource identity was lost"
+    assert config.resources[0].logicalId == "gateway", "Logical resource identity was lost"
     assert config.credentials[0].reference == "EXAMPLE_AUTH", "Credential reference was resolved"
     assert config.credentials[1].reference == "./missing-key", "Credential file was resolved"
     assert "synthetic-secret" not in repr(config), "Secret material entered the desired model"
@@ -73,12 +68,12 @@ def test_MinimalConfigHasNoImplicitProviderResources() -> None:
     assert config.credentials == (), "Minimal config unexpectedly adds credential references"
 
 
-@pytest.mark.parametrize("schema_version", [True, False, 0, 2, "1", 1.0, None])
-def test_UnknownSchemaVersionsFailClosed(schema_version: object) -> None:
+@pytest.mark.parametrize('schemaVersion', [True, False, 0, 2, "1", 1.0, None])
+def test_UnknownSchemaVersionsFailClosed(schemaVersion: object) -> None:
     """Unsupported versions and coercible values cannot reach provider code."""
 
     data = ConfigData()
-    data["schema_version"] = schema_version
+    data["schema_version"] = schemaVersion
 
     with pytest.raises(ConfigError, match="schema_version"):
         ParseConfig(data)
@@ -238,7 +233,7 @@ def test_ModelConstructionPreservesInvariants() -> None:
         )
 
     with pytest.raises(ContractError, match="logical_id"):
-        DesiredResource(logical_id="BAD", kind="instance", name="demo")
+        DesiredResource(logicalId="BAD", kind="instance", name="demo")
 
     with pytest.raises(ContractError, match="environment"):
         SecretReference(name="auth", source="env", reference=7)  # type: ignore[arg-type]

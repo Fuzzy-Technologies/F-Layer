@@ -14,7 +14,7 @@ from flayer.providers.lifecycle import MAX_PARAMETER_VALUES, MutationError, Reso
 @pytest.mark.parametrize(
     "changes",
     [
-        {"logical_id": "Invalid"}, {"name": "invalid name"}, {"kind": "network"},
+        {'logicalId': "Invalid"}, {"name": "invalid name"}, {"kind": "network"},
         {"parameters": []}, {"parameters": (("value", []),)},
         {"parameters": (("value", 1.5),)}, {"parameters": (("value", "\x00"),)},
         {"parameters": (("value", "x" * 16385),)}, {"parameters": (("value", 2 ** 64),)},
@@ -30,7 +30,7 @@ def test_ResourceSpecRejectsMutableOrInvalidFields(changes: dict[str, object]) -
     """Malformed direct constructions cannot bypass the immutable request contract."""
 
     values: dict[str, object] = {
-        "logical_id": "network", "name": "example-network", "kind": ResourceKind.NETWORK,
+        'logicalId': "network", "name": "example-network", "kind": ResourceKind.NETWORK,
     }
     values.update(changes)
 
@@ -85,7 +85,7 @@ def test_MutationFailureHasOnlySanitizedStableFields() -> None:
 
     error = MutationError(ProviderErrorCode.TIMEOUT, "create", True)
 
-    assert error.outcome_unknown is True, "Uncertain submission was represented as safe absence"
+    assert error.outcomeUnknown is True, "Uncertain submission was represented as safe absence"
     assert error.retryable is False, "Uncertain mutation advertised a blind retry recommendation"
     assert MutationError(ProviderErrorCode.TIMEOUT, "create", False).retryable is True, "Safe preflight retry classification changed"
 

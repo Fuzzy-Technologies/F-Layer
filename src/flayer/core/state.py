@@ -8,9 +8,11 @@ import stat
 import tempfile
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import IO
+
+from flayer.core.contracts import _WireDict
 
 from .contracts import (
     SCHEMA_VERSION,
@@ -35,16 +37,16 @@ class StateError(ContractError):
 class ResourceState:
     """Minimum provider locator for a resource recorded by one managed stack."""
 
-    logical_id: str
+    logicalId: str
     kind: str
-    resource_id: str
+    resourceId: str
 
     def __post_init__(self) -> None:
         """Keep persisted locators explicit and free of arbitrary provider payloads."""
 
-        ValidateName(self.logical_id, "resources.logical_id")
+        ValidateName(self.logicalId, "resources.logical_id")
         ValidateName(self.kind, "resources.kind")
-        ValidateIdentifier(self.resource_id, "resources.resource_id")
+        ValidateIdentifier(self.resourceId, "resources.resource_id")
 
 
 @dataclass(frozen=True)
@@ -53,12 +55,12 @@ class StackState:
 
     identity: StackIdentity
     resources: tuple[ResourceState, ...] = ()
-    schema_version: int = SCHEMA_VERSION
+    schemaVersion: int = SCHEMA_VERSION
 
     def __post_init__(self) -> None:
         """Reject duplicate locators and invalid direct model construction."""
 
-        ValidateSchemaVersion(self.schema_version)
+        ValidateSchemaVersion(self.schemaVersion)
 
         if not isinstance(self.identity, StackIdentity):
             raise ContractError("identity must be a StackIdentity")
@@ -68,10 +70,10 @@ class StackState:
         ):
             raise ContractError("resources must be a tuple of ResourceState values")
 
-        if len({resource.logical_id for resource in self.resources}) != len(self.resources):
+        if len({resource.logicalId for resource in self.resources}) != len(self.resources):
             raise ContractError("resources.logical_id values must be unique")
 
-        if len({(resource.kind, resource.resource_id) for resource in self.resources}) != len(
+        if len({(resource.kind, resource.resourceId) for resource in self.resources}) != len(
             self.resources
         ):
             raise ContractError("resources must not contain duplicate provider locators")
@@ -84,7 +86,7 @@ def _RequireIdentity(actual: StackIdentity, expected: StackIdentity) -> None:
         raise StateError("State identity does not match the expected ownership boundary")
 
 
-def ParseState(data: Mapping[str, object], expected_identity: StackIdentity) -> StackState:
+def ParseState(data: Mapping[str, object], expectedIdentity: StackIdentity) -> StackState:
     """Decode a versioned snapshot and require explicit caller ownership expectations."""
 
     try:
@@ -93,15 +95,15 @@ def ParseState(data: Mapping[str, object], expected_identity: StackIdentity) -> 
         )
         ValidateSchemaVersion(data["schema_version"])
         identity = ParseIdentity(data["identity"])
-        _RequireIdentity(identity, expected_identity)
-        raw_resources = data["resources"]
+        _RequireIdentity(identity, expectedIdentity)
+        rawResources = data["resources"]
 
-        if not isinstance(raw_resources, list):
+        if not isinstance(rawResources, list):
             raise ContractError("resources must be an array of tables")
 
         resources: list[ResourceState] = []
 
-        for item in raw_resources:
+        for item in rawResources:
             table = RequireTable(item, "resources")
             ValidateFields(
                 table,
@@ -111,9 +113,9 @@ def ParseState(data: Mapping[str, object], expected_identity: StackIdentity) -> 
             )
             resources.append(
                 ResourceState(
-                    logical_id=ValidateName(table["logical_id"], "resources.logical_id"),
+                    logicalId=ValidateName(table["logical_id"], "resources.logical_id"),
                     kind=ValidateName(table["kind"], "resources.kind"),
-                    resource_id=ValidateIdentifier(table["resource_id"], "resources.resource_id"),
+                    resourceId=ValidateIdentifier(table["resource_id"], "resources.resource_id"),
                 )
             )
 
@@ -166,21 +168,21 @@ def _OpenTextStream(descriptor: int, mode: str) -> IO[str]:
 def _ReadOwnedJson(path: Path) -> object:
     """Read bounded regular JSON without blocking on a post-validation FIFO substitution."""
 
-    opened_descriptor = os.open(
+    openedDescriptor = os.open(
         path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
     )
-    descriptor: int | None = opened_descriptor
+    descriptor: int | None = openedDescriptor
 
     try:
-        opened = os.fstat(opened_descriptor)
+        opened = os.fstat(openedDescriptor)
 
         if not stat.S_ISREG(opened.st_mode) or opened.st_size > MAX_JSON_BYTES:
             raise StateError("Owned JSON must be a bounded regular file")
 
-        stream_descriptor = opened_descriptor
+        streamDescriptor = openedDescriptor
         descriptor = None
 
-        with _OpenTextStream(stream_descriptor, "r") as stream:
+        with _OpenTextStream(streamDescriptor, "r") as stream:
             text = stream.read(MAX_JSON_BYTES + 1)
 
         if len(text.encode("utf-8")) > MAX_JSON_BYTES:
@@ -196,17 +198,17 @@ def _ReadOwnedJson(path: Path) -> object:
             os.close(descriptor)
 
 
-def LoadState(path: str | Path, expected_identity: StackIdentity) -> StackState | None:
+def LoadState(path: str | Path, expectedIdentity: StackIdentity) -> StackState | None:
     """Return a strictly owned snapshot, or None only when the file is absent."""
 
-    state_path = Path(path)
+    statePath = Path(path)
 
-    if not isinstance(expected_identity, StackIdentity):
+    if not isinstance(expectedIdentity, StackIdentity):
         raise StateError("expected_identity must be a StackIdentity")
 
     try:
-        _ValidatePath(state_path)
-        data = _ReadOwnedJson(state_path)
+        _ValidatePath(statePath)
+        data = _ReadOwnedJson(statePath)
 
     except FileNotFoundError:
         return None
@@ -218,7 +220,7 @@ def LoadState(path: str | Path, expected_identity: StackIdentity) -> StackState 
         raise StateError("Unable to read a valid state snapshot") from error
 
     try:
-        return ParseState(RequireTable(data, "state"), expected_identity)
+        return ParseState(RequireTable(data, "state"), expectedIdentity)
 
     except ContractError as error:
         raise StateError(str(error)) from error
@@ -232,9 +234,9 @@ def _StateLock(path: Path) -> Iterator[None]:
 
     try:
         _ValidatePath(path)
-        lock_path = path.with_name(f".{path.name}.lock")
+        lockPath = path.with_name(f".{path.name}.lock")
         path.parent.mkdir(parents=True, exist_ok=True)
-        descriptor = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        descriptor = os.open(lockPath, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         os.close(descriptor)
         descriptor = None
 
@@ -253,7 +255,7 @@ def _StateLock(path: Path) -> Iterator[None]:
 
     finally:
         try:
-            lock_path.unlink()
+            lockPath.unlink()
 
         except OSError as error:
             raise StateError("Unable to release the state writer lock") from error
@@ -274,38 +276,38 @@ def _SyncDirectory(path: Path) -> None:
         os.close(descriptor)
 
 
-def SaveState(path: str | Path, state: StackState, expected_identity: StackIdentity) -> None:
+def SaveState(path: str | Path, state: StackState, expectedIdentity: StackIdentity) -> None:
     """Atomically save owned state; never replace a foreign or malformed existing snapshot."""
 
     if not isinstance(state, StackState):
         raise StateError("state must be a StackState")
 
-    _RequireIdentity(state.identity, expected_identity)
-    serialized = json.dumps(asdict(state), indent=2, sort_keys=True) + "\n"
+    _RequireIdentity(state.identity, expectedIdentity)
+    serialized = json.dumps(_WireDict(state), indent=2, sort_keys=True) + "\n"
 
     if len(serialized.encode("utf-8")) > MAX_JSON_BYTES:
         raise StateError("Owned state snapshot exceeds its bounded JSON storage limit")
 
-    state_path = Path(path)
-    temporary_path: Path | None = None
+    statePath = Path(path)
+    temporaryPath: Path | None = None
 
-    with _StateLock(state_path):
-        LoadState(state_path, expected_identity)
+    with _StateLock(statePath):
+        LoadState(statePath, expectedIdentity)
 
         try:
-            descriptor, temporary_name = tempfile.mkstemp(
-                prefix=f".{state_path.name}.", suffix=".tmp", dir=state_path.parent
+            descriptor, temporaryName = tempfile.mkstemp(
+                prefix=f".{statePath.name}.", suffix=".tmp", dir=statePath.parent
             )
-            temporary_path = Path(temporary_name)
+            temporaryPath = Path(temporaryName)
 
             with _OpenTextStream(descriptor, "w") as stream:
                 stream.write(serialized)
                 stream.flush()
                 os.fsync(stream.fileno())
 
-            os.replace(temporary_path, state_path)
-            temporary_path = None
-            _SyncDirectory(state_path.parent)
+            os.replace(temporaryPath, statePath)
+            temporaryPath = None
+            _SyncDirectory(statePath.parent)
 
         except OSError as error:
             raise StateError(
@@ -313,9 +315,9 @@ def SaveState(path: str | Path, state: StackState, expected_identity: StackIdent
             ) from error
 
         finally:
-            if temporary_path is not None:
+            if temporaryPath is not None:
                 try:
-                    temporary_path.unlink(missing_ok=True)
+                    temporaryPath.unlink(missing_ok=True)
 
                 except OSError as error:
                     raise StateError(
@@ -324,26 +326,26 @@ def SaveState(path: str | Path, state: StackState, expected_identity: StackIdent
                     ) from error
 
 
-def RemoveState(path: str | Path, expected_identity: StackIdentity) -> bool:
+def RemoveState(path: str | Path, expectedIdentity: StackIdentity) -> bool:
     """Remove only a matching local snapshot; never delete infrastructure resources."""
 
-    state_path = Path(path)
+    statePath = Path(path)
 
-    if not isinstance(expected_identity, StackIdentity):
+    if not isinstance(expectedIdentity, StackIdentity):
         raise StateError("expected_identity must be a StackIdentity")
 
     try:
-        _ValidatePath(state_path)
+        _ValidatePath(statePath)
 
-        if not state_path.parent.exists():
+        if not statePath.parent.exists():
             return False
 
-        with _StateLock(state_path):
-            if LoadState(state_path, expected_identity) is None:
+        with _StateLock(statePath):
+            if LoadState(statePath, expectedIdentity) is None:
                 return False
 
-            state_path.unlink()
-            _SyncDirectory(state_path.parent)
+            statePath.unlink()
+            _SyncDirectory(statePath.parent)
 
     except OSError as error:
         raise StateError("Unable to remove the owned state snapshot") from error

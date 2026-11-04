@@ -19,7 +19,7 @@ from urllib.parse import parse_qs, urlsplit
 import pytest
 
 from flayer.core.contracts import StackIdentity
-from flayer.profiles import _amnezia_export as amnezia_export
+from flayer.profiles import _amnezia_export as amneziaExport
 from flayer.profiles import _vless_guest as guest
 from flayer.profiles import vless
 from flayer.profiles.artifacts import WriteArtifactBundle
@@ -70,7 +70,7 @@ def test_PackagedInstallerLineEndingsDoNotChangePreparedArtifacts(
     windows = PrepareVless(profile, ENDPOINT, SETTINGS, material)
 
     assert linux == windows, "Checkout line endings changed private VPN artifacts"
-    assert next(item.content for item in windows.server_bundle.files if item.name == "install.py") == canonical
+    assert next(item.content for item in windows.serverBundle.files if item.name == "install.py") == canonical
 
 
 def test_PrivateKeysAndDeviceCredentialsAreSeparate() -> None:
@@ -80,22 +80,22 @@ def test_PrivateKeysAndDeviceCredentialsAreSeparate() -> None:
     material = GenerateVlessMaterial(profile)
     second = GenerateVlessMaterial(profile)
     prepared = PrepareVless(profile, ENDPOINT, SETTINGS, material)
-    server = json.loads(prepared.server_bundle.files[0].content)
-    client = json.loads(prepared.device_bundles[0].files[0].content)
+    server = json.loads(prepared.serverBundle.files[0].content)
+    client = json.loads(prepared.deviceBundles[0].files[0].content)
 
-    assert material.server_private_key != second.server_private_key
-    assert len({item.user_id for item in material.devices}) == 2
-    assert prepared.capabilities.network_mode == "application-proxy"
+    assert material.serverPrivateKey != second.serverPrivateKey
+    assert len({item.userId for item in material.devices}) == 2
+    assert prepared.capabilities.networkMode == "application-proxy"
     assert server["inbounds"][0]["streamSettings"]["realitySettings"]["privateKey"] not in repr(material)
-    assert material.devices[0].user_id not in repr(prepared)
-    assert material.devices[0].user_id not in repr(material.devices[0])
+    assert material.devices[0].userId not in repr(prepared)
+    assert material.devices[0].userId not in repr(material.devices[0])
     assert server["dns"] == {"servers": ["1.1.1.1"], "queryStrategy": "UseIPv4"}
     assert client["inbounds"][0]["listen"] == "127.0.0.1"
-    assert all(item.sensitive for bundle in (prepared.server_bundle, *prepared.device_bundles)
+    assert all(item.sensitive for bundle in (prepared.serverBundle, *prepared.deviceBundles)
                for item in bundle.files)
-    assert material.devices[1].user_id.encode() not in prepared.device_bundles[0].files[0].content
-    assert b"privateKey" not in prepared.device_bundles[0].files[0].content
-    assert b"169.254.0.0/16" in prepared.server_bundle.files[0].content
+    assert material.devices[1].userId.encode() not in prepared.deviceBundles[0].files[0].content
+    assert b"privateKey" not in prepared.deviceBundles[0].files[0].content
+    assert b"169.254.0.0/16" in prepared.serverBundle.files[0].content
     assert client["routing"]["rules"][-1]["outboundTag"] == "blocked"
 
 
@@ -106,21 +106,21 @@ def test_ImportUriBindsRealityParametersToOneDevice() -> None:
     material = GenerateVlessMaterial(profile)
     uri = urlsplit(BuildVlessUri(profile, ENDPOINT, SETTINGS, material, "phone"))
     parameters = parse_qs(uri.query)
-    expected_key = base64.urlsafe_b64encode(material.server_public_key).decode().rstrip("=")
+    expectedKey = base64.urlsafe_b64encode(material.serverPublicKey).decode().rstrip("=")
 
-    assert uri.username == material.devices[1].user_id
+    assert uri.username == material.devices[1].userId
     assert uri.hostname == ENDPOINT.host and uri.port == 443
     assert parameters == {
         "encryption": ["none"], "flow": ["xtls-rprx-vision"], "security": ["reality"],
-        "sni": [SETTINGS.server_name], "fp": ["chrome"], "pbk": [expected_key],
-        "sid": [material.short_id], "type": ["tcp"], "headerType": ["none"], "spx": ["/"],
+        "sni": [SETTINGS.serverName], "fp": ["chrome"], "pbk": [expectedKey],
+        "sid": [material.shortId], "type": ["tcp"], "headerType": ["none"], "spx": ["/"],
     }
 
 
 @pytest.mark.parametrize("changes", [
-    {"target_host": "https://example.org"}, {"server_name": "example.org;id"},
-    {"server_name": "198.51.100.1"}, {"target_host": "example..org"},
-    {"fingerprint": "unsafe"}, {"socks_port": True}, {"target_port": 65536},
+    {'targetHost': "https://example.org"}, {'serverName': "example.org;id"},
+    {'serverName': "198.51.100.1"}, {'targetHost': "example..org"},
+    {"fingerprint": "unsafe"}, {'socksPort': True}, {'targetPort': 65536},
 ])
 def test_RealitySettingsRejectMalformedOrUnsupportedInput(changes: dict[str, object]) -> None:
     """Reject shell-shaped hosts and coercions before rendering a guest program."""
@@ -136,7 +136,7 @@ def test_SecretMaterialCannotCrossDeviceOrKeyBoundaries() -> None:
     material = GenerateVlessMaterial(profile)
 
     with pytest.raises(VlessError, match="form a pair"):
-        RenderVlessServer(profile, SETTINGS, replace(material, server_public_key=b"a" * 32))
+        RenderVlessServer(profile, SETTINGS, replace(material, serverPublicKey=b"a" * 32))
 
     with pytest.raises(VlessError, match="match the declared"):
         RenderVlessServer(profile, SETTINGS, replace(material, devices=material.devices[:1]))
@@ -172,13 +172,13 @@ def test_SplitClientOnlyAllowsConfiguredDestinations() -> None:
     assert client["dns"]["queryStrategy"] == "UseIPv4"
 
 
-def PreparedDirectory(tmp_path: Path) -> Path:
+def PreparedDirectory(tmpPath: Path) -> Path:
     """Export a real private bundle to exercise the standalone guest descriptor reader."""
 
     profile = Profile()
     prepared = PrepareVless(profile, ENDPOINT, SETTINGS, GenerateVlessMaterial(profile))
 
-    return WriteArtifactBundle(tmp_path / "artifacts", prepared.server_bundle)
+    return WriteArtifactBundle(tmpPath / "artifacts", prepared.serverBundle)
 
 
 def test_InstallerInputIsBoundToPreparedConfig(tmp_path: Path) -> None:
@@ -240,11 +240,11 @@ def test_ArchivePinAndSafeExtraction(monkeypatch: pytest.MonkeyPatch) -> None:
             guest._DownloadBinary()
 
 
-def GuestPaths(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path]:
+def GuestPaths(tmpPath: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path]:
     """Route managed guest files to isolated root-owned test directories only."""
 
-    base = tmp_path / "owned"
-    systemd = tmp_path / "units"
+    base = tmpPath / "owned"
+    systemd = tmpPath / "units"
     base.mkdir()
     systemd.mkdir()
     monkeypatch.setattr(guest, "_ROOT_UID", os.getuid())
@@ -264,10 +264,10 @@ def test_OwnedInstallReapplyAndRemove(tmp_path: Path, monkeypatch: pytest.Monkey
     request, config = guest._Request(PreparedDirectory(tmp_path))
     root, service = GuestPaths(tmp_path, monkeypatch)
     guest._Install(root, service, request, config)
-    original_inode = (root / "xray").stat().st_ino
+    originalInode = (root / "xray").stat().st_ino
     guest._Install(root, service, request, config)
 
-    assert (root / "xray").stat().st_ino == original_inode
+    assert (root / "xray").stat().st_ino == originalInode
     assert b"DynamicUser=yes" in service.read_bytes()
     assert b"LoadCredential=server.json:" in service.read_bytes()
     assert stat.S_IMODE((root / "server.json").stat().st_mode) == 0o600
@@ -298,9 +298,9 @@ def test_GuestRefusesForeignAndChangedFiles(tmp_path: Path, monkeypatch: pytest.
     assert root.exists() and service.exists()
 
 
-@pytest.mark.parametrize("initial_active", [False, True])
+@pytest.mark.parametrize('initialActive', [False, True])
 def test_OwnedRetryEnsuresServiceRunsWithoutReplacingCredentials(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, initial_active: bool,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, initialActive: bool,
 ) -> None:
     """An explicit deployment retry must restore an inactive verified service without rewriting it."""
 
@@ -308,7 +308,7 @@ def test_OwnedRetryEnsuresServiceRunsWithoutReplacingCredentials(
     root, service = GuestPaths(tmp_path, monkeypatch)
     guest._Install(root, service, request, config)
     snapshot = {path: (path.stat().st_ino, path.read_bytes()) for path in (*root.iterdir(), service)}
-    active = initial_active
+    active = initialActive
     commands: list[list[str]] = []
 
     def RunCommand(arguments: list[str], **kwargs: object) -> None:
@@ -591,7 +591,7 @@ def test_RealityTargetRequiresValidatedTlsAndHttp2(
     class Context:
         """Represent a verified default SSL context without reaching an external server."""
 
-        minimum_version: object = None
+        minimumVersion: object = None
 
         def set_alpn_protocols(self, protocols: list[str]) -> None:
             """Check the external context API receives only HTTP/2."""
@@ -601,7 +601,7 @@ def test_RealityTargetRequiresValidatedTlsAndHttp2(
         def wrap_socket(self, connection: object, server_hostname: str) -> nullcontext[Channel]:
             """Check the expected certificate identity accompanies the TLS handshake."""
 
-            assert server_hostname == SETTINGS.server_name
+            assert server_hostname == SETTINGS.serverName
             assert self.minimum_version == guest.ssl.TLSVersion.TLSv1_3
 
             return nullcontext(Channel())
@@ -665,7 +665,7 @@ def test_AmneziaExportPreservesDevicePolicyAndPrivatePermissions(tmp_path: Path,
         ("1.1.1.1", "8.8.8.8"), "disabled",
     ))
     material = GenerateVlessMaterial(profile)
-    bundle = PrepareVless(profile, ENDPOINT, SETTINGS, material).device_bundles[0]
+    bundle = PrepareVless(profile, ENDPOINT, SETTINGS, material).deviceBundles[0]
     artifacts = {item.name: item.content for item in bundle.files}
     encoded = artifacts["amnezia.vpn"].strip().removeprefix(b"vpn://")
     compressed = base64.urlsafe_b64decode(encoded + b"=" * (-len(encoded) % 4))
@@ -677,15 +677,15 @@ def test_AmneziaExportPreservesDevicePolicyAndPrivatePermissions(tmp_path: Path,
 
     assert native["defaultContainer"] == "amnezia-xray"
     assert native["hostName"] == ENDPOINT.host
-    assert (native["dns1"], native["dns2"]) == profile.routes.dns_servers
+    assert (native["dns1"], native["dns2"]) == profile.routes.dnsServers
     assert set(native) == {"containers", "defaultContainer", "hostName", "description", "dns1", "dns2"}
 
     protocol = native["containers"][0]["xray"]
 
     assert protocol["isThirdPartyConfig"] is True
     assert protocol["last_config"].encode() == artifacts["client.json"]
-    assert material.devices[0].user_id in protocol["last_config"]
-    assert material.devices[1].user_id not in decoded.decode()
+    assert material.devices[0].userId in protocol["last_config"]
+    assert material.devices[1].userId not in decoded.decode()
     assert b"privateKey" not in decoded
     assert artifacts["import.txt"].startswith(b"vless://")
     assert all(item.sensitive for item in bundle.files)
@@ -714,7 +714,7 @@ def test_AmneziaQrFramesReassembleLikeTheNativeScanner(monkeypatch: pytest.Monke
     monkeypatch.setattr(segno, "make_qr", Capture)
     client = json.dumps({"fixture": [hashlib.sha256(str(index).encode()).hexdigest()
                                      for index in range(100)]}).encode()
-    artifacts = amnezia_export.BuildAmneziaArtifacts(client, ENDPOINT.host, "phone", ("1.1.1.1",))
+    artifacts = amneziaExport.BuildAmneziaArtifacts(client, ENDPOINT.host, "phone", ("1.1.1.1",))
 
     assert len(captured) > 1
 
@@ -747,7 +747,7 @@ def test_AmneziaExportExplainsMissingOptionalDependency(monkeypatch: pytest.Monk
 
         raise ImportError(name)
 
-    monkeypatch.setattr(amnezia_export.importlib, "import_module", Missing)
+    monkeypatch.setattr(amneziaExport.importlib, "import_module", Missing)
 
     with pytest.raises(ValueError, match="vpn.*extra"):
-        amnezia_export.BuildAmneziaArtifacts(b"{}", ENDPOINT.host, "phone", ("1.1.1.1",))
+        amneziaExport.BuildAmneziaArtifacts(b"{}", ENDPOINT.host, "phone", ("1.1.1.1",))

@@ -18,27 +18,27 @@ from flayer.vpn_project import VpnProject, VpnProjectReport
 
 
 def ExportVpnDevice(
-    project: VpnProject, device_id: str, protocol: str, output: str | Path, *, qr: bool = False,
+    project: VpnProject, deviceId: str, protocol: str, output: str | Path, *, qr: bool = False,
 ) -> VpnProjectReport:
     """Copy one manifest-verified device without cloud calls, key generation, or source writes."""
 
-    ValidateName(device_id, "device_id")
+    ValidateName(deviceId, "device_id")
 
-    if device_id not in {device.device_id for device in project.vpn.devices}:
+    if deviceId not in {device.deviceId for device in project.vpn.devices}:
         raise VpnError("Export requires a device declared in project.toml")
 
     if protocol not in {"amneziawg", "vless-reality"} or type(qr) is not bool:
         raise VpnError("Export requires a supported protocol and boolean QR option")
 
-    output_root = Path(output).absolute()
+    outputRoot = Path(output).absolute()
 
-    if ".." in output_root.parts or output_root.is_relative_to(project.Artifacts.absolute()):
+    if ".." in outputRoot.parts or outputRoot.is_relative_to(project.Artifacts.absolute()):
         raise VpnError("Export output must be separate from the source artifact store and contain no traversal")
 
-    if output_root.exists() or output_root.is_symlink():
-        PrivatePath(output_root, directory=True)
+    if outputRoot.exists() or outputRoot.is_symlink():
+        PrivatePath(outputRoot, directory=True)
 
-    name = f"{device_id}-{protocol}"
+    name = f"{deviceId}-{protocol}"
     ValidateName(name, "artifact name")
     source = project.Artifacts / f"device-{name}"
     filenames = ("amneziawg.conf",) if protocol == "amneziawg" else ("client.json", "import.txt", "amnezia.vpn")
@@ -47,13 +47,13 @@ def ExportVpnDevice(
     )) for filename in filenames)
 
     if protocol == "amneziawg":
-        artifacts += BuildAmneziaWgArtifacts(artifacts[0].content, device_id, qr=qr)
+        artifacts += BuildAmneziaWgArtifacts(artifacts[0].content, deviceId, qr=qr)
 
     elif qr:
         artifacts += BuildAmneziaQrArtifacts(artifacts[-1].content)
 
     bundle = ArtifactBundle(project.vpn.identity, "device", name, artifacts)
-    destination = output_root / f"device-{name}"
+    destination = outputRoot / f"device-{name}"
 
     if destination.exists() or destination.is_symlink():
         for artifact in artifacts:
@@ -66,7 +66,7 @@ def ExportVpnDevice(
             raise VpnError("Existing export has a different file selection; choose a separate output directory")
 
     else:
-        WriteArtifactBundle(output_root, bundle)
+        WriteArtifactBundle(outputRoot, bundle)
 
-    return VpnProjectReport("export", "complete", client_exports=(str(destination),),
+    return VpnProjectReport("export", "complete", clientExports=(str(destination),),
                             details="Existing device files exported privately; no connectivity check was performed")

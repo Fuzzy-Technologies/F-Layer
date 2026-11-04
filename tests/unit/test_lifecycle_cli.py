@@ -12,15 +12,7 @@ from flayer.core.lifecycle import LifecycleReport
 from flayer.providers.contracts import ProviderError, ProviderErrorCode
 from flayer.providers.yandex import YandexCloudSettings
 
-PLAN_TEXT = '''schema_version = 1
-resources = []
-[identity]
-project = "example"
-stack = "sandbox"
-provider = "yandex-cloud"
-scope_id = "example-folder"
-owner_id = "example-owner"
-'''
+PLAN_TEXT = 'schema_version = 1\nresources = []\n[identity]\nproject = "example"\nstack = "sandbox"\nprovider = "yandex-cloud"\nscope_id = "example-folder"\nowner_id = "example-owner"\n'
 
 
 class FakeEngine:
@@ -28,10 +20,10 @@ class FakeEngine:
 
     calls: list[str] = []
 
-    def __init__(self, plan: object, provider: object, state_path: str) -> None:
+    def __init__(self, plan: object, provider: object, statePath: str) -> None:
         """Accept only the already-validated explicit inputs passed by the CLI."""
 
-        self.state_path = state_path
+        self.statePath = statePath
 
     def Create(self) -> LifecycleReport:
         """Record an explicit create call."""
@@ -59,15 +51,15 @@ class FakeEngine:
 
         self.calls.append("rollback" if rollback else "recover")
 
-        return LifecycleReport("recover", "uncertain", recovery_required=True)
+        return LifecycleReport("recover", "uncertain", recoveryRequired=True)
 
 
-def Arguments(tmp_path: Path, action: str) -> list[str]:
+def Arguments(tmpPath: Path, action: str) -> list[str]:
     """Write a portable local plan and return fully explicit CLI arguments."""
 
-    path = tmp_path / "plan.toml"
+    path = tmpPath / "plan.toml"
     path.write_text(PLAN_TEXT, encoding="utf-8")
-    result = ["lifecycle", action, "--config", str(path), "--state", str(tmp_path / "stack.json"),
+    result = ["lifecycle", action, "--config", str(path), "--state", str(tmpPath / "stack.json"),
               "--yc-profile", "sandbox", "--format", "json"]
 
     if action != "status":
@@ -76,13 +68,13 @@ def Arguments(tmp_path: Path, action: str) -> list[str]:
     return result
 
 
-@pytest.mark.parametrize("action,expected,exit_code", [
+@pytest.mark.parametrize('action,expected,exitCode', [
     ("create", "create", 0), ("status", "status", 1), ("destroy", "destroy", 0),
     ("recover", "recover", 1), ("recover", "rollback", 1),
 ])
 def test_ExplicitLifecycleDispatch(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
-    action: str, expected: str, exit_code: int,
+    action: str, expected: str, exitCode: int,
 ) -> None:
     """The CLI passes selected scope and profile only after concrete authorization checks."""
 
@@ -106,9 +98,9 @@ def test_ExplicitLifecycleDispatch(
     if expected == "rollback":
         arguments.append("--rollback")
 
-    assert Main(arguments) == exit_code
+    assert Main(arguments) == exitCode
     assert FakeEngine.calls == [expected]
-    assert seen[0].folder_id == "example-folder" and seen[0].profile == "sandbox"
+    assert seen[0].folderId == "example-folder" and seen[0].profile == "sandbox"
     assert json.loads(capsys.readouterr().out)["action"] == action
 
 

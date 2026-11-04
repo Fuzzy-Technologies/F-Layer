@@ -208,10 +208,10 @@ def test_RequiredFieldsAndDirectConstructionAreStrict() -> None:
             ParseStaticSiteProfile(incomplete)
 
     for changes in (
-        {"identity": "invalid"}, {"schema_version": True}, {"guest_contract": "other"},
-        {"admin_source_cidrs": ["198.51.100.42/32"]}, {"http_source_cidrs": (1,)},
-        {"http_source_cidrs": tuple(f"192.0.2.{index}/32" for index in range(17))},
-        {"admin_public_key": "ssh-ed25519 " + base64.b64encode(b"invalid").decode("ascii")},
+        {"identity": "invalid"}, {'schemaVersion': True}, {'guestContract': "other"},
+        {'adminSourceCidrs': ["198.51.100.42/32"]}, {'httpSourceCidrs': (1,)},
+        {'httpSourceCidrs': tuple(f"192.0.2.{index}/32" for index in range(17))},
+        {'adminPublicKey': "ssh-ed25519 " + base64.b64encode(b"invalid").decode("ascii")},
     ):
         with pytest.raises(ValueError):
             replace(Profile(), **changes)
@@ -258,12 +258,12 @@ def test_PreparationProducesTwoPrivateOwnedBundlesAndLoadedPlan(tmp_path: Path) 
 
     profile = Profile()
     root = tmp_path / "artifacts-🚀"
-    prepared = PrepareStaticSite(profile, artifact_root=root)
+    prepared = PrepareStaticSite(profile, artifactRoot=root)
     plan = LoadDeploymentPlan(prepared.PlanFile)
     data = tomllib.loads(prepared.PlanFile.read_text())
     resources = {item["logical_id"]: item for item in data["resources"]}
     parameters = resources["instance"]["parameters"]
-    initialization = prepared.server_directory / CLOUD_INIT_FILENAME
+    initialization = prepared.serverDirectory / CLOUD_INIT_FILENAME
     rules = resources["firewall"]["parameters"]["rules"]
 
     assert plan.identity == IDENTITY and len(plan.resources) == 6, "New profile must use the existing complete lifecycle contract"
@@ -276,9 +276,9 @@ def test_PreparationProducesTwoPrivateOwnedBundlesAndLoadedPlan(tmp_path: Path) 
     ], "HTTP allowances must remain distinct from administrator SSH"
     assert resources["instance"]["dependencies"] == ["subnet", "firewall", "address", "boot-disk"], "Instance must depend on separately owned disk and network resources"
     assert resources["boot-disk"]["parameters"]["image_id"] == "example-image", "Image placement must remain explicit"
-    assert RenderStaticSitePlan(CompileStaticSite(profile), user_data_file=initialization) == prepared.PlanFile.read_text(), "Serialization must be deterministic"
+    assert RenderStaticSitePlan(CompileStaticSite(profile), userDataFile=initialization) == prepared.PlanFile.read_text(), "Serialization must be deterministic"
 
-    for directory in (prepared.server_directory, prepared.plan_directory):
+    for directory in (prepared.serverDirectory, prepared.planDirectory):
         assert directory.stat().st_mode & 0o777 == 0o700, "Owned bundle directories must remain private"
 
         manifest = json.loads((directory / "manifest.json").read_text())
@@ -298,28 +298,28 @@ def test_PlanRenderingRefusesForeignChangedOrWrongArtifacts(tmp_path: Path) -> N
     profile = Profile()
 
     for index, other in enumerate((
-        replace(profile, identity=replace(IDENTITY, owner_id="foreign")),
+        replace(profile, identity=replace(IDENTITY, ownerId="foreign")),
         replace(profile, body="Different publishable body"),
     )):
         directory = WriteArtifactBundle(tmp_path / f"root-{index}", BuildStaticSiteBundle(other))
 
         with pytest.raises(StaticSiteError):
-            RenderStaticSitePlan(CompileStaticSite(profile), user_data_file=directory / CLOUD_INIT_FILENAME)
+            RenderStaticSitePlan(CompileStaticSite(profile), userDataFile=directory / CLOUD_INIT_FILENAME)
 
     directory = WriteArtifactBundle(tmp_path / "root", BuildStaticSiteBundle(profile))
     path = directory / CLOUD_INIT_FILENAME
     path.write_bytes(b"synthetic-secret")
 
     with pytest.raises(StaticSiteError) as caught:
-        RenderStaticSitePlan(CompileStaticSite(profile), user_data_file=path)
+        RenderStaticSitePlan(CompileStaticSite(profile), userDataFile=path)
 
     assert "synthetic-secret" not in str(caught.value), "Changed artifact bytes must remain outside failures"
 
     with pytest.raises(StaticSiteError):
-        RenderStaticSitePlan(CompileStaticSite(profile), user_data_file=directory / "wrong.json")
+        RenderStaticSitePlan(CompileStaticSite(profile), userDataFile=directory / "wrong.json")
 
     with pytest.raises(StaticSiteError):
-        RenderStaticSitePlan("invalid", user_data_file=path)  # type: ignore[arg-type]
+        RenderStaticSitePlan("invalid", userDataFile=path)  # type: ignore[arg-type]
 
 
 def test_PlanCollisionRollsBackServerWithoutReplacingForeignBytes(tmp_path: Path) -> None:
@@ -334,7 +334,7 @@ def test_PlanCollisionRollsBackServerWithoutReplacingForeignBytes(tmp_path: Path
     marker.write_bytes(b"foreign-value")
 
     with pytest.raises(ArtifactError):
-        PrepareStaticSite(profile, artifact_root=root)
+        PrepareStaticSite(profile, artifactRoot=root)
 
     assert marker.read_bytes() == b"foreign-value", "Plan collision must preserve foreign bytes"
     assert not (root / "server-site").exists(), "Failed preparation must roll back its new server bundle"
@@ -345,22 +345,22 @@ def test_PreparationRejectsTraversalSymlinksAndServerCollision(tmp_path: Path) -
     """Keep both plan and cloud-init within the existing bounded private artifact writer."""
 
     root = tmp_path / "artifacts"
-    prepared = PrepareStaticSite(Profile(), artifact_root=root)
+    prepared = PrepareStaticSite(Profile(), artifactRoot=root)
     original = prepared.PlanFile.read_bytes()
 
     with pytest.raises(ArtifactError):
-        PrepareStaticSite(Profile(), artifact_root=root)
+        PrepareStaticSite(Profile(), artifactRoot=root)
 
     assert prepared.PlanFile.read_bytes() == original, "Repeated preparation must never overwrite an existing plan"
 
     with pytest.raises(ArtifactError):
-        PrepareStaticSite(Profile(), artifact_root=tmp_path / ".." / "escape")
+        PrepareStaticSite(Profile(), artifactRoot=tmp_path / ".." / "escape")
 
     link = tmp_path / "link"
     link.symlink_to(root, target_is_directory=True)
 
     with pytest.raises(ArtifactError):
-        PrepareStaticSite(Profile(), artifact_root=link)
+        PrepareStaticSite(Profile(), artifactRoot=link)
 
 
 def test_ChangedServerDuringFailedPreparationIsPreserved(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -379,7 +379,7 @@ def test_ChangedServerDuringFailedPreparationIsPreserved(tmp_path: Path, monkeyp
     monkeypatch.setattr("flayer.profiles.static_site.RenderStaticSitePlan", FailRender)
 
     with pytest.raises(ArtifactError):
-        PrepareStaticSite(Profile(), artifact_root=root)
+        PrepareStaticSite(Profile(), artifactRoot=root)
 
     assert (root / "server-site" / CLOUD_INIT_FILENAME).read_bytes() == b"changed-by-other-writer", "Rollback must preserve detected replacement bytes"
 
@@ -403,7 +403,7 @@ def test_ValidSameIdentityReplacementSurvivesPreparationRollback(tmp_path: Path,
     monkeypatch.setattr("flayer.profiles.static_site.RenderStaticSitePlan", ReplaceThenFailRender)
 
     with pytest.raises(ArtifactError):
-        PrepareStaticSite(profile, artifact_root=root)
+        PrepareStaticSite(profile, artifactRoot=root)
 
     path = root / "server-site" / CLOUD_INIT_FILENAME
 
@@ -417,10 +417,10 @@ def test_PublishedOwnedPlanPreservesReferencedServerOnLateFailure(tmp_path: Path
 
     root = tmp_path / "artifacts"
 
-    def FailAfterPlanPublication(artifact_root: str | Path, bundle: ArtifactBundle) -> Path:
+    def FailAfterPlanPublication(artifactRoot: str | Path, bundle: ArtifactBundle) -> Path:
         """Emulate a final writer failure only after publishing the owned plan successfully."""
 
-        directory = WriteArtifactBundle(artifact_root, bundle)
+        directory = WriteArtifactBundle(artifactRoot, bundle)
 
         if bundle.name.endswith("-plan"):
             raise ArtifactError("Synthetic final publication failure")
@@ -430,7 +430,7 @@ def test_PublishedOwnedPlanPreservesReferencedServerOnLateFailure(tmp_path: Path
     monkeypatch.setattr("flayer.profiles.static_site.WriteArtifactBundle", FailAfterPlanPublication)
 
     with pytest.raises(ArtifactError):
-        PrepareStaticSite(Profile(), artifact_root=root)
+        PrepareStaticSite(Profile(), artifactRoot=root)
 
     assert LoadDeploymentPlan(root / "server-site-plan" / "deployment-plan.toml").identity == IDENTITY, "Late failure must preserve the fully verified published plan"
     assert (root / "server-site" / CLOUD_INIT_FILENAME).is_file(), "Rollback must not remove initialization referenced by an exact owned published plan"
@@ -451,13 +451,13 @@ def test_PreparationCliReadsExampleAndReportsOnlyLocalPreparedStatus(tmp_path: P
     assert Main((str(example), "--artifact-root", str(tmp_path / "artifacts"))) == 1, "CLI must report exclusive publication failures"
     assert json.loads(capsys.readouterr().out)["status"] == "failed", "CLI failure must remain structured and sanitized"
 
-    result_process = subprocess.run([sys.executable, "-m", "flayer.profiles.static_site", "--help"], env={**os.environ, "PYTHONPATH": str(example.parents[1] / "src")}, capture_output=True, text=True, check=False, timeout=5)
+    resultProcess = subprocess.run([sys.executable, "-m", "flayer.profiles.static_site", "--help"], env={**os.environ, "PYTHONPATH": str(example.parents[1] / "src")}, capture_output=True, text=True, check=False, timeout=5)
 
-    assert result_process.returncode == 0 and "RuntimeWarning" not in result_process.stderr, "Module entry point must work without preloaded-module warnings"
+    assert resultProcess.returncode == 0 and "RuntimeWarning" not in resultProcess.stderr, "Module entry point must work without preloaded-module warnings"
 
 
-@pytest.mark.parametrize("failed_command", ["none", "sshd", "nft", "nginx"])
-def test_FixedBootstrapStopsOnSyntaxFailureBeforeServiceActivation(tmp_path: Path, failed_command: str) -> None:
+@pytest.mark.parametrize('failedCommand', ["none", "sshd", "nft", "nginx"])
+def test_FixedBootstrapStopsOnSyntaxFailureBeforeServiceActivation(tmp_path: Path, failedCommand: str) -> None:
     """Execute sequencing only through isolated command fakes, never host services or files."""
 
     script = tmp_path / "bootstrap.sh"
@@ -475,10 +475,10 @@ def test_FixedBootstrapStopsOnSyntaxFailureBeforeServiceActivation(tmp_path: Pat
         command.write_text("#!/bin/sh\nprintf '%s %s\\n' \"${0##*/}\" \"$*\" >> \"$STATIC_SITE_TRACE\"\n" + f"[ '{name}' != \"$STATIC_SITE_FAIL\" ]\n")
         command.chmod(0o700)
 
-    result = subprocess.run(["/bin/sh", str(script)], env={**os.environ, "PATH": str(commands), "STATIC_SITE_TRACE": str(trace), "STATIC_SITE_FAIL": failed_command}, capture_output=True, check=False, timeout=5)
+    result = subprocess.run(["/bin/sh", str(script)], env={**os.environ, "PATH": str(commands), "STATIC_SITE_TRACE": str(trace), "STATIC_SITE_FAIL": failedCommand}, capture_output=True, check=False, timeout=5)
     calls = trace.read_text().splitlines()
 
-    if failed_command == "none":
+    if failedCommand == "none":
         assert result.returncode == 0, "All validated fake operations must complete bootstrap sequencing"
         assert calls.index("nginx -t -c /etc/nginx/nginx.conf") < calls.index("systemctl enable --now nftables"), "All syntax checks must precede explicit service activation"
         assert "systemctl disable --now ssh.socket" in calls and "systemctl enable --now ssh.service" in calls, "SSH service must persist after socket activation is disabled"
@@ -524,16 +524,16 @@ def test_NginxParsesFixedConfigurationWithoutDaemonStartup(tmp_path: Path) -> No
         f"pid {json.dumps(str(tmp_path / 'nginx.pid'))};", "error_log stderr;",
         f"lock_file {json.dumps(str(tmp_path / 'nginx.lock'))};",
     )))
-    temporary_directives: list[str] = []
+    temporaryDirectives: list[str] = []
 
     for module in ("client_body", "proxy", "fastcgi", "uwsgi", "scgi"):
         directory = tmp_path / (module + "-temp")
         directory.mkdir(mode=0o700)
-        temporary_directives.append(f"    {module}_temp_path {json.dumps(str(directory))};")
+        temporaryDirectives.append(f"    {module}_temp_path {json.dumps(str(directory))};")
 
-    config = config.replace("http {\n", "http {\n" + "\n".join(temporary_directives) + "\n", 1)
-    socket_listener = "listen " + json.dumps("unix:" + str(tmp_path / "n.sock")) + " default_server;"
-    config = config.replace("listen 80 default_server;", socket_listener, 1)
+    config = config.replace("http {\n", "http {\n" + "\n".join(temporaryDirectives) + "\n", 1)
+    socketListener = "listen " + json.dumps("unix:" + str(tmp_path / "n.sock")) + " default_server;"
+    config = config.replace("listen 80 default_server;", socketListener, 1)
     path = tmp_path / "nginx.conf"
     path.write_text(config)
     result = subprocess.run([str(shutil.which("nginx")), "-t", "-e", "stderr", "-p", str(tmp_path), "-c", str(path)], capture_output=True, text=True, check=False, timeout=5)
@@ -557,11 +557,11 @@ def test_NginxValidatorIsolatesWritablePathsAndRetainsServerGrammar(tmp_path: Pa
 
         config = Path(command[command.index("-c") + 1]).read_text()
         original = GuestFiles()["/etc/nginx/nginx.conf"]["content"]
-        socket_listener = "listen " + json.dumps("unix:" + str(tmp_path / "n.sock")) + " default_server;"
+        socketListener = "listen " + json.dumps("unix:" + str(tmp_path / "n.sock")) + " default_server;"
 
-        assert socket_listener in config and config.count("listen ") == 1, "Nginx test mode must have only the caller-owned Unix socket listener"
+        assert socketListener in config and config.count("listen ") == 1, "Nginx test mode must have only the caller-owned Unix socket listener"
 
-        restored = config.replace(socket_listener, "listen 80 default_server;", 1)
+        restored = config.replace(socketListener, "listen 80 default_server;", 1)
 
         assert restored[restored.index("    default_type text/html;"):] == original[original.index("    default_type text/html;"):], "Validation must retain generated HTTP and server grammar except its isolated listen endpoint"
         assert "error_log stderr;" in config and "access_log off;" in config, "Nginx must have no writable default host logs"
@@ -588,12 +588,12 @@ def test_MaximumTextAndSourceBudgetsRemainWithinProviderArtifactLimit(tmp_path: 
     """Exercise bounded maximum expansion and exact sizing without provider execution."""
 
     profile = replace(Profile(), title="t" * 160, body="&" * 8192,
-                      admin_source_cidrs=tuple(f"198.51.100.{index}/32" for index in range(16)),
-                      http_source_cidrs=tuple(f"192.0.2.{index}/32" for index in range(16)),
-                      cores=32, memory_gib=64, boot_disk_gib=256)
-    prepared = PrepareStaticSite(profile, artifact_root=tmp_path / "maximum")
+                      adminSourceCidrs=tuple(f"198.51.100.{index}/32" for index in range(16)),
+                      httpSourceCidrs=tuple(f"192.0.2.{index}/32" for index in range(16)),
+                      cores=32, memoryGib=64, bootDiskGib=256)
+    prepared = PrepareStaticSite(profile, artifactRoot=tmp_path / "maximum")
     resources = tomllib.loads(prepared.PlanFile.read_text())["resources"]
     firewall = next(item for item in resources if item["kind"] == "security-group")
 
     assert len(firewall["parameters"]["rules"]) == 33, "Maximum profile must remain inside the provider 64-rule contract"
-    assert len((prepared.server_directory / CLOUD_INIT_FILENAME).read_bytes()) < 262144, "Maximum escaped page must remain within the provider metadata bound"
+    assert len((prepared.serverDirectory / CLOUD_INIT_FILENAME).read_bytes()) < 262144, "Maximum escaped page must remain within the provider metadata bound"

@@ -15,7 +15,9 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlsplit, urlunsplit
 
-from tools import documentation_coverage, documentation_gates, generated_localization
+from tools import documentation_coverage as documentationCoverage
+from tools import documentation_gates as documentationGates
+from tools import generated_localization as generatedLocalization
 from tools.locale_documentation import ValidateLocales
 from tools.markdown_tables import AlignMarkdown
 
@@ -34,30 +36,30 @@ def _LocalizeNavigation(value: Any, labels: Mapping[str, str]) -> Any:
 
 
 def LocalizeConfig(
-    config: str, locale: str, content_root: Path, site_root: Path,
-    labels: Mapping[str, str], publication_root: str,
+    config: str, locale: str, contentRoot: Path, siteRoot: Path,
+    labels: Mapping[str, str], publicationRoot: str,
 ) -> str:
     """Adapt the verified canonical configuration without loading its environment tags."""
 
-    config = re.sub(r"(?m)^docs_dir:.*$", f"docs_dir: {json.dumps(str(content_root))}", config)
-    config = re.sub(r"(?m)^site_dir:.*$", f"site_dir: {json.dumps(str(site_root))}", config)
-    config = re.sub(r"(?m)^site_url:.*$", f"site_url: {publication_root}/{locale}/", config)
+    config = re.sub(r"(?m)^docs_dir:.*$", f"docs_dir: {json.dumps(str(contentRoot))}", config)
+    config = re.sub(r"(?m)^site_dir:.*$", f"site_dir: {json.dumps(str(siteRoot))}", config)
+    config = re.sub(r"(?m)^site_url:.*$", f"site_url: {publicationRoot}/{locale}/", config)
     config = re.sub(r"(?m)^edit_uri:.*$", f"edit_uri: edit/develop/docs/site/content/{locale}/",
                     config)
-    theme_locale = "zh" if locale == "zh-CN" else locale
-    config = re.sub(r"(?m)^  language:.*$", f"  language: {theme_locale}", config)
+    themeLocale = "zh" if locale == "zh-CN" else locale
+    config = re.sub(r"(?m)^  language:.*$", f"  language: {themeLocale}", config)
     lines = config.splitlines()
-    in_navigation = False
+    inNavigation = False
 
     for index, line in enumerate(lines):
         if line == "nav:":
-            in_navigation = True
+            inNavigation = True
             continue
 
-        if in_navigation and line and not line.startswith(" "):
-            in_navigation = False
+        if inNavigation and line and not line.startswith(" "):
+            inNavigation = False
 
-        if not in_navigation:
+        if not inNavigation:
             continue
 
         match = re.fullmatch(r"(\s+- )([^:]+):(.*)", line)
@@ -78,26 +80,26 @@ def LocalizeConfig(
 
 
 def TranslationBanner(
-    state: str, unit_id: str, canonical_url: str, notices: Mapping[str, Any],
-    rendered_source_hash: str,
+    state: str, unitId: str, canonicalUrl: str, notices: Mapping[str, Any],
+    renderedSourceHash: str,
 ) -> str:
     """Expose the actual computed review state and a link to current canonical English."""
 
     if state == "approved":
         return (
             f'<aside hidden data-translation-state="approved" '
-            f'data-documentation-unit="{html.escape(unit_id)}" '
-            f'data-rendered-source-sha256="{rendered_source_hash}"></aside>\n\n'
+            f'data-documentation-unit="{html.escape(unitId)}" '
+            f'data-rendered-source-sha256="{renderedSourceHash}"></aside>\n\n'
         )
 
     message = notices["states"][state]
 
     return (
         f'<aside class="fl-translation-notice" data-translation-state="{html.escape(state)}" '
-        f'data-documentation-unit="{html.escape(unit_id)}" '
-        f'data-rendered-source-sha256="{rendered_source_hash}">\n'
+        f'data-documentation-unit="{html.escape(unitId)}" '
+        f'data-rendered-source-sha256="{renderedSourceHash}">\n'
         f'<strong>{html.escape(message["title"])}</strong> '
-        f'<a href="{html.escape(canonical_url)}">{html.escape(notices["canonicalLink"])}</a>'
+        f'<a href="{html.escape(canonicalUrl)}">{html.escape(notices["canonicalLink"])}</a>'
         f' <details><summary>{html.escape(notices["statusLink"])}</summary>'
         f'<p>{html.escape(message["body"])} '
         f'<a href="{html.escape(notices["statusUrl"])}">'
@@ -105,29 +107,29 @@ def TranslationBanner(
     )
 
 
-def _PageRoute(relative_path: Path) -> str:
+def _PageRoute(relativePath: Path) -> str:
     """Map an authored Markdown path to MkDocs directory URLs."""
 
-    if relative_path.name in {"index.md", "README.md"}:
-        return relative_path.parent.as_posix().removeprefix(".").strip("/")
+    if relativePath.name in {"index.md", "README.md"}:
+        return relativePath.parent.as_posix().removeprefix(".").strip("/")
 
-    return relative_path.with_suffix("").as_posix()
+    return relativePath.with_suffix("").as_posix()
 
 
 def RewriteFallbackLinks(
-    body: str, translation_path: Path, canonical_root: Path, project_root: Path | None = None,
+    body: str, translationPath: Path, canonicalRoot: Path, projectRoot: Path | None = None,
 ) -> str:
     """Map actual authored and repository source targets onto the current locale's routes."""
 
-    locale_root = translation_path
+    localeRoot = translationPath
 
-    while locale_root.name not in {"ru", "zh-CN"}:
-        locale_root = locale_root.parent
+    while localeRoot.name not in {"ru", "zh-CN"}:
+        localeRoot = localeRoot.parent
 
-        if locale_root == locale_root.parent:
+        if localeRoot == localeRoot.parent:
             raise ValueError("Translation source must belong to a configured locale")
 
-    source_parent = translation_path.parent.relative_to(locale_root).as_posix()
+    sourceParent = translationPath.parent.relative_to(localeRoot).as_posix()
 
     def Rewrite(match: re.Match[str]) -> str:
         """Preserve labels and fragments while remapping canonical source destinations."""
@@ -138,212 +140,212 @@ def RewriteFallbackLinks(
         if parsed.scheme or parsed.netloc or not parsed.path:
             return match.group(0)
 
-        resolved = (translation_path.parent / unquote(parsed.path)).resolve()
+        resolved = (translationPath.parent / unquote(parsed.path)).resolve()
 
-        if resolved.is_relative_to(canonical_root.resolve()):
-            destination = resolved.relative_to(canonical_root).as_posix()
+        if resolved.is_relative_to(canonicalRoot.resolve()):
+            destination = resolved.relative_to(canonicalRoot).as_posix()
 
-        elif resolved.is_relative_to(locale_root.resolve()):
-            destination = resolved.relative_to(locale_root).as_posix()
+        elif resolved.is_relative_to(localeRoot.resolve()):
+            destination = resolved.relative_to(localeRoot).as_posix()
 
-        elif project_root and resolved.is_relative_to(project_root.resolve()):
+        elif projectRoot and resolved.is_relative_to(projectRoot.resolve()):
             if resolved.is_dir() and (resolved / "README.md").is_file():
                 resolved /= "README.md"
 
-            source_path = resolved.relative_to(project_root).as_posix()
-            destination = (documentation_coverage.MarkdownPage(source_path)
+            sourcePath = resolved.relative_to(projectRoot).as_posix()
+            destination = (documentationCoverage.MarkdownPage(sourcePath)
                            if resolved.suffix == ".md"
-                           else documentation_coverage.SOURCE_URL + source_path)
+                           else documentationCoverage.SOURCE_URL + sourcePath)
 
         else:
             return match.group(0)
 
         route = urlsplit(destination)
-        local_path = route.path if route.scheme else posixpath.relpath(route.path, source_parent)
-        rewritten = urlunsplit((route.scheme, route.netloc, local_path, parsed.query, parsed.fragment))
+        localPath = route.path if route.scheme else posixpath.relpath(route.path, sourceParent)
+        rewritten = urlunsplit((route.scheme, route.netloc, localPath, parsed.query, parsed.fragment))
         start, end = match.span(1)
         original = match.group(0)
 
         return original[:start - match.start()] + rewritten + original[end - match.start():]
 
-    return documentation_gates.MARKDOWN_LINK.sub(Rewrite, body)
+    return documentationGates.MARKDOWN_LINK.sub(Rewrite, body)
 
 
 def _PrepareLocale(
-    project_root: Path, build_root: Path, locale: str, project: Mapping[str, Any],
+    projectRoot: Path, buildRoot: Path, locale: str, project: Mapping[str, Any],
     registry: Mapping[str, Any], states: Mapping[str, Mapping[str, str]],
-    notices: dict[str, Any], publication_root: str,
-    generated_units: Mapping[str, Any] | None = None,
-    generated_translations: Mapping[str, generated_localization.ReviewedTranslation] | None = None,
+    notices: dict[str, Any], publicationRoot: str,
+    generatedUnits: Mapping[str, Any] | None = None,
+    generatedTranslations: Mapping[str, generatedLocalization.ReviewedTranslation] | None = None,
 ) -> tuple[Path, dict[str, dict[str, str]]]:
     """Overlay tracked translations onto disposable canonical source with visible state."""
 
-    generated_units = generated_units or {}
-    generated_translations = generated_translations or {}
-    canonical_root = build_root / "content/en"
-    content_root = build_root / "content" / locale
+    generatedUnits = generatedUnits or {}
+    generatedTranslations = generatedTranslations or {}
+    canonicalRoot = buildRoot / "content/en"
+    contentRoot = buildRoot / "content" / locale
 
-    if content_root.is_symlink() or content_root.parent.is_symlink():
+    if contentRoot.is_symlink() or contentRoot.parent.is_symlink():
         raise ValueError(f"Refusing redirected generated locale source: {locale}")
 
-    if content_root.exists():
-        shutil.rmtree(content_root)
+    if contentRoot.exists():
+        shutil.rmtree(contentRoot)
 
-    shutil.copytree(canonical_root, content_root)
+    shutil.copytree(canonicalRoot, contentRoot)
     records = {Path(record["sourcePath"]).relative_to(Path(project["contentRoot"]) / "en"): record
                for record in registry["units"] if record["kind"] == "page"}
     evidence: dict[str, dict[str, str]] = {}
-    notices["statusUrl"] = f"{publication_root}/{locale}/translation-status/"
+    notices["statusUrl"] = f"{publicationRoot}/{locale}/translation-status/"
 
-    for canonical_path in sorted(canonical_root.rglob("*.md")):
-        relative_path = canonical_path.relative_to(canonical_root)
-        record = records.get(relative_path)
-        unit_id = record["id"] if record else f"generated:{relative_path.as_posix()}"
-        state = states[unit_id][locale] if record else "missing"
-        route = _PageRoute(relative_path)
-        canonical_url = f"{publication_root}/en/{route + '/' if route else ''}"
-        body = canonical_path.read_text(encoding="utf-8")
+    for canonicalPath in sorted(canonicalRoot.rglob("*.md")):
+        relativePath = canonicalPath.relative_to(canonicalRoot)
+        record = records.get(relativePath)
+        unitId = record["id"] if record else f"generated:{relativePath.as_posix()}"
+        state = states[unitId][locale] if record else "missing"
+        route = _PageRoute(relativePath)
+        canonicalUrl = f"{publicationRoot}/en/{route + '/' if route else ''}"
+        body = canonicalPath.read_text(encoding="utf-8")
 
         if record and state in {"draft", "review", "approved"}:
-            translation_path = project_root / record["translations"][locale]["path"]
+            translationPath = projectRoot / record["translations"][locale]["path"]
             body = RewriteFallbackLinks(
-                translation_path.read_text(encoding="utf-8"), translation_path,
-                project_root / project["contentRoot"] / "en", project_root,
+                translationPath.read_text(encoding="utf-8"), translationPath,
+                projectRoot / project["contentRoot"] / "en", projectRoot,
             )
 
         elif not record:
-            repository_id = "repository:" + relative_path.as_posix().removeprefix("repository/")
+            repositoryId = "repository:" + relativePath.as_posix().removeprefix("repository/")
 
-            if relative_path.as_posix().startswith("repository/github/"):
-                repository_id = repository_id.replace("repository:github/", "repository:.github/", 1)
+            if relativePath.as_posix().startswith("repository/github/"):
+                repositoryId = repositoryId.replace("repository:github/", "repository:.github/", 1)
 
-            if repository_id in generated_units:
+            if repositoryId in generatedUnits:
                 from tools.build_api_reference import RewriteRepositoryLinks
 
-                unit_id = repository_id
-                translation = generated_translations.get(unit_id)
+                unitId = repositoryId
+                translation = generatedTranslations.get(unitId)
                 state = translation.state if translation else "missing"
 
                 if translation and state == "approved":
-                    unit = generated_units[unit_id]
-                    body = generated_localization.CanonicalHeadingAnchors(unit.body, translation.body)
-                    body = RewriteRepositoryLinks(body, project_root / unit.source_path,
-                                                  relative_path.as_posix())
+                    unit = generatedUnits[unitId]
+                    body = generatedLocalization.CanonicalHeadingAnchors(unit.body, translation.body)
+                    body = RewriteRepositoryLinks(body, projectRoot / unit.sourcePath,
+                                                  relativePath.as_posix())
 
-            elif relative_path.as_posix() == "coverage/index.md" and generated_units:
-                body, state = generated_localization.RenderCoverage(project_root, generated_translations)
-                unit_id = "generated:coverage/index.md"
+            elif relativePath.as_posix() == "coverage/index.md" and generatedUnits:
+                body, state = generatedLocalization.RenderCoverage(projectRoot, generatedTranslations)
+                unitId = "generated:coverage/index.md"
 
-            elif relative_path.parts[:2] == ("api", "modules"):
-                module_id = "module:" + relative_path.stem.replace("-", ".")
-                module = generated_units.get(module_id)
+            elif relativePath.parts[:2] == ("api", "modules"):
+                moduleId = "module:" + relativePath.stem.replace("-", ".")
+                module = generatedUnits.get(moduleId)
 
                 if module:
-                    unit_id = module_id
-                    related = [identifier for identifier, unit in generated_units.items()
-                               if unit.kind == "symbol" and unit.source_path == module.source_path]
-                    review_states = [generated_translations[identifier].state
-                                     if identifier in generated_translations else "missing"
+                    unitId = moduleId
+                    related = [identifier for identifier, unit in generatedUnits.items()
+                               if unit.kind == "symbol" and unit.sourcePath == module.sourcePath]
+                    reviewStates = [generatedTranslations[identifier].state
+                                     if identifier in generatedTranslations else "missing"
                                      for identifier in related]
-                    state = ("approved" if all(value == "approved" for value in review_states)
-                             else "stale" if "stale" in review_states else "missing")
+                    state = ("approved" if all(value == "approved" for value in reviewStates)
+                             else "stale" if "stale" in reviewStates else "missing")
                     body = body.replace("[Module source]", f"[{notices.get('moduleSource', 'Module source')}]")
 
-        rendered_source_hash = hashlib.sha256(body.encode("utf-8")).hexdigest()
-        (content_root / relative_path).write_text(
-            TranslationBanner(state, unit_id, canonical_url, notices, rendered_source_hash) + body,
+        renderedSourceHash = hashlib.sha256(body.encode("utf-8")).hexdigest()
+        (contentRoot / relativePath).write_text(
+            TranslationBanner(state, unitId, canonicalUrl, notices, renderedSourceHash) + body,
             encoding="utf-8",
         )
-        evidence[relative_path.as_posix()] = {
-            "unitId": unit_id, "state": state,
+        evidence[relativePath.as_posix()] = {
+            "unitId": unitId, "state": state,
             "renderedContent": "translation" if state in {"draft", "review", "approved"}
-            else "english-fallback", "canonicalUrl": canonical_url,
-            "renderedSourceSha256": rendered_source_hash,
+            else "english-fallback", "canonicalUrl": canonicalUrl,
+            "renderedSourceSha256": renderedSourceHash,
         }
 
-    status_lines = [f'# {notices["statusTitle"]}', "", notices["statusBody"], "",
+    statusLines = [f'# {notices["statusTitle"]}', "", notices["statusBody"], "",
                     f'| {notices["pageLabel"]} | {notices["stateLabel"]} |', "| --- | --- |"]
 
-    for page_name, entry in evidence.items():
-        status_lines.append(
-            f'| [{page_name}](../{page_name}) | '
+    for pageName, entry in evidence.items():
+        statusLines.append(
+            f'| [{pageName}](../{pageName}) | '
             f'{notices["states"][entry["state"]]["title"]} (`{entry["state"]}`) |'
         )
 
-    status_root = content_root / "translation-status"
-    status_root.mkdir()
-    (status_root / "index.md").write_text(
-        AlignMarkdown("\n".join(status_lines) + "\n"), encoding="utf-8",
+    statusRoot = contentRoot / "translation-status"
+    statusRoot.mkdir()
+    (statusRoot / "index.md").write_text(
+        AlignMarkdown("\n".join(statusLines) + "\n"), encoding="utf-8",
     )
 
-    return content_root, evidence
+    return contentRoot, evidence
 
 
 def RenderLocaleSites(
-    project_root: Path, build_root: Path, config_path: Path, environment_python: Path,
+    projectRoot: Path, buildRoot: Path, configPath: Path, environmentPython: Path,
     environment: Mapping[str, str],
 ) -> dict[str, Any]:
     """Build every locale strictly using the canonical guarded installed-wheel environment."""
 
-    expected_root = project_root / "_build/api-reference"
+    expectedRoot = projectRoot / "_build/api-reference"
 
-    if (build_root.resolve() != expected_root.resolve() or build_root.is_symlink()
-            or (build_root / "site").is_symlink() or not (build_root / "site/en/index.html").is_file()):
+    if (buildRoot.resolve() != expectedRoot.resolve() or buildRoot.is_symlink()
+            or (buildRoot / "site").is_symlink() or not (buildRoot / "site/en/index.html").is_file()):
         raise ValueError("Locale rendering requires the owned verified canonical build root")
 
-    report = ValidateLocales(project_root)
+    report = ValidateLocales(projectRoot)
 
     if report.diagnostics:
         raise ValueError("\n".join(report.diagnostics))
 
-    project = tomllib.loads((project_root / "docs/i18n/project.toml").read_text(encoding="utf-8"))
-    registry = tomllib.loads((project_root / project["unitManifest"]).read_text(encoding="utf-8"))
-    VerifyTrackedTranslations(project_root, registry)
-    generated_units = generated_localization.DiscoverGeneratedUnits(project_root)
-    generated_translations = generated_localization.LoadTranslations(project_root, generated_units)
-    locale_data = tomllib.loads((project_root / "docs/i18n/fallbacks.toml").read_text(encoding="utf-8"))
-    canonical_config = config_path.read_text(encoding="utf-8")
-    publication_root = "https://fuzzy-technologies.github.io" + project["publicationPath"]
+    project = tomllib.loads((projectRoot / "docs/i18n/project.toml").read_text(encoding="utf-8"))
+    registry = tomllib.loads((projectRoot / project["unitManifest"]).read_text(encoding="utf-8"))
+    VerifyTrackedTranslations(projectRoot, registry)
+    generatedUnits = generatedLocalization.DiscoverGeneratedUnits(projectRoot)
+    generatedTranslations = generatedLocalization.LoadTranslations(projectRoot, generatedUnits)
+    localeData = tomllib.loads((projectRoot / "docs/i18n/fallbacks.toml").read_text(encoding="utf-8"))
+    canonicalConfig = configPath.read_text(encoding="utf-8")
+    publicationRoot = "https://fuzzy-technologies.github.io" + project["publicationPath"]
     result: dict[str, Any] = {}
 
     for locale in project["locales"][1:]:
-        site_root = build_root / "site" / locale
-        staged_root = build_root / "rendered-locales" / locale
+        siteRoot = buildRoot / "site" / locale
+        stagedRoot = buildRoot / "rendered-locales" / locale
 
-        if site_root.is_symlink():
+        if siteRoot.is_symlink():
             raise ValueError(f"Refusing redirected generated locale directory: {locale}")
 
-        if staged_root.is_symlink() or staged_root.parent.is_symlink():
+        if stagedRoot.is_symlink() or stagedRoot.parent.is_symlink():
             raise ValueError(f"Refusing redirected locale staging directory: {locale}")
 
-        if staged_root.exists():
-            shutil.rmtree(staged_root)
+        if stagedRoot.exists():
+            shutil.rmtree(stagedRoot)
 
-        content_root, pages = _PrepareLocale(
-            project_root, build_root, locale, project, registry, report.states,
-            locale_data[locale], publication_root, generated_units, generated_translations[locale],
+        contentRoot, pages = _PrepareLocale(
+            projectRoot, buildRoot, locale, project, registry, report.states,
+            localeData[locale], publicationRoot, generatedUnits, generatedTranslations[locale],
         )
-        labels = dict(locale_data[locale]["navigation"])
+        labels = dict(localeData[locale]["navigation"])
 
-        for identifier, unit in generated_units.items():
-            translation = generated_translations[locale].get(identifier)
+        for identifier, unit in generatedUnits.items():
+            translation = generatedTranslations[locale].get(identifier)
 
             if identifier.startswith("repository:") and translation and translation.state == "approved":
-                canonical_title = next((line[2:].strip() for line in unit.body.splitlines()
-                                        if line.startswith("# ")), Path(unit.source_path).stem)
-                translated_title = next((line[2:].strip() for line in translation.body.splitlines()
-                                         if line.startswith("# ")), canonical_title)
-                labels[f"{canonical_title} ({unit.source_path})"] = (
-                    f"{translated_title} ({unit.source_path})"
+                canonicalTitle = next((line[2:].strip() for line in unit.body.splitlines()
+                                        if line.startswith("# ")), Path(unit.sourcePath).stem)
+                translatedTitle = next((line[2:].strip() for line in translation.body.splitlines()
+                                         if line.startswith("# ")), canonicalTitle)
+                labels[f"{canonicalTitle} ({unit.sourcePath})"] = (
+                    f"{translatedTitle} ({unit.sourcePath})"
                 )
 
-        config = LocalizeConfig(canonical_config, locale, content_root, staged_root,
-                                labels, publication_root)
-        extension, overlay = generated_localization.WriteApiOverlay(
-            project_root, build_root, locale, generated_translations[locale], generated_units,
+        config = LocalizeConfig(canonicalConfig, locale, contentRoot, stagedRoot,
+                                labels, publicationRoot)
+        extension, overlay = generatedLocalization.WriteApiOverlay(
+            projectRoot, buildRoot, locale, generatedTranslations[locale], generatedUnits,
         )
-        extension_config = [{str(extension): {"translations_path": str(overlay)}}]
-        templates = generated_localization.WriteApiTemplates(project_root, build_root, locale)
+        extensionConfig = [{str(extension): {"translations_path": str(overlay)}}]
+        templates = generatedLocalization.WriteApiTemplates(projectRoot, buildRoot, locale)
 
         if config.count("  - mkdocstrings:\n") != 1:
             raise ValueError("Locale configuration must contain exactly one mkdocstrings plugin")
@@ -355,77 +357,77 @@ def RenderLocaleSites(
             raise ValueError("Locale configuration must contain exactly one Python handler options block")
 
         config = config.replace("          options:\n", "          options:\n            extensions: "
-                                + json.dumps(extension_config) + "\n", 1)
+                                + json.dumps(extensionConfig) + "\n", 1)
         config = re.sub(r"(?m)^plugins:",
-                        f'  - {json.dumps(locale_data[locale]["statusTitle"], ensure_ascii=False)}: '
+                        f'  - {json.dumps(localeData[locale]["statusTitle"], ensure_ascii=False)}: '
                         "translation-status/index.md\n\nplugins:", config, count=1)
-        locale_config = build_root / f"mkdocs-{locale}.yml"
-        locale_config.write_text(config, encoding="utf-8")
+        localeConfig = buildRoot / f"mkdocs-{locale}.yml"
+        localeConfig.write_text(config, encoding="utf-8")
         process = subprocess.run(
-            [str(environment_python), "-m", "mkdocs", "build", "--strict", "--config-file",
-             str(locale_config)], cwd=build_root, env=environment,
+            [str(environmentPython), "-m", "mkdocs", "build", "--strict", "--config-file",
+             str(localeConfig)], cwd=buildRoot, env=environment,
             capture_output=True, text=True, check=False,
         )
 
         if process.returncode:
             raise RuntimeError(f"Strict locale build failed: {locale}\n{process.stdout}{process.stderr}")
 
-        VerifyRenderedLocale(build_root / "rendered-locales", locale, pages)
-        generated_localization.VerifyApiProse(build_root / "rendered-locales", locale,
-                                              generated_units, generated_translations[locale])
+        VerifyRenderedLocale(buildRoot / "rendered-locales", locale, pages)
+        generatedLocalization.VerifyApiProse(buildRoot / "rendered-locales", locale,
+                                              generatedUnits, generatedTranslations[locale])
 
-        if site_root.exists():
-            shutil.rmtree(site_root)
+        if siteRoot.exists():
+            shutil.rmtree(siteRoot)
 
-        shutil.move(str(staged_root), site_root)
-        VerifyRenderedLocale(build_root / "site", locale, pages)
+        shutil.move(str(stagedRoot), siteRoot)
+        VerifyRenderedLocale(buildRoot / "site", locale, pages)
 
-        reviewed_records = [record["translations"][locale] for record in registry["units"]
+        reviewedRecords = [record["translations"][locale] for record in registry["units"]
                             if record["translations"][locale].get("path")]
         result[locale] = {
             "strictBuild": "pass", "pages": pages, "renderedApiProse": "pass",
             "generatedTranslationStates": {identifier: locales[locale] for identifier, locales in
-                generated_localization.TranslationStates(generated_units, generated_translations).items()},
+                generatedLocalization.TranslationStates(generatedUnits, generatedTranslations).items()},
             "translationReviewComplete": all(entry["state"] == "approved" for entry in pages.values()),
-            "authoredTranslationReviewComplete": bool(reviewed_records) and all(
+            "authoredTranslationReviewComplete": bool(reviewedRecords) and all(
                 report.states[record["id"]][locale] == "approved" for record in registry["units"]
                 if record["translations"][locale].get("path")
             ),
             "humanReviewComplete": all(entry["state"] == "approved" for entry in pages.values())
-            and all(entry.reviewer_type == "human" for entry in generated_translations[locale].values())
+            and all(entry.reviewerType == "human" for entry in generatedTranslations[locale].values())
             and all(review.get("reviewerType", "human") == "human"
-                    for translation in reviewed_records for review in translation.get("reviews", ())),
+                    for translation in reviewedRecords for review in translation.get("reviews", ())),
         }
 
     return result
 
 
-def VerifyTrackedTranslations(project_root: Path, registry: Mapping[str, Any]) -> None:
+def VerifyTrackedTranslations(projectRoot: Path, registry: Mapping[str, Any]) -> None:
     """Reject draft overlays that exist locally but cannot be reproduced from tracked source."""
 
-    process = subprocess.run(["git", "ls-files", "-z"], cwd=project_root,
+    process = subprocess.run(["git", "ls-files", "-z"], cwd=projectRoot,
                              capture_output=True, text=True, check=True)
-    tracked_paths = set(process.stdout.split("\0"))
+    trackedPaths = set(process.stdout.split("\0"))
 
     for record in registry["units"]:
         for locale, translation in record["translations"].items():
             path = translation.get("path")
 
-            if path and path not in tracked_paths:
+            if path and path not in trackedPaths:
                 raise ValueError(f"Untracked locale overlay: {record['id']}:{locale}: {path}")
 
 
 def VerifyRenderedLocale(
-    site_root: Path, locale: str, pages: Mapping[str, Mapping[str, str]],
+    siteRoot: Path, locale: str, pages: Mapping[str, Mapping[str, str]],
 ) -> None:
     """Require actual rendered banners and reachability for every locale overlay/fallback."""
 
-    locale_root = (site_root / locale).resolve()
-    expected_pages = {}
+    localeRoot = (siteRoot / locale).resolve()
+    expectedPages = {}
 
     for name, entry in pages.items():
         route = _PageRoute(Path(name))
-        path = locale_root / route / "index.html"
+        path = localeRoot / route / "index.html"
 
         if not path.is_file():
             raise ValueError(f"Missing rendered locale page: {locale}/{name}")
@@ -436,32 +438,32 @@ def VerifyRenderedLocale(
                 or f'data-documentation-unit="{html.escape(entry["unitId"])}"' not in content):
             raise ValueError(f"Missing actual review-state banner: {locale}/{name}")
 
-        source_hash = entry.get("renderedSourceSha256")
+        sourceHash = entry.get("renderedSourceSha256")
 
-        if source_hash and f'data-rendered-source-sha256="{source_hash}"' not in content:
+        if sourceHash and f'data-rendered-source-sha256="{sourceHash}"' not in content:
             raise ValueError(f"Rendered locale source provenance differs: {locale}/{name}")
 
-        expected_pages[path.resolve()] = name
+        expectedPages[path.resolve()] = name
 
-    pending = [locale_root / "index.html"]
+    pending = [localeRoot / "index.html"]
     visited: set[Path] = set()
 
     while pending:
-        page_path = pending.pop().resolve()
+        pagePath = pending.pop().resolve()
 
-        if page_path in visited:
+        if pagePath in visited:
             continue
 
-        visited.add(page_path)
+        visited.add(pagePath)
 
-        for target in documentation_gates.ParsePage(page_path).targets:
-            resolved = documentation_gates.LocalTarget(page_path, target, site_root)
+        for target in documentationGates.ParsePage(pagePath).targets:
+            resolved = documentationGates.LocalTarget(pagePath, target, siteRoot)
 
             if (resolved is not None and resolved[0].suffix == ".html"
-                    and resolved[0].is_relative_to(locale_root) and resolved[0].is_file()):
+                    and resolved[0].is_relative_to(localeRoot) and resolved[0].is_file()):
                 pending.append(resolved[0])
 
-    unreachable = sorted(expected_pages[path] for path in expected_pages if path not in visited)
+    unreachable = sorted(expectedPages[path] for path in expectedPages if path not in visited)
 
     if unreachable:
         raise ValueError(f"Unreachable locale pages: {locale}: {', '.join(unreachable)}")

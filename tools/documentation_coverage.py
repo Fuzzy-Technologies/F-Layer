@@ -10,8 +10,10 @@ import subprocess
 import sys
 import tomllib
 from collections.abc import Callable, Sequence
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
+
+from flayer.core.contracts import _WireDict
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -28,11 +30,11 @@ CALLABLE_METHODS = frozenset({"__call__"})
 class FileCoverage:
     """A repository file's documentation disposition and accountable reason."""
 
-    source_path: str
+    sourcePath: str
     category: str
     disposition: str
     reason: str
-    page_path: str | None = None
+    pagePath: str | None = None
 
 
 @dataclass(frozen=True)
@@ -44,19 +46,19 @@ class DefinitionCoverage:
     reason: str
 
 
-def TrackedFiles(project_root: Path) -> tuple[str, ...]:
+def TrackedFiles(projectRoot: Path) -> tuple[str, ...]:
     """Read the exact Git index inventory without relying on directory enumeration."""
 
-    result = subprocess.run(["git", "ls-files", "-z"], cwd=project_root,
+    result = subprocess.run(["git", "ls-files", "-z"], cwd=projectRoot,
                             capture_output=True, text=True, check=True)
 
     return tuple(sorted(set(filter(None, result.stdout.split("\0")))))
 
 
-def ModuleName(source_path: str) -> str:
+def ModuleName(sourcePath: str) -> str:
     """Translate one package Python path into its static import name."""
 
-    parts = list(Path(source_path).relative_to("src").with_suffix("").parts)
+    parts = list(Path(sourcePath).relative_to("src").with_suffix("").parts)
 
     if parts[-1] == "__init__":
         parts.pop()
@@ -64,34 +66,34 @@ def ModuleName(source_path: str) -> str:
     return ".".join(parts)
 
 
-def PublicModule(source_path: str) -> bool:
+def PublicModule(sourcePath: str) -> bool:
     """Include the explicit executable entry point and nonprivate package paths."""
 
-    module_name = ModuleName(source_path)
+    moduleName = ModuleName(sourcePath)
 
-    return module_name == "flayer.__main__" or all(
-        not part.startswith("_") for part in module_name.split(".")
+    return moduleName == "flayer.__main__" or all(
+        not part.startswith("_") for part in moduleName.split(".")
     )
 
 
-def MarkdownPage(source_path: str) -> str:
+def MarkdownPage(sourcePath: str) -> str:
     """Preserve canonical routes and place other Markdown under repository routes."""
 
-    if source_path.startswith(SOURCE_CONTENT_PREFIX):
-        return source_path.removeprefix(SOURCE_CONTENT_PREFIX)
+    if sourcePath.startswith(SOURCE_CONTENT_PREFIX):
+        return sourcePath.removeprefix(SOURCE_CONTENT_PREFIX)
 
-    relative = source_path.removeprefix(".github/")
+    relative = sourcePath.removeprefix(".github/")
 
-    if relative != source_path:
+    if relative != sourcePath:
         relative = "github/" + relative
 
     return "repository/" + relative
 
 
-def MarkdownArtifact(page_path: str) -> Path:
+def MarkdownArtifact(pagePath: str) -> Path:
     """Map Markdown to MkDocs directory routes, including README index semantics."""
 
-    relative = Path(page_path)
+    relative = Path(pagePath)
 
     if relative.name in {"index.md", "README.md"}:
         return relative.parent / "index.html"
@@ -99,91 +101,91 @@ def MarkdownArtifact(page_path: str) -> Path:
     return relative.with_suffix("") / "index.html"
 
 
-def InventoryFiles(project_root: Path) -> tuple[FileCoverage, ...]:
+def InventoryFiles(projectRoot: Path) -> tuple[FileCoverage, ...]:
     """Fail closed on missing, ambiguous, malformed, or unsupported coverage rules."""
 
-    manifest = tomllib.loads((project_root / MANIFEST_PATH).read_text(encoding="utf-8"))
+    manifest = tomllib.loads((projectRoot / MANIFEST_PATH).read_text(encoding="utf-8"))
 
     if manifest.get("schemaVersion") != 1 or not isinstance(manifest.get("rules"), list):
         raise ValueError("Repository coverage manifest must use schemaVersion 1 and rules")
 
     rules = manifest["rules"]
-    valid_categories = {"markdown", "package", "typing", "tests", "tools", "examples",
+    validCategories = {"markdown", "package", "typing", "tests", "tools", "examples",
                         "workflow", "template", "locale", "asset", "configuration", "license"}
 
     for rule in rules:
-        if (not isinstance(rule, dict) or rule.get("category") not in valid_categories
+        if (not isinstance(rule, dict) or rule.get("category") not in validCategories
                 or not isinstance(rule.get("reason"), str) or not rule["reason"].strip()
                 or not isinstance(rule.get("patterns"), list) or not rule["patterns"]
                 or any(not isinstance(pattern, str) or not pattern for pattern in rule["patterns"])):
             raise ValueError("Repository coverage rule requires patterns, category, and rationale")
 
     inventory = []
-    page_owners: dict[str, str] = {}
+    pageOwners: dict[str, str] = {}
 
-    for source_path in TrackedFiles(project_root):
+    for sourcePath in TrackedFiles(projectRoot):
         matches = [rule for rule in rules if any(
-            fnmatch.fnmatchcase(source_path, pattern) for pattern in rule["patterns"]
+            fnmatch.fnmatchcase(sourcePath, pattern) for pattern in rule["patterns"]
         )]
 
         if len(matches) != 1:
-            raise ValueError(f"Repository file requires exactly one coverage rule: {source_path}")
+            raise ValueError(f"Repository file requires exactly one coverage rule: {sourcePath}")
 
-        if not (project_root / source_path).is_file():
-            raise ValueError(f"Tracked coverage file is absent: {source_path}")
+        if not (projectRoot / sourcePath).is_file():
+            raise ValueError(f"Tracked coverage file is absent: {sourcePath}")
 
         rule = matches[0]
         category = rule["category"]
-        page_path = None
+        pagePath = None
         disposition = "source-only"
         reason = rule["reason"]
 
         if category == "markdown":
-            if source_path.startswith("docs/site/content/") and not source_path.startswith(
+            if sourcePath.startswith("docs/site/content/") and not sourcePath.startswith(
                 SOURCE_CONTENT_PREFIX
             ):
                 disposition = "locale-overlay"
-                page_path = source_path.removeprefix("docs/site/content/")
+                pagePath = sourcePath.removeprefix("docs/site/content/")
                 reason = ("Locale overlay rendered with explicit review state by the locale renderer; "
                           "human approval is never inferred.")
 
             else:
                 disposition = "rendered-markdown"
-                page_path = MarkdownPage(source_path)
+                pagePath = MarkdownPage(sourcePath)
 
         elif category == "package":
-            if PublicModule(source_path):
+            if PublicModule(sourcePath):
                 disposition = "generated-api"
-                page_path = "api/modules/" + ModuleName(source_path).replace(".", "-") + ".md"
+                pagePath = "api/modules/" + ModuleName(sourcePath).replace(".", "-") + ".md"
 
             else:
                 reason = "Private package module: implementation detail outside the supported API."
 
-        if page_path is not None:
-            artifact = MarkdownArtifact(page_path).as_posix()
+        if pagePath is not None:
+            artifact = MarkdownArtifact(pagePath).as_posix()
 
-            if artifact == "coverage/index.html" or artifact in page_owners:
-                raise ValueError(f"Duplicate or reserved documentation route: {page_path}")
+            if artifact == "coverage/index.html" or artifact in pageOwners:
+                raise ValueError(f"Duplicate or reserved documentation route: {pagePath}")
 
-            page_owners[artifact] = source_path
+            pageOwners[artifact] = sourcePath
 
-        inventory.append(FileCoverage(source_path, category, disposition, reason, page_path))
+        inventory.append(FileCoverage(sourcePath, category, disposition, reason, pagePath))
 
     return tuple(inventory)
 
 
-def CheckBuildInputs(project_root: Path) -> tuple[str, ...]:
+def CheckBuildInputs(projectRoot: Path) -> tuple[str, ...]:
     """Reject untracked package or canonical site files that could enter built artifacts."""
 
-    tracked = set(TrackedFiles(project_root))
+    tracked = set(TrackedFiles(projectRoot))
     diagnostics = []
 
-    for source_root in (project_root / "src/flayer", project_root / SOURCE_CONTENT_PREFIX):
-        for path in sorted(source_root.rglob("*")):
+    for sourceRoot in (projectRoot / "src/flayer", projectRoot / SOURCE_CONTENT_PREFIX):
+        for path in sorted(sourceRoot.rglob("*")):
             if not path.is_file() or "__pycache__" in path.parts or path.suffix in {".pyc", ".pyo"}:
                 continue
 
-            relative = path.relative_to(project_root).as_posix()
+            relative = path.relative_to(projectRoot).as_posix()
 
             if relative not in tracked:
                 diagnostics.append(f"Untracked documentation build input: {relative}")
@@ -191,59 +193,59 @@ def CheckBuildInputs(project_root: Path) -> tuple[str, ...]:
     return tuple(diagnostics)
 
 
-def InventoryDefinitions(source_path: str, syntax: ast.Module) -> tuple[DefinitionCoverage, ...]:
+def InventoryDefinitions(sourcePath: str, syntax: ast.Module) -> tuple[DefinitionCoverage, ...]:
     """Record defined public symbols, callable protocols, and all omitted definitions."""
 
-    module_name = ModuleName(source_path)
-    module_public = PublicModule(source_path)
+    moduleName = ModuleName(sourcePath)
+    modulePublic = PublicModule(sourcePath)
     definitions = []
-    seen_symbols: set[str] = set()
+    seenSymbols: set[str] = set()
 
-    def Visit(nodes: list[ast.stmt], parent: str, public_parent: bool, scope: str) -> None:
+    def Visit(nodes: list[ast.stmt], parent: str, publicParent: bool, scope: str) -> None:
         """Classify definition scopes without promoting nested implementation helpers."""
 
         for node in nodes:
             if not isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
-                nested_statements = []
+                nestedStatements = []
 
                 for child in ast.iter_child_nodes(node):
                     if isinstance(child, ast.stmt):
-                        nested_statements.append(child)
+                        nestedStatements.append(child)
 
                     elif isinstance(child, (ast.ExceptHandler, ast.match_case)):
-                        nested_statements.extend(child.body)
+                        nestedStatements.extend(child.body)
 
-                Visit(nested_statements, parent, public_parent, scope)
+                Visit(nestedStatements, parent, publicParent, scope)
                 continue
 
             symbol = parent + "." + node.name
-            is_public = (public_parent and scope != "function" and (
+            isPublic = (publicParent and scope != "function" and (
                 not node.name.startswith("_") or (scope == "class" and node.name in CALLABLE_METHODS)
             ))
-            disposition = "generated-api" if is_public else "source-only"
-            reason = ("Public definition receives an exact rendered API anchor." if is_public else
+            disposition = "generated-api" if isPublic else "source-only"
+            reason = ("Public definition receives an exact rendered API anchor." if isPublic else
                       "Private, special-method, or nested implementation definition; inspect source.")
 
-            if symbol not in seen_symbols:
+            if symbol not in seenSymbols:
                 definitions.append(DefinitionCoverage(symbol, disposition, reason))
-                seen_symbols.add(symbol)
+                seenSymbols.add(symbol)
 
-            if is_public and not ast.get_docstring(node):
+            if isPublic and not ast.get_docstring(node):
                 raise ValueError(f"Public symbol lacks a docstring: {symbol}")
 
-            Visit(node.body, symbol, is_public,
+            Visit(node.body, symbol, isPublic,
                   "class" if isinstance(node, ast.ClassDef) else "function")
 
-    Visit(syntax.body, module_name, module_public, "module")
+    Visit(syntax.body, moduleName, modulePublic, "module")
 
     return tuple(definitions)
 
 
-def CheckRepositoryCoverage(project_root: Path) -> tuple[str, ...]:
+def CheckRepositoryCoverage(projectRoot: Path) -> tuple[str, ...]:
     """Expose manifest validation as deterministic documentation diagnostics."""
 
     try:
-        InventoryFiles(project_root)
+        InventoryFiles(projectRoot)
 
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         return (f"Repository documentation coverage: {error}",)
@@ -252,19 +254,19 @@ def CheckRepositoryCoverage(project_root: Path) -> tuple[str, ...]:
 
 
 def WriteInventory(
-    project_root: Path, build_root: Path, definitions: Sequence[DefinitionCoverage],
+    projectRoot: Path, buildRoot: Path, definitions: Sequence[DefinitionCoverage],
 ) -> None:
     """Write machine evidence and a navigable, explicitly scoped file inventory."""
 
-    files = InventoryFiles(project_root)
-    payload = {"schemaVersion": 1, "files": [asdict(item) for item in files],
-               "definitions": [asdict(item) for item in definitions]}
-    (build_root / "repository-coverage.json").write_text(
+    files = InventoryFiles(projectRoot)
+    payload = {"schemaVersion": 1, "files": [_WireDict(item) for item in files],
+               "definitions": [_WireDict(item) for item in definitions]}
+    (buildRoot / "repository-coverage.json").write_text(
         json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8",
     )
-    coverage_root = build_root / "content/en/coverage"
-    coverage_root.mkdir(parents=True, exist_ok=True)
-    (coverage_root / "index.md").write_text(RenderInventory(files, definitions), encoding="utf-8")
+    coverageRoot = buildRoot / "content/en/coverage"
+    coverageRoot.mkdir(parents=True, exist_ok=True)
+    (coverageRoot / "index.md").write_text(RenderInventory(files, definitions), encoding="utf-8")
 
 
 def RenderInventory(
@@ -284,12 +286,12 @@ def RenderInventory(
              "| --- | --- | --- |"]
 
     for item in files:
-        target = "../" + item.page_path if item.page_path else SOURCE_URL + item.source_path
+        target = "../" + item.pagePath if item.pagePath else SOURCE_URL + item.sourcePath
 
         if item.disposition == "locale-overlay":
-            target = SOURCE_URL + item.source_path
+            target = SOURCE_URL + item.sourcePath
 
-        lines.append(f"| [{item.source_path}]({target}) | `{item.disposition}` | {translate(item.reason)} |")
+        lines.append(f"| [{item.sourcePath}]({target}) | `{item.disposition}` | {translate(item.reason)} |")
 
     lines.extend(["", "## " + translate("Defined package symbols"), "",
                   translate("Imported aliases, constants, fields, and inherited methods are represented "
@@ -307,7 +309,7 @@ def Main(arguments: Sequence[str] | None = None) -> int:
     """Validate repository coverage without installing tools or importing runtime code."""
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--project-root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser.add_argument("--project-root", type=Path, default=Path(__file__).resolve().parents[1], dest='projectRoot')
     options = parser.parse_args(arguments)
     diagnostics = CheckRepositoryCoverage(options.project_root)
 

@@ -12,10 +12,10 @@ from griffe import Extension, Object
 class TranslatedDocstrings(Extension):
     """Replace reviewed API prose while preserving source listings and symbol identities."""
 
-    def __init__(self, translations_path: str) -> None:
+    def __init__(self, translationsPath: str) -> None:
         """Read the renderer's already validated exact locale prose overlay."""
 
-        self.translations: dict[str, str] = json.loads(Path(translations_path).read_text(encoding="utf-8"))
+        self.translations: dict[str, str] = json.loads(Path(translationsPath).read_text(encoding="utf-8"))
 
     def on_instance(self, *, obj: Object, **kwargs: Any) -> None:
         """Honor Griffe's callback interface without executing the documented module."""

@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from dataclasses import asdict
 from pathlib import Path
 
 import pytest
 
-from flayer.core.contracts import StackIdentity
+from flayer.core.contracts import StackIdentity, _WireDict
 from flayer.core.lifecycle import (
     CoreKind,
     DeploymentPlan,
@@ -48,15 +47,15 @@ class FakeProvider:
         self.resources: dict[str, ProviderResource] = {}
         self.created: list[str] = []
         self.deleted: list[str] = []
-        self.fail_create: str | None = None
-        self.uncertain_create: str | None = None
-        self.interrupt_create: str | None = None
-        self.fail_delete: str | None = None
-        self.interrupt_delete: str | None = None
-        self.find_error = False
-        self.lookup_error = False
-        self.invalid_scope = False
-        self.unconfirmed_delete = False
+        self.failCreate: str | None = None
+        self.uncertainCreate: str | None = None
+        self.interruptCreate: str | None = None
+        self.failDelete: str | None = None
+        self.interruptDelete: str | None = None
+        self.findError = False
+        self.lookupError = False
+        self.invalidScope = False
+        self.unconfirmedDelete = False
 
     @property
     def Identity(self) -> ProviderIdentity:
@@ -79,12 +78,12 @@ class FakeProvider:
     def FindResource(self, spec: ResourceSpec, identity: StackIdentity) -> ProviderResource | None:
         """Resolve only a logical test locator and optionally inject discovery failure."""
 
-        if self.find_error:
+        if self.findError:
             raise ProviderError(ProviderErrorCode.PERMISSION_DENIED, "find")
 
-        resource = self.resources.get(spec.logical_id)
+        resource = self.resources.get(spec.logicalId)
 
-        if resource is not None and self.invalid_scope:
+        if resource is not None and self.invalidScope:
             return ProviderResource(ResourceReference("fake", "foreign", spec.kind, "foreign-id"),
                                     spec.name, labels=spec.OwnershipLabels(identity))
 
@@ -93,7 +92,7 @@ class FakeProvider:
     def GetResource(self, reference: ResourceReference) -> ProviderResource:
         """Read one exact test reference; missing differs from denied permission."""
 
-        if self.lookup_error:
+        if self.lookupError:
             raise ProviderError(ProviderErrorCode.PERMISSION_DENIED, "get")
 
         for resource in self.resources.values():
@@ -106,66 +105,66 @@ class FakeProvider:
         """Simulate one resource that is already present with exact ownership labels."""
 
         resource = ProviderResource(
-            ResourceReference(identity.provider, identity.scope_id, spec.kind, f"id-{spec.logical_id}"),
+            ResourceReference(identity.provider, identity.scopeId, spec.kind, f"id-{spec.logicalId}"),
             spec.name, labels=spec.OwnershipLabels(identity),
         )
-        self.resources[spec.logical_id] = resource
+        self.resources[spec.logicalId] = resource
 
         return resource
 
     def CreateResource(
         self, spec: ResourceSpec, identity: StackIdentity, dependencies: Mapping[str, ProviderResource],
-        operation_id: str,
+        operationId: str,
     ) -> ProviderResource:
         """Simulate failure before submission, after acceptance, or during interruption."""
 
         assert set(dependencies) == set(spec.dependencies), "Dependencies must precede creation"
 
-        if self.fail_create == spec.logical_id:
+        if self.failCreate == spec.logicalId:
             raise MutationError(ProviderErrorCode.UNSUPPORTED, "create", False)
 
-        if self.uncertain_create == spec.logical_id:
+        if self.uncertainCreate == spec.logicalId:
             raise MutationError(ProviderErrorCode.TIMEOUT, "create", True)
 
-        self.created.append(spec.logical_id)
+        self.created.append(spec.logicalId)
         item = self.Put(spec, identity)
         resource = ProviderResource(item.reference, item.name,
-                                    labels=(*item.labels, ("flayer-operation", operation_id)))
-        self.resources[spec.logical_id] = resource
+                                    labels=(*item.labels, ("flayer-operation", operationId)))
+        self.resources[spec.logicalId] = resource
 
-        if self.interrupt_create == spec.logical_id:
+        if self.interruptCreate == spec.logicalId:
             raise KeyboardInterrupt
 
         return resource
 
     def DeleteResource(
-        self, reference: ResourceReference, identity: StackIdentity, logical_id: str,
-        operation_id: str | None = None,
+        self, reference: ResourceReference, identity: StackIdentity, logicalId: str,
+        operationId: str | None = None,
     ) -> None:
         """Delete one fake ID unless failure or interruption leaves durable uncertainty."""
 
-        assert reference.scope_id == identity.scope_id, "Deletion must remain in the exact scope"
+        assert reference.scopeId == identity.scopeId, "Deletion must remain in the exact scope"
 
-        if self.fail_delete == logical_id:
+        if self.failDelete == logicalId:
             raise MutationError(ProviderErrorCode.TIMEOUT, "delete", True)
 
-        if operation_id is not None:
-            assert dict(self.resources[logical_id].labels).get("flayer-operation") == operation_id, \
+        if operationId is not None:
+            assert dict(self.resources[logicalId].labels).get("flayer-operation") == operationId, \
                 "Rollback must retain its exact creation operation label"
 
-        self.deleted.append(logical_id)
+        self.deleted.append(logicalId)
 
-        if not self.unconfirmed_delete:
-            self.resources.pop(logical_id, None)
+        if not self.unconfirmedDelete:
+            self.resources.pop(logicalId, None)
 
-        if self.interrupt_delete == logical_id:
+        if self.interruptDelete == logicalId:
             raise KeyboardInterrupt
 
 
-def Engine(tmp_path: Path, provider: FakeProvider | None = None) -> LifecycleEngine:
+def Engine(tmpPath: Path, provider: FakeProvider | None = None) -> LifecycleEngine:
     """Create a new isolated engine with explicit local persistence."""
 
-    return LifecycleEngine(PLAN, provider or FakeProvider(), tmp_path / "stack.json")
+    return LifecycleEngine(PLAN, provider or FakeProvider(), tmpPath / "stack.json")
 
 
 def test_CreateStatusDestroyAreIdempotentAndOrdered(tmp_path: Path) -> None:
@@ -184,7 +183,7 @@ def test_CreateStatusDestroyAreIdempotentAndOrdered(tmp_path: Path) -> None:
     assert engine.Destroy().status == "complete"
     assert provider.deleted == ["instance", "subnet", "network"]
     assert engine.Destroy().ExitCode() == 0
-    assert LoadState(engine.state_path, IDENTITY) == StackState(IDENTITY)
+    assert LoadState(engine.statePath, IDENTITY) == StackState(IDENTITY)
 
 
 def test_PreexistingResourcesSurviveRollback(tmp_path: Path) -> None:
@@ -192,29 +191,29 @@ def test_PreexistingResourcesSurviveRollback(tmp_path: Path) -> None:
 
     provider = FakeProvider()
     provider.Put(NETWORK)
-    provider.fail_create = "instance"
+    provider.failCreate = "instance"
     engine = Engine(tmp_path, provider)
     report = engine.Create()
 
     assert report.status == "rolled-back" and report.ExitCode() == 1
     assert provider.deleted == ["subnet"]
     assert set(provider.resources) == {"network"}
-    assert LoadState(engine.state_path, IDENTITY).resources == (
+    assert LoadState(engine.statePath, IDENTITY).resources == (
         ResourceState("network", "network", "id-network"),
     )
-    assert not _JournalPath(engine.state_path).exists()
+    assert not _JournalPath(engine.statePath).exists()
 
 
 def test_AmbiguousMissingCreateNeverDuplicatesOnRecovery(tmp_path: Path) -> None:
     """A timeout without visible resource retains uncertainty and never retries creation."""
 
     provider = FakeProvider()
-    provider.uncertain_create = "subnet"
+    provider.uncertainCreate = "subnet"
     engine = Engine(tmp_path, provider)
     report = engine.Create()
 
-    assert report.status == "uncertain" and report.recovery_required
-    assert engine.Status().recovery_required
+    assert report.status == "uncertain" and report.recoveryRequired
+    assert engine.Status().recoveryRequired
 
     with pytest.raises(LifecycleError, match="recovery"):
         engine.Create()
@@ -232,15 +231,15 @@ def test_InterruptedCreateRecoversAcceptedResourceWithoutDuplication(tmp_path: P
     """A process interruption after submission is reconciled by exact ownership labels."""
 
     provider = FakeProvider()
-    provider.interrupt_create = "subnet"
+    provider.interruptCreate = "subnet"
     engine = Engine(tmp_path, provider)
 
     with pytest.raises(KeyboardInterrupt):
         engine.Create()
 
-    assert not engine.state_path.with_name(".stack.json.operation.lock").exists()
+    assert not engine.statePath.with_name(".stack.json.operation.lock").exists()
 
-    provider.interrupt_create = None
+    provider.interruptCreate = None
 
     assert engine.Recover().status == "complete"
     assert provider.created == ["network", "subnet", "instance"]
@@ -251,7 +250,7 @@ def test_InterruptedCreateCanRollbackOnlyNewResources(tmp_path: Path) -> None:
 
     provider = FakeProvider()
     provider.Put(NETWORK)
-    provider.interrupt_create = "instance"
+    provider.interruptCreate = "instance"
     engine = Engine(tmp_path, provider)
 
     with pytest.raises(KeyboardInterrupt):
@@ -266,14 +265,14 @@ def test_RollbackFailureCanResumeSafely(tmp_path: Path) -> None:
     """A failed deletion retains created locators until explicit cleanup recovery."""
 
     provider = FakeProvider()
-    provider.fail_create = "instance"
-    provider.fail_delete = "subnet"
+    provider.failCreate = "instance"
+    provider.failDelete = "subnet"
     engine = Engine(tmp_path, provider)
 
     assert engine.Create().status == "rollback-incomplete"
-    assert _LoadJournal(engine.state_path, PLAN).action == "rollback"
+    assert _LoadJournal(engine.statePath, PLAN).action == "rollback"
 
-    provider.fail_delete = None
+    provider.failDelete = None
 
     assert engine.Recover().status == "rolled-back"
     assert not provider.resources
@@ -285,7 +284,7 @@ def test_DestroyFailureAndInterruptionRemainRecoverable(tmp_path: Path) -> None:
     provider = FakeProvider()
     engine = Engine(tmp_path, provider)
     engine.Create()
-    provider.fail_delete = "subnet"
+    provider.failDelete = "subnet"
 
     assert engine.Destroy().status == "incomplete"
     assert set(provider.resources) == {"network", "subnet"}
@@ -293,13 +292,13 @@ def test_DestroyFailureAndInterruptionRemainRecoverable(tmp_path: Path) -> None:
     with pytest.raises(LifecycleError, match="cannot be rolled back"):
         engine.Recover(rollback=True)
 
-    provider.fail_delete = None
-    provider.interrupt_delete = "subnet"
+    provider.failDelete = None
+    provider.interruptDelete = "subnet"
 
     with pytest.raises(KeyboardInterrupt):
         engine.Recover()
 
-    provider.interrupt_delete = None
+    provider.interruptDelete = None
 
     assert engine.Recover().status == "complete"
     assert provider.deleted == ["instance", "subnet", "network"]
@@ -311,10 +310,10 @@ def test_UnconfirmedDeletionFailsClosed(tmp_path: Path) -> None:
     provider = FakeProvider()
     engine = Engine(tmp_path, provider)
     engine.Create()
-    provider.unconfirmed_delete = True
+    provider.unconfirmedDelete = True
 
-    assert engine.Destroy().recovery_required
-    assert len(LoadState(engine.state_path, IDENTITY).resources) == 3
+    assert engine.Destroy().recoveryRequired
+    assert len(LoadState(engine.statePath, IDENTITY).resources) == 3
 
 
 def test_SnapshotFailureAfterCreationKeepsJournalForRecovery(
@@ -326,7 +325,7 @@ def test_SnapshotFailureAfterCreationKeepsJournalForRecovery(
 
     provider = FakeProvider()
     engine = Engine(tmp_path, provider)
-    actual_save = lifecycle.SaveState
+    actualSave = lifecycle.SaveState
     calls = 0
 
     def FailSecondSave(path: Path, state: StackState, identity: StackIdentity) -> None:
@@ -338,16 +337,16 @@ def test_SnapshotFailureAfterCreationKeepsJournalForRecovery(
         if calls == 2:
             raise StateError("Synthetic disk failure")
 
-        actual_save(path, state, identity)
+        actualSave(path, state, identity)
 
     monkeypatch.setattr(lifecycle, "SaveState", FailSecondSave)
 
     with pytest.raises(StateError):
         engine.Create()
 
-    assert len(_LoadJournal(engine.state_path, PLAN).created) == 1
+    assert len(_LoadJournal(engine.statePath, PLAN).created) == 1
 
-    monkeypatch.setattr(lifecycle, "SaveState", actual_save)
+    monkeypatch.setattr(lifecycle, "SaveState", actualSave)
 
     assert engine.Recover().status == "complete"
     assert provider.created == ["network", "subnet", "instance"]
@@ -358,20 +357,20 @@ def test_MissingRecordedResourceAndPreexistingDependencyFailBeforeMutation(tmp_p
 
     provider = FakeProvider()
     engine = Engine(tmp_path, provider)
-    SaveState(engine.state_path, StackState(IDENTITY, (
+    SaveState(engine.statePath, StackState(IDENTITY, (
         ResourceState("network", "network", "old-id"),
     )), IDENTITY)
 
     with pytest.raises(LifecycleError, match="missing or replaced"):
         engine.Create()
 
-    engine.state_path.unlink()
+    engine.statePath.unlink()
     provider.Put(SUBNET)
 
     with pytest.raises(LifecycleError, match="depends on a missing"):
         engine.Create()
 
-    assert not provider.created and not _JournalPath(engine.state_path).exists()
+    assert not provider.created and not _JournalPath(engine.statePath).exists()
 
 
 def test_ForeignObservationAndForeignStateBlockBeforeMutation(tmp_path: Path) -> None:
@@ -379,14 +378,14 @@ def test_ForeignObservationAndForeignStateBlockBeforeMutation(tmp_path: Path) ->
 
     provider = FakeProvider()
     provider.Put(NETWORK)
-    provider.invalid_scope = True
+    provider.invalidScope = True
     engine = Engine(tmp_path, provider)
 
     with pytest.raises(LifecycleError, match="ownership"):
         engine.Create()
 
     foreign = StackIdentity("example", "sandbox", "fake", "foreign", "test-owner")
-    SaveState(engine.state_path, StackState(foreign), foreign)
+    SaveState(engine.statePath, StackState(foreign), foreign)
 
     with pytest.raises(StateError, match="identity"):
         engine.Destroy()
@@ -414,14 +413,14 @@ def test_ReadPermissionFailureIsNotMisreportedAsMissing(tmp_path: Path) -> None:
 
     provider = FakeProvider()
     engine = Engine(tmp_path, provider)
-    provider.find_error = True
+    provider.findError = True
 
     with pytest.raises(ProviderError):
         engine.Create()
 
-    provider.find_error = False
+    provider.findError = False
     engine.Create()
-    provider.lookup_error = True
+    provider.lookupError = True
 
     with pytest.raises(ProviderError):
         engine.Status()
@@ -498,7 +497,7 @@ def test_ProviderMismatchUnsupportedSpecAndInvalidStateFailOffline(tmp_path: Pat
         )), provider, tmp_path / "state.json")
 
     engine = Engine(tmp_path, provider)
-    SaveState(engine.state_path, StackState(IDENTITY, (
+    SaveState(engine.statePath, StackState(IDENTITY, (
         ResourceState("unknown", "network", "id-test"),
     )), IDENTITY)
 
@@ -509,15 +508,7 @@ def test_ProviderMismatchUnsupportedSpecAndInvalidStateFailOffline(tmp_path: Pat
 def PlanText(resources: str) -> str:
     """Return a portable synthetic lifecycle TOML document."""
 
-    return """schema_version = 1
-profile = "generic"
-[identity]
-project = "example"
-stack = "sandbox"
-provider = "fake"
-scope_id = "folder-test"
-owner_id = "test-owner"
-""" + resources
+    return 'schema_version = 1\nprofile = "generic"\n[identity]\nproject = "example"\nstack = "sandbox"\nprovider = "fake"\nscope_id = "folder-test"\nowner_id = "test-owner"\n' + resources
 
 
 def test_LoadPlanStrictParametersKindsAndFingerprint(tmp_path: Path) -> None:
@@ -592,11 +583,11 @@ def test_CorruptJournalCannotAuthorizeRecovery(tmp_path: Path, change: dict[str,
 
     engine = Engine(tmp_path)
     data: dict[str, object] = {
-        "schema_version": 1, "identity": asdict(IDENTITY), "fingerprint": PLAN.Fingerprint(),
+        "schema_version": 1, "identity": _WireDict(IDENTITY), "fingerprint": PLAN.Fingerprint(),
         "action": "create", "original": [], "created": [], "pending": None, "operation_id": "a" * 32,
     }
     data.update(change)
-    _JournalPath(engine.state_path).write_text(json.dumps(data), encoding="utf-8")
+    _JournalPath(engine.statePath).write_text(json.dumps(data), encoding="utf-8")
 
     with pytest.raises(LifecycleError):
         engine.Recover()
@@ -606,16 +597,16 @@ def test_JournalDuplicateFieldsOwnershipAndOverlapsFailClosed(tmp_path: Path) ->
     """Ambiguous JSON and overlap with the original resource set cannot authorize rollback."""
 
     engine = Engine(tmp_path)
-    path = _JournalPath(engine.state_path)
+    path = _JournalPath(engine.statePath)
     path.write_text('{"action":"create","action":"destroy"}', encoding="utf-8")
 
     with pytest.raises(LifecycleError):
         engine.Recover()
 
     data = {
-        "schema_version": 1, "identity": asdict(IDENTITY), "fingerprint": PLAN.Fingerprint(),
-        "action": "create", "original": [asdict(ResourceState("network", "network", "id"))],
-        "created": [asdict(ResourceState("network", "network", "id"))], "pending": None,
+        "schema_version": 1, "identity": _WireDict(IDENTITY), "fingerprint": PLAN.Fingerprint(),
+        "action": "create", "original": [_WireDict(ResourceState("network", "network", "id"))],
+        "created": [_WireDict(ResourceState("network", "network", "id"))], "pending": None,
         "operation_id": "a" * 32,
     }
     path.write_text(json.dumps(data), encoding="utf-8")
@@ -637,7 +628,7 @@ def test_EmptyPlanConvergesAndStateContainsNoParameters(tmp_path: Path) -> None:
     engine = LifecycleEngine(DeploymentPlan(IDENTITY, ()), FakeProvider(), tmp_path / "empty.json")
 
     assert engine.Create().status == engine.Status().status == engine.Destroy().status == "complete"
-    assert set(json.loads(engine.state_path.read_text(encoding="utf-8"))) == {
+    assert set(json.loads(engine.statePath.read_text(encoding="utf-8"))) == {
         "schema_version", "identity", "resources",
     }
 
@@ -646,7 +637,7 @@ def test_DifferentOperationCannotBeRecoveredAsOwnCreation(tmp_path: Path) -> Non
     """A concurrent same-stack creation cannot become eligible for another rollback."""
 
     provider = FakeProvider()
-    provider.uncertain_create = "subnet"
+    provider.uncertainCreate = "subnet"
     engine = Engine(tmp_path, provider)
 
     assert engine.Create().status == "uncertain"
@@ -658,20 +649,20 @@ def test_DifferentOperationCannotBeRecoveredAsOwnCreation(tmp_path: Path) -> Non
 
     assert engine.Recover(rollback=True).status == "uncertain"
     assert provider.deleted == []
-    assert provider.resources["subnet"].reference.resource_id == "id-subnet"
+    assert provider.resources["subnet"].reference.resourceId == "id-subnet"
 
 
 def test_ChangedOperationLabelBlocksRollbackDeletion(tmp_path: Path) -> None:
     """Even a journaled created locator must retain its exact creation nonce at cleanup."""
 
     provider = FakeProvider()
-    provider.fail_create = "instance"
-    provider.fail_delete = "subnet"
+    provider.failCreate = "instance"
+    provider.failDelete = "subnet"
     engine = Engine(tmp_path, provider)
 
     assert engine.Create().status == "rollback-incomplete"
 
-    provider.fail_delete = None
+    provider.failDelete = None
     item = provider.resources["subnet"]
     labels = tuple((key, "b" * 32 if key == "flayer-operation" else value)
                    for key, value in item.labels)
@@ -689,15 +680,15 @@ def test_ConcurrentAcceptedCreateHasForeignNonceAndRemainsUncertain(
     """A creation response followed by another operation's resource never grants rollback."""
 
     provider = FakeProvider()
-    actual_create = provider.CreateResource
+    actualCreate = provider.CreateResource
 
     def ConcurrentCreate(
         spec: ResourceSpec, identity: StackIdentity, dependencies: Mapping[str, ProviderResource],
-        operation_id: str,
+        operationId: str,
     ) -> ProviderResource:
         """Replace the observed operation nonce after an apparent successful creation."""
 
-        return actual_create(spec, identity, dependencies, "c" * 32)
+        return actualCreate(spec, identity, dependencies, "c" * 32)
 
     monkeypatch.setattr(provider, "CreateResource", ConcurrentCreate)
     engine = Engine(tmp_path, provider)
@@ -728,22 +719,22 @@ def test_ConcurrentAdoptionRemainsOutsideRollbackEligibility(
     """A resource appearing between preflight and create is adopted and preserved on failure."""
 
     provider = FakeProvider()
-    provider.fail_create = "instance"
-    original_find = provider.FindResource
-    network_calls = 0
+    provider.failCreate = "instance"
+    originalFind = provider.FindResource
+    networkCalls = 0
 
     def ConcurrentFind(spec: ResourceSpec, identity: StackIdentity) -> ProviderResource | None:
         """Reveal a concurrent preexisting network only on the second observation."""
 
-        nonlocal network_calls
+        nonlocal networkCalls
 
-        if spec.logical_id == "network":
-            network_calls += 1
+        if spec.logicalId == "network":
+            networkCalls += 1
 
-            if network_calls == 2:
+            if networkCalls == 2:
                 provider.Put(spec, identity)
 
-        return original_find(spec, identity)
+        return originalFind(spec, identity)
 
     monkeypatch.setattr(provider, "FindResource", ConcurrentFind)
     engine = Engine(tmp_path, provider)
@@ -759,17 +750,17 @@ def test_ConcurrentPreexistingDependentBlocksUnsafeRollback(
     """A different operation's dependent resource cannot lose its dependency during rollback."""
 
     provider = FakeProvider()
-    original_create = provider.CreateResource
+    originalCreate = provider.CreateResource
 
     def ConcurrentDependent(
         spec: ResourceSpec, identity: StackIdentity, dependencies: Mapping[str, ProviderResource],
-        operation_id: str,
+        operationId: str,
     ) -> ProviderResource:
         """Inject a dependent resource outside this operation after its network was created."""
 
-        resource = original_create(spec, identity, dependencies, operation_id)
+        resource = originalCreate(spec, identity, dependencies, operationId)
 
-        if spec.logical_id == "network":
+        if spec.logicalId == "network":
             provider.Put(SUBNET, identity)
 
         return resource
@@ -796,7 +787,7 @@ def test_AcceptedCreateWithoutInventoryResultRemainsUncertain(
 
     def InvisibleCreate(
         spec: ResourceSpec, identity: StackIdentity, dependencies: Mapping[str, ProviderResource],
-        operation_id: str,
+        operationId: str,
     ) -> ProviderResource:
         """Return an accepted result while the simulated inventory remains empty."""
 
@@ -841,7 +832,7 @@ def test_JournalDirectorySyncFailureKeepsRecoverableIntent(
     import flayer.core.lifecycle as lifecycle
 
     provider = FakeProvider()
-    actual_sync = lifecycle._SyncDirectory
+    actualSync = lifecycle._SyncDirectory
 
     def FailedSync(path: Path) -> None:
         """Inject a filesystem synchronization failure after atomic journal replacement."""
@@ -854,9 +845,9 @@ def test_JournalDirectorySyncFailureKeepsRecoverableIntent(
     with pytest.raises(LifecycleError, match="persist operation intent"):
         engine.Create()
 
-    assert not provider.created and _JournalPath(engine.state_path).exists()
+    assert not provider.created and _JournalPath(engine.statePath).exists()
 
-    monkeypatch.setattr(lifecycle, "_SyncDirectory", actual_sync)
+    monkeypatch.setattr(lifecycle, "_SyncDirectory", actualSync)
 
     assert engine.Recover().status == "complete"
 
@@ -866,15 +857,15 @@ def test_CompletedOperationWithUnclearableJournalRecoversWithoutDuplication(
 ) -> None:
     """Failure to clear completed intent does not repeat accepted resource creation."""
 
-    actual_unlink = Path.unlink
+    actualUnlink = Path.unlink
 
-    def FailedJournalUnlink(path: Path, missing_ok: bool = False) -> None:
+    def FailedJournalUnlink(path: Path, missingOk: bool = False) -> None:
         """Keep the journal after creation while allowing locks and temporary files to clean up."""
 
         if path.name.endswith(".operation.json"):
             raise OSError("Synthetic cleanup failure")
 
-        actual_unlink(path, missing_ok=missing_ok)
+        actualUnlink(path, missing_ok=missingOk)
 
     provider = FakeProvider()
     engine = Engine(tmp_path, provider)
@@ -885,7 +876,7 @@ def test_CompletedOperationWithUnclearableJournalRecoversWithoutDuplication(
 
     assert provider.created == ["network", "subnet", "instance"]
 
-    monkeypatch.setattr(Path, "unlink", actual_unlink)
+    monkeypatch.setattr(Path, "unlink", actualUnlink)
 
     assert engine.Recover().status == "complete"
     assert provider.created == ["network", "subnet", "instance"]
@@ -896,9 +887,9 @@ def test_UnavailableStorageAndUnreleasableLockFailExplicitly(
 ) -> None:
     """Operation lock allocation and cleanup failures never become successful outcomes."""
 
-    actual_mkdir = Path.mkdir
+    actualMkdir = Path.mkdir
 
-    def FailedMkdir(path: Path, parents: bool = False, exist_ok: bool = False) -> None:
+    def FailedMkdir(path: Path, parents: bool = False, existOk: bool = False) -> None:
         """Inject unavailable caller-owned local storage."""
 
         raise OSError("Synthetic directory allocation failure")
@@ -909,16 +900,16 @@ def test_UnavailableStorageAndUnreleasableLockFailExplicitly(
     with pytest.raises(LifecycleError, match="storage is unavailable"):
         engine.Status()
 
-    monkeypatch.setattr(Path, "mkdir", actual_mkdir)
-    actual_unlink = Path.unlink
+    monkeypatch.setattr(Path, "mkdir", actualMkdir)
+    actualUnlink = Path.unlink
 
-    def FailedLockUnlink(path: Path, missing_ok: bool = False) -> None:
+    def FailedLockUnlink(path: Path, missingOk: bool = False) -> None:
         """Inject failure to release the exclusive operation lock."""
 
         if path.name.endswith(".operation.lock"):
             raise OSError("Synthetic lock cleanup failure")
 
-        actual_unlink(path, missing_ok=missing_ok)
+        actualUnlink(path, missing_ok=missingOk)
 
     monkeypatch.setattr(Path, "unlink", FailedLockUnlink)
 
@@ -935,7 +926,7 @@ def test_TemporaryJournalCleanupFailureBlocksCloudWork(
 
     import flayer.core.lifecycle as lifecycle
 
-    actual_unlink = Path.unlink
+    actualUnlink = Path.unlink
 
     def FailedStream(descriptor: int, mode: str) -> object:
         """Simulate descriptor transfer failure while preserving descriptor cleanup."""
@@ -944,13 +935,13 @@ def test_TemporaryJournalCleanupFailureBlocksCloudWork(
 
         raise OSError("Synthetic stream allocation failure")
 
-    def FailedTemporaryUnlink(path: Path, missing_ok: bool = False) -> None:
+    def FailedTemporaryUnlink(path: Path, missingOk: bool = False) -> None:
         """Inject cleanup failure for the incomplete private temporary journal only."""
 
         if path.suffix == ".tmp":
             raise OSError("Synthetic temporary cleanup failure")
 
-        actual_unlink(path, missing_ok=missing_ok)
+        actualUnlink(path, missing_ok=missingOk)
 
     provider = FakeProvider()
     monkeypatch.setattr(lifecycle, "_OpenTextStream", FailedStream)
@@ -971,10 +962,10 @@ def test_RecordedResourceVanishingBetweenPreflightAndCreateBlocksWork(
     provider = FakeProvider()
     provider.Put(NETWORK)
     engine = Engine(tmp_path, provider)
-    SaveState(engine.state_path, StackState(IDENTITY, (
+    SaveState(engine.statePath, StackState(IDENTITY, (
         ResourceState("network", "network", "id-network"),
     )), IDENTITY)
-    original_find = provider.FindResource
+    originalFind = provider.FindResource
     calls = 0
 
     def VanishingFind(spec: ResourceSpec, identity: StackIdentity) -> ProviderResource | None:
@@ -982,13 +973,13 @@ def test_RecordedResourceVanishingBetweenPreflightAndCreateBlocksWork(
 
         nonlocal calls
 
-        if spec.logical_id == "network":
+        if spec.logicalId == "network":
             calls += 1
 
             if calls == 2:
                 provider.resources.pop("network")
 
-        return original_find(spec, identity)
+        return originalFind(spec, identity)
 
     monkeypatch.setattr(provider, "FindResource", VanishingFind)
 
@@ -996,12 +987,12 @@ def test_RecordedResourceVanishingBetweenPreflightAndCreateBlocksWork(
         engine.Create()
 
     assert provider.created == []
-    assert _JournalPath(engine.state_path).exists()
+    assert _JournalPath(engine.statePath).exists()
 
 
-@pytest.mark.parametrize("recorded_set", ["original", "created"])
+@pytest.mark.parametrize('recordedSet', ["original", "created"])
 def test_CorruptPendingCreationCannotPromoteRecordedResourceToRollback(
-    tmp_path: Path, recorded_set: str
+    tmp_path: Path, recordedSet: str
 ) -> None:
     """A corrupt pending logical ID cannot turn any preexisting locator into a new creation."""
 
@@ -1012,14 +1003,14 @@ def test_CorruptPendingCreationCannotPromoteRecordedResourceToRollback(
     )
     engine = Engine(tmp_path, provider)
     locator = ResourceState("network", "network", "id-network")
-    SaveState(engine.state_path, StackState(IDENTITY, (locator,)), IDENTITY)
+    SaveState(engine.statePath, StackState(IDENTITY, (locator,)), IDENTITY)
     data: dict[str, object] = {
-        "schema_version": 1, "identity": asdict(IDENTITY), "fingerprint": PLAN.Fingerprint(),
+        "schema_version": 1, "identity": _WireDict(IDENTITY), "fingerprint": PLAN.Fingerprint(),
         "action": "create", "original": [], "created": [], "pending": "network",
         "operation_id": "a" * 32,
     }
-    data[recorded_set] = [asdict(locator)]
-    _JournalPath(engine.state_path).write_text(json.dumps(data), encoding="utf-8")
+    data[recordedSet] = [_WireDict(locator)]
+    _JournalPath(engine.statePath).write_text(json.dumps(data), encoding="utf-8")
 
     with pytest.raises(LifecycleError):
         engine.Recover(rollback=True)

@@ -4,6 +4,7 @@ F-Layer engineering guidance is organized around the repository development prot
 
 - [Repository development protocol](../../DEVELOPMENT_PROTOCOL.md)
 - [Python code style](PYTHON_CODE_STYLE.md)
+- [Python naming audit and caller migration](python-naming-audit.md)
 - [Branch and release workflow](../RELEASE_WORKFLOW.md)
 - [Documentation completeness contract](documentation-coverage.md)
 - [Architecture Decision Records](../adr/README.md)

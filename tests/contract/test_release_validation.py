@@ -22,12 +22,12 @@ VERSION = "1.2.3"
 METADATA_ROOT = f"f_layer-{VERSION}.dist-info/"
 
 
-def Sources(version: str = VERSION, include_scripts: bool = False) -> dict[str, bytes]:
+def Sources(version: str = VERSION, includeScripts: bool = False) -> dict[str, bytes]:
     """Provide a minimal owned package source set with optional console metadata."""
 
     project = f'[project]\nname = "f-layer"\nversion = "{version}"\n'
 
-    if include_scripts:
+    if includeScripts:
         project += '[project.scripts]\nflayer = "flayer.__main__:Main"\n'
 
     return {
@@ -39,16 +39,16 @@ def Sources(version: str = VERSION, include_scripts: bool = False) -> dict[str, 
     }
 
 
-def WriteRepository(repo_root: Path, sources: Mapping[str, bytes]) -> None:
+def WriteRepository(repoRoot: Path, sources: Mapping[str, bytes]) -> None:
     """Write owned file fixtures using only local temporary directories."""
 
     for name, payload in sources.items():
-        target = repo_root / name
+        target = repoRoot / name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(payload)
 
 
-def WheelMembers(sources: Mapping[str, bytes], include_scripts: bool = False) -> dict[str, bytes]:
+def WheelMembers(sources: Mapping[str, bytes], includeScripts: bool = False) -> dict[str, bytes]:
     """Construct an owned wheel fixture with expected generated metadata."""
 
     members = {name[4:]: payload for name, payload in sources.items() if name.startswith("src/")}
@@ -58,7 +58,7 @@ def WheelMembers(sources: Mapping[str, bytes], include_scripts: bool = False) ->
         METADATA_ROOT + "WHEEL": b"Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n",
     })
 
-    if include_scripts:
+    if includeScripts:
         members[METADATA_ROOT + "entry_points.txt"] = b"[console_scripts]\nflayer = flayer.__main__:Main\n"
 
     SetRecord(members)
@@ -69,19 +69,19 @@ def WheelMembers(sources: Mapping[str, bytes], include_scripts: bool = False) ->
 def SetRecord(members: dict[str, bytes]) -> None:
     """Bind every fixture wheel payload to a correctly sized SHA256 RECORD entry."""
 
-    record_name = METADATA_ROOT + "RECORD"
+    recordName = METADATA_ROOT + "RECORD"
     stream = io.StringIO()
     writer = csv.writer(stream, lineterminator="\n")
 
     for name, payload in sorted(members.items()):
-        if name == record_name:
+        if name == recordName:
             continue
 
         digest = base64.urlsafe_b64encode(hashlib.sha256(payload).digest()).decode().rstrip("=")
         writer.writerow((name, "sha256=" + digest, len(payload)))
 
-    writer.writerow((record_name, "", ""))
-    members[record_name] = stream.getvalue().encode()
+    writer.writerow((recordName, "", ""))
+    members[recordName] = stream.getvalue().encode()
 
 
 def WriteWheel(path: Path, members: Mapping[str, bytes], timestamp: int = 0) -> None:
@@ -103,11 +103,11 @@ def WriteSdist(path: Path, members: Mapping[str, bytes]) -> None:
             archive.addfile(member, io.BytesIO(payload))
 
 
-def WriteArtifacts(root: Path, sources: Mapping[str, bytes], include_scripts: bool = False) -> None:
+def WriteArtifacts(root: Path, sources: Mapping[str, bytes], includeScripts: bool = False) -> None:
     """Materialize minimal valid wheel and source archives for audit failure tests."""
 
     root.mkdir(parents=True, exist_ok=True)
-    wheel = WheelMembers(sources, include_scripts)
+    wheel = WheelMembers(sources, includeScripts)
     sdist = dict(sources)
     sdist["PKG-INFO"] = wheel[METADATA_ROOT + "METADATA"]
     WriteWheel(root / f"f_layer-{VERSION}-py3-none-any.whl", wheel)
@@ -184,9 +184,9 @@ def test_MilestoneReadUsesCanonicalRepository(tmp_path: Path, monkeypatch: pytes
     )
 
 
-@pytest.mark.parametrize("milestone_number", ["", "0", "-1", "3;fixture", "03", "3"])
+@pytest.mark.parametrize('milestoneNumber', ["", "0", "-1", "3;fixture", "03", "3"])
 def test_PublicationRejectsIncompleteMilestoneBeforeBuilding(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, milestone_number: str,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, milestoneNumber: str,
 ) -> None:
     """An owner-confirmed dispatch cannot publish while release acceptance remains open."""
 
@@ -195,7 +195,7 @@ def test_PublicationRejectsIncompleteMilestoneBeforeBuilding(
     for name, value in PublicationEnvironment().items():
         monkeypatch.setenv(name, value)
 
-    monkeypatch.setenv("FLAYER_RELEASE_MILESTONE", milestone_number)
+    monkeypatch.setenv("FLAYER_RELEASE_MILESTONE", milestoneNumber)
     monkeypatch.setattr(release, "RunCommand", lambda *_arguments: json.dumps(
         ClosedMilestone() | {"state": "open", "open_issues": 2},
     ))
@@ -254,7 +254,7 @@ def test_BootstrapPreviewIsNotPublishable(tmp_path: Path) -> None:
     assert release.ReadProjectVersion(tmp_path) == ("0.0.0", None), "Bootstrap preview was rejected"
 
     with pytest.raises(ValueError, match="non-bootstrap"):
-        release.ReadProjectVersion(tmp_path, require_source=True)
+        release.ReadProjectVersion(tmp_path, requireSource=True)
 
 
 def test_DynamicMetadataOwnsPackageLiteral(tmp_path: Path) -> None:
@@ -317,19 +317,19 @@ def test_ConfirmedOwnerPublicationContext() -> None:
     release.ValidatePublicationContext(PublicationEnvironment())
 
 
-@pytest.mark.parametrize(("object_type", "head", "tag_head", "master", "accepted"), [
+@pytest.mark.parametrize(('objectType', "head", 'tagHead', "master", "accepted"), [
     ("tag", "a", "a", "a", True), ("commit", "a", "a", "a", False),
     ("tag", "a", "b", "a", False), ("tag", "a", "a", "b", False),
 ])
 def test_TagMustOwnExactCurrentMaster(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, object_type: str, head: str,
-    tag_head: str, master: str, accepted: bool,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, objectType: str, head: str,
+    tagHead: str, master: str, accepted: bool,
 ) -> None:
     """Annotation and exact tag/checkout/master parity are independent release gates."""
 
-    responses = iter((object_type, head, tag_head, master))
+    responses = iter((objectType, head, tagHead, master))
 
-    def Git(_repo_root: Path, *_arguments: str) -> str:
+    def Git(_repoRoot: Path, *_arguments: str) -> str:
         """Return local Git object fixtures without contacting a remote."""
 
         return next(responses)
@@ -393,10 +393,10 @@ def test_DuplicateMembersRejected() -> None:
 def test_PrivateKeyMaterialRejectedWithoutEcho() -> None:
     """Recognizable credential material is rejected without exposing its value."""
 
-    private_marker = b"-----BEGIN " + b"PRIVATE KEY-----"
+    privateMarker = b"-----BEGIN " + b"PRIVATE KEY-----"
 
     with pytest.raises(ValueError, match="credential") as captured:
-        release.ValidatePayload(private_marker + b"\nfixture-private-material")
+        release.ValidatePayload(privateMarker + b"\nfixture-private-material")
 
     assert "fixture-private-material" not in str(captured.value), "Credential payload leaked"
 
@@ -404,35 +404,35 @@ def test_PrivateKeyMaterialRejectedWithoutEcho() -> None:
 def test_ZipAndTarLinksRejected(tmp_path: Path) -> None:
     """Archives never follow symbolic or hard links, even with innocuous names."""
 
-    wheel_path = tmp_path / "fixture.whl"
+    wheelPath = tmp_path / "fixture.whl"
 
-    with zipfile.ZipFile(wheel_path, "w") as archive:
+    with zipfile.ZipFile(wheelPath, "w") as archive:
         member = zipfile.ZipInfo("flayer/link.py")
-        member.create_system = 3
+        member.createSystem = 3
         member.external_attr = (stat.S_IFLNK | 0o777) << 16
         archive.writestr(member, "../../private")
 
     with pytest.raises(ValueError, match="link"):
-        release.ReadWheel(wheel_path)
+        release.ReadWheel(wheelPath)
 
-    sdist_path = tmp_path / "fixture.tar.gz"
+    sdistPath = tmp_path / "fixture.tar.gz"
 
-    with tarfile.open(sdist_path, "w:gz") as archive:
+    with tarfile.open(sdistPath, "w:gz") as archive:
         member = tarfile.TarInfo(f"f_layer-{VERSION}/src/link.py")
         member.type = tarfile.LNKTYPE
         member.linkname = "../../private"
         archive.addfile(member)
 
     with pytest.raises(ValueError, match="member type"):
-        release.ReadSdist(sdist_path, VERSION)
+        release.ReadSdist(sdistPath, VERSION)
 
 
 def test_ValidArtifactOwnershipAndConsoleScripts(tmp_path: Path) -> None:
     """Both distributions retain exact owned package members and declared scripts."""
 
-    sources = Sources(include_scripts=True)
+    sources = Sources(includeScripts=True)
     sources["examples/profiles/fixture.toml"] = b'[fixture]\nname = "example"\n'
-    WriteArtifacts(tmp_path, sources, include_scripts=True)
+    WriteArtifacts(tmp_path, sources, includeScripts=True)
     wheel, sdist = release.AuditArtifacts(tmp_path, sources, VERSION)
 
     assert wheel["flayer/__init__.py"] == sdist["src/flayer/__init__.py"], "Package source diverged"
@@ -584,9 +584,9 @@ def test_ExistingOrRedirectedOutputRejected(tmp_path: Path) -> None:
     """A prior report or symlink cannot be overwritten or redirect release output."""
 
     WriteRepository(tmp_path, Sources())
-    output_parent = tmp_path / "_build"
-    output_parent.mkdir()
-    (output_parent / "release").mkdir()
+    outputParent = tmp_path / "_build"
+    outputParent.mkdir()
+    (outputParent / "release").mkdir()
 
     with pytest.MonkeyPatch.context() as patch:
         patch.setattr(release, "Git", lambda *_arguments: "123")
@@ -598,7 +598,7 @@ def test_ExistingOrRedirectedOutputRejected(tmp_path: Path) -> None:
 def test_CliFailureDoesNotEchoTagOrPayload(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
     """The public CLI returns failure without replaying sensitive exception details."""
 
-    def Fail(_repo_root: Path, _tag: str | None, _publication: bool) -> dict[str, object]:
+    def Fail(_repoRoot: Path, _tag: str | None, _publication: bool) -> dict[str, object]:
         """Represent an untrusted lower-level exception containing a fixture secret."""
 
         raise ValueError("fixture-private-value")
@@ -620,41 +620,41 @@ def test_ReleaseEvidenceRequiresBothBuildComparisons(
     """Only matching repeated builds and a matching source rebuild emit artifacts."""
 
     sources = Sources()
-    repo_root = tmp_path / "repository"
-    repo_root.mkdir()
-    WriteRepository(repo_root, sources)
-    fixture_root = tmp_path / "fixture-artifacts"
-    WriteArtifacts(fixture_root, sources)
+    repoRoot = tmp_path / "repository"
+    repoRoot.mkdir()
+    WriteRepository(repoRoot, sources)
+    fixtureRoot = tmp_path / "fixture-artifacts"
+    WriteArtifacts(fixtureRoot, sources)
 
-    def Git(_repo_root: Path, *arguments: str) -> str:
+    def Git(_repoRoot: Path, *arguments: str) -> str:
         """Provide a fixed local commit and reproducible timestamp."""
 
         return "1234567890" if arguments[0] == "show" else "fixture-commit"
 
-    def Snapshot(_repo_root: Path, source_root: Path) -> dict[str, bytes]:
+    def Snapshot(_repoRoot: Path, sourceRoot: Path) -> dict[str, bytes]:
         """Copy the fixed owned fixture inputs to each disposable build source."""
 
-        WriteRepository(source_root, sources)
+        WriteRepository(sourceRoot, sources)
 
         return sources
 
-    def Build(_source_root: Path, output_root: Path, _epoch: str) -> None:
+    def Build(_sourceRoot: Path, outputRoot: Path, _epoch: str) -> None:
         """Supply deterministic artifacts with separately controllable parity failures."""
 
-        output_root.mkdir()
+        outputRoot.mkdir()
 
-        for artifact in fixture_root.iterdir():
-            (output_root / artifact.name).write_bytes(artifact.read_bytes())
+        for artifact in fixtureRoot.iterdir():
+            (outputRoot / artifact.name).write_bytes(artifact.read_bytes())
 
-        wheel_path = output_root / f"f_layer-{VERSION}-py3-none-any.whl"
+        wheelPath = outputRoot / f"f_layer-{VERSION}-py3-none-any.whl"
 
-        if failure == "reproducibility" and output_root.name == "second":
-            WriteWheel(wheel_path, release.ReadWheel(wheel_path), timestamp=2)
+        if failure == "reproducibility" and outputRoot.name == "second":
+            WriteWheel(wheelPath, release.ReadWheel(wheelPath), timestamp=2)
 
-        elif failure == "sdist-parity" and output_root.name == "rebuilt":
-            members = release.ReadWheel(wheel_path)
+        elif failure == "sdist-parity" and outputRoot.name == "rebuilt":
+            members = release.ReadWheel(wheelPath)
             members["flayer/__init__.py"] = b"changed during rebuild"
-            WriteWheel(wheel_path, members)
+            WriteWheel(wheelPath, members)
 
     monkeypatch.setattr(release, "Git", Git)
     monkeypatch.setattr(release, "SnapshotTrackedSources", Snapshot)
@@ -670,15 +670,15 @@ def test_ReleaseEvidenceRequiresBothBuildComparisons(
 
     if failure is not None:
         with pytest.raises(ValueError):
-            release.ValidateRelease(repo_root, tag, publication)
+            release.ValidateRelease(repoRoot, tag, publication)
 
-        assert not (repo_root / "_build/release").exists(), "Failed comparison emitted approved output"
+        assert not (repoRoot / "_build/release").exists(), "Failed comparison emitted approved output"
 
     else:
-        evidence = release.ValidateRelease(repo_root, tag, publication)
-        evidence_path = repo_root / "_build/release/build-evidence.json"
+        evidence = release.ValidateRelease(repoRoot, tag, publication)
+        evidencePath = repoRoot / "_build/release/build-evidence.json"
 
-        assert json.loads(evidence_path.read_text()) == evidence, "Persisted evidence differs"
+        assert json.loads(evidencePath.read_text()) == evidence, "Persisted evidence differs"
         assert evidence["reproducible"] is True and evidence["sdist_wheel_parity"] is True, (
             "Successful comparisons were not recorded"
         )
@@ -697,18 +697,18 @@ def test_SnapshotExcludesUntrackedAndIgnoredInputs(
 
     WriteRepository(tmp_path, Sources())
     (tmp_path / ".env").write_text("fixture-private-material", encoding="utf-8")
-    target_root = tmp_path / "snapshot"
+    targetRoot = tmp_path / "snapshot"
 
-    def Git(_repo_root: Path, *arguments: str) -> str:
+    def Git(_repoRoot: Path, *arguments: str) -> str:
         """Represent a clean index containing only the owned fixture package files."""
 
         return "\x00".join(Sources()) + "\x00" if arguments[0] == "ls-files" else ""
 
     monkeypatch.setattr(release, "Git", Git)
-    snapshot = release.SnapshotTrackedSources(tmp_path, target_root)
+    snapshot = release.SnapshotTrackedSources(tmp_path, targetRoot)
 
     assert snapshot == Sources(), "Snapshot included files outside the tracked source contract"
-    assert not (target_root / ".env").exists(), "Untracked private file entered the snapshot"
+    assert not (targetRoot / ".env").exists(), "Untracked private file entered the snapshot"
 
 
 def test_SnapshotRejectsTrackedSymlink(
@@ -720,7 +720,7 @@ def test_SnapshotRejectsTrackedSymlink(
     target.write_text("fixture", encoding="utf-8")
     (tmp_path / "linked.txt").symlink_to(target)
 
-    def Git(_repo_root: Path, *arguments: str) -> str:
+    def Git(_repoRoot: Path, *arguments: str) -> str:
         """Represent a clean index that contains a symlink entry."""
 
         return "linked.txt\x00" if arguments[0] == "ls-files" else ""
@@ -744,16 +744,16 @@ def test_ByteCounterAndRecordSchemaRejectAmbiguity(tmp_path: Path) -> None:
         release.ValidateRecord(members, METADATA_ROOT + "RECORD")
 
 
-@pytest.mark.parametrize("file_type", [stat.S_IFIFO, stat.S_IFSOCK, stat.S_IFCHR, stat.S_IFBLK])
-def test_WheelRejectsAllSpecialUnixMemberTypes(tmp_path: Path, file_type: int) -> None:
+@pytest.mark.parametrize('fileType', [stat.S_IFIFO, stat.S_IFSOCK, stat.S_IFCHR, stat.S_IFBLK])
+def test_WheelRejectsAllSpecialUnixMemberTypes(tmp_path: Path, fileType: int) -> None:
     """A ZIP member cannot smuggle a device, socket or FIFO under a source filename."""
 
     path = tmp_path / "fixture.whl"
 
     with zipfile.ZipFile(path, "w") as archive:
         member = zipfile.ZipInfo("flayer/source.py")
-        member.create_system = 3
-        member.external_attr = (file_type | 0o600) << 16
+        member.createSystem = 3
+        member.external_attr = (fileType | 0o600) << 16
         archive.writestr(member, b"fixture")
 
     with pytest.raises(ValueError, match="unsupported file type"):

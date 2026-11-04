@@ -16,22 +16,22 @@ from tools import validate
 
 
 def WriteCoverageReport(
-    report_path: Path,
+    reportPath: Path,
     statements: int = 10,
-    covered_lines: int = 10,
+    coveredLines: int = 10,
     branches: int = 10,
-    covered_branches: int = 10,
+    coveredBranches: int = 10,
 ) -> None:
     """Write measured-counter fixtures for the coverage-floor contract."""
 
-    report_path.write_text(
+    reportPath.write_text(
         json.dumps(
             {
                 "totals": {
                     "num_statements": statements,
-                    "covered_lines": covered_lines,
+                    "covered_lines": coveredLines,
                     "num_branches": branches,
-                    "covered_branches": covered_branches,
+                    "covered_branches": coveredBranches,
                 },
             },
         ),
@@ -68,55 +68,55 @@ def test_EnvironmentUsesOnlyCurrentCheckout(
 
 
 @pytest.mark.parametrize(
-    ("covered_lines", "covered_branches"),
+    ('coveredLines', 'coveredBranches'),
     [(8, 8), (10, 10)],
 )
 def test_CoverageAcceptsExactFloor(
     tmp_path: Path,
-    covered_lines: int,
-    covered_branches: int,
+    coveredLines: int,
+    coveredBranches: int,
 ) -> None:
     """Both coverage ratios accept the exact 80-percent boundary."""
 
-    report_path = tmp_path / "coverage.json"
+    reportPath = tmp_path / "coverage.json"
     WriteCoverageReport(
-        report_path, covered_lines=covered_lines, covered_branches=covered_branches,
+        reportPath, coveredLines=coveredLines, coveredBranches=coveredBranches,
     )
 
-    validate.CheckCoverage(report_path)
+    validate.CheckCoverage(reportPath)
 
 
 def test_CoverageRejectsLowBranchesDespiteHighOverall(tmp_path: Path) -> None:
     """High statement coverage cannot conceal insufficient exercised branches."""
 
-    report_path = tmp_path / "coverage.json"
+    reportPath = tmp_path / "coverage.json"
     WriteCoverageReport(
-        report_path, statements=100, covered_lines=100, branches=10, covered_branches=7,
+        reportPath, statements=100, coveredLines=100, branches=10, coveredBranches=7,
     )
 
     with pytest.raises(ValueError, match="Branch coverage is below 80%"):
-        validate.CheckCoverage(report_path)
+        validate.CheckCoverage(reportPath)
 
 
 def test_CoverageRejectsLowOverallDespiteHighBranches(tmp_path: Path) -> None:
     """High branch coverage cannot conceal untested statements."""
 
-    report_path = tmp_path / "coverage.json"
+    reportPath = tmp_path / "coverage.json"
     WriteCoverageReport(
-        report_path, statements=100, covered_lines=70, branches=10, covered_branches=10,
+        reportPath, statements=100, coveredLines=70, branches=10, coveredBranches=10,
     )
 
     with pytest.raises(ValueError, match="Overall coverage is below 80%"):
-        validate.CheckCoverage(report_path)
+        validate.CheckCoverage(reportPath)
 
 
 def test_CoverageAllowsModulesWithoutBranches(tmp_path: Path) -> None:
     """A nonempty straight-line package has no branch obligations."""
 
-    report_path = tmp_path / "coverage.json"
-    WriteCoverageReport(report_path, branches=0, covered_branches=0)
+    reportPath = tmp_path / "coverage.json"
+    WriteCoverageReport(reportPath, branches=0, coveredBranches=0)
 
-    validate.CheckCoverage(report_path)
+    validate.CheckCoverage(reportPath)
 
 
 @pytest.mark.parametrize(
@@ -134,35 +134,35 @@ def test_CoverageAllowsModulesWithoutBranches(tmp_path: Path) -> None:
 def test_CoverageRejectsMalformedReports(tmp_path: Path, report: object) -> None:
     """Missing or invalid counters never become a passing coverage result."""
 
-    report_path = tmp_path / "coverage.json"
-    report_path.write_text(json.dumps(report), encoding="utf-8")
+    reportPath = tmp_path / "coverage.json"
+    reportPath.write_text(json.dumps(report), encoding="utf-8")
 
     with pytest.raises(ValueError):
-        validate.CheckCoverage(report_path)
+        validate.CheckCoverage(reportPath)
 
 
 @pytest.mark.parametrize(
-    ("statements", "covered_lines", "branches", "covered_branches"),
+    ("statements", 'coveredLines', "branches", 'coveredBranches'),
     [(0, 0, 0, 0), (10, 11, 10, 10), (10, 10, 10, 11)],
 )
 def test_CoverageRejectsImpossibleTotals(
     tmp_path: Path,
     statements: int,
-    covered_lines: int,
+    coveredLines: int,
     branches: int,
-    covered_branches: int,
+    coveredBranches: int,
 ) -> None:
     """Empty measurement and counters above the measured total fail validation."""
 
-    report_path = tmp_path / "coverage.json"
-    WriteCoverageReport(report_path, statements, covered_lines, branches, covered_branches)
+    reportPath = tmp_path / "coverage.json"
+    WriteCoverageReport(reportPath, statements, coveredLines, branches, coveredBranches)
 
     with pytest.raises(ValueError, match="empty or contain inconsistent"):
-        validate.CheckCoverage(report_path)
+        validate.CheckCoverage(reportPath)
 
 
 @pytest.mark.parametrize(
-    "failed_stage",
+    'failedStage',
     [
         "compile", "Ruff", "mypy", "pytest", "coverage report", "local source import",
         "offline package installation", "installed package import", "CLI help",
@@ -171,118 +171,118 @@ def test_CoverageRejectsImpossibleTotals(
 def test_GateStopsAtFirstFailedCommand(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    failed_stage: str,
+    failedStage: str,
 ) -> None:
     """No later check runs after an earlier stage fails."""
 
-    command_names: list[str] = []
-    coverage_paths: list[Path] = []
-    cli_path = tmp_path / "src" / "flayer" / "__main__.py"
-    cli_path.parent.mkdir(parents=True)
-    cli_path.write_text("", encoding="utf-8")
+    commandNames: list[str] = []
+    coveragePaths: list[Path] = []
+    cliPath = tmp_path / "src" / "flayer" / "__main__.py"
+    cliPath.parent.mkdir(parents=True)
+    cliPath.write_text("", encoding="utf-8")
 
     def FakeRunCommand(
-        stage_name: str,
+        stageName: str,
         arguments: Sequence[str],
-        working_directory: Path,
+        workingDirectory: Path,
         environment: Mapping[str, str],
     ) -> int:
         """Record execution order and emulate only the coverage report side effect."""
 
-        command_names.append(stage_name)
+        commandNames.append(stageName)
 
-        if stage_name == "coverage report" and stage_name != failed_stage:
-            report_path = Path(arguments[-1])
-            coverage_paths.append(report_path)
-            WriteCoverageReport(report_path)
+        if stageName == "coverage report" and stageName != failedStage:
+            reportPath = Path(arguments[-1])
+            coveragePaths.append(reportPath)
+            WriteCoverageReport(reportPath)
 
-        return 7 if stage_name == failed_stage else 0
+        return 7 if stageName == failedStage else 0
 
     monkeypatch.setattr(validate, "RunCommand", FakeRunCommand)
-    exit_code = validate.RunGate(tmp_path)
+    exitCode = validate.RunGate(tmp_path)
 
-    assert exit_code == 7, "Validation lost the failing stage's exit code"
-    assert command_names[-1] == failed_stage, "Validation continued after a failed command"
-    assert all(not path.exists() for path in coverage_paths), (
+    assert exitCode == 7, "Validation lost the failing stage's exit code"
+    assert commandNames[-1] == failedStage, "Validation continued after a failed command"
+    assert all(not path.exists() for path in coveragePaths), (
         "Temporary coverage output survived a failed gate"
     )
 
 
-@pytest.mark.parametrize("report_text", [None, "{", "{}"])
+@pytest.mark.parametrize('reportText', [None, "{", "{}"])
 def test_GateRejectsMissingOrMalformedCoverage(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    report_text: str | None,
+    reportText: str | None,
 ) -> None:
     """A successful export command without valid measurement cannot pass the gate."""
 
-    command_names: list[str] = []
+    commandNames: list[str] = []
 
     def FakeRunCommand(
-        stage_name: str,
+        stageName: str,
         arguments: Sequence[str],
-        working_directory: Path,
+        workingDirectory: Path,
         environment: Mapping[str, str],
     ) -> int:
         """Represent a broken exporter that exits successfully but omits valid data."""
 
-        command_names.append(stage_name)
+        commandNames.append(stageName)
 
-        if stage_name == "coverage report" and report_text is not None:
-            Path(arguments[-1]).write_text(report_text, encoding="utf-8")
+        if stageName == "coverage report" and reportText is not None:
+            Path(arguments[-1]).write_text(reportText, encoding="utf-8")
 
         return 0
 
     monkeypatch.setattr(validate, "RunCommand", FakeRunCommand)
 
     assert validate.RunGate(tmp_path) == 1, "Broken coverage measurement passed validation"
-    assert command_names[-1] == "coverage report", "Gate continued with invalid coverage"
+    assert commandNames[-1] == "coverage report", "Gate continued with invalid coverage"
 
 
-@pytest.mark.parametrize("has_cli", [False, True])
+@pytest.mark.parametrize('hasCli', [False, True])
 def test_GateRunsWholePlanFromCheckoutRoot(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    has_cli: bool,
+    hasCli: bool,
 ) -> None:
     """All required checks use the given checkout independently of the caller's cwd."""
 
-    checkout_root = tmp_path / "checkout"
-    checkout_root.mkdir()
+    checkoutRoot = tmp_path / "checkout"
+    checkoutRoot.mkdir()
     monkeypatch.chdir(tmp_path)
-    command_names: list[str] = []
+    commandNames: list[str] = []
 
-    if has_cli:
-        cli_path = checkout_root / "src" / "flayer" / "__main__.py"
-        cli_path.parent.mkdir(parents=True)
-        cli_path.write_text("", encoding="utf-8")
+    if hasCli:
+        cliPath = checkoutRoot / "src" / "flayer" / "__main__.py"
+        cliPath.parent.mkdir(parents=True)
+        cliPath.write_text("", encoding="utf-8")
 
     def FakeRunCommand(
-        stage_name: str,
+        stageName: str,
         arguments: Sequence[str],
-        working_directory: Path,
+        workingDirectory: Path,
         environment: Mapping[str, str],
     ) -> int:
         """Inspect stage cwd, source precedence, and offline installation switches."""
 
-        command_names.append(stage_name)
-        expected_pythonpath = os.pathsep.join(
-            (str(checkout_root / "src"), str(checkout_root)),
+        commandNames.append(stageName)
+        expectedPythonpath = os.pathsep.join(
+            (str(checkoutRoot / "src"), str(checkoutRoot)),
         )
 
-        assert environment["PYTHONPATH"] == expected_pythonpath, (
+        assert environment["PYTHONPATH"] == expectedPythonpath, (
             "Stage inherited a different checkout's sources"
         )
 
-        if stage_name in {"compile", "Ruff", "mypy", "pytest", "coverage report", "CLI help"}:
-            assert working_directory == checkout_root, "Stage used the caller's cwd"
+        if stageName in {"compile", "Ruff", "mypy", "pytest", "coverage report", "CLI help"}:
+            assert workingDirectory == checkoutRoot, "Stage used the caller's cwd"
 
-        if stage_name == "offline package installation":
+        if stageName == "offline package installation":
             assert {"--no-index", "--no-deps", "--no-build-isolation"}.issubset(arguments), (
                 "Installation smoke permits dependency downloads"
             )
 
-        if stage_name == "coverage report":
+        if stageName == "coverage report":
             WriteCoverageReport(Path(arguments[-1]))
 
         return 0
@@ -290,33 +290,33 @@ def test_GateRunsWholePlanFromCheckoutRoot(
     monkeypatch.setattr(validate, "RunCommand", FakeRunCommand)
 
     assert validate.RunGate(Path("checkout")) == 0, "Complete successful gate returned failure"
-    assert command_names == [
+    assert commandNames == [
         "compile", "Ruff", "mypy", "pytest", "coverage report", "local source import",
         "offline package installation", "installed package import",
-        *(["CLI help"] if has_cli else []),
+        *(["CLI help"] if hasCli else []),
     ], "The required validation stages were skipped or reordered"
 
 
 def test_ImportSmokeSelectsCheckoutOverAmbientPackage(tmp_path: Path) -> None:
     """A real isolated interpreter imports this checkout when ambient sources conflict."""
 
-    source_root = tmp_path / "source"
-    package_root = source_root / "flayer"
-    package_root.mkdir(parents=True)
-    (package_root / "__init__.py").write_text(
+    sourceRoot = tmp_path / "source"
+    packageRoot = sourceRoot / "flayer"
+    packageRoot.mkdir(parents=True)
+    (packageRoot / "__init__.py").write_text(
         '"""Isolated package fixture."""\n', encoding="utf-8",
     )
-    ambient_root = tmp_path / "ambient"
-    ambient_package = ambient_root / "flayer"
-    ambient_package.mkdir(parents=True)
-    (ambient_package / "__init__.py").write_text(
+    ambientRoot = tmp_path / "ambient"
+    ambientPackage = ambientRoot / "flayer"
+    ambientPackage.mkdir(parents=True)
+    (ambientPackage / "__init__.py").write_text(
         'raise RuntimeError("Wrong checkout imported")\n', encoding="utf-8",
     )
     environment = dict(os.environ)
-    environment["PYTHONPATH"] = str(ambient_root)
+    environment["PYTHONPATH"] = str(ambientRoot)
     result = subprocess.run(
-        [sys.executable, "-I", "-c", validate.BuildImportSmoke(source_root)],
-        cwd=ambient_root,
+        [sys.executable, "-I", "-c", validate.BuildImportSmoke(sourceRoot)],
+        cwd=ambientRoot,
         env=environment,
         capture_output=True,
         text=True,
@@ -325,7 +325,7 @@ def test_ImportSmokeSelectsCheckoutOverAmbientPackage(tmp_path: Path) -> None:
     )
 
     assert result.returncode == 0, f"Local import smoke selected ambient code: {result.stderr}"
-    assert str(package_root / "__init__.py") in result.stdout, (
+    assert str(packageRoot / "__init__.py") in result.stdout, (
         "Import smoke did not report the expected local package"
     )
 
@@ -353,7 +353,7 @@ def test_RunCommandRejectsTimeout(
 ) -> None:
     """A timeout is an explicit failure and never triggers a retry."""
 
-    def RaiseTimeout(*arguments: object, **keyword_arguments: object) -> None:
+    def RaiseTimeout(*arguments: object, **keywordArguments: object) -> None:
         """Represent a tool that exceeds the stage time limit."""
 
         raise subprocess.TimeoutExpired("tool", 600)
@@ -374,32 +374,32 @@ def test_TestStageIsDiscoveredFromDirectory(request: pytest.FixtureRequest) -> N
 
 
 def RunCollectionFixture(
-    fixture_root: Path,
-    stage_names: Sequence[str],
+    fixtureRoot: Path,
+    stageNames: Sequence[str],
 ) -> subprocess.CompletedProcess[str]:
     """Collect an isolated test tree with the repository's actual discovery hook."""
 
-    marker_config = "\n".join(
-        f"    {stage_name}: isolated test stage"
-        for stage_name in ("unit", "contract", "functional", "integration", "e2e")
+    markerConfig = "\n".join(
+        f"    {stageName}: isolated test stage"
+        for stageName in ("unit", "contract", "functional", "integration", "e2e")
     )
-    (fixture_root / "pytest.ini").write_text(
-        f"[pytest]\ntestpaths = tests\naddopts = --strict-markers\nmarkers =\n{marker_config}\n",
+    (fixtureRoot / "pytest.ini").write_text(
+        f"[pytest]\ntestpaths = tests\naddopts = --strict-markers\nmarkers =\n{markerConfig}\n",
         encoding="utf-8",
     )
-    tests_root = fixture_root / "tests"
-    tests_root.mkdir()
-    (tests_root / "conftest.py").write_text(
+    testsRoot = fixtureRoot / "tests"
+    testsRoot.mkdir()
+    (testsRoot / "conftest.py").write_text(
         (Path(__file__).resolve().parents[1] / "conftest.py").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
 
-    for stage_name in stage_names:
-        stage_root = tests_root / stage_name
-        stage_root.mkdir()
-        (stage_root / f"test_{stage_name}.py").write_text(
+    for stageName in stageNames:
+        stageRoot = testsRoot / stageName
+        stageRoot.mkdir()
+        (stageRoot / f"test_{stageName}.py").write_text(
             f'"""Isolated collection fixture."""\n\n'
-            f'def test_{stage_name.capitalize()}() -> None:\n'
+            f'def test_{stageName.capitalize()}() -> None:\n'
             f'    """Represent one discoverable stage test."""\n\n'
             f'    assert True, "Collection fixture failed unexpectedly"\n',
             encoding="utf-8",
@@ -412,7 +412,7 @@ def RunCollectionFixture(
 
     return subprocess.run(
         [sys.executable, "-m", "pytest", "--collect-only", "-q"],
-        cwd=fixture_root,
+        cwd=fixtureRoot,
         env=environment,
         capture_output=True,
         text=True,
@@ -424,14 +424,14 @@ def RunCollectionFixture(
 def test_CollectionDiscoversEveryStage(tmp_path: Path) -> None:
     """All five stage directories participate in default pytest discovery."""
 
-    stage_names = ("unit", "contract", "functional", "integration", "e2e")
-    result = RunCollectionFixture(tmp_path, stage_names)
+    stageNames = ("unit", "contract", "functional", "integration", "e2e")
+    result = RunCollectionFixture(tmp_path, stageNames)
 
     assert result.returncode == 0, f"Supported test stages failed collection: {result.stderr}"
 
-    for stage_name in stage_names:
-        assert f"tests/{stage_name}/" in result.stdout, (
-            f"Default discovery omitted the {stage_name} stage"
+    for stageName in stageNames:
+        assert f"tests/{stageName}/" in result.stdout, (
+            f"Default discovery omitted the {stageName} stage"
         )
 
     assert "5 tests collected" in result.stdout, "Default discovery lost a test stage"

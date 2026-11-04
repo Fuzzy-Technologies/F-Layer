@@ -143,27 +143,27 @@ def AlignMarkdown(text: str) -> str:
     return "".join(lines)
 
 
-def TrackedMarkdown(project_root: Path) -> tuple[Path, ...]:
+def TrackedMarkdown(projectRoot: Path) -> tuple[Path, ...]:
     """List repository-owned Markdown while excluding disposable generated output."""
 
     result = subprocess.run(
-        ["git", "ls-files", "-z", "--", "*.md"], cwd=project_root,
+        ["git", "ls-files", "-z", "--", "*.md"], cwd=projectRoot,
         capture_output=True, text=True, check=True,
     )
 
-    return tuple(project_root / name for name in result.stdout.split("\0") if name)
+    return tuple(projectRoot / name for name in result.stdout.split("\0") if name)
 
 
-def CheckMarkdownTables(project_root: Path) -> tuple[str, ...]:
+def CheckMarkdownTables(projectRoot: Path) -> tuple[str, ...]:
     """Report tracked files whose table columns drift from readable source alignment."""
 
     diagnostics = []
 
-    for path in TrackedMarkdown(project_root):
+    for path in TrackedMarkdown(projectRoot):
         text = path.read_text(encoding="utf-8")
 
         if AlignMarkdown(text) != text:
-            diagnostics.append(f"{path.relative_to(project_root)}: Markdown table columns need alignment")
+            diagnostics.append(f"{path.relative_to(projectRoot)}: Markdown table columns need alignment")
 
     return tuple(diagnostics)
 
@@ -172,7 +172,7 @@ def Main(arguments: Sequence[str] | None = None) -> int:
     """Check alignment by default or apply requested table padding and separator rules."""
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--project-root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser.add_argument("--project-root", type=Path, default=Path(__file__).resolve().parents[1], dest='projectRoot')
     parser.add_argument("--write", action="store_true")
     options = parser.parse_args(arguments)
 

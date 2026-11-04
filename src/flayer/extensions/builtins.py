@@ -67,8 +67,8 @@ class YandexReadOnlyExtension:
             raise ExtensionError("Provider construction requires a validated ProviderContext")
 
         return YandexCloudProvider(YandexCloudSettings(
-            folder_id=context.scope_id, profile=context.authentication_reference,
-            command_timeout=context.command_timeout, inventory_limit=context.inventory_limit,
+            folderId=context.scopeId, profile=context.authenticationReference,
+            commandTimeout=context.commandTimeout, inventoryLimit=context.inventoryLimit,
         ))
 
 
@@ -91,8 +91,8 @@ class YandexLifecycleExtension(YandexReadOnlyExtension):
             raise ExtensionError("Provider construction requires a validated ProviderContext")
 
         return YandexLifecycleProvider(YandexCloudSettings(
-            folder_id=context.scope_id, profile=context.authentication_reference,
-            command_timeout=context.command_timeout, inventory_limit=context.inventory_limit,
+            folderId=context.scopeId, profile=context.authenticationReference,
+            commandTimeout=context.commandTimeout, inventoryLimit=context.inventoryLimit,
         ))
 
 
@@ -115,12 +115,12 @@ class _CompiledGateway:
 
         return BuildServerBundle(self.plan.profile)
 
-    def RenderPlan(self, *, user_data_file: str | Path) -> str:
+    def RenderPlan(self, *, userDataFile: str | Path) -> str:
         """Preserve gateway verification of the exact exported server artifact."""
 
         from flayer.profiles.gateway import RenderPlan
 
-        return RenderPlan(self.plan, user_data_file=user_data_file)
+        return RenderPlan(self.plan, userDataFile=userDataFile)
 
 
 class SecureGatewayExtension:

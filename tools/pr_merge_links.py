@@ -16,20 +16,20 @@ ISSUE_REFERENCE_PATTERN = re.compile(r"#(\d+)")
 def ParseLinkedTasks(body: str) -> list[int]:
     """Return unique issue numbers from explicit closing clauses in source order."""
 
-    issue_numbers: list[int] = []
-    seen_numbers: set[int] = set()
+    issueNumbers: list[int] = []
+    seenNumbers: set[int] = set()
 
-    for clause_match in CLOSING_CLAUSE_PATTERN.finditer(body):
-        for issue_match in ISSUE_REFERENCE_PATTERN.finditer(clause_match.group(1)):
-            issue_number = int(issue_match.group(1))
+    for clauseMatch in CLOSING_CLAUSE_PATTERN.finditer(body):
+        for issueMatch in ISSUE_REFERENCE_PATTERN.finditer(clauseMatch.group(1)):
+            issueNumber = int(issueMatch.group(1))
 
-            if issue_number in seen_numbers:
+            if issueNumber in seenNumbers:
                 continue
 
-            seen_numbers.add(issue_number)
-            issue_numbers.append(issue_number)
+            seenNumbers.add(issueNumber)
+            issueNumbers.append(issueNumber)
 
-    return issue_numbers
+    return issueNumbers
 
 
 def Main() -> int:
@@ -37,8 +37,8 @@ def Main() -> int:
 
     body = os.environ.get("PR_BODY", "")
 
-    for issue_number in ParseLinkedTasks(body):
-        print(issue_number)
+    for issueNumber in ParseLinkedTasks(body):
+        print(issueNumber)
 
     return 0
 

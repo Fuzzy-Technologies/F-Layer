@@ -113,17 +113,17 @@ def ValidateComputeShape(options: Mapping[str, JsonValue]) -> None:
         raise ValueError("Kazakhstan deployments require platform_id standard-v3")
 
     if fraction == 100:
-        valid_cores = (*range(2, 17, 2), 20, 24, 28, 32)
+        validCores = (*range(2, 17, 2), 20, 24, 28, 32)
         ratios = tuple(float(value) for value in range(1, 9 if platform == "standard-v1" else 17))
 
     else:
-        valid_cores = (2, 4)
+        validCores = (2, 4)
         ratios = tuple(value / 2 for value in range(1, 5 if fraction == 5 else 9))
 
         if platform == "standard-v2" and fraction == 5:
             ratios = (0.25, *ratios)
 
-    if cores not in valid_cores or memory / cores not in ratios:
+    if cores not in validCores or memory / cores not in ratios:
         raise ValueError("Unsupported vCPU/RAM combination for the selected platform and core_fraction")
 
 
@@ -294,9 +294,9 @@ class YandexLifecycleProvider(YandexCloudProvider):
                     ValidateName(dependency, "dependency")
                     expected.add(dependency)
 
-            dependency_options = sum(key in DEPENDENCY_KINDS for key in options)
+            dependencyOptions = sum(key in DEPENDENCY_KINDS for key in options)
 
-            if expected != set(spec.dependencies) or len(expected) != dependency_options:
+            if expected != set(spec.dependencies) or len(expected) != dependencyOptions:
                 raise ValueError("Dependencies must match explicit typed dependency options")
 
             if "zone_id" in options:
@@ -344,8 +344,8 @@ class YandexLifecycleProvider(YandexCloudProvider):
         """Require the selected provider and folder to match the complete stack boundary."""
 
         if not isinstance(identity, StackIdentity) or (
-            identity.provider != self.Identity.provider_id
-            or identity.scope_id != self.Identity.scope_id
+            identity.provider != self.Identity.providerId
+            or identity.scopeId != self.Identity.scopeId
         ):
             raise MutationError(ProviderErrorCode.SCOPE_MISMATCH, "identity", False)
 
@@ -379,7 +379,7 @@ class YandexLifecycleProvider(YandexCloudProvider):
         self.ValidateSpec(spec)
         self._ValidateIdentity(identity)
         labels = identity.OwnershipLabels()
-        labels[LOGICAL_ID_LABEL] = spec.logical_id
+        labels[LOGICAL_ID_LABEL] = spec.logicalId
         ownership = tuple(sorted(labels.items()))
         matches = tuple(
             resource for resource in self.ListResources(spec.kind) if resource.HasLabels(ownership)
@@ -407,7 +407,7 @@ class YandexLifecycleProvider(YandexCloudProvider):
     def _ResourceZone(resource: ProviderResource) -> str | None:
         """Return the normalized zone; address adapters populate the nested IPv4 zone."""
 
-        return resource.zone_id
+        return resource.zoneId
 
     def _NormalizeResource(
         self, payload: object, kind: ResourceKind, operation: str
@@ -438,33 +438,33 @@ class YandexLifecycleProvider(YandexCloudProvider):
             if key not in options:
                 continue
 
-            logical_id = _String(options[key])
-            resource = dependencies[logical_id]
+            logicalId = _String(options[key])
+            resource = dependencies[logicalId]
 
             if not isinstance(resource, ProviderResource) or resource.reference.kind != kind:
                 raise MutationError(ProviderErrorCode.SCOPE_MISMATCH, "dependencies", False)
 
             observed = self.GetResource(resource.reference)
             labels = identity.OwnershipLabels()
-            labels[LOGICAL_ID_LABEL] = logical_id
+            labels[LOGICAL_ID_LABEL] = logicalId
 
             if not observed.HasLabels(tuple(sorted(labels.items()))):
                 raise MutationError(ProviderErrorCode.SCOPE_MISMATCH, "dependencies", False)
 
             if kind in {ResourceKind.SUBNET, ResourceKind.DISK, ResourceKind.ADDRESS} and (
-                observed.zone_id != options.get("zone_id")
+                observed.zoneId != options.get("zone_id")
             ):
                 raise MutationError(ProviderErrorCode.SCOPE_MISMATCH, "dependencies", False)
 
             if observed.status not in {"UNKNOWN", "ACTIVE", "READY", "RUNNING"}:
                 raise MutationError(ProviderErrorCode.CONFLICT, "dependencies", False)
 
-            refreshed[logical_id] = observed
+            refreshed[logicalId] = observed
 
         return refreshed
 
     @staticmethod
-    def _ReadUserData(path: Path, expected_digest: str) -> bytes:
+    def _ReadUserData(path: Path, expectedDigest: str) -> bytes:
         """Read one owned, private, bounded nonsecret cloud-init JSON artifact without symlinks."""
 
         descriptor: int | None = None
@@ -501,7 +501,7 @@ class YandexLifecycleProvider(YandexCloudProvider):
                 descriptor = None
                 data = source.read(MAX_USER_DATA_BYTES + 1)
 
-            if len(data) > MAX_USER_DATA_BYTES or hashlib.sha256(data).hexdigest() != expected_digest:
+            if len(data) > MAX_USER_DATA_BYTES or hashlib.sha256(data).hexdigest() != expectedDigest:
                 raise ValueError("Initialization artifact content differs from the plan")
 
             text = data.decode("utf-8")
@@ -539,13 +539,13 @@ class YandexLifecycleProvider(YandexCloudProvider):
         if spec.kind == ResourceKind.SUBNET:
             network = dependencies[_String(options["network_dependency"])]
             arguments.extend((
-                "--network-id", network.reference.resource_id, "--zone", _String(options["zone_id"]),
+                "--network-id", network.reference.resourceId, "--zone", _String(options["zone_id"]),
                 "--range", _String(options["ipv4_cidr"]),
             ))
 
         elif spec.kind == ResourceKind.SECURITY_GROUP:
             network = dependencies[_String(options["network_dependency"])]
-            arguments.extend(("--network-id", network.reference.resource_id))
+            arguments.extend(("--network-id", network.reference.resourceId))
 
             for rule in _Rules(options["rules"]):
                 arguments.extend(("--rule", rule))
@@ -565,21 +565,21 @@ class YandexLifecycleProvider(YandexCloudProvider):
             group = dependencies[_String(options["security_group_dependency"])]
             address = dependencies[_String(options["address_dependency"])]
 
-            if len(address.public_addresses) != 1:
+            if len(address.publicAddresses) != 1:
                 raise MutationError(ProviderErrorCode.INVALID_RESPONSE, "address", False)
 
             interface = (
-                f"subnet-id={subnet.reference.resource_id},nat-ip-version=ipv4,"
-                f"nat-address={address.public_addresses[0]},"
-                f"security-group-ids={group.reference.resource_id}"
+                f"subnet-id={subnet.reference.resourceId},nat-ip-version=ipv4,"
+                f"nat-address={address.publicAddresses[0]},"
+                f"security-group-ids={group.reference.resourceId}"
             )
             username = _String(options.get("ssh_username", "yc-user"))
-            public_key = _PublicKey(options["ssh_public_key"])
+            publicKey = _PublicKey(options["ssh_public_key"])
             arguments.extend((
                 "--zone", _String(options["zone_id"]), "--cores", str(options["cores"]),
                 "--memory", str(options["memory_gib"]),
-                "--use-boot-disk", f"disk-id={disk.reference.resource_id},auto-delete=false",
-                "--network-interface", interface, "--metadata", f"ssh-keys={username}:{public_key}",
+                "--use-boot-disk", f"disk-id={disk.reference.resourceId},auto-delete=false",
+                "--network-interface", interface, "--metadata", f"ssh-keys={username}:{publicKey}",
             ))
 
             if "platform_id" in options:
@@ -593,15 +593,15 @@ class YandexLifecycleProvider(YandexCloudProvider):
     ) -> ProviderError:
         """Recognize only proven local parser refusals, never generic RPC error categories."""
 
-        if result.return_code == 1 and not result.stdout.strip() and operation == "create":
+        if result.returnCode == 1 and not result.stdout.strip() and operation == "create":
             message = result.stderr.strip()
-            unknown_flag = re.fullmatch(r"ERROR: execute command: unknown flag: (--[a-z][a-z0-9-]*)", message)
-            rule_rejection = (
+            unknownFlag = re.fullmatch(r"ERROR: execute command: unknown flag: (--[a-z][a-z0-9-]*)", message)
+            ruleRejection = (
                 arguments[:3] == ("vpc", "security-group", "create")
                 and message == "ERROR: execute command: run command: for rule spec port or [from/to]-port fields is required"
             )
 
-            if rule_rejection or (unknown_flag is not None and unknown_flag[1] in arguments):
+            if ruleRejection or (unknownFlag is not None and unknownFlag[1] in arguments):
                 return MutationError(ProviderErrorCode.UNSUPPORTED, operation, False)
 
         return super()._CommandFailure(arguments, result, operation)
@@ -610,7 +610,7 @@ class YandexLifecycleProvider(YandexCloudProvider):
         """Never retry a dispatched mutation or retain raw runner exceptions in the error."""
 
         code: ProviderErrorCode | None = None
-        outcome_unknown = True
+        outcomeUnknown = True
 
         try:
             result = self._Run(arguments, operation)
@@ -619,7 +619,7 @@ class YandexLifecycleProvider(YandexCloudProvider):
             code = error.code
 
             if isinstance(error, MutationError):
-                outcome_unknown = error.outcome_unknown
+                outcomeUnknown = error.outcomeUnknown
 
         except Exception:
             code = ProviderErrorCode.COMMAND_FAILED
@@ -627,25 +627,25 @@ class YandexLifecycleProvider(YandexCloudProvider):
         else:
             return result
 
-        raise MutationError(code or ProviderErrorCode.COMMAND_FAILED, operation, outcome_unknown)
+        raise MutationError(code or ProviderErrorCode.COMMAND_FAILED, operation, outcomeUnknown)
 
     def CreateResource(
         self, spec: ResourceSpec, identity: StackIdentity,
-        dependencies: Mapping[str, ProviderResource], operation_id: str,
+        dependencies: Mapping[str, ProviderResource], operationId: str,
     ) -> ProviderResource:
         """Create once with stable ownership labels and an explicit, separately owned boot disk."""
 
         self.ValidateSpec(spec)
         self._ValidateIdentity(identity)
 
-        if not isinstance(operation_id, str) or OPERATION_ID_PATTERN.fullmatch(operation_id) is None:
+        if not isinstance(operationId, str) or OPERATION_ID_PATTERN.fullmatch(operationId) is None:
             raise MutationError(ProviderErrorCode.UNSUPPORTED, "operation-id", False)
 
         options = dict(spec.parameters)
         content: bytes | None = None
         existing: ProviderResource | None = None
         arguments: tuple[str, ...] = ()
-        preflight_failure: ProviderErrorCode | None = None
+        preflightFailure: ProviderErrorCode | None = None
 
         try:
             content = self._ReadUserData(
@@ -661,36 +661,36 @@ class YandexLifecycleProvider(YandexCloudProvider):
             raise
 
         except ProviderError as error:
-            preflight_failure = error.code
+            preflightFailure = error.code
 
         except Exception:
-            preflight_failure = ProviderErrorCode.COMMAND_FAILED
+            preflightFailure = ProviderErrorCode.COMMAND_FAILED
 
-        if preflight_failure is not None:
-            raise MutationError(preflight_failure, "create", False)
+        if preflightFailure is not None:
+            raise MutationError(preflightFailure, "create", False)
 
         if existing is not None:
             return existing
 
-        creation_labels = (*spec.OwnershipLabels(identity), (OPERATION_ID_LABEL, operation_id))
-        labels = ",".join(f"{key}={value}" for key, value in creation_labels)
+        creationLabels = (*spec.OwnershipLabels(identity), (OPERATION_ID_LABEL, operationId))
+        labels = ",".join(f"{key}={value}" for key, value in creationLabels)
         command = (*self._CommandForKind(spec.kind), "create", "--name", spec.name, "--labels", labels)
-        temporary_path: str | None = None
-        mutation_started = False
+        temporaryPath: str | None = None
+        mutationStarted = False
         failure: ProviderErrorCode | None = None
         created: ProviderResource | None = None
 
         try:
             if content is not None:
                 with tempfile.NamedTemporaryFile(mode="wb", delete=False) as destination:
-                    temporary_path = destination.name
+                    temporaryPath = destination.name
                     destination.write(content)
                     destination.flush()
                     os.fsync(destination.fileno())
 
-                arguments = (*arguments, "--metadata-from-file", f"user-data={temporary_path}")
+                arguments = (*arguments, "--metadata-from-file", f"user-data={temporaryPath}")
 
-            mutation_started = True
+            mutationStarted = True
             result = self._MutationRun((*command, *arguments), "create")
 
             try:
@@ -702,10 +702,10 @@ class YandexLifecycleProvider(YandexCloudProvider):
             else:
                 resource = self._ValidateObservation(self._NormalizeResource(payload, spec.kind, "create"))
 
-                if not resource.HasLabels(creation_labels) or resource.name != spec.name:
+                if not resource.HasLabels(creationLabels) or resource.name != spec.name:
                     failure = ProviderErrorCode.SCOPE_MISMATCH
 
-                elif "zone_id" in options and resource.zone_id != options["zone_id"]:
+                elif "zone_id" in options and resource.zoneId != options["zone_id"]:
                     failure = ProviderErrorCode.SCOPE_MISMATCH
 
                 else:
@@ -721,9 +721,9 @@ class YandexLifecycleProvider(YandexCloudProvider):
             failure = ProviderErrorCode.COMMAND_FAILED
 
         finally:
-            if temporary_path is not None:
+            if temporaryPath is not None:
                 try:
-                    os.unlink(temporary_path)
+                    os.unlink(temporaryPath)
 
                 except FileNotFoundError:
                     pass
@@ -734,24 +734,24 @@ class YandexLifecycleProvider(YandexCloudProvider):
         if failure is None and created is not None:
             return created
 
-        raise MutationError(failure or ProviderErrorCode.INVALID_RESPONSE, "create", mutation_started)
+        raise MutationError(failure or ProviderErrorCode.INVALID_RESPONSE, "create", mutationStarted)
 
     def DeleteResource(
-        self, reference: ResourceReference, identity: StackIdentity, logical_id: str,
-        operation_id: str | None = None,
+        self, reference: ResourceReference, identity: StackIdentity, logicalId: str,
+        operationId: str | None = None,
     ) -> None:
         """Observe and verify ownership before exact-ID deletion, then confirm absence once."""
 
         self._ValidateIdentity(identity)
-        ValidateName(logical_id, "delete.logical_id")
+        ValidateName(logicalId, "delete.logical_id")
         labels = identity.OwnershipLabels()
-        labels[LOGICAL_ID_LABEL] = logical_id
+        labels[LOGICAL_ID_LABEL] = logicalId
 
-        if operation_id is not None:
-            if not isinstance(operation_id, str) or OPERATION_ID_PATTERN.fullmatch(operation_id) is None:
+        if operationId is not None:
+            if not isinstance(operationId, str) or OPERATION_ID_PATTERN.fullmatch(operationId) is None:
                 raise MutationError(ProviderErrorCode.UNSUPPORTED, "operation-id", False)
 
-            labels[OPERATION_ID_LABEL] = operation_id
+            labels[OPERATION_ID_LABEL] = operationId
 
         try:
             resource = self.GetResource(reference)
@@ -766,7 +766,7 @@ class YandexLifecycleProvider(YandexCloudProvider):
             raise MutationError(ProviderErrorCode.SCOPE_MISMATCH, "delete", False)
 
         command = self._CommandForKind(reference.kind)
-        self._MutationRun((*command, "delete", "--id", reference.resource_id), "delete")
+        self._MutationRun((*command, "delete", "--id", reference.resourceId), "delete")
         failure = ProviderErrorCode.CONFLICT
 
         try:

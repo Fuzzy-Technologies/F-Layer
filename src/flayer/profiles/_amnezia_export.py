@@ -19,7 +19,7 @@ QR_MAGIC = 1984
 
 
 def BuildAmneziaArtifacts(
-    client: bytes, host: str, device_id: str, dns_servers: tuple[str, ...],
+    client: bytes, host: str, deviceId: str, dnsServers: tuple[str, ...],
     *, qr: bool = True,
 ) -> tuple[Artifact, ...]:
     """Wrap one exact Xray policy without server keys or administration credentials."""
@@ -29,8 +29,8 @@ def BuildAmneziaArtifacts(
             "last_config": client.decode("utf-8"), "isThirdPartyConfig": True,
         }}],
         "defaultContainer": "amnezia-xray", "hostName": host,
-        "description": f"F-Layer VLESS {device_id}",
-        "dns1": dns_servers[0], "dns2": dns_servers[1] if len(dns_servers) > 1 else dns_servers[0],
+        "description": f"F-Layer VLESS {deviceId}",
+        "dns1": dnsServers[0], "dns2": dnsServers[1] if len(dnsServers) > 1 else dnsServers[0],
     }
 
     return _EncodeProfile(profile, qr=qr)
@@ -106,7 +106,7 @@ class _AwgConfigParser(configparser.ConfigParser):
         return optionstr
 
 
-def BuildAmneziaWgArtifacts(client: bytes, device_id: str, *, qr: bool = False) -> tuple[Artifact, ...]:
+def BuildAmneziaWgArtifacts(client: bytes, deviceId: str, *, qr: bool = False) -> tuple[Artifact, ...]:
     """Wrap existing AWG bytes and structured 3.1 fields without issuing or rotating keys."""
 
     from flayer.profiles.amneziawg import AmneziaWgSettings, _Key, _PublicKey
@@ -138,36 +138,36 @@ def BuildAmneziaWgArtifacts(client: bytes, device_id: str, *, qr: bool = False) 
         host, port = peer["Endpoint"].rsplit(":", 1)
         endpoint = VpnEndpoint(host, int(port))
         routes = tuple(item.strip() for item in peer["AllowedIPs"].split(","))
-        dns_servers = tuple(item.strip() for item in interface["DNS"].split(","))
-        VpnRoutes("full" if routes == ("0.0.0.0/0",) else "split", routes, dns_servers, "disabled")
+        dnsServers = tuple(item.strip() for item in interface["DNS"].split(","))
+        VpnRoutes("full" if routes == ("0.0.0.0/0",) else "split", routes, dnsServers, "disabled")
         AmneziaWgSettings(mtu=int(interface["MTU"]))
         address = ipaddress.IPv4Interface(interface["Address"])
 
-        if address.network.prefixlen != 32 or not address.ip.is_private or len(dns_servers) > 2:
+        if address.network.prefixlen != 32 or not address.ip.is_private or len(dnsServers) > 2:
             raise ValueError
 
         if not 0 <= int(peer["PersistentKeepalive"]) <= 65535:
             raise ValueError
 
-        private_key = _Key(interface["PrivateKey"])
-        public_key = _PublicKey(private_key)
-        server_key = _Key(peer["PublicKey"])
+        privateKey = _Key(interface["PrivateKey"])
+        publicKey = _PublicKey(privateKey)
+        serverKey = _Key(peer["PublicKey"])
         fields: dict[str, object] = {
             "config": client.decode("utf-8"), "hostName": endpoint.host, "port": endpoint.port,
             "client_ip": str(address.ip),
-            "client_priv_key": private_key, "client_pub_key": public_key, "clientId": public_key,
-            "server_pub_key": server_key, "allowed_ips": list(routes), "mtu": interface["MTU"],
+            "client_priv_key": privateKey, "client_pub_key": publicKey, "clientId": publicKey,
+            "server_pub_key": serverKey, "allowed_ips": list(routes), "mtu": interface["MTU"],
             "persistent_keep_alive": peer["PersistentKeepalive"],
         }
         fields.update({key: interface[key] for key in obfuscation if key in interface})
-        last_config = json.dumps(fields, ensure_ascii=False, separators=(",", ":"))
+        lastConfig = json.dumps(fields, ensure_ascii=False, separators=(",", ":"))
         profile: dict[str, object] = {
             "containers": [{"container": "amnezia-awg", "awg": {
-                "last_config": last_config, "isThirdPartyConfig": True,
+                "last_config": lastConfig, "isThirdPartyConfig": True,
             }}],
             "defaultContainer": "amnezia-awg", "hostName": host,
-            "description": f"F-Layer AmneziaWG {device_id}",
-            "dns1": dns_servers[0], "dns2": dns_servers[1] if len(dns_servers) > 1 else dns_servers[0],
+            "description": f"F-Layer AmneziaWG {deviceId}",
+            "dns1": dnsServers[0], "dns2": dnsServers[1] if len(dnsServers) > 1 else dnsServers[0],
         }
 
     except (ValueError, KeyError, configparser.Error, UnicodeError):

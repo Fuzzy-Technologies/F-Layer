@@ -29,7 +29,8 @@ from flayer.profiles.vpn import (
 VLESS_TRANSPORT = "vless-reality"
 VLESS_FLOW = "xtls-rprx-vision"
 VLESS_CAPABILITIES = VpnCapabilities(VLESS_TRANSPORT, "application-proxy", ("full", "split"))
-XRAY_VERSION = "26.9.30"
+XRAY_VERSION = "26.10.31"
+LEGACY_XRAY_VERSION = "26.9.30"
 _HOST = re.compile(r"[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?\Z")
 
 
@@ -392,16 +393,20 @@ def VlessServiceName(profile: VpnProfile) -> str:
 
 def PrepareVless(
     profile: VpnProfile, endpoint: VpnEndpoint, settings: VlessRealitySettings,
-    material: VlessMaterial,
+    material: VlessMaterial, *, runtimeVersion: str = XRAY_VERSION,
 ) -> PreparedVpnTransport:
     """Prepare an owned installer and one private import bundle per declared device."""
 
     server = RenderVlessServer(profile, settings, material)
+
+    if runtimeVersion not in {LEGACY_XRAY_VERSION, XRAY_VERSION}:
+        raise VlessError("VLESS preparation requires an explicitly supported pinned runtime")
+
     identity = _WireDict(profile.identity)
     owner = hashlib.sha256(_Json(identity)).hexdigest()
     deployment = _Json({
         "schema_version": 1, "owner": owner, "config_sha256": hashlib.sha256(server).hexdigest(),
-        "port": endpoint.port, "xray_version": XRAY_VERSION,
+        "port": endpoint.port, "xray_version": runtimeVersion,
     })
     installer = files("flayer.profiles").joinpath("_vless_guest.py").read_bytes().replace(b"\r\n", b"\n")
     serverBundle = BuildVpnServerBundle(profile, VLESS_TRANSPORT, (

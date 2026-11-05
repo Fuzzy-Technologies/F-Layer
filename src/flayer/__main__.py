@@ -75,14 +75,18 @@ def Parser() -> argparse.ArgumentParser:
     vpn = commands.add_parser("vpn", help="Prepare and manage a two-protocol VPN project")
     vpnActions = vpn.add_subparsers(dest="action", required=True)
 
-    for action in ("prepare", "deploy", "status", "destroy", "recover"):
+    for action in ("prepare", "deploy", "status", "destroy", "recover", "runtime-status", "upgrade", "rollback-upgrade", "recover-upgrade"):
         child = vpnActions.add_parser(action)
         child.add_argument("--project", required=True, help="Private project directory")
         child.add_argument("--format", choices=("text", "json"), default="text")
 
-        if action in {"deploy", "destroy", "recover"}:
+        if action in {"deploy", "destroy", "recover", "upgrade", "rollback-upgrade", "recover-upgrade"}:
             child.add_argument("--allow-mutation", action="store_true", dest='allowMutation')
             child.add_argument("--scope-confirm", required=True, help="Repeat the exact cloud folder ID", dest='scopeConfirm')
+
+        if action in {"upgrade", "rollback-upgrade", "recover-upgrade"}:
+            child.add_argument("--expected-version", required=True, dest="expectedVersion")
+            child.add_argument("--expected-receipt-sha256", required=True, dest="expectedReceipt")
 
         if action == "recover":
             child.add_argument("--rollback", action="store_true")
@@ -154,7 +158,7 @@ def _VpnProject(args: argparse.Namespace) -> int:
     from .core.contracts import ContractError
     from .profiles.vpn import VpnError
     from .providers.contracts import ProviderError
-    from .vpn_project import InitializeVpnProject, LoadVpnProject, RunVpnProject
+    from .vpn_project import InitializeVpnProject, LoadVpnProject, RunVpnProject, RunVpnRuntime
 
     try:
         if args.command == "project":
@@ -169,6 +173,13 @@ def _VpnProject(args: argparse.Namespace) -> int:
             from .vpn_export import ExportVpnDevice
 
             report = ExportVpnDevice(project, args.device, args.protocol, args.output, qr=args.qr)
+
+        elif args.action in {"runtime-status", "upgrade", "rollback-upgrade", "recover-upgrade"}:
+            report = RunVpnRuntime(
+                project, args.action, allowMutation=getattr(args, "allowMutation", False),
+                scopeConfirm=getattr(args, "scopeConfirm", ""),
+                expectedVersion=getattr(args, "expectedVersion", ""), expectedReceipt=getattr(args, "expectedReceipt", ""),
+            )
 
         else:
             report = RunVpnProject(
@@ -185,7 +196,7 @@ def _VpnProject(args: argparse.Namespace) -> int:
             "VPN operation failed. Check private artifact ownership, cloud access, and retained state before retrying."
         )
         payload = {"action": args.action, "status": "failed", "message": message,
-                   "recovery_required": args.action in {"deploy", "destroy", "recover"}}
+                   "recovery_required": args.action in {"deploy", "destroy", "recover", "upgrade", "rollback-upgrade", "recover-upgrade"}}
         print(json.dumps(payload) if getattr(args, "format", "text") == "json" else message)
 
         return 2

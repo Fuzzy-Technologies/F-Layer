@@ -21,6 +21,25 @@ MAX_GUEST_REQUEST_BYTES = 4 * 1024 * 1024
 _SERVICE = re.compile(r"[a-z][a-z0-9-]{0,79}\.service\Z")
 
 
+def ValidateVlessRuntimeOptions(action: str, expectedVersion: str, expectedReceipt: str) -> None:
+    """Reject ambiguous runtime actions and incomplete expected-old input before external access."""
+
+    if (not isinstance(action, str) or not isinstance(expectedVersion, str) or not isinstance(expectedReceipt, str)
+            or action not in {"runtime-status", "upgrade", "rollback-upgrade", "recover-upgrade"}):
+        raise VpnError("VLESS runtime action is unsupported")
+
+    if action == "runtime-status":
+        if expectedVersion or expectedReceipt:
+            raise VpnError("Runtime status does not accept mutation preconditions")
+
+    elif (expectedVersion not in {"26.9.30", "26.10.31"} or not isinstance(expectedReceipt, str)
+          or re.fullmatch(r"[0-9a-f]{64}", expectedReceipt) is None):
+        raise VpnError("Runtime mutation requires --expected-version and exact --expected-receipt-sha256")
+
+    if action != "runtime-status" and expectedVersion != ("26.10.31" if action == "rollback-upgrade" else "26.9.30"):
+        raise VpnError("Expected version does not match the supported runtime transition")
+
+
 @dataclass(frozen=True, slots=True)
 class GuestResult:
     """Transient subprocess output excluded from object representations and error messages."""
@@ -247,6 +266,54 @@ class SshGuestProvisioner:
                 raise VpnError(f"VPN {transport} {phase} failed. {hint}. Cloud resources and private artifacts were retained for retry")
 
             raise VpnError("Guest SSH connection or installation failed. Check administrator source CIDRs, host trust, and guest logs; resources and private artifacts were retained for retry")
+
+    def VlessRuntime(
+        self, bundle: ArtifactBundle, action: str, *, expectedVersion: str = "", expectedReceipt: str = "",
+    ) -> dict[str, str]:
+        """Run one host-pinned runtime operation and accept only bounded nonsecret receipt facts."""
+
+        ValidateVlessRuntimeOptions(action, expectedVersion, expectedReceipt)
+
+        if (not isinstance(bundle, ArtifactBundle) or bundle.kind != "server"
+                or not bundle.name.endswith("-vless-reality")
+                or {item.name for item in bundle.files} != {"install.py", "server.json", "deployment.json"}
+                or any(not item.sensitive for item in bundle.files)):
+            raise VpnError("VLESS runtime maintenance requires one exact private server bundle")
+
+        payload = json.dumps({"bundles": [{"transport": "vless-reality", "files": {
+            item.name: base64.b64encode(item.content).decode("ascii") for item in bundle.files
+        }}], "runtime": {"action": action, "expected_version": expectedVersion,
+                         "expected_receipt_sha256": expectedReceipt}}, sort_keys=True).encode()
+
+        if len(payload) > MAX_GUEST_REQUEST_BYTES:
+            raise VpnError("VLESS runtime request exceeds its bounded size")
+
+        command = "sudo -n /usr/bin/python3 -c " + shlex.quote(files("flayer").joinpath("_vpn_guest.py").read_text(encoding="utf-8"))
+        result = self.runner.Run((*self.command, command), payload, 420)
+
+        try:
+            if result.returnCode != 0 or not 1 <= len(result.stdout) <= 4096:
+                raise ValueError
+
+            data = json.loads(result.stdout)
+            expected = {"version", "receipt_sha256", "binary_sha256", "upgrade_status",
+                        "kernel_release", "kernel_package_version", "kernel_patch_status"}
+
+            if (not isinstance(data, dict) or set(data) != expected
+                    or any(not isinstance(value, str) for value in data.values())
+                    or data["version"] not in {"26.9.30", "26.10.31"}
+                    or data["upgrade_status"] not in {"none", "rollback-available", "interrupted"}
+                    or data["kernel_patch_status"] != "not-assessed"
+                    or any(re.fullmatch(r"[0-9a-f]{64}", data[key]) is None
+                           for key in ("receipt_sha256", "binary_sha256"))
+                    or any(re.fullmatch(r"[a-zA-Z0-9.+:~_-]{1,128}", data[key]) is None
+                           for key in ("kernel_release", "kernel_package_version"))):
+                raise ValueError
+
+            return {key: str(value) for key, value in data.items()}
+
+        except (ValueError, TypeError, UnicodeError):
+            raise VpnError("VLESS runtime operation failed or returned an invalid receipt. Inspect runtime-status and retained recovery state; private output was suppressed") from None
 
     def ServiceStatus(self, services: tuple[str, ...]) -> tuple[tuple[str, bool], ...]:
         """Observe service activity without claiming client connectivity or performing guest writes."""

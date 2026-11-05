@@ -188,7 +188,7 @@ def test_InstallerInputIsBoundToPreparedConfig(tmp_path: Path) -> None:
     request, config = guest._Request(directory)
 
     assert request["config_sha256"] == hashlib.sha256(config).hexdigest()
-    assert request["xray_version"] == "26.9.30"
+    assert request["xray_version"] == "26.10.31"
     assert VlessServiceName(Profile()) == f"flayer-vless-{request['owner'][:24]}.service"
     assert stat.S_IMODE((directory / "server.json").stat().st_mode) == 0o600
 
@@ -411,7 +411,7 @@ def test_RealPinnedXrayParsesGeneratedConfigs(tmp_path: Path) -> None:
     material = GenerateVlessMaterial(profile)
     version = subprocess.run([binary, "version"], capture_output=True, check=True, text=True)
 
-    assert "Xray 26.9.30" in version.stdout
+    assert "Xray 26.10.31" in version.stdout
 
     for name, content in (
         ("server", RenderVlessServer(profile, SETTINGS, material)),

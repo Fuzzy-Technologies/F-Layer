@@ -39,22 +39,28 @@ jobs:
           from pathlib import Path
           import urllib.request
           import zipfile
-          from flayer.profiles._vless_guest import ARCHIVES, XRAY_VERSION
+          from flayer.profiles._vless_guest import ARCHIVES, LEGACY_VERSION, XRAY_VERSION
 
-          name, digest = ARCHIVES["x86_64"]
-          url = f"https://github.com/XTLS/Xray-core/releases/download/v{XRAY_VERSION}/{name}"
-          with urllib.request.urlopen(url, timeout=120) as response:
-              archive = response.read()
-          if hashlib.sha256(archive).hexdigest() != digest:
-              raise SystemExit("Xray archive checksum mismatch")
-          destination = Path("_build/xray/xray")
-          destination.parent.mkdir(parents=True, exist_ok=True)
-          with zipfile.ZipFile(io.BytesIO(archive)) as bundle:
-              destination.write_bytes(bundle.read("xray"))
-          destination.chmod(0o700)
+          releases = [
+              (XRAY_VERSION, *ARCHIVES["x86_64"], Path("_build/xray/xray")),
+              (LEGACY_VERSION, "Xray-linux-64.zip",
+               "f851110beaff16e78d643f0ccfd9524b4a44dfd59bae3e34bb52bba378f7690e",
+               Path("_build/xray-legacy/xray")),
+          ]
+          for version, name, digest, destination in releases:
+              url = f"https://github.com/XTLS/Xray-core/releases/download/v{version}/{name}"
+              with urllib.request.urlopen(url, timeout=120) as response:
+                  archive = response.read(32 * 1024 * 1024 + 1)
+              if len(archive) > 32 * 1024 * 1024 or hashlib.sha256(archive).hexdigest() != digest:
+                  raise SystemExit("Xray archive checksum mismatch")
+              destination.parent.mkdir(parents=True, exist_ok=True)
+              with zipfile.ZipFile(io.BytesIO(archive)) as bundle:
+                  destination.write_bytes(bundle.read("xray"))
+              destination.chmod(0o700)
           PYTHON
 
       - name: Run the canonical local and CI validation gate
         env:
+          FLAYER_LEGACY_XRAY_BINARY: ${{ github.workspace }}/_build/xray-legacy/xray
           FLAYER_XRAY_BINARY: ${{ github.workspace }}/_build/xray/xray
         run: python tools/validate.py

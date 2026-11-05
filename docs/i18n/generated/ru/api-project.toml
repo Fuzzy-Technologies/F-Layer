@@ -327,3 +327,43 @@ reviewer = "Codex"
 reviewerType = "ai"
 reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
+[[units]]
+id = "symbol:flayer.guest.SshGuestProvisioner.VlessRuntime"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:0783818f73fb7953e5a996a4d49163753bb2e9e3501bd3e5b63862ef7c448c20"
+reviewedTranslationHash = "sha256:d91c76e3f21e0bfae3a9f8e8f0a6ccf409c32e25492bdba0aac3d3a0387a8406"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-05T18:37:32.432583Z"
+reviewRoles = ["editorial", "technical"]
+body = "Выполнить операцию с закреплённым SSH-ключом и принять только ограниченные несекретные данные записи."
+[[units]]
+id = "symbol:flayer.guest.ValidateVlessRuntimeOptions"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:b01dd3480f19c23ee6a7ef462b663968a3cb4f6ff9fe9b7cb6192870ef18ac48"
+reviewedTranslationHash = "sha256:579ab0928c44225394c31c63f480dd958e35f73e385423efc9b2f3a72c038677"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-05T18:37:32.432583Z"
+reviewRoles = ["editorial", "technical"]
+body = "Отклонить неоднозначные операции и неполные ожидаемые старые данные до внешнего доступа."
+[[units]]
+id = "symbol:flayer.vpn_project.RunVpnRuntime"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:4345fb0e4601fdd0dbd91a7f375d8ed0f5e2387f846a474116ae253ecde5a17e"
+reviewedTranslationHash = "sha256:afc662a0bfc22363be451b7f4418b3d789806219f75786d494ba0feb3bcca6f9"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-05T18:37:32.432583Z"
+reviewRoles = ["editorial", "technical"]
+body = "Обслуживать только существующий принадлежащий проекту Xray после явного разрешения и чтения облачных данных."
+[[units]]
+id = "symbol:flayer.vpn_project.VpnRuntimeReport"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:5a53b328a2e93c8495573f56b45e92eef7403a460d27cde9546554576b26e821"
+reviewedTranslationHash = "sha256:dc2422aa8a6d22eb49d920f2ea788538e97f355717def2b0df301e66fa5c2689"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-05T18:37:32.432583Z"
+reviewRoles = ["editorial", "technical"]
+body = "Выдать только данные записи версии и ядра; клиентская связность остаётся непроверенной."

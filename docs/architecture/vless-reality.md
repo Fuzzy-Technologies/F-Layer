@@ -15,7 +15,7 @@ its routing and DNS settings.
 
 Use Ubuntu 24.04 on amd64 or arm64. The VM must have Python 3, systemd, outbound
 HTTPS access to GitHub release assets, and access to the selected Reality target.
-F-Layer installs the official **Xray 26.9.30 release (upstream prerelease)**, with a separate
+F-Layer installs the official **Xray 26.10.31 release**, with a separate
 pinned SHA-256 digest for each architecture. It does not run a downloaded shell
 installer, use an unpinned container, or select a moving `latest` release.
 
@@ -31,11 +31,11 @@ installer checks the target from that VM: a certificate-valid TLS 1.3 handshake
 must negotiate HTTP/2. A failed handshake stops installation with a target
 preflight error. Repeat this check when the target or network conditions change.
 
-The pinned version includes the Reality TLS-record buffer increase from 8192 to
-17 KiB, addressing [upstream issue #6356](https://github.com/XTLS/Xray-core/issues/6356).
-The amd64 and arm64 archive SHA-256 values are pinned from the official release
-assets and `.dgst` files. Selecting this upstream prerelease is a deliberate
-compatibility fix; it still requires exact-candidate live acceptance.
+The pinned version retains the Reality TLS-record buffer increase from 8192 to
+17 KiB, addressing [upstream issue #6356](https://github.com/XTLS/Xray-core/issues/6356),
+and disables default MPTCP to reduce the attack surface for CVE-2026-98432.
+The amd64 and arm64 archive SHA-256 values match the official release assets.
+This runtime change does not patch the Linux kernel or establish live acceptance.
 
 TLS 1.3/HTTP2 preflight validates the target's TLS properties, not an authenticated
 Reality connection. `services-active` reports local service health only. CLI text
@@ -60,9 +60,11 @@ Installer generation canonicalizes CRLF to LF, so Windows checkouts and Linux
 packages produce the same bytes. Project retries accept a legacy CRLF `install.py`
 only after validating its original ownership and manifest and comparing its
 LF-normalized content with the current installer. Retained files, manifests, and
-credentials are not rewritten. Other files and actual installer changes still
-require exact content; newline compatibility cannot repair an uncertain cloud
-operation journal.
+credentials are not rewritten. Exact known historical 26.9.30 installer source
+hashes are also recognized after manifest verification; operations transfer the
+current trusted installer in memory. The retained descriptor keeps its original
+runtime baseline. Unknown installer changes remain errors. Neither compatibility
+rule repairs an uncertain cloud operation journal.
 
 `PrepareVless()` produces these files:
 
@@ -129,6 +131,9 @@ policy: check DNS, VPN/TUN, app exclusions and IPv6 before verifying real traffi
 All exports are private artifacts; never send them to an online QR converter.
 The encoding follows the [versioned AmneziaVPN exporter](https://github.com/amnezia-vpn/amnezia-client/blob/5.0.3.0/client/core/controllers/selfhosted/exportController.cpp)
 and its [native QR framing](https://github.com/amnezia-vpn/amnezia-client/blob/5.0.3.0/client/core/utils/qrCodeUtils.cpp).
+The third-party `last_config` import contract is also checked against
+[AmneziaVPN 5.1.0.6](https://github.com/amnezia-vpn/amnezia-client/blob/5.1.0.6/client/core/models/protocols/xrayProtocolConfig.cpp).
+That source/schema check does not replace actual device import or playback tests.
 
 ## Installation, updates, and removal
 
@@ -152,6 +157,13 @@ expected-old authorization contract; silently replacing a working configuration
 is not supported. Failed first installation removes the files created by that
 attempt.
 
+An existing 26.9.30 runtime needs an explicit receipt-bound upgrade to 26.10.31;
+ordinary deployment never performs that transition. Read-only runtime inventory,
+preserved rollback material and interrupted-upgrade recovery are described in
+[Xray runtime maintenance](xray-runtime-maintenance.md). That workflow preserves
+server configuration, device exports and AWG, and never upgrades packages,
+reboots a host or changes firewall rules implicitly.
+
 A forced process kill or power loss during initial installation can leave an incomplete
 receipt. Subsequent operations then stop instead of guessing which files to
 remove or overwrite. Inspect the owned deployment and restore its known private
@@ -165,7 +177,7 @@ Unit tests cover credential separation, import fields, split routing, malformed
 settings, hash verification, malicious archive entries, unauthorized replacement rejection,
 failed-install cleanup, private-file link rejection, and installer entry points.
 `FLAYER_XRAY_BINARY` enables a targeted test that passes generated server and
-client configurations to the actual checksum-verified Xray 26.9.30 executable.
+client configurations to the actual checksum-verified Xray 26.10.31 executable.
 CI also exercises its real router with static DNS and loopback-only sinks: public
 dual-stack names and IPv4 pass, while private, metadata and IPv6 targets remain
 blocked. These routing tests do not exercise a Reality handshake or external DNS.
@@ -177,7 +189,7 @@ of that deployment.
 
 ## Upstream references
 
-- [Pinned Xray release](https://github.com/XTLS/Xray-core/releases/tag/v26.9.30)
-- [Versioned Reality configuration parser](https://github.com/XTLS/Xray-core/blob/v26.9.30/infra/conf/transport_internet.go)
+- [Pinned Xray release](https://github.com/XTLS/Xray-core/releases/tag/v26.10.31)
+- [Versioned Reality configuration parser](https://github.com/XTLS/Xray-core/blob/v26.10.31/infra/conf/transport_internet.go)
 - [VLESS inbound configuration](https://xtls.github.io/en/config/inbounds/vless.html)
 - [VLESS outbound configuration](https://xtls.github.io/en/config/outbounds/vless.html)

@@ -157,6 +157,8 @@ flayer vpn status --project ~/flayer-vpn
 ## 管理部署
 
 使用 `flayer vpn status --project ~/flayer-vpn` 检查服务器。
+Xray 版本清单、显式升级和回滚请参阅
+[运行时维护](docs/architecture/xray-runtime-maintenance.md)。
 如果云操作中断，请保留项目并按照[恢复指南](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/)操作。
 需要删除此项目的云资源时，运行：
 
@@ -182,9 +184,9 @@ VPN CLI 尚不支持原地调整资源、添加或撤销设备及轮换密钥。
 [Apache 2.0](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/LICENSE) 许可证。
 参与贡献请先阅读 [CONTRIBUTING.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/CONTRIBUTING.md)。
 '''
-sourceHash = "sha256:345b3110787e1d01c16a3a9cedc222a153f2a0e88897e032bb94561befe4096e"
-reviewedTranslationHash = "sha256:e5e3231ed38cadf12fd0403a940d72273e0ca140918968a40cf9b09a03c650c3"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:386214313fe8314d3202427716f075d6e8471f4de150522156db3ec1695db14d"
+reviewedTranslationHash = "sha256:369ade37a2049a660f32e48a5e2f406122d5a0ef8aa0bffaea04452f23a8e258"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-11T01:00:56Z"
+reviewedAt = "2026-11-05T18:37:32.432583Z"
 reviewRoles = ["editorial", "technical"]

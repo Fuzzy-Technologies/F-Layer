@@ -172,6 +172,8 @@ IPv4 сервера как выходной адрес, DNS, маршруты и
 ## Управление развёртыванием
 
 Проверяйте сервер командой `flayer vpn status --project ~/flayer-vpn`.
+Версию Xray, явное обновление и откат описывает
+[руководство по обслуживанию](docs/architecture/xray-runtime-maintenance.md).
 При прерывании облачной операции сохраните проект и следуйте
 [инструкции восстановления](https://fuzzy-technologies.github.io/F-Layer/ru/guide/).
 Чтобы удалить облачные ресурсы этого проекта:
@@ -199,9 +201,9 @@ flayer vpn destroy --project ~/flayer-vpn --allow-mutation --scope-confirm YOUR_
 [Apache 2.0](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/LICENSE).
 Для участия в разработке начните с [CONTRIBUTING.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/CONTRIBUTING.md).
 '''
-sourceHash = "sha256:345b3110787e1d01c16a3a9cedc222a153f2a0e88897e032bb94561befe4096e"
-reviewedTranslationHash = "sha256:7c0bf5d7bf33c785f7d8b76b6852268e72a9b2bc0b4418c9ebc5d1e2eda72a40"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:386214313fe8314d3202427716f075d6e8471f4de150522156db3ec1695db14d"
+reviewedTranslationHash = "sha256:5690b220a26a6da22c7ab7a6560f87fe2fdbfd92da8fea070b4a0fd65ae4b955"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-11T01:00:56Z"
+reviewedAt = "2026-11-05T18:37:32.432583Z"
 reviewRoles = ["editorial", "technical"]

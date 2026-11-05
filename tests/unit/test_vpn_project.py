@@ -275,6 +275,7 @@ class FakeGuest:
         PrivatePath(identityFile)
         self.trust = ReadPrivate(knownHostsFile)
         self.installations: list[object] = []
+        self.runtimeCalls: list[tuple[object, str, dict[str, object]]] = []
         self.instances.append(self)
 
     def Install(self, bundles: object) -> None:
@@ -289,6 +290,15 @@ class FakeGuest:
         """Observe configured fixture service activity independently of client reachability."""
 
         return tuple((service, self.active) for service in services)
+
+    def VlessRuntime(self, bundle: object, action: str, **options: object) -> dict[str, str]:
+        """Return bounded fixture runtime facts without any guest or cloud mutation."""
+
+        self.runtimeCalls.append((bundle, action, options))
+
+        return {"version": "26.10.31", "receipt_sha256": "a" * 64, "previous_receipt_sha256": "c" * 64, "binary_sha256": "b" * 64,
+                "upgrade_status": "rollback-available", "kernel_release": "6.8.0-fixture",
+                "kernel_package_version": "unavailable", "kernel_patch_status": "not-assessed"}
 
 
 @pytest.fixture(autouse=True)
@@ -305,6 +315,92 @@ def Run(project: VpnProject, action: str, cloud: FakeCloud, **options: Any) -> A
 
     return RunVpnProject(project, action, allowMutation=True, scopeConfirm=project.vpn.identity.scopeId,
                          provider=cloud, guestFactory=FakeGuest, **options)
+
+
+def test_RuntimeMutationConsentFailsBeforeCloudOrGuest(tmp_path: Path) -> None:
+    """A runtime receipt alone cannot authorize operating on an existing deployment."""
+
+    project = Project(tmp_path)
+    cloud = FakeCloud(project)
+
+    for options in ({}, {"allowMutation": True}, {"allowMutation": True, "scopeConfirm": "other-folder"}):
+        with pytest.raises(VpnError, match="scope-confirm"):
+            vpnProject.RunVpnRuntime(project, "upgrade", expectedVersion="26.9.30", expectedReceipt="a" * 64,
+                                     provider=cloud, guestFactory=FakeGuest, **options)
+
+    assert not cloud.authenticationChecks and not FakeGuest.instances
+    assert not cloud.created and not cloud.deleted
+
+
+def test_RuntimeUpgradeReusesLegacyProjectWithoutRewritingArtifacts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A trusted current installer must be sent in memory while old private manifests remain exact."""
+
+    import hashlib
+
+    from flayer.profiles.artifacts import Artifact, ArtifactBundle
+
+    project = Project(tmp_path)
+    originalPrepare = vpnProject.PrepareVless
+    legacyInstaller = b"# known historical installer fixture\n"
+
+    def PrepareLegacy(*args: Any, **kwargs: Any) -> Any:
+        """Produce a declared old-version bundle using a deterministic historical-program fixture."""
+
+        kwargs["runtimeVersion"] = "26.9.30"
+        transport = originalPrepare(*args, **kwargs)
+        bundle = transport.serverBundle
+        legacy = ArtifactBundle(bundle.identity, bundle.kind, bundle.name, tuple(
+            Artifact(item.name, legacyInstaller) if item.name == "install.py" else item for item in bundle.files
+        ))
+
+        return replace(transport, serverBundle=legacy)
+
+    monkeypatch.setattr(vpnProject, "PrepareVless", PrepareLegacy)
+    monkeypatch.setattr(vpnProject, "LEGACY_VLESS_INSTALLERS", frozenset({hashlib.sha256(legacyInstaller).hexdigest()}))
+    PrepareVpnProject(project)
+    cloud = FakeCloud(project)
+    Run(project, "deploy", cloud)
+    before = {path.relative_to(project.root): path.read_bytes() for path in project.root.rglob("*") if path.is_file()}
+    created, deleted = list(cloud.created), list(cloud.deleted)
+    monkeypatch.setattr(vpnProject, "PrepareVless", originalPrepare)
+    PrepareVpnProject(project)
+    report = vpnProject.RunVpnRuntime(
+        project, "upgrade", allowMutation=True, scopeConfirm=project.vpn.identity.scopeId,
+        expectedVersion="26.9.30", expectedReceipt="c" * 64, provider=cloud, guestFactory=FakeGuest,
+    )
+
+    assert report.version == "26.10.31" and report.connectivityStatus == "not-verified"
+    assert report.kernelPatchStatus == "not-assessed"
+    assert cloud.created == created and cloud.deleted == deleted
+    assert before == {path.relative_to(project.root): path.read_bytes() for path in project.root.rglob("*") if path.is_file()}
+
+    bundle, action, options = FakeGuest.instances[-1].runtimeCalls[0]
+
+    assert action == "upgrade" and options == {"expectedVersion": "26.9.30", "expectedReceipt": "c" * 64}
+    assert next(item.content for item in bundle.files if item.name == "install.py") != legacyInstaller
+    assert json.loads(next(item.content for item in bundle.files if item.name == "deployment.json"))["xray_version"] == "26.9.30"
+    assert Run(project, "status", cloud).status == "complete"
+
+
+def test_RuntimeStatusRequiresPreparedOwnershipAndCompleteCloudState(tmp_path: Path) -> None:
+    """Read-only maintenance cannot infer a deployment from an unprepared or incomplete project."""
+
+    project = Project(tmp_path)
+    cloud = FakeCloud(project)
+
+    with pytest.raises(ArtifactError):
+        vpnProject.RunVpnRuntime(project, "runtime-status", provider=cloud, guestFactory=FakeGuest)
+
+    assert not cloud.authenticationChecks and not FakeGuest.instances
+
+    PrepareVpnProject(project)
+
+    with pytest.raises(VpnError, match="complete owned cloud"):
+        vpnProject.RunVpnRuntime(project, "runtime-status", provider=cloud, guestFactory=FakeGuest)
+
+    assert not FakeGuest.instances and not cloud.created
 
 
 def test_ProjectInitializationIsPrivateAndExclusive(tmp_path: Path) -> None:

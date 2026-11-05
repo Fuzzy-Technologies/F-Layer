@@ -13,6 +13,7 @@ import time
 import tomllib
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from importlib.resources import files
 from pathlib import Path
 from typing import cast
 
@@ -32,6 +33,7 @@ from flayer.guest import (
     ReadPrivate,
     SshGuestProvisioner,
     ValidateSshPathSyntax,
+    ValidateVlessRuntimeOptions,
     WritePrivate,
 )
 from flayer.profiles.amneziawg import (
@@ -49,6 +51,8 @@ from flayer.profiles.artifacts import (
     WriteArtifactBundle,
 )
 from flayer.profiles.vless import (
+    LEGACY_XRAY_VERSION,
+    XRAY_VERSION,
     DecodeVlessMaterial,
     EncodeVlessMaterial,
     GenerateVlessMaterial,
@@ -75,6 +79,11 @@ from flayer.providers.yandex_lifecycle import ValidateComputeShape, YandexLifecy
 
 ADMIN_USERNAME = "flayer-admin"
 MAX_SERIAL_BYTES = 1024 * 1024
+# LF-normalized installers from the released 2.0.0 baseline and PR #117.
+LEGACY_VLESS_INSTALLERS = frozenset({
+    "655da13c3b949c835c8429bdc8532f7fce23fb37fc20fe0c2c4de701a0dd3532",
+    "ab0867185961a307af41b06acc86cc244dc19303004f9da5e925f26ab7996e12",
+})
 PROJECT_TEMPLATE = '# Edit the folder, image, management address, and Reality target before preparation.\n# Project files contain private keys and must remain outside Git and shared directories.\nschema_version = 1\n\n[identity]\nproject = "my-vpn"\nstack = "gateway"\nprovider = "yandex-cloud"\nscope_id = "replace-with-folder-id"\nowner_id = "my-team"\n\n[cloud]\nyc_profile = "default"\nzone_id = "ru-central1-a"\nimage_id = "replace-with-ubuntu-2404-amd64-image-id"\nsubnet_cidr = "10.42.0.0/24"\nmanagement_cidrs = ["198.51.100.42/32"] # Replace with your current public IPv4 address.\n\n# Optional explicit sizing: uncomment the entire block before prepare.\n# Confirm regional availability and image minimum disk size first.\n# [resources]\n# platform_id = "standard-v3"\n# cores = 2\n# core_fraction = 50\n# memory_gib = 2\n# disk_size_gib = 10\n# disk_type = "network-hdd"\n\n[routes]\nmode = "full"\nipv4_cidrs = ["0.0.0.0/0"]\ndns_servers = ["1.1.1.1"]\nipv6_policy = "disabled" # Disable client IPv6 to prevent traffic bypass.\n\n[[devices]]\ndevice_id = "laptop"\nipv4_address = "10.66.0.2"\n\n[amneziawg]\nport = 51820\ntunnel_cidr = "10.66.0.0/24"\n\n[vless]\nport = 443\n# Example only: choose an accessible TLS 1.3 / HTTP/2 site for your server location.\ntarget_host = "www.microsoft.com"\nserver_name = "www.microsoft.com"\n'
 
 
@@ -222,6 +231,20 @@ class VpnProjectReport:
         return 0 if self.status == "complete" else 1
 
 
+@dataclass(frozen=True, slots=True)
+class VpnRuntimeReport(VpnProjectReport):
+    """Expose only runtime receipt and kernel facts, with client connectivity still unverified."""
+
+    version: str = ""
+    receiptSha256: str = ""
+    previousReceiptSha256: str = ""
+    binarySha256: str = ""
+    upgradeStatus: str = "none"
+    kernelRelease: str = "unavailable"
+    kernelPackageVersion: str = "unavailable"
+    kernelPatchStatus: str = "not-assessed"
+
+
 def InitializeVpnProject(directory: str | Path) -> Path:
     """Create one exclusive private project and an administration key without cloud access."""
 
@@ -349,7 +372,7 @@ def LoadVpnProject(directory: str | Path) -> VpnProject:
 
 
 def _Publish(project: VpnProject, bundle: ArtifactBundle) -> Path:
-    """Reuse verified bundles, allowing only legacy VLESS installer newline equivalence."""
+    """Preserve owned artifacts while recognizing exact historical VLESS installer programs."""
 
     directory = project.Artifacts / f"{bundle.kind}-{bundle.name}"
 
@@ -365,12 +388,39 @@ def _Publish(project: VpnProject, bundle: ArtifactBundle) -> Path:
                 # Verify the original manifest first; preserve its bytes instead of migrating secrets.
                 actual = actual.replace(b"\r\n", b"\n")
 
+                if (actual != artifact.content and hashlib.sha256(actual).hexdigest() in LEGACY_VLESS_INSTALLERS
+                        and _VlessRuntimeVersion(project) == LEGACY_XRAY_VERSION):
+                    continue
+
             if actual != artifact.content:
                 raise VpnError("Existing project artifacts differ. Keep the old project for cloud cleanup, then initialize a new private project")
 
         return directory
 
     return WriteArtifactBundle(project.Artifacts, bundle)
+
+
+def _VlessRuntimeVersion(project: VpnProject) -> str:
+    """Retain a verified prepared bundle's runtime baseline without rewriting its manifest."""
+
+    name = project.vpn.identity.stack + "-vless-reality"
+    directory = project.Artifacts / ("server-" + name)
+
+    if not directory.exists() and not directory.is_symlink():
+        return XRAY_VERSION
+
+    raw = ReadOwnedArtifactFile(directory / "deployment.json", project.vpn.identity, kind="server", name=name)
+
+    try:
+        descriptor = json.loads(raw)
+
+        if not isinstance(descriptor, dict) or descriptor.get("xray_version") not in {LEGACY_XRAY_VERSION, XRAY_VERSION}:
+            raise ValueError
+
+        return str(descriptor["xray_version"])
+
+    except (TypeError, ValueError, RecursionError):
+        raise VpnError("Prepared VLESS runtime descriptor is invalid or unsupported") from None
 
 
 def _MaterialBundle(project: VpnProject) -> ArtifactBundle:
@@ -409,7 +459,8 @@ def _Transports(project: VpnProject, material: ArtifactBundle, endpoint: str) ->
 
     return (
         PrepareAmneziaWg(project.vpn, VpnEndpoint(endpoint, ports["amneziawg"]), project.amneziawg, DecodeAmneziaWgSecrets(content["amneziawg.json"])),
-        PrepareVless(project.vpn, VpnEndpoint(endpoint, ports["vless-reality"]), project.vless, DecodeVlessMaterial(content["vless.json"])),
+        PrepareVless(project.vpn, VpnEndpoint(endpoint, ports["vless-reality"]), project.vless,
+                     DecodeVlessMaterial(content["vless.json"]), runtimeVersion=_VlessRuntimeVersion(project)),
     )
 
 
@@ -780,3 +831,80 @@ def RunVpnProject(
 
     return VpnProjectReport(action, "complete", "complete", "services-active", tuple(exports),
                             details="Guest services are active; authenticated client traffic, DNS and Internet access are not verified")
+
+
+def RunVpnRuntime(
+    project: VpnProject, action: str, *, allowMutation: bool = False, scopeConfirm: str = "",
+    expectedVersion: str = "", expectedReceipt: str = "", provider: VpnYandexProvider | None = None,
+    guestFactory: Callable[..., SshGuestProvisioner] = SshGuestProvisioner,
+) -> VpnRuntimeReport:
+    """Maintain only an existing owned Xray runtime after explicit consent and read-only cloud checks."""
+
+    ValidateVlessRuntimeOptions(action, expectedVersion, expectedReceipt)
+
+    if action != "runtime-status" and (not allowMutation or scopeConfirm != project.vpn.identity.scopeId):
+        raise VpnError("Runtime mutation requires --allow-mutation and exact --scope-confirm folder ID")
+
+    if action == "runtime-status" and (allowMutation or scopeConfirm):
+        raise VpnError("Runtime status is read-only and does not accept mutation consent")
+
+    ValidateSshPathSyntax(project.root)
+    _VerifyAdministrationKey(project)
+    materialName = project.vpn.identity.stack + "-credentials"
+    proof = ReadOwnedArtifactFile(project.Artifacts / ("server-" + materialName) / "project.sha256",
+                                  project.vpn.identity, kind="server", name=materialName)
+
+    if proof != (project.Fingerprint() + "\n").encode("ascii"):
+        raise VpnError("Runtime maintenance requires the unchanged prepared project settings")
+
+    name = project.vpn.identity.stack + "-vless-reality"
+    directory = project.Artifacts / ("server-" + name)
+    content = {filename: ReadOwnedArtifactFile(directory / filename, project.vpn.identity, kind="server", name=name)
+               for filename in ("server.json", "deployment.json", "install.py")}
+    installer = files("flayer.profiles").joinpath("_vless_guest.py").read_bytes().replace(b"\r\n", b"\n")
+
+    if (content["install.py"].replace(b"\r\n", b"\n") != installer
+            and hashlib.sha256(content["install.py"].replace(b"\r\n", b"\n")).hexdigest() not in LEGACY_VLESS_INSTALLERS):
+        raise VpnError("Prepared VLESS installer is not a recognized current or historical program")
+
+    try:
+        descriptor = json.loads(content["deployment.json"])
+        owner = hashlib.sha256((json.dumps(_WireDict(project.vpn.identity), indent=2, sort_keys=True) + "\n").encode()).hexdigest()
+        port = next(listener.port for listener in project.vpn.listeners if listener.transport == "vless-reality")
+
+        if (not isinstance(descriptor, dict)
+                or set(descriptor) != {"schema_version", "owner", "config_sha256", "port", "xray_version"}
+                or type(descriptor["schema_version"]) is not int or descriptor["schema_version"] != 1
+                or descriptor["owner"] != owner or type(descriptor["port"]) is not int or descriptor["port"] != port
+                or descriptor["xray_version"] not in {LEGACY_XRAY_VERSION, XRAY_VERSION}
+                or descriptor["config_sha256"] != hashlib.sha256(content["server.json"]).hexdigest()):
+            raise ValueError
+
+    except (ValueError, TypeError, StopIteration, RecursionError):
+        raise VpnError("Prepared VLESS runtime bundle has an invalid descriptor or configuration hash") from None
+
+    bundle = ArtifactBundle(project.vpn.identity, "server", name, (
+        Artifact("server.json", content["server.json"]), Artifact("deployment.json", content["deployment.json"]),
+        Artifact("install.py", installer),
+    ))
+    provider = provider or VpnYandexProvider(YandexCloudSettings(project.vpn.identity.scopeId, project.cloud.ycProfile))
+    _CheckCloudAccess(provider)
+    observed = LifecycleEngine(CompileVpnProject(project), provider, project.root / "state.json").Status()
+
+    if observed.status != "complete":
+        raise VpnError("Runtime maintenance requires complete owned cloud state; resolve lifecycle recovery first")
+
+    instance, endpoint = _OwnedEndpoints(project, provider)
+    trust = _HostTrust(project, provider, instance, endpoint, wait=False)
+    guest = guestFactory(VpnEndpoint(endpoint, 22), ADMIN_USERNAME, project.root / "admin-key", trust)
+    runtime = guest.VlessRuntime(bundle, action, expectedVersion=expectedVersion, expectedReceipt=expectedReceipt)
+
+    return VpnRuntimeReport(
+        action, "incomplete" if runtime["upgrade_status"] == "interrupted" else "complete", "complete", "runtime-observed",
+        recoveryRequired=runtime["upgrade_status"] == "interrupted",
+        details="Runtime receipt verified; kernel patch and client traffic remain unverified",
+        version=runtime["version"], receiptSha256=runtime["receipt_sha256"], binarySha256=runtime["binary_sha256"],
+        previousReceiptSha256=runtime["previous_receipt_sha256"],
+        upgradeStatus=runtime["upgrade_status"], kernelRelease=runtime["kernel_release"],
+        kernelPackageVersion=runtime["kernel_package_version"], kernelPatchStatus=runtime["kernel_patch_status"],
+    )

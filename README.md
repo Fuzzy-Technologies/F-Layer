@@ -171,6 +171,8 @@ for protocol-specific checks and import details.
 ## Manage your deployment
 
 Use `flayer vpn status --project ~/flayer-vpn` to inspect your server.
+For explicit Xray version inventory, upgrades and rollback, follow
+[runtime maintenance](docs/architecture/xray-runtime-maintenance.md).
 For an interrupted cloud operation, retain the project and follow the
 [recovery guide](https://fuzzy-technologies.github.io/F-Layer/en/guide/#5-recover-or-remove-the-deployment).
 When you want to remove this project's cloud resources:

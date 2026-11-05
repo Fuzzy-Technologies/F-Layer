@@ -234,12 +234,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.vless.PrepareVless"
 sourcePath = "src/flayer/profiles/vless.py"
-sourceHash = "sha256:8b676027a04102e8fcb0e30dda79406ff722957e7a997db201c5e2c08cadf21f"
-body = "Готовит установщик своего стека и отдельный закрытый набор файлов импорта для каждого объявленного устройства."
-reviewedTranslationHash = "sha256:1297b8c38de356b321c9ede8fcb904914f92a1008e8d5a2dfcd11fc260ce0da4"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:e483a5cc9eef366661a3c86080bb31f1de71a5858f3e16dbe13037dbb1bb8fc6"
+body = "Подготовить приватные наборы с явно выбранной текущей или сохранённой старой версией."
+reviewedTranslationHash = "sha256:fd4889a0f950f0aeeabd5652bd3c4c712a6d473a01b4900ca00e09f9ee276761"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137456+00:00"
+reviewedAt = "2026-11-05T18:37:32.432583Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]

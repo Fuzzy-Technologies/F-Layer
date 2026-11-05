@@ -24,7 +24,7 @@ from flayer.vpn_project import VpnRuntimeReport
 
 IDENTITY = StackIdentity("example", "gateway", "yandex-cloud", "example-folder", "example-owner")
 PRIVATE = b"private-output-fixture"
-INFO = {"version": "26.10.31", "receipt_sha256": "a" * 64, "binary_sha256": "b" * 64,
+INFO = {"version": "26.10.31", "receipt_sha256": "a" * 64, "previous_receipt_sha256": "c" * 64, "binary_sha256": "b" * 64,
         "upgrade_status": "rollback-available", "kernel_release": "6.8.0-fixture",
         "kernel_package_version": "6.8.0-fixture", "kernel_patch_status": "not-assessed"}
 
@@ -90,13 +90,18 @@ def test_InvalidRuntimeOptionsFailBeforeAnyRunnerCall(action: Any, version: Any,
 def test_RuntimeTransportValidatesFactsAndKeepsPayloadOffArguments(action: str, version: str) -> None:
     """Only allowlisted nonsecret strings can leave the private host-pinned transport."""
 
-    runner = Runner(GuestResult(0, json.dumps(INFO).encode(), PRIVATE))
+    expectedInfo = dict(INFO)
+
+    if action in {"rollback-upgrade", "recover-upgrade"}:
+        expectedInfo.update(version="26.9.30", upgrade_status="none", previous_receipt_sha256="")
+
+    runner = Runner(GuestResult(0, json.dumps(expectedInfo).encode(), PRIVATE))
     receipt = "" if action == "runtime-status" else "c" * 64
     result = Provisioner(runner).VlessRuntime(Bundle(), action, expectedVersion=version, expectedReceipt=receipt)
     command, payload, timeout = runner.calls[0]
     envelope = json.loads(payload)
 
-    assert result == INFO
+    assert result == expectedInfo
     assert PRIVATE.decode() not in repr(command)
     assert base64.b64encode(PRIVATE).decode() not in repr(command)
     assert timeout == 420
@@ -105,7 +110,7 @@ def test_RuntimeTransportValidatesFactsAndKeepsPayloadOffArguments(action: str, 
     assert base64.b64decode(envelope["bundles"][0]["files"]["server.json"]) == PRIVATE
 
 
-@pytest.mark.parametrize("change", ["exit", "raw-output", "oversized", "extra", "version", "hash", "kernel", "patch-status", "value-type"])
+@pytest.mark.parametrize("change", ["exit", "raw-output", "oversized", "extra", "version", "hash", "kernel", "patch-status", "value-type", "nested-json"])
 def test_InvalidRuntimeOutputCannotLeakGuestDiagnostics(change: str) -> None:
     """A guest response cannot smuggle private text into a CLI receipt or exception."""
 
@@ -134,6 +139,9 @@ def test_InvalidRuntimeOutputCannotLeakGuestDiagnostics(change: str) -> None:
         info["version"] = []
 
     output = PRIVATE if change == "raw-output" else b"x" * 4097 if change == "oversized" else json.dumps(info).encode()
+
+    if change == "nested-json":
+        output = b"[" * 1100 + b"]" * 1100
     runner = Runner(GuestResult(code, output, PRIVATE))
 
     with pytest.raises(VpnError) as caught:
@@ -245,3 +253,19 @@ def test_RuntimeStatusAcceptsNoMutationPreconditions() -> None:
     """Keep the read-only public operation usable without guessed expected-old data."""
 
     ValidateVlessRuntimeOptions("runtime-status", "", "")
+
+
+@pytest.mark.parametrize("action", ["upgrade", "rollback-upgrade", "recover-upgrade"])
+def test_SuccessReceiptMustMatchTheRequestedTransition(action: str) -> None:
+    """A zero exit with a valid but wrong-version receipt must not become successful maintenance."""
+
+    wrong = {**INFO, "version": "26.9.30", "upgrade_status": "none", "previous_receipt_sha256": ""}
+
+    if action != "upgrade":
+        wrong = dict(INFO)
+
+    runner = Runner(GuestResult(0, json.dumps(wrong).encode()))
+    version = "26.10.31" if action == "rollback-upgrade" else "26.9.30"
+
+    with pytest.raises(VpnError):
+        Provisioner(runner).VlessRuntime(Bundle(), action, expectedVersion=version, expectedReceipt="c" * 64)

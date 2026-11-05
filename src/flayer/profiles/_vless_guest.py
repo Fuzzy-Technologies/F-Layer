@@ -93,7 +93,9 @@ def _Directory(path: Path, *, create: bool = False) -> None:
 def _Atomic(path: Path, content: bytes, mode: int) -> None:
     """Replace one bounded owned file atomically without following its destination."""
 
-    descriptor, temporary = tempfile.mkstemp(prefix=".flayer-", dir=path.parent)
+    # Keep crash leftovers outside a published deployment/journal's exact file set.
+    temporaryDirectory = BASE if path.is_relative_to(BASE) else path.parent
+    descriptor, temporary = tempfile.mkstemp(prefix=".flayer-", dir=temporaryDirectory)
 
     try:
         with os.fdopen(descriptor, "wb") as stream:
@@ -104,6 +106,9 @@ def _Atomic(path: Path, content: bytes, mode: int) -> None:
 
         os.replace(temporary, path)
         _Sync(path.parent)
+
+        if temporaryDirectory != path.parent:
+            _Sync(temporaryDirectory)
 
     finally:
         if os.path.exists(temporary):
@@ -610,10 +615,12 @@ def _RuntimeStatus(root: Path, service: Path, request: dict[str, Any]) -> dict[s
     """Report bounded version/hash facts without reading keys into diagnostics or assessing patches."""
 
     upgradeStatus = "none"
+    previousReceipt = ""
 
     if (root / "runtime-upgrade").exists() or (root / "runtime-upgrade").is_symlink():
         record = _Transaction(root, service, request["owner"])
         upgradeStatus = "rollback-available" if record["phase"] == "committed" else "interrupted"
+        previousReceipt = record["old_receipt_sha256"]
 
     elif _Existing(root, service, request["owner"]) is None:
         raise GuestError("Runtime status requires an existing owned service")
@@ -645,6 +652,7 @@ def _RuntimeStatus(root: Path, service: Path, request: dict[str, Any]) -> dict[s
             pass
 
     return {"version": receipt["xray_version"], "receipt_sha256": _Digest(raw),
+            "previous_receipt_sha256": previousReceipt,
             "binary_sha256": _Digest(_Read(root / "xray", MAX_BINARY_BYTES, rootOwned=True)),
             "upgrade_status": upgradeStatus, "kernel_release": kernelRelease,
             "kernel_package_version": packageVersion, "kernel_patch_status": "not-assessed"}

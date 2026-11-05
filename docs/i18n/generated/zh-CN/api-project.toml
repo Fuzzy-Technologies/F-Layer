@@ -327,3 +327,43 @@ reviewer = "Codex"
 reviewerType = "ai"
 reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
+[[units]]
+id = "symbol:flayer.guest.SshGuestProvisioner.VlessRuntime"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:0783818f73fb7953e5a996a4d49163753bb2e9e3501bd3e5b63862ef7c448c20"
+reviewedTranslationHash = "sha256:98d4d19280009faaa64b24e9f4d9d298fd3a65e1f17bf1cda38d79386593989b"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-05T18:37:32.432583Z"
+reviewRoles = ["editorial", "technical"]
+body = "通过固定主机密钥执行一次运行时操作，仅接受有界且非敏感的回执事实。"
+[[units]]
+id = "symbol:flayer.guest.ValidateVlessRuntimeOptions"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:b01dd3480f19c23ee6a7ef462b663968a3cb4f6ff9fe9b7cb6192870ef18ac48"
+reviewedTranslationHash = "sha256:943f457f8f1546a26536565005ff04b1278dca59cd134a1632d3f8825e0a64c5"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-05T18:37:32.432583Z"
+reviewRoles = ["editorial", "technical"]
+body = "在外部访问前拒绝含糊的运行时操作和不完整的预期旧状态。"
+[[units]]
+id = "symbol:flayer.vpn_project.RunVpnRuntime"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:4345fb0e4601fdd0dbd91a7f375d8ed0f5e2387f846a474116ae253ecde5a17e"
+reviewedTranslationHash = "sha256:c335954e8771c5baf9d9dc34dad223a040a68f5a617473184fc3e7bce9f33736"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-05T18:37:32.432583Z"
+reviewRoles = ["editorial", "technical"]
+body = "在显式授权和只读云检查后，仅维护已有且属于本项目的 Xray 运行时。"
+[[units]]
+id = "symbol:flayer.vpn_project.VpnRuntimeReport"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:5a53b328a2e93c8495573f56b45e92eef7403a460d27cde9546554576b26e821"
+reviewedTranslationHash = "sha256:0a3b75178a92e2980632d25040b08d42c10ec29a60d57971c3c761d900488384"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-05T18:37:32.432583Z"
+reviewRoles = ["editorial", "technical"]
+body = "仅公开运行时回执与内核事实，客户端连通性仍未验证。"

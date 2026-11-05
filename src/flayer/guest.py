@@ -296,7 +296,7 @@ class SshGuestProvisioner:
                 raise ValueError
 
             data = json.loads(result.stdout)
-            expected = {"version", "receipt_sha256", "binary_sha256", "upgrade_status",
+            expected = {"version", "receipt_sha256", "previous_receipt_sha256", "binary_sha256", "upgrade_status",
                         "kernel_release", "kernel_package_version", "kernel_patch_status"}
 
             if (not isinstance(data, dict) or set(data) != expected
@@ -304,15 +304,24 @@ class SshGuestProvisioner:
                     or data["version"] not in {"26.9.30", "26.10.31"}
                     or data["upgrade_status"] not in {"none", "rollback-available", "interrupted"}
                     or data["kernel_patch_status"] != "not-assessed"
+                    or (data["upgrade_status"] == "none" and data["previous_receipt_sha256"] != "")
+                    or (data["upgrade_status"] != "none"
+                        and re.fullmatch(r"[0-9a-f]{64}", data["previous_receipt_sha256"]) is None)
                     or any(re.fullmatch(r"[0-9a-f]{64}", data[key]) is None
                            for key in ("receipt_sha256", "binary_sha256"))
                     or any(re.fullmatch(r"[a-zA-Z0-9.+:~_-]{1,128}", data[key]) is None
                            for key in ("kernel_release", "kernel_package_version"))):
                 raise ValueError
 
+            if (data["upgrade_status"] == "rollback-available" and data["version"] != "26.10.31"
+                    or action == "upgrade" and (data["version"] != "26.10.31" or data["upgrade_status"] != "rollback-available")
+                    or action in {"rollback-upgrade", "recover-upgrade"}
+                    and (data["version"] != "26.9.30" or data["upgrade_status"] != "none")):
+                raise ValueError
+
             return {key: str(value) for key, value in data.items()}
 
-        except (ValueError, TypeError, UnicodeError):
+        except (ValueError, TypeError, UnicodeError, RecursionError):
             raise VpnError("VLESS runtime operation failed or returned an invalid receipt. Inspect runtime-status and retained recovery state; private output was suppressed") from None
 
     def ServiceStatus(self, services: tuple[str, ...]) -> tuple[tuple[str, bool], ...]:

@@ -234,12 +234,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.vless.PrepareVless"
 sourcePath = "src/flayer/profiles/vless.py"
-sourceHash = "sha256:8b676027a04102e8fcb0e30dda79406ff722957e7a997db201c5e2c08cadf21f"
-body = "为归属明确的栈准备安装程序，并为每台已声明设备生成独立的私有导入文件包。"
-reviewedTranslationHash = "sha256:e184450c556bcbd8edcd9d84518e297577f5bc073b3864fcc396adfdccfe3fdd"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:e483a5cc9eef366661a3c86080bb31f1de71a5858f3e16dbe13037dbb1bb8fc6"
+body = "以显式选择的当前版本或保留的旧运行时基线准备私密文件包。"
+reviewedTranslationHash = "sha256:b09cc5d5169281069137cd49241cba51f6ec5a4497a48922f33b6060e068db2a"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.138839+00:00"
+reviewedAt = "2026-11-05T18:37:32.432583Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]

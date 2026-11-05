@@ -443,3 +443,36 @@ def test_RealPinnedRuntimesUpgradeAndRollbackWithUnchangedConfig(tmp_path: Path,
     guest._RollbackRuntime(root, service, request, guest.XRAY_VERSION, guest._Digest((root / "owner.json").read_bytes()))
 
     assert Snapshot(root, service) == before
+
+
+def test_ProcessExitDuringAtomicWriteLeavesRecoverableJournal(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A real killed child bypasses finally cleanup, so its temporary file must not block recovery."""
+
+    root, service, request, expected, commands = Seed(tmp_path, monkeypatch)
+    before = Snapshot(root, service)
+    process = os.fork()
+
+    if process == 0:
+        replaceFile = guest.os.replace
+
+        def ExitBeforeRename(source: object, destination: object) -> None:
+            """Exit after fsync of a replacement but before its atomic rename."""
+
+            if Path(destination) == root / "xray":
+                os._exit(19)
+
+            replaceFile(source, destination)
+
+        guest.os.replace = ExitBeforeRename
+        guest._Upgrade(root, service, request, guest.LEGACY_VERSION, expected)
+        os._exit(20)
+
+    _, waitStatus = os.waitpid(process, 0)
+
+    assert os.waitstatus_to_exitcode(waitStatus) == 19
+    assert any(path.name.startswith(".flayer-") for path in root.parent.iterdir())
+    assert guest._RuntimeStatus(root, service, request)["upgrade_status"] == "interrupted"
+
+    guest._RollbackRuntime(root, service, request, guest.LEGACY_VERSION, expected, recover=True)
+
+    assert Snapshot(root, service) == before

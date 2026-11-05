@@ -14,6 +14,7 @@ import zlib
 from contextlib import nullcontext
 from dataclasses import replace
 from pathlib import Path
+from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
@@ -115,6 +116,16 @@ def test_ImportUriBindsRealityParametersToOneDevice() -> None:
         "sni": [SETTINGS.serverName], "fp": ["chrome"], "pbk": [expectedKey],
         "sid": [material.shortId], "type": ["tcp"], "headerType": ["none"], "spx": ["/"],
     }
+
+
+@pytest.mark.parametrize("version", ["latest", "26.7.28", True, None, []])
+def test_PreparationRejectsUnsupportedRuntimeBaselines(version: Any) -> None:
+    """An explicit runtime selector must reject unhashable values and unsupported versions uniformly."""
+
+    profile = Profile()
+
+    with pytest.raises(VlessError, match="supported pinned runtime"):
+        PrepareVless(profile, ENDPOINT, SETTINGS, GenerateVlessMaterial(profile), runtimeVersion=version)
 
 
 @pytest.mark.parametrize("changes", [

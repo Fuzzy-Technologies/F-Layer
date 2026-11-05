@@ -395,11 +395,11 @@ def PrepareVless(
     profile: VpnProfile, endpoint: VpnEndpoint, settings: VlessRealitySettings,
     material: VlessMaterial, *, runtimeVersion: str = XRAY_VERSION,
 ) -> PreparedVpnTransport:
-    """Prepare an owned installer and one private import bundle per declared device."""
+    """Prepare private bundles with an explicit current or retained legacy runtime baseline."""
 
     server = RenderVlessServer(profile, settings, material)
 
-    if runtimeVersion not in {LEGACY_XRAY_VERSION, XRAY_VERSION}:
+    if not isinstance(runtimeVersion, str) or runtimeVersion not in {LEGACY_XRAY_VERSION, XRAY_VERSION}:
         raise VlessError("VLESS preparation requires an explicitly supported pinned runtime")
 
     identity = _WireDict(profile.identity)

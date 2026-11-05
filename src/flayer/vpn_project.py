@@ -79,6 +79,7 @@ from flayer.providers.yandex_lifecycle import ValidateComputeShape, YandexLifecy
 
 ADMIN_USERNAME = "flayer-admin"
 MAX_SERIAL_BYTES = 1024 * 1024
+# LF-normalized installers from the released 2.0.0 baseline and PR #117.
 LEGACY_VLESS_INSTALLERS = frozenset({
     "655da13c3b949c835c8429bdc8532f7fce23fb37fc20fe0c2c4de701a0dd3532",
     "ab0867185961a307af41b06acc86cc244dc19303004f9da5e925f26ab7996e12",
@@ -236,6 +237,7 @@ class VpnRuntimeReport(VpnProjectReport):
 
     version: str = ""
     receiptSha256: str = ""
+    previousReceiptSha256: str = ""
     binarySha256: str = ""
     upgradeStatus: str = "none"
     kernelRelease: str = "unavailable"
@@ -417,7 +419,7 @@ def _VlessRuntimeVersion(project: VpnProject) -> str:
 
         return str(descriptor["xray_version"])
 
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, RecursionError):
         raise VpnError("Prepared VLESS runtime descriptor is invalid or unsupported") from None
 
 
@@ -878,7 +880,7 @@ def RunVpnRuntime(
                 or descriptor["config_sha256"] != hashlib.sha256(content["server.json"]).hexdigest()):
             raise ValueError
 
-    except (ValueError, TypeError, StopIteration):
+    except (ValueError, TypeError, StopIteration, RecursionError):
         raise VpnError("Prepared VLESS runtime bundle has an invalid descriptor or configuration hash") from None
 
     bundle = ArtifactBundle(project.vpn.identity, "server", name, (
@@ -898,8 +900,11 @@ def RunVpnRuntime(
     runtime = guest.VlessRuntime(bundle, action, expectedVersion=expectedVersion, expectedReceipt=expectedReceipt)
 
     return VpnRuntimeReport(
-        action, "complete", "complete", "runtime-observed", details="Runtime receipt verified; kernel patch and client traffic remain unverified",
+        action, "incomplete" if runtime["upgrade_status"] == "interrupted" else "complete", "complete", "runtime-observed",
+        recoveryRequired=runtime["upgrade_status"] == "interrupted",
+        details="Runtime receipt verified; kernel patch and client traffic remain unverified",
         version=runtime["version"], receiptSha256=runtime["receipt_sha256"], binarySha256=runtime["binary_sha256"],
+        previousReceiptSha256=runtime["previous_receipt_sha256"],
         upgradeStatus=runtime["upgrade_status"], kernelRelease=runtime["kernel_release"],
         kernelPackageVersion=runtime["kernel_package_version"], kernelPatchStatus=runtime["kernel_patch_status"],
     )

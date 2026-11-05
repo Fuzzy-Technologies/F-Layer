@@ -1,13 +1,12 @@
 schemaVersion = 1
 sourcePath = "docs/adr/README.md"
-sourceHash = "sha256:10247d5cdfadcc360d54e6f68ffc1f4d50c3b30620df1b907a7759206afba4cf"
-reviewedTranslationHash = "sha256:24cbef9d11de5425abe0cbd432bdce30556922b0d7e6ec0c8337147c36f097b3"
+sourceHash = "sha256:389fc48bfe830f4d23fd6ca0a373a2aca4198702f6790d62052fa9e2133ca2bd"
+reviewedTranslationHash = "sha256:2f86ab0b18bdc1701e9ae160a3ccc20fb4a843992b5eec95f2d5f953943ecfe0"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-04T10:34:46Z"
+reviewedAt = "2026-11-05T18:37:32.432583Z"
 reviewRoles = ["editorial", "technical"]
-body = '''
-# 架构决策记录
+body = '''# 架构决策记录
 
 F-Layer 使用架构决策记录（ADR）保存对架构、公共契约、兼容性、安全边界、持久化、提供商接口或扩展设计产生实质影响的决策。
 
@@ -62,5 +61,6 @@ ADR 编号一经分配便保持不变。
 | [ADR 0017](0017-package-installation.md)                 | 软件包安装与可选 VPN 依赖             |
 | [ADR 0018](0018-generated-documentation-translations.md) | 为生成文档提供经过审核的翻译          |
 | [ADR 0019](0019-private-vpn-project-workflow.md)         | 私有 VPN 项目与经过身份验证的来宾部署 |
-| [ADR 0021](0021-python-naming-wire-compatibility.md)     | Python 命名与稳定的外部数据格式        |
+| [ADR 0021](0021-python-naming-wire-compatibility.md)     | Python 命名与稳定的外部数据格式       |
+| [ADR 0022](0022-explicit-xray-runtime-upgrades.md)       | 显式、可恢复的 Xray 运行时升级        |
 '''

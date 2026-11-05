@@ -296,7 +296,7 @@ class FakeGuest:
 
         self.runtimeCalls.append((bundle, action, options))
 
-        return {"version": "26.10.31", "receipt_sha256": "a" * 64, "binary_sha256": "b" * 64,
+        return {"version": "26.10.31", "receipt_sha256": "a" * 64, "previous_receipt_sha256": "c" * 64, "binary_sha256": "b" * 64,
                 "upgrade_status": "rollback-available", "kernel_release": "6.8.0-fixture",
                 "kernel_package_version": "unavailable", "kernel_patch_status": "not-assessed"}
 

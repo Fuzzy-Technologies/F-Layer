@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/adr/README.md"
-sourceHash = "sha256:389fc48bfe830f4d23fd6ca0a373a2aca4198702f6790d62052fa9e2133ca2bd"
+sourceHash = "sha256:dd85afafaf3ed85639280604d70e3d036b43d1541dee90aa0351dffae8cf94a3"
 reviewedTranslationHash = "sha256:2f86ab0b18bdc1701e9ae160a3ccc20fb4a843992b5eec95f2d5f953943ecfe0"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-05T18:37:32.432583Z"
+reviewedAt = "2026-11-05T18:47:28.609296Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 架构决策记录
 

@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:77199daedb680e716a89c464abeb30aa850b25bcc018e7cdeef3bc553edc7703"
-reviewedTranslationHash = "sha256:ccd7c66183d265de052b9ebd1f60234cc63e04b60b56211ccec908569fd2bf1e"
+sourceHash = "sha256:8f7d809852663dbd75d0d983a3876bd3c6950d1bc6969b2f39c50cfa212f92c8"
+reviewedTranslationHash = "sha256:549880ee1cbadb6684ccd6ef39d0db11e821b56dbb01f4cd37f1e465fad2d045"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T18:38:31.246811Z"
+reviewedAt = "2026-11-06T18:56:06.946972Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -226,6 +226,26 @@ Endpoint 漫游、握手时间及流量计数器不属于受管配置。
 独立隔离 Linux CI 校验真实固定工具的对等端更新、接口身份、nft echo/live 等价、
 拒绝批次的原子性及无关表保留。不使用桌面网络或生产来宾。
 
+## 对等端 SSH 边界
+
+`SshGuestProvisioner.WireGuardPeerOperation()` 现在通过现有、独立固定主机密钥的
+SSH 通道提供来宾事务。接收保留的私有服务器包、一个指定设备的注册/吊销，
+以及 `status`、`apply` 或 `recover`。变更必须提供精确 scope 确认、显式同意、
+当前回执和原始链式历史；恢复还必须提供原始回执。Status 拒绝变更选项。
+这些检查在 SSH 前完成，同时将精确服务器角色/名称及描述符 owner 绑定到完整
+栈身份，并校验保留配置/程序哈希。服务维护复用相同的强化 owner 校验。
+仅名称后缀无法授权访问另一栈的来宾根目录。
+
+只有驱动/辅助程序及服务器配置/描述符通过 SSH 私有 stdin 传输；描述符保留
+原始已安装程序的固定值。Root 接收器在私有临时准备前独立校验精确四文件信封、
+目标及同意，再调用有界参数向量。不转发原始 stderr。控制器拒绝重复字段、
+额外输出、错误目标/描述符哈希、不一致历史事实或任意结果。
+变更确认区分 `committed` 与恢复的 `not-applied`，不能替代随后的健康服务观测。
+可移植测试使用内存中的 runner/staging 边界，不执行 SSH 或来宾程序。
+
+该低层 API 不持久化控制器意图，也不签发新设备密钥。在后续控制器修订流程提供
+持久日志之前，调用方必须保留完整旧/新包及原始证明。
+
 ## 尚待集成
 
 `PrepareWireGuardPeerEnrollment()` 和 `PrepareWireGuardPeerRevocation()` 现在可在
@@ -234,8 +254,8 @@ Endpoint 漫游、握手时间及流量计数器不属于受管配置。
 地址及其客户端配置字节保持不变。拒绝无效身份、地址/密钥复用、超出设备容量的
 注册以及吊销最后一个对等端。原私有材料保留供审计。移除最后一个对等端需要
 显式停用协议。这些准备 API 不连接来宾、不使对等端断开、不持久化修订，也不
-更新项目状态。公共实际吊销仍需要控制器修订/恢复流程以及与私有来宾事务的
-SSH 集成；对等端 CLI 尚未提供此能力。
+更新项目状态。公共项目吊销仍需要控制器修订/恢复流程；对等端 CLI
+尚未提供此能力。
 
 现有来宾上的协议增删、模式 1 迁移、显式云/来宾入口覆盖层及定向对等端
 注册/吊销仍属于任务 #128。模式 2 的 Xray 运行时维护与独立设备导出命令

@@ -332,6 +332,10 @@ class SshGuestProvisioner:
     ) -> dict[str, object]:
         """Observe or recover one owned WireGuard service using explicit scope and current proof."""
 
+        from flayer._vpn_peer_transport import ValidateBundle
+
+        ValidateBundle(bundle)
+
         if (not isinstance(bundle, ArtifactBundle) or bundle.kind != "server" or not bundle.name.endswith("-wireguard")
                 or {item.name for item in bundle.files} != {"install.py", "server.conf", "deployment.json"}
                 or any(not item.sensitive for item in bundle.files)
@@ -405,6 +409,21 @@ class SshGuestProvisioner:
 
         except (ValueError, TypeError, UnicodeError, RecursionError):
             raise VpnError("WireGuard operation failed or returned invalid bounded status; private diagnostics were suppressed") from None
+
+    def WireGuardPeerOperation(
+        self, bundle: ArtifactBundle, action: str, change: str, deviceId: str, *, allowMutation: bool = False, scopeConfirm: str = "",
+        expectedReceipt: str = "", expectedPrevious: str = "", expectedHistory: str = "",
+    ) -> dict[str, object]:
+        """Observe or apply one named peer transaction using exact scope, receipt and chained history preconditions."""
+
+        from flayer._vpn_peer_transport import DecodeResult, EncodeRequest
+
+        payload = EncodeRequest(bundle, action, change, deviceId, allowMutation=allowMutation, scopeConfirm=scopeConfirm,
+                                expectedReceipt=expectedReceipt, expectedPrevious=expectedPrevious, expectedHistory=expectedHistory)
+        command = "sudo -n /usr/bin/python3 -c " + shlex.quote(files("flayer").joinpath("_vpn_guest.py").read_text(encoding="utf-8"))
+        result = self.runner.Run((*self.command, command), payload, 420)
+
+        return DecodeResult(result.stdout, result.returnCode, bundle, action, change, deviceId)
 
     def ServiceStatus(self, services: tuple[str, ...]) -> tuple[tuple[str, bool], ...]:
         """Observe service activity without claiming client connectivity or performing guest writes."""

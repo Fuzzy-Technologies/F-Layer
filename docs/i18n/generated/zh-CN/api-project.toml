@@ -547,3 +547,13 @@ reviewerType = "ai"
 reviewedAt = "2026-11-06T16:56:43.901995Z"
 reviewRoles = ["editorial", "technical"]
 body = "观测精确 scope 内虚拟机网络及存储绑定，不读取来宾秘密。"
+[[units]]
+id = "symbol:flayer.guest.SshGuestProvisioner.WireGuardPeerOperation"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:8d53571252f5e6e60f09664d851648fafb0595585a882acb1c5180f52a3c69cb"
+reviewedTranslationHash = "sha256:2c2a7ac39086b1e2ae2fa594d36c5bebb6663a9d9b939b3696684472c8292071"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T18:56:06.946972Z"
+reviewRoles = ["editorial", "technical"]
+body = "使用精确作用域、回执及链式历史前置条件观测或应用一个指定对等端事务。"

@@ -325,7 +325,7 @@ body = "导出经校验的单个设备，支持可选客户端策略，且不写
 reviewedTranslationHash = "sha256:89ec51e9e3b8bfbf1176355f2a0e83c07fb48f6f82a3ae27b8efd0d8a6238401"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T11:40:55.306761Z"
+reviewedAt = "2026-11-06T11:51:27.104846Z"
 reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.guest.SshGuestProvisioner.VlessRuntime"

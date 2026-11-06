@@ -38,6 +38,9 @@ ordinary Vision's UDP 443 interception by default.
 Derived exports contain the exact client JSON and a complete native AmneziaVPN
 `.vpn`, plus numbered native QR frames when requested. Omit the plain VLESS URI
 for either option, so every supported import preserves the complete derived policy.
+Preserve the verified original native envelope, including DNS and description,
+replacing only its exact matching Xray client. Do not take native policy from
+current desired project settings; refuse inconsistent or unbounded source envelopes.
 Require separate output when selected bytes or files differ; never overwrite or
 prune an existing export. No cloud call, guest operation, source write, key
 generation or device-connectivity claim is introduced.

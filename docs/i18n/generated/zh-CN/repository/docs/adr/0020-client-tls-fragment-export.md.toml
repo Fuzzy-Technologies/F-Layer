@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/adr/0020-client-tls-fragment-export.md"
-sourceHash = "sha256:f98c53679f7e90b2460e39038d6775ffed65e82bb771afe1fc970f8b0900c8a4"
-reviewedTranslationHash = "sha256:f7c5e2052e408dce2bf2a9bca235d6a0a8fd9e8290d4ff75a70ac2447904b55f"
+sourceHash = "sha256:2572ea92975181f4ca65e11857667e5b74503dd7118490f0f929ac9ce267509e"
+reviewedTranslationHash = "sha256:6cf37c4b97f89c283535fe56f30e18909eb136dc5bd12e986c30361778b865d9"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T11:40:55.306761Z"
+reviewedAt = "2026-11-06T11:51:27.104846Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# ADR 0020：按需导出 VLESS 客户端传输策略
 
@@ -44,6 +44,8 @@ QUIC 选项仅将选定客户端的 Vision flow 改为 `xtls-rprx-vision-udp443`
 派生导出包含完整一致的客户端 JSON 和 AmneziaVPN 原生 `.vpn` 配置，
 并可按需附带带编号的原生 QR 帧。启用任一选项时均不输出普通 VLESS URI，
 确保每种受支持的导入方式都能保留完整派生策略。
+保留已验证的原始原生封装，包括 DNS 和描述，仅替换与源文件完全一致的 Xray 客户端配置。
+不从当前项目期望设置中提取原生策略；拒绝不一致或超出限制的源封装。
 选定的字节或文件集合不同时，必须使用其他输出目录；不覆盖或裁剪已有导出。
 此变更不引入云调用、来宾操作、源文件写入、密钥生成，
 也不声称设备连通性已得到验证。

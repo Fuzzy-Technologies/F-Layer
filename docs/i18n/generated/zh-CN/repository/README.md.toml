@@ -195,5 +195,5 @@ sourceHash = "sha256:5d03ab37d80c86092661b340a3dab1d49627c8bb573a12a21d625948cf1
 reviewedTranslationHash = "sha256:a8e2f622260b8273792d9cef3e9b0c1951d3879c449410af133bdd72a2ccaaac"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T11:40:55.306761Z"
+reviewedAt = "2026-11-06T11:51:27.104846Z"
 reviewRoles = ["editorial", "technical"]

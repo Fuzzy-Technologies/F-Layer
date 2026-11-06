@@ -9,9 +9,9 @@ from typing import Any
 from flayer.core.contracts import ValidateName
 from flayer.guest import PrivatePath
 from flayer.profiles._amnezia_export import (
-    BuildAmneziaArtifacts,
     BuildAmneziaQrArtifacts,
     BuildAmneziaWgArtifacts,
+    _ReplaceAmneziaXrayClient,
 )
 from flayer.profiles.artifacts import (
     Artifact,
@@ -147,13 +147,13 @@ def ExportVpnDevice(
         client = artifacts[0].content
 
         if allowQuic:
-            client, host = _AllowQuicVlessClient(client)
+            client, _ = _AllowQuicVlessClient(client)
 
         if tlsFragment:
-            client, host = _FragmentVlessClient(client)
+            client, _ = _FragmentVlessClient(client)
 
-        artifacts = (Artifact("client.json", client), *BuildAmneziaArtifacts(
-            client, host, deviceId, project.vpn.routes.dnsServers, qr=qr,
+        artifacts = (Artifact("client.json", client), *_ReplaceAmneziaXrayClient(
+            artifacts[-1].content, artifacts[0].content, client, qr=qr,
         ))
 
     elif qr:

@@ -16,7 +16,7 @@ import segno
 
 from flayer.__main__ import Parser
 from flayer.core.contracts import StackIdentity
-from flayer.profiles._amnezia_export import BuildAmneziaArtifacts
+from flayer.profiles._amnezia_export import BuildAmneziaArtifacts, _ReplaceAmneziaXrayClient
 from flayer.profiles.vless import (
     GenerateVlessMaterial,
     RenderVlessClient,
@@ -171,6 +171,110 @@ def ChangedClient(path: tuple[str | int, ...], value: object) -> bytes:
     return json.dumps(data).encode()
 
 
+def NativeConnection(profile: object) -> bytes:
+    """Independently encode synthetic envelopes, including unsupported profile shapes."""
+
+    raw = json.dumps(profile).encode()
+
+    return b"vpn://" + base64.urlsafe_b64encode(len(raw).to_bytes(4, "big") + zlib.compress(raw)).rstrip(b"=") + b"\n"
+
+
+@pytest.mark.parametrize("qr", [False, True])
+def test_DerivedNativeProfilePreservesAllOriginalMetadata(qr: bool) -> None:
+    """Keep native DNS, descriptions and extension fields while replacing only exact Xray policy."""
+
+    source = json.dumps(Client()).encode()
+    profile: dict[str, Any] = {
+        "containers": [{"container": "amnezia-xray", "xray": {
+            "last_config": source.decode(), "isThirdPartyConfig": True, "extension": {"enabled": False},
+        }}],
+        "defaultContainer": "amnezia-xray", "hostName": "vpn.example",
+        "description": "Existing private device", "dns1": "1.1.1.1", "dns2": "8.8.8.8",
+        "extension": ["retained", 17],
+    }
+    client, _ = _AllowQuicVlessClient(source)
+    artifacts = _ReplaceAmneziaXrayClient(NativeConnection(profile), source, client, qr=qr)
+    encoded = artifacts[0].content.strip().removeprefix(b"vpn://")
+    compressed = base64.urlsafe_b64decode(encoded + b"=" * (-len(encoded) % 4))
+    derived = json.loads(zlib.decompress(compressed[4:]))
+
+    assert derived["containers"][0]["xray"]["last_config"].encode() == client
+
+    derived["containers"][0]["xray"]["last_config"] = source.decode()
+
+    assert derived == profile, "Derived native profile changed original metadata or DNS"
+    assert bool(artifacts[1:]) is qr
+
+
+@pytest.mark.parametrize("case", [
+    "prefix", "base64", "padding", "zero-size", "wrong-size", "oversized", "truncated",
+    "trailing-stream", "expansion", "json", "nested-json",
+])
+def test_DerivedNativeProfileRejectsMalformedCompressionPrivately(case: str) -> None:
+    """Bound decompression and reject incomplete, concatenated or noncanonical private envelopes."""
+
+    raw = b'{"fixture":"fixture-secret"}'
+    size = len(raw)
+    stream = zlib.compress(raw)
+
+    if case == "zero-size":
+        size = 0
+
+    elif case == "wrong-size":
+        size += 1
+
+    elif case == "oversized":
+        size = 1048577
+
+    elif case == "truncated":
+        stream = stream[:-2]
+
+    elif case == "trailing-stream":
+        stream += zlib.compress(b"fixture-secret")
+
+    elif case == "expansion":
+        stream = zlib.compress(b"x" * 1048577)
+
+    elif case in {"json", "nested-json"}:
+        raw = b"fixture-secret" if case == "json" else b"[" * 2000 + b"0" + b"]" * 2000
+        size, stream = len(raw), zlib.compress(raw)
+
+    connection = b"vpn://" + base64.urlsafe_b64encode(size.to_bytes(4, "big") + stream).rstrip(b"=")
+
+    if case == "prefix":
+        connection = connection.removeprefix(b"vpn://")
+
+    elif case == "base64":
+        connection = b"vpn://!fixture-secret"
+
+    elif case == "padding":
+        connection += b"="
+
+    with pytest.raises(VpnError, match="invalid or inconsistent") as caught:
+        _ReplaceAmneziaXrayClient(connection, b"fixture-secret", b"replacement")
+
+    assert "fixture-secret" not in str(caught.value)
+
+
+@pytest.mark.parametrize("profile", [
+    None, [], {}, {"defaultContainer": "amnezia-awg", "containers": []},
+    {"defaultContainer": "amnezia-xray", "containers": []},
+    {"defaultContainer": "amnezia-xray", "containers": [None]},
+    {"defaultContainer": "amnezia-xray", "containers": [{"container": "amnezia-xray", "xray": None}]},
+    {"defaultContainer": "amnezia-xray", "containers": [{"container": "amnezia-xray", "xray": {
+        "isThirdPartyConfig": False, "last_config": "fixture-secret",
+    }}]},
+    {"defaultContainer": "amnezia-xray", "containers": [{"container": "amnezia-xray", "xray": {
+        "isThirdPartyConfig": True, "last_config": "different-client",
+    }}]},
+])
+def test_DerivedNativeProfileRejectsUnsupportedOrInconsistentSource(profile: object) -> None:
+    """Refuse unsupported envelopes and a native policy that differs from verified client JSON."""
+
+    with pytest.raises(VpnError, match="invalid or inconsistent"):
+        _ReplaceAmneziaXrayClient(NativeConnection(profile), b"fixture-secret", b"replacement")
+
+
 @pytest.mark.parametrize("transform", [_AllowQuicVlessClient, _FragmentVlessClient])
 @pytest.mark.parametrize("path,value", [
     ((), []),
@@ -318,7 +422,7 @@ def test_RealPinnedXrayAcceptsDerivedClientSyntax(
 
     profile = VpnProfile(
         StackIdentity("example", "vpn", "yandex-cloud", "example-folder", "example-owner"),
-        (VpnDevice("phone"),), VpnRoutes(),
+        (VpnDevice("phone"),), VpnRoutes("full", ("0.0.0.0/0",), ("1.1.1.1",), "disabled"),
         (VpnListener("vless-reality", "tcp", 443, ("0.0.0.0/0",)),),
     )
     settings = VlessRealitySettings("www.example.org", "www.example.org")

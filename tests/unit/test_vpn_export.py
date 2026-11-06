@@ -401,6 +401,29 @@ def test_DerivedVlessExportPreservesSourceAndNativePolicy(
 
 
 @pytest.mark.parametrize("tlsFragment,allowQuic", [(True, False), (False, True), (True, True)])
+def test_DerivedExportPreservesPreparedDnsAfterDesiredConfigurationDrifts(
+    tmp_path: Path, tlsFragment: bool, allowQuic: bool,
+) -> None:
+    """Keep the prepared native policy even when current desired DNS differs from the device."""
+
+    project = Deployed(tmp_path)
+    source = project.Artifacts / "device-laptop-vless-reality"
+    _, original = Decode((source / "amnezia.vpn").read_bytes())
+    project = replace(project, vpn=replace(project.vpn, routes=replace(
+        project.vpn.routes, dnsServers=("9.9.9.9",),
+    )))
+    before = Snapshot(project.root)
+    report = ExportVpnDevice(project, "laptop", "vless-reality", tmp_path / "derived",
+                             tlsFragment=tlsFragment, allowQuic=allowQuic)
+    destination = Path(report.clientExports[0])
+    _, profile = Decode((destination / "amnezia.vpn").read_bytes())
+    profile["containers"][0]["xray"]["last_config"] = original["containers"][0]["xray"]["last_config"]  # type: ignore[index]
+
+    assert profile == original, "Derived export changed prepared native metadata or DNS"
+    assert Snapshot(project.root) == before, "Configuration drift export rewrote the source"
+
+
+@pytest.mark.parametrize("tlsFragment,allowQuic", [(True, False), (False, True), (True, True)])
 def test_ChangingTransportOptionsLeavesAnExistingExportIntact(
     tmp_path: Path, tlsFragment: bool, allowQuic: bool,
 ) -> None:

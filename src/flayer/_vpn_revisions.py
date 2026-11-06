@@ -10,6 +10,7 @@ import stat
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from flayer._vpn_creation import (
@@ -22,6 +23,7 @@ from flayer._vpn_creation import (
     _Json,
 )
 from flayer._vpn_peer_transport import ValidateBundle
+from flayer._vpn_protocol_sources import ProtocolSource, ReadSource
 from flayer.core.contracts import _WireDict
 from flayer.guest import PrivatePath, ReadPrivate, WritePrivate
 from flayer.profiles.artifacts import (
@@ -36,6 +38,61 @@ from flayer.vpn_project import SelectedVpnProject
 _HASH = re.compile(r"[0-9a-f]{64}\Z")
 _REQUEST_FILES = ("material.json", "intent.sha256", "server.conf", "deployment.json", "install.py", "request.json")
 MAX_PEER_REVISIONS = 4096
+
+
+@dataclass(frozen=True, slots=True)
+class PeerSegment:
+    """An epoch's retained starting projection; its full digest confines the separate mutable peer head."""
+
+    genesis: str
+    sources: tuple[ProtocolSource, ...]
+    activeProtocols: tuple[str, ...]
+    staticFingerprint: str
+    receipt: str
+    history: str
+
+    def __post_init__(self) -> None:
+        """Keep segment metadata closed, bounded and independent from private payloads or caller paths."""
+
+        if (type(self) is not PeerSegment or type(self.sources) is not tuple or not 1 <= len(self.sources) <= 3
+                or any(type(source) is not ProtocolSource for source in self.sources)
+                or type(self.activeProtocols) is not tuple or any(type(value) is not str for value in self.activeProtocols)
+                or any(type(value) is not str or _HASH.fullmatch(value) is None
+                       for value in (self.genesis, self.staticFingerprint, self.history))
+                or type(self.receipt) is not str or self.receipt != "" and _HASH.fullmatch(self.receipt) is None):
+            raise VpnError("Peer segment requires exact bounded projection and authority hashes")
+
+        for source in self.sources:
+            source.Record()
+
+        protocols = tuple(source.pin.protocol for source in self.sources)
+
+        if (len(set(protocols)) != len(protocols) or len(set(self.activeProtocols)) != len(self.activeProtocols)
+                or self.activeProtocols != tuple(protocol for protocol in protocols if protocol in self.activeProtocols)
+                or any(source.identity != self.sources[0].identity for source in self.sources)
+                or bool(self.receipt) != ("wireguard" in self.activeProtocols)):
+            raise VpnError("Peer segment selection, ownership or active WireGuard receipt is inconsistent")
+
+
+def _Directory(project: SelectedVpnProject, segment: PeerSegment | None) -> Path:
+    """Resolve only the original metadata root or a complete epoch digest below its fixed private directory."""
+
+    if segment is None:
+        return project.root
+
+    if type(segment) is not PeerSegment or any(source.identity != project.vpn.identity for source in segment.sources):
+        raise VpnError("Peer segment cannot select another project's metadata")
+
+    PrivatePath(project.root, directory=True)
+    parent = project.root / "protocol-epochs"
+    PrivatePath(parent, directory=True)
+    directory = parent / segment.genesis
+    PrivatePath(directory, directory=True)
+
+    if {path.name for path in directory.iterdir()} - {"wireguard-head.json", "wireguard-pending.json", ".wireguard-head.json.new", ".wireguard-pending.json.new"}:
+        raise VpnError("Peer segment contains unknown metadata files")
+
+    return directory
 
 
 def Digest(content: bytes) -> str:
@@ -104,14 +161,15 @@ def ProjectLock(project: SelectedVpnProject, *, readOnly: bool) -> Iterator[None
             os.close(descriptor)
 
 
-def AtomicRecord(project: SelectedVpnProject, filename: str, data: dict[str, Any] | None) -> None:
+def AtomicRecord(project: SelectedVpnProject, filename: str, data: dict[str, Any] | None, *, segment: PeerSegment | None = None) -> None:
     """Publish one fixed private metadata file durably while the complete project lock is held."""
 
     if filename not in {"wireguard-head.json", "wireguard-pending.json"}:
         raise VpnError("Unsupported peer metadata path")
 
-    path = project.root / filename
-    temporary = project.root / ("." + filename + ".new")
+    directory = _Directory(project, segment)
+    path = directory / filename
+    temporary = directory / ("." + filename + ".new")
 
     if path.exists() or path.is_symlink():
         ReadPrivate(path)
@@ -154,7 +212,7 @@ def AtomicRecord(project: SelectedVpnProject, filename: str, data: dict[str, Any
 
         os.replace(temporary, path)
 
-    descriptor = os.open(project.root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
 
     try:
         os.fsync(descriptor)
@@ -228,18 +286,22 @@ class RevisionState:
     lastRecord: dict[str, Any] | None = field(repr=False)
     activeRecord: dict[str, Any] | None = field(repr=False)
     recordCount: int
+    segment: PeerSegment | None = None
+    artifactNames: frozenset[str] = field(default_factory=frozenset, repr=False)
 
     def ValidateCurrent(self, project: SelectedVpnProject, *, peerChange: bool = False) -> None:
         """Allow only an explicitly planned WireGuard peer projection delta, preserving every other intent field."""
 
-        if (StaticFingerprint(project) != self.baseline.staticFingerprint
+        static = self.segment.staticFingerprint if self.segment is not None else self.baseline.staticFingerprint
+
+        if (StaticFingerprint(project) != static
                 or tuple(item.protocol for item in project.protocolSelections) != tuple(item.protocol for item in self.pins)
                 or any(project.TransportFingerprint(pin.protocol) != pin.intentFingerprint
                        for pin in self.pins if not peerChange or pin.protocol != "wireguard")):
             raise VpnError("Selected intent differs from its effective revision; use an explicit peer/protocol transition")
 
 
-def _CompletionRecord(project: SelectedVpnProject, raw: bytes, origin: str) -> dict[str, Any]:
+def _CompletionRecord(project: SelectedVpnProject, raw: bytes, origin: str, *, genesis: str | None = None) -> dict[str, Any]:
     """Validate one complete immutable completion independently of whether its head was published."""
 
     record = _Decode(raw)
@@ -276,13 +338,13 @@ def _CompletionRecord(project: SelectedVpnProject, raw: bytes, origin: str) -> d
     _Pin(record["desired_pin"])
     current = _Pointer(record["parent"], project)
 
-    if record["previous_head_sha256"] != (Digest(_Json(current)) if current is not None else origin):
+    if record["previous_head_sha256"] != (Digest(_Json(current)) if current is not None else genesis or origin):
         raise VpnError("Peer commit parent differs from its original head")
 
     return record
 
 
-def ExistingCompletion(project: SelectedVpnProject, pending: dict[str, Any]) -> dict[str, Any] | None:
+def ExistingCompletion(project: SelectedVpnProject, pending: dict[str, Any], *, segment: PeerSegment | None = None) -> dict[str, Any] | None:
     """Read an exact manifest-owned pending completion even before its head pointer was published."""
 
     if (not isinstance(pending.get("request_name"), str)
@@ -301,7 +363,7 @@ def ExistingCompletion(project: SelectedVpnProject, pending: dict[str, Any]) -> 
         raise VpnError("Pending peer completion has unknown or missing immutable files")
 
     raw = ReadOwnedArtifactFile(directory / "record.json", project.vpn.identity, kind="server", name=name)
-    record = _CompletionRecord(project, raw, pending["creation_sha256"])
+    record = _CompletionRecord(project, raw, pending["creation_sha256"], genesis=segment.genesis if segment is not None else None)
 
     if ({key: record[key] for key in pending if key != "schema_version"}
             != {key: value for key, value in pending.items() if key != "schema_version"}):
@@ -313,9 +375,34 @@ def ExistingCompletion(project: SelectedVpnProject, pending: dict[str, Any]) -> 
 def LoadRevisions(project: SelectedVpnProject) -> RevisionState:
     """Verify the complete nonsecret commit chain without depending on private client key availability."""
 
+    for filename in ("protocol-head.json", ".protocol-head.json.new", "protocol-pending.json", ".protocol-pending.json.new", "protocol-epochs"):
+        path = project.root / filename
+
+        if path.exists() or path.is_symlink():
+            raise VpnError("Protocol epoch metadata requires the integrated protocol workflow; no legacy peer head was adopted")
+
     baseline = LoadCreationBaseline(project)
+    state = LoadPeerSegment(project, baseline)
+    actualNames = {path.name.removeprefix("server-") for path in project.Artifacts.iterdir()
+                   if path.name.startswith(("server-" + project.vpn.identity.stack + "-wp-", "server-" + project.vpn.identity.stack + "-wc-"))}
+
+    if actualNames - state.artifactNames:
+        raise VpnError("Unrecorded peer revision artifacts require explicit inspection; a missing head is never adopted")
+
+    return state
+
+
+def LoadPeerSegment(project: SelectedVpnProject, baseline: CreationBaseline, segment: PeerSegment | None = None) -> RevisionState:
+    """Verify one bounded peer segment against its explicit genesis, retaining its global immutable artifact names."""
+
     origin = BundleDigest(baseline.bundle)
-    path = project.root / "wireguard-head.json"
+    genesis = segment.genesis if segment is not None else origin
+
+    if (baseline.plan.identity != project.vpn.identity or segment is not None and genesis == origin):
+        raise VpnError("Peer segment must preserve its original creation owner and use a distinct epoch genesis")
+
+    directory = _Directory(project, segment)
+    path = directory / "wireguard-head.json"
     rawHead = ReadPrivate(path) if path.exists() or path.is_symlink() else None
     head = _Pointer(_Decode(rawHead), project) if rawHead is not None else None
 
@@ -333,13 +420,14 @@ def LoadRevisions(project: SelectedVpnProject) -> RevisionState:
         visited.add(current["name"])
         bundle = _ReadBundle(project, current["name"], current["sha256"], ("record.json",))
         raw = bundle.files[0].content
-        record = _CompletionRecord(project, raw, origin)
+        record = _CompletionRecord(project, raw, origin, genesis=genesis)
         current = _Pointer(record["parent"], project)
 
         records.append(record)
 
-    pin = next((item for item in baseline.protocols if item.protocol == "wireguard"), None)
-    receipt, history = "", InitialHistory(project)
+    originalPins = tuple(source.pin for source in segment.sources) if segment is not None else baseline.protocols
+    pin = next((item for item in originalPins if item.protocol == "wireguard"), None)
+    receipt, history = (segment.receipt, segment.history) if segment is not None else ("", InitialHistory(project))
     activeRecord = None
 
     for record in reversed(records):
@@ -361,14 +449,14 @@ def LoadRevisions(project: SelectedVpnProject) -> RevisionState:
         receipt, history = record["receipt_sha256"], record["history_sha256"]
 
     expectedNames = {item["request_name"] for item in records} | visited
-    pending = Pending(project)
+    pending = Pending(project, segment=segment)
 
     if pending is not None:
         expectedNames.add(pending["request_name"])
         expectedNames.add(project.vpn.identity.stack + "-wc-" + pending["request_name"].rsplit("-", 1)[1])
 
         if (pending["creation_sha256"] != origin
-                or pending["previous_head_sha256"] != (Digest(_Json(pending["parent"])) if pending["parent"] is not None else origin)
+                or pending["previous_head_sha256"] != (Digest(_Json(pending["parent"])) if pending["parent"] is not None else genesis)
                 or head != pending["parent"] and (not records or records[0]["request_name"] != pending["request_name"]
                                                   or {key: records[0][key] for key in pending if key != "schema_version"}
                                                   != {key: value for key, value in pending.items() if key != "schema_version"})
@@ -376,16 +464,13 @@ def LoadRevisions(project: SelectedVpnProject) -> RevisionState:
                                                    or receipt and pending["previous_receipt_sha256"] != receipt)):
             raise VpnError("Pending peer operation does not continue its exact original controller and guest state")
 
-    actualNames = {path.name.removeprefix("server-") for path in project.Artifacts.iterdir()
-                   if path.name.startswith(("server-" + project.vpn.identity.stack + "-wp-", "server-" + project.vpn.identity.stack + "-wc-"))}
+    if segment is not None and "wireguard" not in segment.activeProtocols and (records or pending is not None):
+        raise VpnError("An inactive WireGuard segment cannot contain a peer operation")
 
-    if actualNames - expectedNames:
-        raise VpnError("Unrecorded peer revision artifacts require explicit inspection; a missing head is never adopted")
+    pins = tuple(pin if item.protocol == "wireguard" and pin is not None else item for item in originalPins)
 
-    pins = tuple(pin if item.protocol == "wireguard" and pin is not None else item for item in baseline.protocols)
-
-    return RevisionState(baseline, pins, head, Digest(_Json(head)) if head is not None else origin, receipt, history,
-                         records[0] if records else None, activeRecord, len(records))
+    return RevisionState(baseline, pins, head, Digest(_Json(head)) if head is not None else genesis, receipt, history,
+                         records[0] if records else None, activeRecord, len(records), segment, frozenset(expectedNames))
 
 
 def RequireCapacity(state: RevisionState) -> None:
@@ -395,13 +480,14 @@ def RequireCapacity(state: RevisionState) -> None:
         raise VpnError("Peer revision history is at capacity; retain the current project and do not activate another peer change")
 
 
-def Pending(project: SelectedVpnProject) -> dict[str, Any] | None:
+def Pending(project: SelectedVpnProject, *, segment: PeerSegment | None = None) -> dict[str, Any] | None:
     """Read only a complete owner-bound metadata journal, with original material kept in immutable bundles."""
 
-    path = project.root / "wireguard-pending.json"
+    directory = _Directory(project, segment)
+    path = directory / "wireguard-pending.json"
 
     if not path.exists() and not path.is_symlink():
-        temporary = project.root / ".wireguard-pending.json.new"
+        temporary = directory / ".wireguard-pending.json.new"
 
         if not temporary.exists() and not temporary.is_symlink():
             return None
@@ -465,10 +551,12 @@ def ValidateRequest(project: SelectedVpnProject, pending: dict[str, Any], pin: P
 def ReadEffectiveBundle(project: SelectedVpnProject, state: RevisionState, pin: ProtocolPin, *, material: bool = False) -> ArtifactBundle:
     """Resolve only the last committed transport revision while preserving all unrelated original pins."""
 
-    from flayer._vpn_protocol_sources import ProtocolSource, ReadSource
-
     if pin.protocol != "wireguard" or state.activeRecord is None:
-        source = ProtocolSource(project.vpn.identity, pin)
+        source = (next((source for source in state.segment.sources if source.pin == pin), None) if state.segment is not None
+                  else ProtocolSource(project.vpn.identity, pin))
+
+        if source is None:
+            raise VpnError("Effective protocol pin has no retained source in its epoch")
 
     else:
         source = ProtocolSource(project.vpn.identity, pin, "peer", state.activeRecord["request_name"], state.activeRecord["request_sha256"])
@@ -476,10 +564,12 @@ def ReadEffectiveBundle(project: SelectedVpnProject, state: RevisionState, pin: 
     return ReadSource(project, source, material=material)
 
 
-def PublishRequest(project: SelectedVpnProject, pending: dict[str, Any], material: ArtifactBundle, server: ArtifactBundle) -> str:
+def PublishRequest(
+    project: SelectedVpnProject, pending: dict[str, Any], material: ArtifactBundle, server: ArtifactBundle, *, segment: PeerSegment | None = None,
+) -> str:
     """Persist all newly retained peer bytes before any remote action, keeping original bundles unchanged."""
 
-    if (Pending(project) != pending or pending["request_sha256"] != ""
+    if (Pending(project, segment=segment) != pending or pending["request_sha256"] != ""
             or material.identity != project.vpn.identity or material.kind != "server"
             or material.name != project.vpn.identity.stack + "-wireguard-credentials"
             or {item.name for item in material.files} != {"material.json", "intent.sha256"}
@@ -492,7 +582,12 @@ def PublishRequest(project: SelectedVpnProject, pending: dict[str, Any], materia
     if server.identity != project.vpn.identity:
         raise VpnError("Peer server belongs to a different stack")
 
-    RequireCapacity(LoadRevisions(project))
+    state = LoadRevisions(project) if segment is None else LoadPeerSegment(project, LoadCreationBaseline(project), segment)
+    RequireCapacity(state)
+
+    if segment is not None and "wireguard" not in segment.activeProtocols:
+        raise VpnError("An inactive WireGuard segment cannot stage a peer change")
+
     metadata = {**pending, "request_sha256": ""}
     bundle = ArtifactBundle(project.vpn.identity, "server", pending["request_name"],
                             material.files + server.files + (Artifact("request.json", _Json(metadata), False),))
@@ -556,7 +651,7 @@ def Commit(
     record.update(schema_version=2, desired_pin=_WireDict(pin), receipt_sha256=facts["receipt_sha256"], history_sha256=facts["history_sha256"],
                   deployment_sha256=facts["deployment_sha256"], outcome=outcome)
 
-    existing = ExistingCompletion(project, pending)
+    existing = ExistingCompletion(project, pending, segment=state.segment)
 
     if (existing is not None and existing["schema_version"] == 1 and (outcome == "committed" or not pending["request_sha256"])
             and existing == {**record, "schema_version": 1}):
@@ -566,10 +661,11 @@ def Commit(
     bundle = ArtifactBundle(project.vpn.identity, "server", name, (Artifact("record.json", _Json(record), False),))
     directory = project.Artifacts / ("server-" + name)
     pointer = {"name": name, "sha256": BundleDigest(bundle)}
-    actual = LoadRevisions(project)
+    actual = LoadRevisions(project) if state.segment is None else LoadPeerSegment(project, state.baseline, state.segment)
+    currentPending = Pending(project, segment=state.segment)
 
     if (actual.head != state.head or state.head not in (pending["parent"], pointer)
-            or Pending(project) != pending and (Pending(project) is not None or actual.head != pointer or actual.lastRecord != record)):
+            or currentPending != pending and (currentPending is not None or actual.head != pointer or actual.lastRecord != record)):
         raise VpnError("Peer commit head or journal changed; retain the pending operation")
 
     if actual.head != pointer:
@@ -581,7 +677,8 @@ def Commit(
     else:
         WriteArtifactBundle(project.Artifacts, bundle)
 
-    AtomicRecord(project, "wireguard-head.json", pointer)
+    options = {"segment": state.segment} if state.segment is not None else {}
+    AtomicRecord(project, "wireguard-head.json", pointer, **options)
 
-    if Pending(project) is not None:
-        AtomicRecord(project, "wireguard-pending.json", None)
+    if Pending(project, segment=state.segment) is not None:
+        AtomicRecord(project, "wireguard-pending.json", None, **options)

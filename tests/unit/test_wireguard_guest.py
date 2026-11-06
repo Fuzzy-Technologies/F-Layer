@@ -129,6 +129,45 @@ def test_ReleasedEvidenceIsBoundToExactResponseAndVersion(monkeypatch: pytest.Mo
                         "fixed_version": "6.8.0-999.999", "checked_at": 1234567890}
 
 
+@pytest.mark.parametrize("signature", ["Ubuntu 6.8.0-999.998-generic 6.8.12", "Ubuntu 6.8.0-998.999-generic 6.8.12",
+                                       "Ubuntu 6.8.0-999.999-aws 6.8.12", "6.8.0-999-generic", ""])
+def test_SameAbiOrPackageInstallationCannotReplaceExecutingBuildProof(signature: str) -> None:
+    """A same-ABI upload revision still needs the corresponding running kernel before admission."""
+
+    with pytest.raises(guest.GuestError, match="Executing Ubuntu build"):
+        guest._KernelSignature(signature, "6.8.0-999.999")
+
+    guest._KernelSignature("Ubuntu 6.8.0-999.999-generic 6.8.12", "6.8.0-999.999")
+
+
+@pytest.mark.parametrize("fault", ["target", "hash", "options", "missing", "unbounded"])
+def test_BuildProvenanceRequiresExactBoundedToolchainEvidence(fault: str) -> None:
+    """Do not accept a provenance record with substituted build options or absent compiler identity."""
+
+    record = {"compiler_version": "synthetic gcc", "compiler_target": "x86_64-linux-gnu",
+              "make_version": "GNU Make fixture", "libc_headers_version": "1.0", "kernel_headers_version": "1.0",
+              "compiler_sha256": "e" * 64, "make_sha256": "f" * 64, "options": list(guest.BUILD_OPTIONS)}
+    guest._BuildRecord(record)
+
+    if fault == "target":
+        record["compiler_target"] = "foreign-target"
+
+    elif fault == "hash":
+        record["compiler_sha256"] = "invalid"
+
+    elif fault == "options":
+        record["options"] = ["unknown-option"]
+
+    elif fault == "missing":
+        record.pop("make_version")
+
+    else:
+        record["compiler_version"] = "private-value" * 100
+
+    with pytest.raises(guest.GuestError, match="provenance is invalid"):
+        guest._BuildRecord(record)
+
+
 @pytest.mark.parametrize("content", [b'{"a":1,"a":2}', b'{"a":{"x":1,"x":2}}', b"", b"[", b"x" * 1048577],
                          ids=["duplicate", "nested-duplicate", "empty", "syntax", "oversize"])
 def test_ManagedJsonRejectsDuplicateAndUnboundedDataWithoutEcho(content: bytes) -> None:

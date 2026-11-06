@@ -61,19 +61,30 @@ At implementation time Ubuntu lists the noble fix as pending; its target version
 is not proof of a released fix. The installer never upgrades/reboots the kernel or
 applies a host-wide mitigation. Such maintenance requires a separate plan.
 
-Installed receipts cache that named-CVE evidence and exact image/module hashes.
+Installed receipts cache that named-CVE evidence, the complete executing Ubuntu
+`/proc/version_signature`, installed image/modules revision, available module's
+source checksum and disk-artifact hash. A loaded module must expose the same
+source checksum; after interface creation this loaded identity is mandatory
+before link-up. Missing or mismatched build/source identities fail closed.
+These are executing-build/source facts and a separate disk hash, not hashes of
+the running image or loaded memory. See [Ubuntu kernel identity](https://ubuntu.com/kernel)
+and the [kernel module ABI](https://docs.kernel.org/admin-guide/abi-stable.html).
 Ordinary status, repeat and boot checks compare current kernel facts against the
 receipt without downloading metadata or reinstalling tools. A changed kernel
 requires explicit policy maintenance. This assesses one named baseline, not all
 kernel security. No status claims end-to-end traffic or media playback.
 
 Tools are built privately from the checksum-pinned upstream
-`wireguard-tools 1.0.20260223` archive. Bounded extraction rejects links and unsafe
-paths, and the built executable must report the pinned version and Linux amd64
+`wireguard-tools 1.0.20260223` archive. Bounded extraction never creates links and rejects unsafe
+paths; it skips only the pinned archive's unused, exactly identified wg-quick link.
+The built executable must report the pinned version and Linux amd64
 format. The private service directory retains the source license. No package
 installation, system binary replacement or userspace fallback is attempted.
 Build prerequisites (`make`, compiler, libc headers), `ip`, `ss`, `nft`, `unshare`,
 `modinfo`, `dpkg-query`, Python and systemd must already be available on the guest.
+The receipt records compiler/make executable hashes and versions, target, libc/kernel
+headers package versions and exact fixed upstream build options. The toolchain
+must remain unchanged during the build; ordinary status does not rebuild tools.
 
 The full owner digest determines the private directory; the stable service,
 interface and nft table use a short owner prefix plus full operation markers.
@@ -92,7 +103,8 @@ must already be disabled. Cloud and guest input ingress are separate integration
 work; running a service alone does not prove that its UDP listener is reachable.
 
 A complete private journal and staged files are published together before any
-service/interface activation. Installation failure removes only proved owned
+service/interface activation. Files and directory boundaries are fsynced before
+activation and before retiring cleanup evidence. Installation failure removes only proved owned
 objects. Removal/recovery require explicit mutation consent and the exact old
 receipt SHA256. The journal retains nonsecret file hashes outside the tree being
 deleted so interrupted partial cleanup can resume. Foreign or drifted state is

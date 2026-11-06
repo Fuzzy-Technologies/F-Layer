@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:707b6ff1d690eefc2d9e02c162691a2c06873497defd151fa818dbc2c472e6f9"
-reviewedTranslationHash = "sha256:b63c389dcb23700d43b146bf1699cc89ea992c83b8d309a16e04aaafdd1a088c"
+sourceHash = "sha256:18cf8a56272a48ae55b7b7a17733ae55299fa346f272b15a432be05adc37409f"
+reviewedTranslationHash = "sha256:3908963831b9168bff8b202f68967992868aadc451aad6a8a17315ede2e6ada6"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T14:23:05.231890Z"
+reviewedAt = "2026-11-06T14:36:37.779531Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -58,15 +58,23 @@ AmneziaVPN 原生导出仍属于任务 #129。
 均阻止激活。实现时 Ubuntu 的 noble 修复仍为 pending；目标版本不能证明修复已发布。
 安装器不会升级/重启内核，也不会应用整机缓解措施；此类维护需要独立计划。
 
-已安装回执缓存该特定 CVE 的证据及精确镜像/模块哈希。常规状态、重复检查和启动检查
+已安装回执缓存该特定 CVE 的证据、完整的运行 Ubuntu `/proc/version_signature`、
+已安装镜像/模块包修订、可用模块的源码校验和及磁盘制品哈希。
+已加载模块必须提供相同源码校验和；创建接口后，在 link-up 前必须取得该加载身份。
+构建/源码身份缺失或不匹配均拒绝操作。这些是运行构建/源码事实和独立磁盘哈希，
+并非运行镜像或已加载内存的哈希。参见 [Ubuntu 内核身份](https://ubuntu.com/kernel)
+及[内核模块 ABI](https://docs.kernel.org/admin-guide/abi-stable.html)。常规状态、重复检查和启动检查
 只将当前内核事实与回执比较，不重新下载元数据或安装 tools。内核变化需要显式政策维护。
 此检查仅评估一个指定 CVE 基线，不代表全部内核安全；任何状态都不声称完成端到端流量或媒体验收。
 
 Tools 从校验和固定的上游 `wireguard-tools 1.0.20260223` 归档私下构建。
-有界解包拒绝链接及不安全路径，生成的可执行文件须报告固定版本并为 Linux amd64 格式。
+有界解包不创建链接并拒绝不安全路径，仅跳过固定归档内精确识别且未使用的 wg-quick 链接。
+生成的可执行文件须报告固定版本并为 Linux amd64 格式。
 私有服务目录保留源码许可证。不安装软件包、不替换系统二进制，也不使用 userspace 回退。
 来宾必须已具备构建依赖（`make`、编译器、libc 头文件）、`ip`、`ss`、`nft`、
 `unshare`、`modinfo`、`dpkg-query`、Python 和 systemd。
+回执记录编译器/make 可执行文件的哈希与版本、目标、libc/内核头文件包版本，
+以及精确固定的上游构建参数。构建期间工具链不得变化，常规状态不会重新构建 tools。
 
 完整所有者摘要确定私有目录；稳定服务、接口及 nft 表使用短所有者前缀和完整操作标记。
 私有目录/文件要求精确所有权及权限。检查拒绝符号/硬链接、额外文件、
@@ -79,7 +87,9 @@ Tools 从校验和固定的上游 `wireguard-tools 1.0.20260223` 归档私下构
 也不重置其他隧道使用的 IPv4 转发。来宾 IPv6 必须事先禁用。
 云及来宾入站规则属于独立集成工作；服务运行本身不能证明 UDP 监听可达。
 
-在任何服务/接口激活前，完整私有日志与暂存文件一起发布。安装失败只移除已证明属于本次安装的对象。
+在任何服务/接口激活前，完整私有日志与暂存文件一起发布。
+激活前和删除清理证据前，文件及目录边界均通过 fsync 持久化。
+安装失败只移除已证明属于本次安装的对象。
 删除/恢复要求显式变更同意及精确旧回执 SHA256。日志在待删除目录树外保留非秘密文件哈希，
 使中断的部分清理可继续。外来或漂移状态保留以供诊断。
 已提交的健康服务不会因日志收尾失败被回滚。常规安装拒绝替换、对等端变更及密钥轮换，

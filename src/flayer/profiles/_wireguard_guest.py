@@ -31,6 +31,11 @@ KERNEL_CVE_URL = "https://ubuntu.com/security/cves/CVE-2026-98432.json"
 BASE = Path("/opt/flayer/wireguard")
 SYSTEMD = Path("/etc/systemd/system")
 LOCK = Path("/run/flayer-wireguard.lock")
+KERNEL_SIGNATURE = Path("/proc/version_signature")
+MODULES = Path("/lib/modules")
+MODULE_STATE = Path("/sys/module/wireguard")
+BUILD_OPTIONS = ("WIREGUARD_TOOLS_VERSION=" + TOOLS_VERSION, "CC=/usr/bin/cc", "PLATFORM=linux",
+                 "PKG_CONFIG=/usr/bin/false", "WITH_WGQUICK=no", "WITH_SYSTEMDUNITS=no", "WITH_BASHCOMPLETION=no")
 _ROOT_UID = 0
 _NAME = re.compile(r"[a-z][a-z0-9-]{0,62}\Z")
 _HASH = re.compile(r"[0-9a-f]{64}\Z")
@@ -103,6 +108,17 @@ def _Directory(path: Path, *, create: bool = False, private: bool = False) -> No
     if any(item.is_symlink() for item in (path, *path.parents)):
         raise GuestError("Managed directory contains a symbolic link")
 
+    managed = {BASE, BASE.parent, BASE.parent.parent, SYSTEMD, SYSTEMD.parent, SYSTEMD.parent.parent}
+
+    for parent in path.parents:
+        if parent in managed:
+            info = parent.stat()
+
+            if not stat.S_ISDIR(info.st_mode) or info.st_uid != _ROOT_UID or info.st_mode & 0o022:
+                raise GuestError("Managed ancestor ownership or permissions are unsafe")
+
+    existed = path.exists()
+
     if create:
         path.mkdir(mode=0o700 if private else 0o755, exist_ok=True)
 
@@ -111,6 +127,9 @@ def _Directory(path: Path, *, create: bool = False, private: bool = False) -> No
     if (not stat.S_ISDIR(info.st_mode) or info.st_uid != _ROOT_UID or info.st_mode & 0o022
             or private and stat.S_IMODE(info.st_mode) != 0o700):
         raise GuestError("Managed directory ownership or permissions are unsafe")
+
+    if create and not existed:
+        _SyncDirectory(path.parent)
 
 
 def _Read(path: Path, *, limit: int = 1048576, mode: int = 0o600) -> bytes:
@@ -137,6 +156,28 @@ def _Read(path: Path, *, limit: int = 1048576, mode: int = 0o600) -> bytes:
         os.close(descriptor)
 
 
+def _SyncDirectory(path: Path) -> None:
+    """Persist a directory boundary before exposing changes or retiring recovery evidence."""
+
+    descriptor = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+
+    try:
+        os.fsync(descriptor)
+
+    finally:
+        os.close(descriptor)
+
+
+def _Publish(source: Path, destination: Path) -> None:
+    """Durably move an already verified complete directory between owned parents."""
+
+    os.replace(source, destination)
+    _SyncDirectory(destination.parent)
+
+    if source.parent != destination.parent:
+        _SyncDirectory(source.parent)
+
+
 def _Atomic(path: Path, content: bytes, mode: int = 0o600) -> None:
     """Publish one file durably, keeping crash leftovers outside exact managed file sets."""
 
@@ -151,13 +192,7 @@ def _Atomic(path: Path, content: bytes, mode: int = 0o600) -> None:
             os.fsync(stream.fileno())
 
         os.replace(temporary, path)
-        directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
-
-        try:
-            os.fsync(directory)
-
-        finally:
-            os.close(directory)
+        _SyncDirectory(path.parent)
 
     finally:
         if os.path.exists(temporary):
@@ -226,6 +261,55 @@ def _KernelVersion(value: object) -> tuple[int, int]:
     return int(match[1]), int(match[2])
 
 
+def _KernelSignature(signature: str, packageVersion: str) -> None:
+    """Bind the complete executing Ubuntu revision, not just uname's shared ABI, to the package."""
+
+    _KernelVersion(packageVersion)
+
+    if not isinstance(signature, str):
+        raise GuestError("Executing Ubuntu build identity is invalid")
+
+    parts = signature.split()
+
+    if (len(parts) != 3 or parts[:2] != ["Ubuntu", packageVersion + "-generic"]
+            or re.fullmatch(r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}", parts[2]) is None):
+        raise GuestError("Executing Ubuntu build differs from the installed image; explicit kernel maintenance is required")
+
+
+def _SystemText(path: Path) -> str:
+    """Read bounded root-owned proc/sys evidence, whose virtual files may report zero size."""
+
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+
+    try:
+        info = os.fstat(descriptor)
+
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != _ROOT_UID or info.st_mode & 0o022:
+            raise GuestError("Kernel identity evidence has unsafe ownership")
+
+        with os.fdopen(descriptor, "rb", closefd=False) as stream:
+            content = stream.read(4097)
+
+        if not 1 <= len(content) <= 4096:
+            raise GuestError("Kernel identity evidence is missing or unbounded")
+
+        return content.decode("ascii").strip()
+
+    finally:
+        os.close(descriptor)
+
+
+def _LoadedSource(sourceVersion: str, *, required: bool = False) -> None:
+    """Allow an unloaded module during admission, but require matching loaded source before traffic."""
+
+    if MODULE_STATE.exists() or MODULE_STATE.is_symlink():
+        if MODULE_STATE.is_symlink() or _SystemText(MODULE_STATE / "srcversion") != sourceVersion:
+            raise GuestError("Loaded WireGuard source identity differs from the available module")
+
+    elif required:
+        raise GuestError("Executing WireGuard module source identity is unavailable")
+
+
 def _VendorEvidence(content: bytes, packageVersion: str) -> dict[str, object]:
     """Require Ubuntu's released fix for noble/linux; a pending target is never a patched baseline."""
 
@@ -277,9 +361,16 @@ def _KernelFacts() -> dict[str, str]:
     if kernelRelease != f"6.8.0-{abi}-generic":
         raise GuestError("Running kernel and installed package identity disagree")
 
+    signature = _SystemText(KERNEL_SIGNATURE)
+    _KernelSignature(signature, packageVersion)
+    _, rawModulesVersion = _Run(["dpkg-query", "-W", "-f=${Version}", "linux-modules-" + kernelRelease])
+
+    if rawModulesVersion.decode("ascii").strip() != packageVersion:
+        raise GuestError("Kernel image and modules packages have different revisions")
+
     _, rawModule = _Run(["modinfo", "-n", "wireguard"])
     module = Path(rawModule.decode("utf-8").strip()).resolve(strict=True)
-    allowed = (Path("/lib/modules") / kernelRelease).resolve(strict=True)
+    allowed = (MODULES / kernelRelease).resolve(strict=True)
 
     if not module.is_relative_to(allowed):
         raise GuestError("WireGuard module is outside the running kernel package")
@@ -289,7 +380,16 @@ def _KernelFacts() -> dict[str, str]:
     if not stat.S_ISREG(info.st_mode) or info.st_uid != _ROOT_UID or info.st_mode & 0o022 or info.st_size > 8 * 1024 * 1024:
         raise GuestError("WireGuard kernel module ownership is unsafe")
 
-    return {"release": kernelRelease, "package_version": packageVersion, "module_sha256": _Digest(module.read_bytes())}
+    _, rawSource = _Run(["modinfo", "-F", "srcversion", str(module)])
+    sourceVersion = rawSource.decode("ascii").strip()
+
+    if re.fullmatch(r"[0-9A-F]{24}", sourceVersion) is None:
+        raise GuestError("Available WireGuard module has no unambiguous source identity")
+
+    _LoadedSource(sourceVersion)
+
+    return {"release": kernelRelease, "package_version": packageVersion, "signature": signature,
+            "module_sha256": _Digest(module.read_bytes()), "module_srcversion": sourceVersion}
 
 
 def _Request(stage: Path) -> tuple[dict[str, Any], bytes, bytes]:
@@ -497,10 +597,17 @@ def _BuildTools(work: Path) -> tuple[bytes, bytes]:
             expanded += member.size
             count += 1
 
+            # The pinned upstream archive contains this unused wg-quick convenience link.
+            # Verify its exact identity and skip it; never materialize or follow archive links.
+            unusedLink = member.name == prefix + "/src/wg-quick/wg" and member.issym() and member.linkname == "../wg"
+
             if (count > 2048 or member.size < 0 or expanded > 32 * 1024 * 1024 or not parts or parts[0] != prefix
                     or len(parts) > 12 or any(part in {"", ".", ".."} or "\\" in part for part in parts)
-                    or not member.isdir() and not member.isfile()):
+                    or not member.isdir() and not member.isfile() and not unusedLink):
                 raise GuestError("WireGuard source archive contains unsafe entries")
+
+            if unusedLink:
+                continue
 
             destination = work.joinpath(*parts)
 
@@ -525,7 +632,7 @@ def _BuildTools(work: Path) -> tuple[bytes, bytes]:
                     output.write(data)
 
     source = work / prefix
-    _Run(["make", "-s", "-C", str(source / "src"), "WIREGUARD_TOOLS_VERSION=" + TOOLS_VERSION, "wg"], timeout=300)
+    _Run(["make", "-s", "-C", str(source / "src"), *BUILD_OPTIONS, "wg"], timeout=300)
     binary = source / "src/wg"
     binary.chmod(0o755)
     data = _Read(binary, limit=8 * 1024 * 1024, mode=0o755)
@@ -539,6 +646,50 @@ def _BuildTools(work: Path) -> tuple[bytes, bytes]:
         raise GuestError("WireGuard tool version differs from the pin")
 
     return data, _Read(source / "COPYING")
+
+
+def _BuildRecord(value: Any) -> dict[str, Any]:
+    """Validate bounded nonsecret provenance without requiring the original toolchain to remain installed."""
+
+    labels = {"compiler_version", "compiler_target", "make_version", "libc_headers_version", "kernel_headers_version"}
+    hashes = {"compiler_sha256", "make_sha256"}
+
+    if (not isinstance(value, dict) or set(value) != labels | hashes | {"options"}
+            or value["options"] != list(BUILD_OPTIONS) or value["compiler_target"] != "x86_64-linux-gnu"
+            or any(not isinstance(value[key], str) or re.fullmatch(r"[a-zA-Z0-9 ._+():~,/-]{1,200}", value[key]) is None for key in labels)
+            or any(not isinstance(value[key], str) or _HASH.fullmatch(value[key]) is None for key in hashes)):
+        raise GuestError("WireGuard build provenance is invalid")
+
+    return value
+
+
+def _BuildFacts() -> dict[str, Any]:
+    """Bind the exact compiler/make binaries, versions, headers and fixed upstream build options."""
+
+    result: dict[str, Any] = {"options": list(BUILD_OPTIONS)}
+
+    for key, command in (
+        ("compiler_version", ["/usr/bin/cc", "--version"]),
+        ("compiler_target", ["/usr/bin/cc", "-dumpmachine"]),
+        ("make_version", ["/usr/bin/make", "--version"]),
+        ("libc_headers_version", ["dpkg-query", "-W", "-f=${Version}", "libc6-dev"]),
+        ("kernel_headers_version", ["dpkg-query", "-W", "-f=${Version}", "linux-libc-dev"]),
+    ):
+        _, raw = _Run(command)
+        lines = raw.decode("ascii").splitlines()
+        result[key] = lines[0].strip() if lines else ""
+
+    for key, path in (("compiler_sha256", Path("/usr/bin/cc")), ("make_sha256", Path("/usr/bin/make"))):
+        path = path.resolve(strict=True)
+        info = path.stat()
+
+        if (not stat.S_ISREG(info.st_mode) or info.st_uid != _ROOT_UID or info.st_mode & 0o022
+                or not 1 <= info.st_size <= 64 * 1024 * 1024):
+            raise GuestError("WireGuard build tool ownership or size is unsafe")
+
+        result[key] = _Digest(path.read_bytes())
+
+    return _BuildRecord(result)
 
 
 def _Config(config: bytes, request: dict[str, Any], binary: Path) -> tuple[str, str, dict[str, tuple[str, str]]]:
@@ -693,7 +844,7 @@ def _KernelMatches(receipt: dict[str, Any]) -> None:
 
 def _ReceiptData(receipt: Any, owner: str, *, staged: bool = False) -> dict[str, Any]:
     """Validate a nonsecret ownership record independently of crash-interrupted file cleanup."""
-    fields = {"schema_version", "owner", "nonce", "status", "files", "network_sha256", "kernel", "deployment_sha256"}
+    fields = {"schema_version", "owner", "nonce", "status", "files", "network_sha256", "kernel", "build", "deployment_sha256"}
 
     if (not isinstance(receipt, dict) or set(receipt) != fields or type(receipt["schema_version"]) is not int
             or receipt["schema_version"] != 1 or receipt["owner"] != owner
@@ -709,15 +860,21 @@ def _ReceiptData(receipt: Any, owner: str, *, staged: bool = False) -> dict[str,
 
     if (receipt["deployment_sha256"] != receipt["files"]["deployment.json"]
             or not isinstance(receipt["kernel"], dict)
-            or set(receipt["kernel"]) != {"release", "package_version", "module_sha256", "cve_id", "source_sha256", "fixed_version", "checked_at"}
+            or set(receipt["kernel"]) != {"release", "package_version", "signature", "module_sha256", "module_srcversion",
+                                         "cve_id", "source_sha256", "fixed_version", "checked_at"}
             or receipt["kernel"].get("cve_id") != KERNEL_CVE
             or type(receipt["kernel"].get("checked_at")) is not int
             or not isinstance(receipt["kernel"].get("module_sha256"), str)
             or _HASH.fullmatch(receipt["kernel"]["module_sha256"]) is None
             or not isinstance(receipt["kernel"].get("source_sha256"), str)
             or _HASH.fullmatch(receipt["kernel"]["source_sha256"]) is None
+            or not isinstance(receipt["kernel"].get("module_srcversion"), str)
+            or re.fullmatch(r"[0-9A-F]{24}", receipt["kernel"]["module_srcversion"]) is None
             or _KernelVersion(receipt["kernel"]["package_version"]) < _KernelVersion(receipt["kernel"]["fixed_version"])):
         raise GuestError("Cached WireGuard kernel-policy receipt is invalid")
+
+    _KernelSignature(receipt["kernel"]["signature"], receipt["kernel"]["package_version"])
+    _BuildRecord(receipt["build"])
 
     return receipt
 
@@ -860,7 +1017,8 @@ def _Check(root: Path, unit: Path, request: dict[str, Any], *, staged: bool = Fa
     owner = request["owner"]
     receipt = _Receipt(root, unit, owner, staged=staged)
 
-    if receipt["files"]["server.conf"] != request["config_sha256"]:
+    if (receipt["files"]["server.conf"] != request["config_sha256"]
+            or _Json(_Read(root / "deployment.json")) != request):
         raise GuestError("Prepared WireGuard configuration differs from the active receipt")
 
     _KernelMatches(receipt)
@@ -868,11 +1026,13 @@ def _Check(root: Path, unit: Path, request: dict[str, Any], *, staged: bool = Fa
     _Run(["systemctl", "is-enabled", "--quiet", _Service(owner) + ".service"])
     state = _InterfaceState(owner)
 
-    if state is None or state.get("ifalias") != _Alias(owner, receipt["nonce"]) or state.get("mtu") != request["mtu"]:
-        raise GuestError("WireGuard interface ownership or MTU differs")
+    if (state is None or state.get("ifalias") != _Alias(owner, receipt["nonce"]) or state.get("mtu") != request["mtu"]
+            or not isinstance(state.get("flags"), list) or "UP" not in state["flags"]):
+        raise GuestError("WireGuard interface ownership, MTU or active state differs")
 
     _WireGuardState(root, request)
     _AddressState(owner, request)
+    _LoadedSource(receipt["kernel"]["module_srcversion"], required=True)
 
     if _NftState(owner, receipt["nonce"]) != receipt["network_sha256"]:
         raise GuestError("WireGuard firewall differs from its owned policy")
@@ -898,11 +1058,13 @@ def _Start(root: Path, unit: Path, request: dict[str, Any]) -> None:
         raise GuestError("Owned WireGuard table has drifted")
 
     if state is not None:
-        if state.get("ifalias") != _Alias(owner, receipt["nonce"]):
-            raise GuestError("WireGuard interface has foreign ownership")
+        if (state.get("ifalias") != _Alias(owner, receipt["nonce"]) or state.get("mtu") != request["mtu"]
+                or not isinstance(state.get("flags"), list) or "UP" not in state["flags"]):
+            raise GuestError("WireGuard interface ownership or active state differs")
 
         _WireGuardState(root, request)
         _AddressState(owner, request)
+        _LoadedSource(receipt["kernel"]["module_srcversion"], required=True)
 
         if networkState != receipt["network_sha256"]:
             raise GuestError("Running WireGuard interface has incomplete firewall policy")
@@ -912,14 +1074,20 @@ def _Start(root: Path, unit: Path, request: dict[str, Any]) -> None:
     _NamespaceAvailable(owner, request, nonce=receipt["nonce"], networkSha256=receipt["network_sha256"])
     interface = _Interface(owner)
     _Run(["ip", "link", "add", "name", interface, "alias", _Alias(owner, receipt["nonce"]), "type", "wireguard"])
+    # Creating the interface may load the kernel module; verify its executing source identity before activation.
+    _KernelMatches(receipt)
+    _LoadedSource(receipt["kernel"]["module_srcversion"], required=True)
     _Run([str(root / "wg"), "syncconf", interface, str(root / "server.conf")])
     network = ipaddress.IPv4Network(request["tunnel_cidr"])
     _Run(["ip", "address", "add", f"{network.network_address + 1}/{network.prefixlen}", "dev", interface])
-    _Run(["ip", "link", "set", "dev", interface, "mtu", str(request["mtu"]), "up"])
-    _Run(["sysctl", "-q", "-w", "net.ipv4.ip_forward=1"])
-
     if networkState is None:
         _Run(["nft", "-f", str(root / "firewall.nft")])
+
+    if _NftState(owner, receipt["nonce"]) != receipt["network_sha256"]:
+        raise GuestError("WireGuard firewall did not match its staged policy before activation")
+
+    _Run(["sysctl", "-q", "-w", "net.ipv4.ip_forward=1"])
+    _Run(["ip", "link", "set", "dev", interface, "mtu", str(request["mtu"]), "up"])
 
 
 def _Stop(root: Path, unit: Path, request: dict[str, Any], *, partial: bool = False) -> None:
@@ -981,7 +1149,9 @@ def _EraseRoot(root: Path, receipt: dict[str, Any]) -> None:
         if name in names:
             (root / name).unlink()
 
+    _SyncDirectory(root)
     root.rmdir()
+    _SyncDirectory(root.parent)
 
 
 def _EnabledLink(unit: Path) -> None:
@@ -1033,7 +1203,9 @@ def _ClearTransaction(owner: str) -> None:
         raise GuestError("WireGuard staged files remain in the transaction")
 
     (path / "transaction.json").unlink()
+    _SyncDirectory(path)
     path.rmdir()
+    _SyncDirectory(path.parent)
 
 
 def _PrepareRoot(stage: Path, request: dict[str, Any], root: Path, unit: Path) -> tuple[dict[str, Any], Path]:
@@ -1053,7 +1225,11 @@ def _PrepareRoot(stage: Path, request: dict[str, Any], root: Path, unit: Path) -
     with tempfile.TemporaryDirectory(prefix=".wg-build-", dir=BASE) as temporary:
         work = Path(temporary)
         os.chmod(work, 0o700)
+        buildFacts = _BuildFacts()
         binary, licenseText = _BuildTools(work)
+
+        if _BuildFacts() != buildFacts:
+            raise GuestError("WireGuard toolchain changed during the private build")
         tool = work / "wg"
         tool.write_bytes(binary)
         tool.chmod(0o755)
@@ -1068,7 +1244,7 @@ def _PrepareRoot(stage: Path, request: dict[str, Any], root: Path, unit: Path) -
         payload.update({"wg": binary, "COPYING": licenseText, "firewall.nft": firewall, "service.service": _Unit(root, owner)})
         receipt: dict[str, Any] = {"schema_version": 1, "owner": owner, "nonce": nonce, "status": "staged",
                                    "files": {name: _Digest(content) for name, content in payload.items()},
-                                   "network_sha256": network, "kernel": {**facts, **evidence},
+                                   "network_sha256": network, "kernel": {**facts, **evidence}, "build": buildFacts,
                                    "deployment_sha256": _Digest(payload["deployment.json"])}
         _, _, transaction = _Paths(owner)
 
@@ -1081,16 +1257,14 @@ def _PrepareRoot(stage: Path, request: dict[str, Any], root: Path, unit: Path) -
         staged.mkdir(mode=0o700)
 
         for name, content in payload.items():
-            (staged / name).write_bytes(content)
-            (staged / name).chmod(0o755 if name == "wg" else 0o600)
+            _Atomic(staged / name, content, 0o755 if name == "wg" else 0o600)
 
-        (staged / "receipt.json").write_bytes(_Encode(receipt))
-        (staged / "receipt.json").chmod(0o600)
+        _Atomic(staged / "receipt.json", _Encode(receipt))
         _Receipt(staged, unit, owner, staged=True)
         _Atomic(container / "transaction.json", _Encode({"schema_version": 1, "owner": owner,
                 "phase": "prepared", "receipt": receipt}))
         # Publish the journal and every staged file together; no incomplete journal is observable.
-        os.replace(container, transaction)
+        _Publish(container, transaction)
 
     return receipt, transaction
 
@@ -1128,6 +1302,7 @@ def _Recover(owner: str, expectedReceipt: str) -> None:
             raise GuestError("Empty WireGuard journal has unexpected remaining resources")
 
         transaction.rmdir()
+        _SyncDirectory(transaction.parent)
 
         return
 
@@ -1202,11 +1377,17 @@ def _Recover(owner: str, expectedReceipt: str) -> None:
 
     if unit.exists() or unit.is_symlink():
         _Run(["systemctl", "disable", _Service(owner) + ".service"])
+        wants = SYSTEMD / "multi-user.target.wants"
+
+        if wants.exists():
+            _Directory(wants)
+            _SyncDirectory(wants)
 
         if _Read(unit, mode=0o644) != _Read(selected / "service.service"):
             raise GuestError("WireGuard unit changed before cleanup")
 
         unit.unlink()
+        _SyncDirectory(SYSTEMD)
         _Run(["systemctl", "daemon-reload"])
 
     _Atomic(transaction / "transaction.json", _Encode({**journal, "phase": "cleanup", "receipt": receipt}))
@@ -1234,7 +1415,7 @@ def _Remove(owner: str, expectedReceipt: str) -> None:
         container.mkdir(mode=0o700)
         _Atomic(container / "transaction.json", _Encode({"schema_version": 1, "owner": owner,
                 "phase": "prepared", "receipt": receipt}))
-        os.replace(container, transaction)
+        _Publish(container, transaction)
 
     _Recover(owner, expectedReceipt)
 
@@ -1266,11 +1447,13 @@ def _Install(stage: Path, request: dict[str, Any]) -> None:
     expected = _Digest(_Encode(receipt))
 
     try:
-        os.replace(transaction / "new", root)
+        _Publish(transaction / "new", root)
         _Atomic(unit, _Read(root / "service.service"), 0o644)
         _EnabledLink(unit)
         _Run(["systemctl", "daemon-reload"])
         _Run(["systemctl", "enable", _Service(owner) + ".service"])
+        _EnabledLink(unit)
+        _SyncDirectory(SYSTEMD / "multi-user.target.wants")
         _Start(root, unit, request)
         _Run(["systemctl", "start", _Service(owner) + ".service"])
         _Check(root, unit, request, staged=True)
@@ -1299,6 +1482,22 @@ def _Status(stage: Path, request: dict[str, Any]) -> dict[str, object]:
     root, unit, transaction = _Paths(owner)
 
     if transaction.exists() or transaction.is_symlink():
+        _Directory(transaction, private=True)
+
+        if not tuple(transaction.iterdir()):
+            if root.exists() or root.is_symlink():
+                _Check(root, unit, request)
+
+                return {"status": "recovery-required", "receipt_sha256": _Digest(_Read(root / "receipt.json")),
+                        "tools_version": TOOLS_VERSION, "kernel_policy": "cached-named-cve-baseline"}
+
+            if (unit.exists() or unit.is_symlink() or _InterfaceState(owner) is not None
+                    or _NftState(owner, "0" * 32) is not None):
+                raise GuestError("Empty WireGuard journal has unexpected remaining resources")
+
+            return {"status": "absent", "receipt_sha256": "", "tools_version": TOOLS_VERSION,
+                    "kernel_policy": "not-assessed", "cleanup_required": True}
+
         journal, _ = _Transaction(owner)
         candidate = root if root.exists() or root.is_symlink() else transaction / "new"
         receipt = journal["receipt"]

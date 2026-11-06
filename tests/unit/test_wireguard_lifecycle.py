@@ -90,11 +90,12 @@ class GuestModel:
 
             if command[1:3] == ["link", "add"]:
                 assert self.interface is None
-                self.interface = {"ifname": guest._Interface(self.owner), "ifalias": command[6], "mtu": 1420}
+                self.interface = {"ifname": guest._Interface(self.owner), "ifalias": command[6], "mtu": 1420, "flags": []}
 
             elif command[1:3] == ["link", "set"]:
                 assert self.interface is not None
                 self.interface["mtu"] = int(command[6])
+                self.interface["flags"] = ["UP"]
 
             elif command[1:3] == ["address", "add"]:
                 address, prefix = command[3].split("/")
@@ -190,9 +191,17 @@ def Seed(tmpPath: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, dict[str
     monkeypatch.setattr(guest, "SYSTEMD", units)
     monkeypatch.setattr(guest, "LOCK", tmpPath / "operation.lock")
     monkeypatch.setattr(guest, "_ROOT_UID", os.getuid())
-    monkeypatch.setattr(guest, "_KernelFacts", lambda: {"release": "6.8.0-999-generic", "package_version": "6.8.0-999.999", "module_sha256": "d" * 64})
+    monkeypatch.setattr(guest, "_KernelFacts", lambda: {"release": "6.8.0-999-generic", "package_version": "6.8.0-999.999",
+                        "signature": "Ubuntu 6.8.0-999.999-generic 6.8.12", "module_sha256": "d" * 64, "module_srcversion": "D" * 24})
     monkeypatch.setattr(guest, "_Fetch", lambda url, limit: Vendor())
     monkeypatch.setattr(guest, "_BuildTools", lambda work: (b"synthetic-private-wg", b"Synthetic license fixture\n"))
+    monkeypatch.setattr(guest, "_BuildFacts", lambda: {"compiler_version": "synthetic gcc", "compiler_target": "x86_64-linux-gnu",
+                        "make_version": "GNU Make fixture", "libc_headers_version": "1.0", "kernel_headers_version": "1.0",
+                        "compiler_sha256": "e" * 64, "make_sha256": "f" * 64, "options": list(guest.BUILD_OPTIONS)})
+    module = tmpPath / "loaded-wireguard"
+    module.mkdir()
+    (module / "srcversion").write_text("D" * 24, encoding="ascii")
+    monkeypatch.setattr(guest, "MODULE_STATE", module)
     monkeypatch.setattr(guest, "_ExpectedNetwork", lambda path, owner, nonce: guest._NftFingerprint(Nft(owner, nonce), owner, nonce))
     monkeypatch.setattr(guest, "__file__", str(stage / "install.py"))
     request, _, _ = guest._Request(stage)
@@ -217,6 +226,10 @@ def test_InstallRepeatStatusRebootAndRemovalPreserveOtherResources(
     original = {path.name: path.read_bytes() for path in root.iterdir()}
 
     assert receipt["status"] == "installed" and not transaction.exists()
+    policyIndex = next(index for index, command in enumerate(model.commands) if command[:2] == ["nft", "-f"])
+    upIndex = next(index for index, command in enumerate(model.commands) if command[:3] == ["ip", "link", "set"])
+
+    assert policyIndex < upIndex, "The complete scoped firewall must exist before the interface can carry traffic"
     assert all(stat.S_IMODE(path.stat().st_mode) == (0o755 if path.name == "wg" else 0o600) for path in root.iterdir())
     assert stat.S_IMODE(root.stat().st_mode) == 0o700
     model.commands.clear()
@@ -321,7 +334,7 @@ def test_AbruptInstallationDeathHasReceiptBoundRecovery(
     assert model.interface is None and not model.network
 
 
-@pytest.mark.parametrize("drift", ["config", "binary", "unit", "extra", "alias", "peer", "address", "link", "kernel"])
+@pytest.mark.parametrize("drift", ["config", "binary", "unit", "extra", "alias", "peer", "address", "link", "kernel", "down", "parent"])
 def test_DriftPreventsAnyServiceOrNetworkDeletion(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, drift: str,
 ) -> None:
@@ -356,13 +369,20 @@ def test_DriftPreventsAnyServiceOrNetworkDeletion(
         link.unlink()
         link.symlink_to(stage / "install.py")
 
-    else:
+    elif drift == "kernel":
         monkeypatch.setattr(guest, "_KernelFacts", lambda: {"release": "changed", "package_version": "6.8.0-1000.1000", "module_sha256": "e" * 64})
+
+    elif drift == "down":
+        assert model.interface is not None
+        model.interface["flags"] = []
+
+    else:
+        guest.BASE.chmod(0o777)
 
     model.commands.clear()
 
     with pytest.raises((guest.GuestError, OSError)):
-        if drift == "kernel":
+        if drift in {"kernel", "down"}:
             guest._Check(root, unit, request)
 
         else:
@@ -472,3 +492,112 @@ def test_EntryPointInstallAndReadOnlyStatusUsePrivateLock(
     assert result["status"] == "active" and guest.LOCK.stat().st_mtime_ns == before
     assert guest.Main(["--remove", "--allow-mutation", "--expected-receipt-sha256", result["receipt_sha256"]]) == 0
     assert model.interface is None and not guest._Paths(request["owner"])[0].exists()
+
+
+def test_EmptyFinalJournalExposesNewReceiptAndPreservesCommittedService(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A crash while retiring journal metadata must leave status able to obtain recovery consent."""
+
+    stage, request, model = Seed(tmp_path, monkeypatch)
+    root, unit, transaction = guest._Paths(request["owner"])
+    unlink = Path.unlink
+
+    def Unlink(path: Path, *args: Any, **kwargs: Any) -> None:
+        """Interrupt the tiny boundary after deleting the final journal but before removing its directory."""
+
+        unlink(path, *args, **kwargs)
+
+        if path == transaction / "transaction.json":
+            raise Interrupted
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "unlink", Unlink)
+
+        with pytest.raises(Interrupted):
+            guest._Install(stage, request)
+
+    assert transaction.exists() and not tuple(transaction.iterdir()) and model.active
+    snapshot = {path.name: path.read_bytes() for path in root.iterdir()}
+    status = guest._Status(stage, request)
+    model.commands.clear()
+    guest._Recover(request["owner"], str(status["receipt_sha256"]))
+
+    assert not transaction.exists() and unit.exists() and model.active
+    assert {path.name: path.read_bytes() for path in root.iterdir()} == snapshot
+    assert not any(command[:2] == ["systemctl", "stop"] for command in model.commands)
+
+
+@pytest.mark.parametrize("fault", ["none", "unloaded", "running-revision", "loaded-source", "missing-source", "disk-source", "module-package"])
+def test_KernelFactsBindExecutingBuildAndModuleSource(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fault: str,
+) -> None:
+    """Exercise the actual admission observation rather than replacing it wholesale with a success fake."""
+
+    modules = tmp_path / "modules"
+    module = modules / "6.8.0-999-generic/kernel/drivers/net/wireguard/wireguard.ko"
+    module.parent.mkdir(parents=True)
+    module.write_bytes(b"synthetic kernel module disk artifact")
+    module.chmod(0o644)
+    signature = tmp_path / "signature"
+    signature.write_text("Ubuntu 6.8.0-999." + ("998" if fault == "running-revision" else "999") + "-generic 6.8.12\n", encoding="ascii")
+    state = tmp_path / "sys-module"
+
+    if fault != "unloaded":
+        state.mkdir()
+
+        if fault != "missing-source":
+            (state / "srcversion").write_text(("E" if fault == "loaded-source" else "D") * 24, encoding="ascii")
+
+    monkeypatch.setattr(guest, "_ROOT_UID", os.getuid())
+    monkeypatch.setattr(guest, "KERNEL_SIGNATURE", signature)
+    monkeypatch.setattr(guest, "MODULES", modules)
+    monkeypatch.setattr(guest, "MODULE_STATE", state)
+    monkeypatch.setattr(guest.platform, "freedesktop_os_release", lambda: {"ID": "ubuntu", "VERSION_ID": "24.04"})
+    monkeypatch.setattr(guest.platform, "machine", lambda: "x86_64")
+    monkeypatch.setattr(guest.platform, "release", lambda: "6.8.0-999-generic")
+
+    def Run(command: list[str], **kwargs: Any) -> tuple[int, bytes]:
+        """Expose only synthetic package/module metadata, never the workstation's kernel."""
+
+        if command[0] == "dpkg-query":
+            revision = "998" if fault == "module-package" and command[-1].startswith("linux-modules-") else "999"
+
+            return 0, ("6.8.0-999." + revision).encode()
+
+        if command[:2] == ["modinfo", "-n"]:
+            return 0, str(module).encode()
+
+        assert command[:3] == ["modinfo", "-F", "srcversion"]
+
+        return 0, b"" if fault == "disk-source" else b"D" * 24
+
+    monkeypatch.setattr(guest, "_Run", Run)
+
+    if fault in {"none", "unloaded"}:
+        facts = guest._KernelFacts()
+
+        assert facts["signature"] == "Ubuntu 6.8.0-999.999-generic 6.8.12"
+        assert facts["module_srcversion"] == "D" * 24
+        assert facts["module_sha256"] == guest._Digest(module.read_bytes())
+
+        if fault == "unloaded":
+            with pytest.raises(guest.GuestError, match="unavailable"):
+                guest._LoadedSource("D" * 24, required=True)
+
+    else:
+        with pytest.raises((guest.GuestError, OSError)):
+            guest._KernelFacts()
+
+
+def test_RequestedRouteChangeCannotPassInstalledHealth(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Bind all descriptor intent even when wg setconf bytes would remain identical."""
+
+    stage, request, _ = Seed(tmp_path, monkeypatch)
+    guest._Install(stage, request)
+    root, unit, _ = guest._Paths(request["owner"])
+
+    with pytest.raises(guest.GuestError, match="differs"):
+        guest._Check(root, unit, {**request, "ipv4_routes": ["1.1.1.1/32"]})

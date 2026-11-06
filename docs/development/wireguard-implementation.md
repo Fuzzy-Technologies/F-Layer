@@ -316,7 +316,9 @@ controller. It is not yet called by project lifecycle or CLI commands. Each atte
 first writes an owner-bound metadata journal, then an immutable private bundle of
 new material/configuration and the retained installer, then the bundle's exact
 digest before remote activation. Reuse complete staging after an interrupted digest
-publication; never regenerate partially retained credentials. An incomplete private
+publication; never regenerate partially retained credentials. Before each rename,
+fsync the exact private temporary inode, including reuse after an earlier file-sync
+failure. An incomplete private
 stage fails closed for inspection before any remote operation.
 
 After a verified active guest result, persist a separate immutable nonsecret commit
@@ -328,7 +330,10 @@ unchanged. Publication retries reconcile exact existing record/pointer bytes.
 Unknown, missing, linked or mismatched ownership metadata is never adopted.
 
 The loader checks the complete bounded chain (at most 4096 records), independently
-of private client key availability. Only reading active material/server bytes
+of private client key availability. Validate completion digest types/formats before
+any publication and preflight the same capacity bound before staging or advancing
+a new head; exact completed retries remain possible at capacity.
+Only reading active material/server bytes
 requires their complete pinned request manifest. This lets future whole-cloud
 cleanup retain its original nonsecret ownership proof even if client keys are lost.
 Original creation resources/bootstrap and unrelated protocol bundles stay unchanged.

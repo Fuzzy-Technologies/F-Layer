@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:206493a751cffdadbb1d08ede281c956c65dcfbbde25849302e35381f872109d"
-reviewedTranslationHash = "sha256:664b5006a285fce8a7026d14732a278d137a7ff3bdeacac94d80effbd4225b13"
+sourceHash = "sha256:f5aa1d742fda63e676f6c195804331f016e60956de6aad2907277039f9a3672a"
+reviewedTranslationHash = "sha256:842191d51e0cf3d4be3e9b457df58c1166fa6a93bd788d4df147ca890c85040d"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T19:18:24.029822Z"
+reviewedAt = "2026-11-06T19:25:57.108988Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -251,7 +251,8 @@ SSH 通道提供来宾事务。接收保留的私有服务器包、一个指定�
 私有 `_vpn_revisions.py` 为后续对等端控制器提供持久化原语，项目生命周期及
 CLI 命令尚未调用。每次尝试先写绑定 owner 的元数据日志，再写包含新材料/配置及
 保留安装程序的不可变私有包，最后在远程激活前写入包的精确摘要。摘要发布中断后
-复用完整准备文件，绝不重新生成部分保留的凭据。不完整私有暂存会在任何远程操作前
+复用完整准备文件，绝不重新生成部分保留的凭据。每次重命名前都对精确私有临时
+inode 执行 fsync，包括先前文件同步失败后的复用。不完整私有暂存会在任何远程操作前
 停止并要求检查。
 
 验证活动来宾结果后，先持久化独立、不可变、非秘密的完成记录，再原子更新私有
@@ -261,6 +262,8 @@ CLI 命令尚未调用。每次尝试先写绑定 owner 的元数据日志，再
 不匹配的 owner 元数据绝不自动接管。
 
 加载器检查完整有界链（最多 4096 条记录），不依赖私有客户端密钥是否存在。
+任何发布前先校验完成摘要的类型/格式，暂存或推进新头前预检相同容量边界；
+达到容量时仍允许精确重试已完成操作。
 只有读取活动材料/服务器字节时才要求完整固定的请求清单。这使后续全云清理即使
 客户端密钥丢失，也能保留原始非秘密所有权证明。原始创建资源/bootstrap 与其他
 协议包保持不变。持久私有 advisory 锁覆盖完整的协作项目流程；缺失锁时的只读

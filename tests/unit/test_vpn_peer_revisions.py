@@ -6,6 +6,7 @@ import base64
 import json
 import os
 import secrets
+import stat
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -378,7 +379,10 @@ def test_ProjectLockRejectsUnsafeFilesAndAbsenceRaces(tmp_path: Path, case: str)
 
 @POSIX
 @pytest.mark.parametrize("field,value", [("status", "peer-recovery-required"), ("is_desired", False),
-                                       ("history_sha256", "f" * 64), ("receipt_sha256", "unchanged"), ("deployment_sha256", "f" * 64)])
+                                       ("history_sha256", "f" * 64), ("receipt_sha256", "unchanged"), ("deployment_sha256", "f" * 64),
+                                       ("receipt_sha256", "not-a-sha"), ("receipt_sha256", {}), ("receipt_sha256", None),
+                                       ("history_sha256", "G" * 64), ("history_sha256", []), ("history_sha256", None),
+                                       ("deployment_sha256", "bad"), ("deployment_sha256", {}), ("deployment_sha256", None)])
 def test_InvalidGuestCompletionNeverAdvancesTheControllerHead(tmp_path: Path, field: str, value: object) -> None:
     """Do not accept a transport acknowledgment or unrelated history as proof of a healthy desired commit."""
 
@@ -388,9 +392,90 @@ def test_InvalidGuestCompletionNeverAdvancesTheControllerHead(tmp_path: Path, fi
     updated, pending, material, server, pin, facts = Change(project, state)
     pending = Stage(project, pending, material, server)
     facts[field] = pending["previous_receipt_sha256"] if value == "unchanged" else value
+
+    if field == "receipt_sha256" and value == "not-a-sha":
+        facts["history_sha256"] = revisions.CommittedHistory(project, pending["change"], pending["device_id"], pending["previous_receipt_sha256"],
+                                                             "not-a-sha", str(facts["deployment_sha256"]), pending["previous_history_sha256"])
     before = Snapshot(project.root)
 
     with pytest.raises(VpnError):
         revisions.Commit(updated, state, pending, pin, facts, outcome="committed")
 
     assert Snapshot(project.root) == before and revisions.Pending(project) == pending
+
+
+@POSIX
+def test_RevisionCapacityBlocksNewStagingAndPublicationButAllowsExactCompletedRetry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The writer enforces the loader's bound before a remote attempt or a new immutable head can be committed."""
+
+    monkeypatch.setattr(revisions, "MAX_PEER_REVISIONS", 1)
+    project = Project(tmp_path)
+    PrepareSelectedProject(project)
+    state = revisions.LoadRevisions(project)
+    updated, pending, material, server, pin, facts = Change(project, state)
+    pending = Stage(project, pending, material, server)
+    revisions.Commit(updated, state, pending, pin, facts, outcome="committed")
+    state = revisions.LoadRevisions(updated)
+
+    assert state.recordCount == 1
+    revisions.Commit(updated, state, pending, pin, facts, outcome="committed")
+    _, pending, material, server, _, _ = Change(updated, state, "1" * 16, change="revoke")
+    revisions.AtomicRecord(updated, "wireguard-pending.json", pending)
+    before = Snapshot(updated.root)
+
+    with pytest.raises(VpnError, match="capacity"):
+        revisions.PublishRequest(updated, pending, material, server)
+
+    oldServer = revisions.ReadEffectiveBundle(updated, state, state.pins[-1])
+    facts = {"status": "active", "is_desired": True, "receipt_sha256": state.receipt, "history_sha256": state.history,
+             "deployment_sha256": revisions.Digest(next(item.content for item in oldServer.files if item.name == "deployment.json"))}
+
+    with pytest.raises(VpnError, match="capacity"):
+        revisions.Commit(updated, state, pending, state.pins[-1], facts, outcome="not-applied")
+
+    assert Snapshot(updated.root) == before and revisions.LoadRevisions(updated).recordCount == 1
+
+
+@POSIX
+def test_ReusedTemporaryRecordIsFileSyncedBeforeRenameAfterAnActualSyncFailure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A durable directory entry cannot substitute for retrying the unflushed temporary file's own fsync."""
+
+    project = Project(tmp_path)
+    sync, rename = revisions.os.fsync, revisions.os.replace
+    events: list[str] = []
+    failed = False
+
+    def Sync(descriptor: int) -> None:
+        """Fail the first actual regular-file sync after complete bytes have been written."""
+
+        nonlocal failed
+        regular = stat.S_ISREG(os.fstat(descriptor).st_mode)
+        events.append("file-sync" if regular else "directory-sync")
+
+        if regular and not failed:
+            failed = True
+
+            raise OSError("Synthetic temporary file fsync failure")
+
+        sync(descriptor)
+
+    def Rename(source: Path, destination: Path) -> None:
+        """Observe publication order while using the actual isolated filesystem rename."""
+
+        events.append("replace")
+        rename(source, destination)
+
+    monkeypatch.setattr(revisions.os, "fsync", Sync)
+    monkeypatch.setattr(revisions.os, "replace", Rename)
+    data = {"fixture": "nonsecret-journal"}
+
+    with pytest.raises(VpnError):
+        revisions.AtomicRecord(project, "wireguard-pending.json", data)
+
+    assert ReadPrivate(project.root / ".wireguard-pending.json.new") == _Json(data)
+    assert not (project.root / "wireguard-pending.json").exists()
+    events.clear()
+    revisions.AtomicRecord(project, "wireguard-pending.json", data)
+
+    assert events == ["file-sync", "replace", "directory-sync"]
+    assert ReadPrivate(project.root / "wireguard-pending.json") == _Json(data)

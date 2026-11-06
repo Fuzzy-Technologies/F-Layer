@@ -36,6 +36,7 @@ from flayer.vpn_project import SelectedVpnProject
 
 _HASH = re.compile(r"[0-9a-f]{64}\Z")
 _REQUEST_FILES = ("material.json", "intent.sha256", "server.conf", "deployment.json", "install.py", "request.json")
+MAX_PEER_REVISIONS = 4096
 
 
 def Digest(content: bytes) -> str:
@@ -129,6 +130,28 @@ def AtomicRecord(project: SelectedVpnProject, filename: str, data: dict[str, Any
         else:
             WritePrivate(temporary, _Json(data))
 
+        descriptor = os.open(temporary, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+
+        try:
+            opened = os.fstat(descriptor)
+            linked = temporary.lstat()
+
+            if (not stat.S_ISREG(opened.st_mode) or opened.st_uid != os.getuid() or opened.st_nlink != 1
+                    or stat.S_IMODE(opened.st_mode) != 0o600 or (opened.st_dev, opened.st_ino) != (linked.st_dev, linked.st_ino)
+                    or ReadPrivate(temporary) != _Json(data)):
+                raise VpnError("Peer metadata changed before durable publication")
+
+            os.fsync(descriptor)
+            synced = os.fstat(descriptor)
+            linked = temporary.lstat()
+
+            if ((opened.st_dev, opened.st_ino) != (linked.st_dev, linked.st_ino)
+                    or (opened.st_size, opened.st_mtime_ns, opened.st_ctime_ns) != (synced.st_size, synced.st_mtime_ns, synced.st_ctime_ns)):
+                raise VpnError("Peer metadata changed during durable publication")
+
+        finally:
+            os.close(descriptor)
+
         os.replace(temporary, path)
 
     descriptor = os.open(project.root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
@@ -166,7 +189,8 @@ def _ReadBundle(project: SelectedVpnProject, name: str, digest: str, filenames: 
 def _Pin(value: object) -> ProtocolPin:
     """Decode one exact nonsecret WireGuard projection/material/server pin."""
 
-    if not isinstance(value, dict) or set(value) != {"protocol", "intent_fingerprint", "material_digest", "server_digest"}:
+    if (not isinstance(value, dict) or set(value) != {"protocol", "intent_fingerprint", "material_digest", "server_digest"}
+            or value["protocol"] != "wireguard"):
         raise VpnError("Peer revision protocol pin is invalid")
 
     pin = ProtocolPin(value["protocol"], value["intent_fingerprint"], value["material_digest"], value["server_digest"])
@@ -203,6 +227,7 @@ class RevisionState:
     history: str
     lastRecord: dict[str, Any] | None = field(repr=False)
     activeRecord: dict[str, Any] | None = field(repr=False)
+    recordCount: int
 
     def ValidateCurrent(self, project: SelectedVpnProject, *, peerChange: bool = False) -> None:
         """Allow only an explicitly planned WireGuard peer projection delta, preserving every other intent field."""
@@ -225,12 +250,13 @@ def LoadRevisions(project: SelectedVpnProject) -> RevisionState:
 
     if rawHead is not None and rawHead != _Json(head):
         raise VpnError("Peer head metadata must use exact canonical bytes")
+
     current = head
     records: list[dict[str, Any]] = []
     visited: set[str] = set()
 
     while current is not None:
-        if current["name"] in visited or len(visited) >= 4096:
+        if current["name"] in visited or len(visited) >= MAX_PEER_REVISIONS:
             raise VpnError("Peer commit chain is cyclic or exceeds its bound")
 
         visited.add(current["name"])
@@ -243,12 +269,12 @@ def LoadRevisions(project: SelectedVpnProject) -> RevisionState:
 
         if (set(record) != fields or raw != _Json(record) or type(record["schema_version"]) is not int or record["schema_version"] != 1
                 or record["identity"] != _WireDict(project.vpn.identity) or record["creation_sha256"] != origin
-                or record["change"] not in {"enroll", "revoke"} or not isinstance(record["device_id"], str)
+                or not isinstance(record["change"], str) or record["change"] not in {"enroll", "revoke"} or not isinstance(record["device_id"], str)
                 or re.fullmatch(r"[a-z][a-z0-9-]{0,62}", record["device_id"]) is None
                 or not isinstance(record["request_name"], str)
                 or re.fullmatch(re.escape(project.vpn.identity.stack) + r"-wp-[0-9a-f]{16}", record["request_name"]) is None
                 or type(record["plan_expires_at"]) is not int or record["plan_expires_at"] <= 0
-                or record["outcome"] not in {"committed", "not-applied"}
+                or not isinstance(record["outcome"], str) or record["outcome"] not in {"committed", "not-applied"}
                 or not isinstance(record["request_sha256"], str)
                 or record["request_sha256"] != "" and _HASH.fullmatch(record["request_sha256"]) is None
                 or record["outcome"] == "committed" and not record["request_sha256"]
@@ -317,7 +343,15 @@ def LoadRevisions(project: SelectedVpnProject) -> RevisionState:
 
     pins = tuple(pin if item.protocol == "wireguard" and pin is not None else item for item in baseline.protocols)
 
-    return RevisionState(baseline, pins, head, Digest(_Json(head)) if head is not None else origin, receipt, history, records[0] if records else None, activeRecord)
+    return RevisionState(baseline, pins, head, Digest(_Json(head)) if head is not None else origin, receipt, history,
+                         records[0] if records else None, activeRecord, len(records))
+
+
+def RequireCapacity(state: RevisionState) -> None:
+    """Refuse a new attempt before activation rather than publishing an unreadable oversized history chain."""
+
+    if state.recordCount >= MAX_PEER_REVISIONS:
+        raise VpnError("Peer revision history is at capacity; retain the current project and do not activate another peer change")
 
 
 def Pending(project: SelectedVpnProject) -> dict[str, Any] | None:
@@ -339,7 +373,7 @@ def Pending(project: SelectedVpnProject) -> dict[str, Any] | None:
               "request_name", "request_sha256", "change", "device_id", "previous_receipt_sha256", "previous_history_sha256", "baseline_sha256", "plan_expires_at"}
 
     if (set(data) != fields or raw != _Json(data) or type(data["schema_version"]) is not int or data["schema_version"] != 1
-            or data["identity"] != _WireDict(project.vpn.identity) or data["change"] not in {"enroll", "revoke"}
+            or data["identity"] != _WireDict(project.vpn.identity) or not isinstance(data["change"], str) or data["change"] not in {"enroll", "revoke"}
             or not isinstance(data["device_id"], str) or re.fullmatch(r"[a-z][a-z0-9-]{0,62}", data["device_id"]) is None
             or not isinstance(data["request_name"], str)
             or re.fullmatch(re.escape(project.vpn.identity.stack) + r"-wp-[0-9a-f]{16}", data["request_name"]) is None
@@ -418,7 +452,7 @@ def PublishRequest(project: SelectedVpnProject, pending: dict[str, Any], materia
     if server.identity != project.vpn.identity:
         raise VpnError("Peer server belongs to a different stack")
 
-    LoadRevisions(project)
+    RequireCapacity(LoadRevisions(project))
     metadata = {**pending, "request_sha256": ""}
     bundle = ArtifactBundle(project.vpn.identity, "server", pending["request_name"],
                             material.files + server.files + (Artifact("request.json", _Json(metadata), False),))
@@ -452,7 +486,9 @@ def Commit(
 ) -> None:
     """Publish immutable verified commit evidence before atomically advancing the controller head."""
 
-    if outcome not in {"committed", "not-applied"} or facts.get("status") != "active":
+    if (outcome not in {"committed", "not-applied"} or facts.get("status") != "active"
+            or any(not isinstance(facts.get(key), str) or _HASH.fullmatch(str(facts[key])) is None
+                   for key in ("receipt_sha256", "deployment_sha256", "history_sha256"))):
         raise VpnError("Peer completion requires a verified active result and exact outcome")
 
     if (outcome == "committed" and (not pending["request_sha256"] or pin.intentFingerprint != pending["desired_fingerprint"]
@@ -485,6 +521,9 @@ def Commit(
     if (actual.head != state.head or state.head not in (pending["parent"], pointer)
             or Pending(project) != pending and (Pending(project) is not None or actual.head != pointer or actual.lastRecord != record)):
         raise VpnError("Peer commit head or journal changed; retain the pending operation")
+
+    if actual.head != pointer:
+        RequireCapacity(actual)
 
     if directory.exists() or directory.is_symlink():
         _ReadBundle(project, name, BundleDigest(bundle), ("record.json",))

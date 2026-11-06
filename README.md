@@ -172,7 +172,7 @@ for protocol-specific checks and import details.
 
 Candidates built from `develop` for release 2.1 add opt-in VLESS export settings:
 `--tls-fragment` and `--allow-quic`. These options retain the existing device
-credentials and source artifacts. See the [candidate export guide](docs/site/content/en/guide/cli.md#optional-vless-transport-exports-development-candidate)
+credentials and source artifacts. See the [candidate export guide](docs/site/content/en/guide/cli.md)
 for complete native profiles, compatibility and limits. The published 2.0.0
 package does not include these options.
 

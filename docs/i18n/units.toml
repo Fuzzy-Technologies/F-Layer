@@ -310,7 +310,7 @@ basedOnSourceHash = "sha256:a25f027ebcdf528f6e3eba195e1f17d6756fcb0e32a394f66f15
 role = "editorial"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T11:51:27.104846Z"
+reviewedAt = "2026-11-06T11:56:06.659037Z"
 reviewedSourceHash = "sha256:a25f027ebcdf528f6e3eba195e1f17d6756fcb0e32a394f66f153c87688f11f2"
 reviewedTranslationHash = "sha256:1b76d525c0893e61ae954b6d6806e7463910d27b0898c94456269c914fc38a90"
 
@@ -318,7 +318,7 @@ reviewedTranslationHash = "sha256:1b76d525c0893e61ae954b6d6806e7463910d27b0898c9
 role = "technical"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T11:51:27.104846Z"
+reviewedAt = "2026-11-06T11:56:06.659037Z"
 reviewedSourceHash = "sha256:a25f027ebcdf528f6e3eba195e1f17d6756fcb0e32a394f66f153c87688f11f2"
 reviewedTranslationHash = "sha256:1b76d525c0893e61ae954b6d6806e7463910d27b0898c94456269c914fc38a90"
 
@@ -331,7 +331,7 @@ basedOnSourceHash = "sha256:a25f027ebcdf528f6e3eba195e1f17d6756fcb0e32a394f66f15
 role = "editorial"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T11:51:27.104846Z"
+reviewedAt = "2026-11-06T11:56:06.659037Z"
 reviewedSourceHash = "sha256:a25f027ebcdf528f6e3eba195e1f17d6756fcb0e32a394f66f153c87688f11f2"
 reviewedTranslationHash = "sha256:2c5f76ab6e2c21915dfa712f5d1a58f73e92c2d0d4f0411a0e5d256207d3f375"
 
@@ -339,7 +339,7 @@ reviewedTranslationHash = "sha256:2c5f76ab6e2c21915dfa712f5d1a58f73e92c2d0d4f041
 role = "technical"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T11:51:27.104846Z"
+reviewedAt = "2026-11-06T11:56:06.659037Z"
 reviewedSourceHash = "sha256:a25f027ebcdf528f6e3eba195e1f17d6756fcb0e32a394f66f153c87688f11f2"
 reviewedTranslationHash = "sha256:2c5f76ab6e2c21915dfa712f5d1a58f73e92c2d0d4f0411a0e5d256207d3f375"
 

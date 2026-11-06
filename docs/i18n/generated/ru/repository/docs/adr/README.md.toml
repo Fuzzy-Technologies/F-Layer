@@ -4,7 +4,7 @@ sourceHash = "sha256:2b996cb1a3a0327bb9dd731d8f87cec0d2d62d21f73c5e23fbedc2d4dea
 reviewedTranslationHash = "sha256:2647460de8e3ceb522d6dcefd4838294bf5213c7e880ecf97894f5ae0f9f5273"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T11:51:27.104846Z"
+reviewedAt = "2026-11-06T11:56:06.659037Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# Архитектурные решения
 

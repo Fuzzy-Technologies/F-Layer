@@ -174,7 +174,7 @@ IPv4 сервера как выходной адрес, DNS, маршруты и
 Кандидаты из `develop` для релиза 2.1 добавляют опциональные настройки экспорта
 VLESS: `--tls-fragment` и `--allow-quic`. Эти опции сохраняют существующие учётные
 данные устройства и исходные артефакты. Полные нативные профили, совместимость
-и ограничения описаны в [руководстве по экспорту кандидата](docs/site/content/en/guide/cli.md#optional-vless-transport-exports-development-candidate).
+и ограничения описаны в [руководстве по экспорту кандидата](docs/site/content/en/guide/cli.md).
 Опубликованный пакет 2.0.0 этих опций не содержит.
 
 ## Управление развёртыванием
@@ -209,9 +209,9 @@ flayer vpn destroy --project ~/flayer-vpn --allow-mutation --scope-confirm YOUR_
 [Apache 2.0](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/LICENSE).
 Для участия в разработке начните с [CONTRIBUTING.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/CONTRIBUTING.md).
 '''
-sourceHash = "sha256:5d03ab37d80c86092661b340a3dab1d49627c8bb573a12a21d625948cf1ef196"
-reviewedTranslationHash = "sha256:90cd27722317ce3f03368d94a0b01931022190ab2929af503eb06dfe4e024ff1"
+sourceHash = "sha256:2bf2269341848d3f355795149eb7333131889cddc8b2646229629dd4b67c420a"
+reviewedTranslationHash = "sha256:ee6ceb7d328adb234d6aad59d9b99a300f2b64ecabececdd6ff4bc00eb39f583"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T11:51:27.104846Z"
+reviewedAt = "2026-11-06T11:56:06.659037Z"
 reviewRoles = ["editorial", "technical"]

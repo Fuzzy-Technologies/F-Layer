@@ -325,7 +325,7 @@ body = "Экспортировать одно проверенное устро�
 reviewedTranslationHash = "sha256:050e8e74a9318685c98b39ce8b3766a610431ac625ee46f799a45bb6cbd79455"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T11:51:27.104846Z"
+reviewedAt = "2026-11-06T11:56:06.659037Z"
 reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.guest.SshGuestProvisioner.VlessRuntime"

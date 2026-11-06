@@ -4,7 +4,7 @@ sourceHash = "sha256:2572ea92975181f4ca65e11857667e5b74503dd7118490f0f929ac9ce26
 reviewedTranslationHash = "sha256:6cf37c4b97f89c283535fe56f30e18909eb136dc5bd12e986c30361778b865d9"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T11:51:27.104846Z"
+reviewedAt = "2026-11-06T11:56:06.659037Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# ADR 0020：按需导出 VLESS 客户端传输策略
 

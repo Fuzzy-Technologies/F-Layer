@@ -215,7 +215,11 @@ does not remove a healthy service or enroll peers. Ordinary deploy does not repa
 an interrupted guest transaction. Status accepts no mutation options and reports
 service health separately from client connectivity. The authorized boot callback
 recreates the private volatile coordination file after reboot; status remains
-read-only. Whole-project destroy uses the frozen nonsecret cloud snapshot even
+read-only. If reboot interrupted installation/removal before a service can restore
+that file, status may read without creating it and discards the result if a
+mutator creates any lock path during observation. Recovery still locks exclusively
+and rechecks its exact current proof. All mutating service callbacks establish
+the coordination file before effects. Whole-project destroy uses the frozen nonsecret cloud snapshot even
 when private client or SSH keys have been lost. Local artifacts are retained;
 old trust or client exports block another deployment after cleanup.
 

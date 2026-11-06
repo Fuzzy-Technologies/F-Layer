@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:d5b4d213be9467600da9250e00e1c65f5507ddc2caff85152abeb86e3796003c"
-reviewedTranslationHash = "sha256:06a317768de7e0726c5d389ab8ae68b8f6a37800d69e49bef9a53146bd6ab158"
+sourceHash = "sha256:574652ec20744c531fe690f8a3d6f9e32d770ee07619862fa80a503d79fab34a"
+reviewedTranslationHash = "sha256:577de2a084f51390fa928bb7ca2d7d8bac2a2f9cc8463540c24b063fb623432d"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T16:56:43.901995Z"
+reviewedAt = "2026-11-06T17:02:12.828029Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -175,7 +175,10 @@ IAM serial-key 标记使用原始项目指纹，即使无关设备或本地认�
 观测到的 WG 回执，或用于清理空遗留元数据的独立完整缺席证明。
 它不会移除健康服务或注册对等端。普通 deploy 不会修复中断的来宾事务。
 Status 不接受变更选项，服务健康与客户端连通性分别报告。已授权的启动
-回调会在重启后重建私有临时协调文件；status 保持只读。全项目删除使用
+回调会在重启后重建私有临时协调文件；status 保持只读。如果重启中断安装/删除，
+且服务尚不能恢复该文件，status 可在不创建文件的情况下读取；若观测期间变更
+操作创建任何锁路径，结果被丢弃。恢复仍获取排他锁并复核当前精确证明。
+所有会变更状态的服务回调均在副作用前建立协调文件。全项目删除使用
 原始非秘密云快照，即使私有客户端或 SSH 密钥丢失仍可清理。
 本地制品被保留；清理后，旧信任或客户端导出会阻止再次部署。
 

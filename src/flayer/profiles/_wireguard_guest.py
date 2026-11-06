@@ -1689,9 +1689,10 @@ def Main(argv: list[str] | None = None) -> int:
                 if journal["phase"] != "prepared" or journal["receipt"] != receipt:
                     raise GuestError("WireGuard provisional service has no matching installation journal")
 
+            # Service callbacks may follow a reboot that cleared /run; every mutator establishes coordination first.
+            os.close(_OpenLock(readOnly=False))
+
             if arguments.start:
-                # /run is volatile: boot must recreate coordination metadata before later read-only status calls.
-                os.close(_OpenLock(readOnly=False))
                 _Start(root, unit, request)
 
             else:
@@ -1699,10 +1700,22 @@ def Main(argv: list[str] | None = None) -> int:
 
             return 0
 
-        descriptor = _OpenLock(readOnly=readOnly)
+        descriptor: int | None
 
         try:
-            fcntl.flock(descriptor, (fcntl.LOCK_SH if readOnly else fcntl.LOCK_EX) | fcntl.LOCK_NB)
+            descriptor = _OpenLock(readOnly=readOnly)
+
+        except FileNotFoundError:
+            if not readOnly or LOCK.exists() or LOCK.is_symlink():
+                raise
+
+            # A crash/reboot can clear /run before the first unit is installed.
+            # Read-only status must still obtain recovery consent without creating metadata.
+            descriptor = None
+
+        try:
+            if descriptor is not None:
+                fcntl.flock(descriptor, (fcntl.LOCK_SH if readOnly else fcntl.LOCK_EX) | fcntl.LOCK_NB)
 
             if arguments.remove:
                 _Remove(owner, arguments.expectedReceipt)
@@ -1722,8 +1735,13 @@ def Main(argv: list[str] | None = None) -> int:
             else:
                 _Install(stage, request)
 
+            if descriptor is None and (LOCK.exists() or LOCK.is_symlink()):
+                # Every mutator creates this file before its first write and never removes it.
+                raise GuestError("WireGuard operation started during observation; retry read-only status")
+
         finally:
-            os.close(descriptor)
+            if descriptor is not None:
+                os.close(descriptor)
 
     except GuestError as error:
         print("WireGuard guest operation failed: " + str(error), file=sys.stderr)

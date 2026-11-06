@@ -555,7 +555,7 @@ def test_BootCallbackRestoresVolatileLockForReadOnlyStatus(
 
 
 def test_EmptyRemovedNamespaceRecoveryUsesAnActualAbsenceProof(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Do not fabricate a previous receipt when a crash left only an empty recovery directory."""
 
@@ -580,17 +580,63 @@ def test_EmptyRemovedNamespaceRecoveryUsesAnActualAbsenceProof(
         with pytest.raises(Interrupted):
             guest._Remove(request["owner"], expected)
 
-    status = guest._Status(stage, request)
+    assert not guest.LOCK.exists()
+    assert guest.Main(["--status"]) == 0
+    status = json.loads(capsys.readouterr().out)
 
     assert status["status"] == "absent" and status["receipt_sha256"] == "" and status["cleanup_required"] is True
+    assert not guest.LOCK.exists()
 
     with pytest.raises(guest.GuestError):
         guest._Recover(request["owner"], "", expectedAbsence="0" * 64)
 
-    guest._Recover(request["owner"], "", expectedAbsence=str(status["absence_sha256"]))
+    assert guest.Main(["--recover", "--allow-mutation", "--expected-absence-sha256", status["absence_sha256"]]) == 0
 
     assert not transaction.exists() and model.interface is None and not model.network
     assert guest._Status(stage, request)["cleanup_required"] is False
+
+
+def test_StagedInstallAfterRebootCanObtainRecoveryConsentWithoutCreatingALock(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A crash before publishing a unit must not require a mutating deploy just to make status available."""
+
+    stage, request, _ = Seed(tmp_path, monkeypatch)
+    root, unit, transaction = guest._Paths(request["owner"])
+    guest._PrepareRoot(stage, request, root, unit)
+    assert not guest.LOCK.exists() and not unit.exists()
+    before = {path.relative_to(transaction): path.read_bytes() for path in transaction.rglob("*") if path.is_file()}
+
+    assert guest.Main(["--status"]) == 0
+    status = json.loads(capsys.readouterr().out)
+
+    assert status["status"] == "recovery-required" and not guest.LOCK.exists()
+    assert {path.relative_to(transaction): path.read_bytes() for path in transaction.rglob("*") if path.is_file()} == before
+    assert guest.Main(["--recover", "--allow-mutation", "--expected-receipt-sha256", status["receipt_sha256"]]) == 0
+    assert guest.LOCK.exists() and not transaction.exists() and not root.exists()
+
+
+def test_MissingLockObservationIsDiscardedWhenAMutatorStartsConcurrently(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Never return a potentially incoherent recovery receipt if an operation began during a lock-free read."""
+
+    Seed(tmp_path, monkeypatch)
+
+    def Status(*args: Any) -> dict[str, object]:
+        """Model the coordination file created by a concurrent authorized mutator before its effects."""
+
+        descriptor = guest._OpenLock(readOnly=False)
+        os.close(descriptor)
+
+        return {"status": "absent"}
+
+    monkeypatch.setattr(guest, "_Status", Status)
+
+    assert guest.Main(["--status"]) == 1
+    result = capsys.readouterr()
+
+    assert result.out == "" and "retry read-only status" in result.err
 
 
 def test_EmptyFinalJournalExposesNewReceiptAndPreservesCommittedService(

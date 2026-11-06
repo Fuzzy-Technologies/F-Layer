@@ -112,10 +112,62 @@ retained for diagnosis. A committed healthy service survives journal-finalizatio
 failure. Replacement, peer changes and key rotation are refused by ordinary
 installation; they need explicit transitions rather than implicit regeneration.
 
+## Explicit project selection and offline preparation
+
+The development candidate accepts schema-2 private projects through the public
+loader and offline preparation CLI. An explicit repeated option opts into this
+format; omitting it retains the exact schema-1 AWG/VLESS template and fingerprints:
+
+```bash
+flayer project init ~/flayer-wireguard --protocol wireguard
+# Edit the cloud placement and administration address in project.toml first.
+flayer vpn prepare --project ~/flayer-wireguard
+```
+
+Repeat `--protocol` to select any nonempty combination of `amneziawg`,
+`vless-reality` and `wireguard`. OpenVPN remains unavailable until its separate
+implementation. An empty, repeated or unknown selection is an error, never an
+implicit fallback to the old pair. The whole document is validated before keys
+are generated: inactive/unknown settings, duplicate UDP listeners, TCP 22,
+overlapping networks, invalid MTU, extra device-address keys or more than two DNS
+servers are refused.
+
+Each selected protocol table requires explicit `device_ids`. WG uses its own
+`[wireguard.device_addresses]` map; top-level `devices.ipv4_address` belongs only
+to AWG members and VLESS has no tunnel address. IDs and assigned addresses are
+retained while declaration order is canonicalized. No addresses are allocated by
+enumeration and no protocol enrolls all devices implicitly.
+
+`SelectedVpnProject` keeps a full public project fingerprint separately from
+`TransportFingerprint()`. Each transport's fingerprint includes its selected
+members, listener/settings, identity and shared route policy. It excludes other
+protocols' devices/listeners/settings and cloud placement. An unselected device
+can be declared without changing any retained transport bytes.
+
+Preparation creates separate owned `server-<stack>-<protocol>-credentials`
+bundles containing private `material.json` and its `intent.sha256` proof, plus
+that protocol's server bundle. Exact matching material is decoded, not regenerated.
+All existing bundle manifests/file sets are verified before publishing new bundles.
+Changed own membership/settings or drift fails closed without rewriting other
+protocols. If a later local bundle write fails, already committed credentials
+remain available for an unchanged retry. Existing filesystem ownership and 0700/
+0600 private-storage requirements still apply.
+
+Preparation emits no bootstrap, cloud state or client files with a placeholder
+endpoint. Schema-2 deploy/status/destroy/recover, runtime maintenance, cloud-plan
+compilation and device export refuse before provider construction or output
+mutation until their integration is implemented. No client-connectivity claim
+follows from offline preparation.
+
+Editing an old project to schema 2 is not migration. Retained generic cloud state or a pending operation journal,
+legacy combined credentials, bootstrap/trust bundles or device exports block this
+preparation. Keep the original schema-1 configuration, keys, manifests and cleanup
+references until an explicit migration/ingress workflow can prove the old baseline.
+
 ## Remaining integration
 
-Project schema 2, selection through the public project CLI, SSH receiver integration,
-cloud/guest ingress transitions and scoped enrollment/revocation remain Task #128.
+SSH receiver integration, immutable creation baselines, cloud/guest ingress
+transitions and scoped enrollment/revocation remain Task #128.
 Connecting the guest receipts/recovery/removal to the full project lifecycle is
 also pending. Existing schema-1
 AWG/VLESS loading and fingerprint algorithms are unchanged by this foundation.

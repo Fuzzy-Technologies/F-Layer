@@ -306,13 +306,13 @@ they do not replace a following healthy-service observation. Portable tests use
 in-memory runner/staging boundaries and execute no SSH or guest program.
 
 This low-level API does not persist controller intent or issue fresh device keys.
-Callers must retain the complete old/new bundles and original proofs until the
-pending controller revision workflow supplies their durable journal.
+The project workflow below supplies its durable journal and retains complete
+old/new bundles and original proofs.
 
 ## Private controller revision store
 
-The private `_vpn_revisions.py` provides persistence primitives for the next peer
-controller. It is not yet called by project lifecycle or CLI commands. Each attempt
+The private `_vpn_revisions.py` provides persistence for the project peer
+controller and effective lifecycle resolution. Each attempt
 first writes an owner-bound metadata journal, then an immutable private bundle of
 new material/configuration and the retained installer, then the bundle's exact
 digest before remote activation. Reuse complete staging after an interrupted digest
@@ -334,16 +334,18 @@ of private client key availability. Validate completion digest types/formats bef
 any publication and preflight the same capacity bound before staging or advancing
 a new head; exact completed retries remain possible at capacity.
 Only reading active material/server bytes
-requires their complete pinned request manifest. This lets future whole-cloud
+requires their complete pinned request manifest. This lets whole-cloud
 cleanup retain its original nonsecret ownership proof even if client keys are lost.
 Original creation resources/bootstrap and unrelated protocol bundles stay unchanged.
 A persistent private advisory lock covers complete cooperating project workflows;
 read-only absence fallback creates no file and discards a raced observation.
-Integration with every selected-project entrypoint is still required before the
-new peer CLI can be exposed. Tests use synthetic projects and actual POSIX private
+Selected prepare/deploy/status/recovery and peer operations share this lock;
+whole-stack destroy validates nonsecret revisions and retains private artifacts.
+Unsupported selected runtime/export commands still refuse before mutation.
+Tests use synthetic projects and actual POSIX private
 files/locks, with no cloud, SSH or desktop network operation.
 
-## Remaining integration
+## Project peer workflow
 
 `PrepareWireGuardPeerEnrollment()` and `PrepareWireGuardPeerRevocation()` now
 prepare deterministic in-memory profile/material changes for one named peer.
@@ -354,11 +356,57 @@ unchanged. Invalid identities, address/key reuse, an over-capacity enrollment or
 revocation of the final peer are refused. The original private material remains
 available for audit. Removing the final peer requires protocol deactivation.
 These preparation APIs do not contact the guest, disconnect a peer, persist a
-revision or update project state. Public project revocation still requires the
-controller revision/recovery workflow; the peer CLI does not yet expose it.
+revision or update project state. `RunVpnPeer()` now composes them with retained
+controller revisions and the owned SSH transaction.
+
+For a deployed schema-2 WireGuard project, edit `project.toml` to describe exactly
+one named enrollment/revocation. Declare a new device and explicit unused tunnel
+address for enrollment; keep every old peer/address and other protocol unchanged.
+Revocation removes only that protocol membership/address, retaining shared device
+declarations needed by other protocols. Removing the final peer requires protocol
+deactivation. Read-only plan validates this delta before external access, observes
+the complete original cloud graph, effective ingress/attachments, existing IAM host
+pin and active guest receipt/history, then reports `baseline_sha256` and
+`plan_expires_at`. No key is generated during plan.
+
+```console
+flayer vpn peer plan --project PROJECT --protocol wireguard --device phone --change enroll --format json
+flayer vpn peer enroll --project PROJECT --protocol wireguard --device phone --allow-mutation --scope-confirm FOLDER_ID --expected-baseline-sha256 BASELINE --plan-expires-at EXPIRES_AT
+flayer vpn peer status --project PROJECT --protocol wireguard --device phone --change enroll --format json
+flayer vpn peer recover --project PROJECT --protocol wireguard --device phone --change enroll --allow-mutation --scope-confirm FOLDER_ID --expected-baseline-sha256 JOURNAL_BASELINE
+```
+
+Replace the uppercase placeholders with the project, exact scope and reported
+proofs. Apply must echo the plan within 600 seconds. Generate and retain only one
+new device key/PSK after matching consent and baseline, persist the journal/request,
+then re-observe cloud/trust and guest proofs immediately before remote apply.
+Preserve the original installed-program bytes/pin. Verify a healthy desired guest
+result and its computed chained history before advancing the local head.
+An identical latest completed retry verifies health without key generation or
+guest mutation, even when its original plan has expired.
+
+An unknown SSH outcome leaves the journal intact. Peer status reports a separate
+journal baseline and nonzero exit status while recovery is required. Explicit
+recovery echoes that baseline, target, scope and consent; it uses retained original
+proofs and files without key generation, finalizing a published root or rolling
+back only an uncommitted prefix. A complete rolled-back candidate is reused on
+the next identical fresh plan. Missing pre-activation staging can be archived as
+unapplied; incomplete private bytes require inspection and are never replaced.
+Ordinary prepare/deploy/status/recover refuse a pending peer journal. Full-project
+destroy remains a separately consented whole-cloud cleanup and never needs client
+or administration private keys.
+
+After commit, ordinary lifecycle uses effective protocol pins and the original
+six-resource creation plan/bootstrap/SSH marker. It checks peer history before
+unrelated installers, so restoring old controller files cannot adopt a repeated
+guest configuration. Other services, resources, addresses and existing client
+files remain unchanged. Client delivery remains Task #129; peer completion alone
+does not export native profiles or establish Internet/media acceptance.
+
+## Remaining integration
 
 Adding/removing a protocol on an existing guest, schema-1 migration, explicit
-cloud/guest ingress overlays and scoped peer enrollment/revocation remain Task
+cloud/guest ingress overlays remain Task
 #128. Schema-2 Xray runtime maintenance and the separate device-export command
 still refuse before provider/output mutation. Existing schema-1 AWG/VLESS
 loading, bootstrap bytes, resource labels and fingerprint algorithms are unchanged.

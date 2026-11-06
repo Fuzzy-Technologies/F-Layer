@@ -93,6 +93,27 @@ def Parser() -> argparse.ArgumentParser:
         if action == "recover":
             child.add_argument("--rollback", action="store_true")
 
+    peer = vpnActions.add_parser("peer", help="Plan and explicitly manage one existing project's WireGuard peer")
+    peerActions = peer.add_subparsers(dest="peerAction", required=True)
+
+    for action in ("plan", "status", "enroll", "revoke", "recover"):
+        child = peerActions.add_parser(action)
+        child.add_argument("--project", required=True, help="Private schema-2 project directory")
+        child.add_argument("--protocol", required=True, choices=("wireguard",))
+        child.add_argument("--device", required=True, help="One exact named peer")
+        child.add_argument("--format", choices=("text", "json"), default="text")
+
+        if action in {"plan", "status", "recover"}:
+            child.add_argument("--change", required=True, choices=("enroll", "revoke"))
+
+        if action not in {"plan", "status"}:
+            child.add_argument("--allow-mutation", action="store_true", dest="allowMutation")
+            child.add_argument("--scope-confirm", required=True, dest="scopeConfirm")
+            child.add_argument("--expected-baseline-sha256", required=True, dest="expectedBaseline")
+
+        if action in {"enroll", "revoke"}:
+            child.add_argument("--plan-expires-at", required=True, type=int, dest="planExpiresAt")
+
     export = vpnActions.add_parser("export", help="Export existing device files without cloud access")
     export.add_argument("--project", required=True, help="Private project directory")
     export.add_argument("--device", required=True, help="One declared device ID")
@@ -183,6 +204,13 @@ def _VpnProject(args: argparse.Namespace) -> int:
             report = ExportVpnDevice(project, args.device, args.protocol, args.output,
                                      qr=args.qr, tlsFragment=args.tlsFragment, allowQuic=args.allowQuic)
 
+        elif args.action == "peer":
+            from .vpn_peers import RunVpnPeer
+
+            report = RunVpnPeer(project, args.peerAction, getattr(args, "change", args.peerAction), args.device,
+                protocol=args.protocol, allowMutation=getattr(args, "allowMutation", False), scopeConfirm=getattr(args, "scopeConfirm", ""),
+                expectedBaseline=getattr(args, "expectedBaseline", ""), planExpiresAt=getattr(args, "planExpiresAt", 0))
+
         elif args.action in {"runtime-status", "upgrade", "rollback-upgrade", "recover-upgrade"}:
             report = RunVpnRuntime(
                 project, args.action, allowMutation=getattr(args, "allowMutation", False),
@@ -205,10 +233,21 @@ def _VpnProject(args: argparse.Namespace) -> int:
             "VPN operation failed. Check private artifact ownership, cloud access, and retained state before retrying."
         )
         payload = {"action": args.action, "status": "failed", "message": message,
-                   "recovery_required": args.action in {"deploy", "destroy", "recover", "upgrade", "rollback-upgrade", "recover-upgrade"}}
+                   "recovery_required": args.action in {"deploy", "destroy", "recover", "upgrade", "rollback-upgrade", "recover-upgrade"}
+                   or args.action == "peer" and args.peerAction not in {"plan", "status"}}
         print(json.dumps(payload) if getattr(args, "format", "text") == "json" else message)
 
         return 2
+
+    if args.action == "peer":
+        from .vpn_peers import VpnPeerReport
+
+        assert isinstance(report, VpnPeerReport)
+        print(json.dumps(_WireDict(report), sort_keys=True) if args.format == "json" else
+              f"VPN peer {report.action}: {report.status}; baseline_sha256={report.baselineSha256}; "
+              f"plan_expires_at={report.planExpiresAt}; recovery_required={str(report.recoveryRequired).lower()}. {report.details}")
+
+        return report.ExitCode()
 
     print(json.dumps(_WireDict(report), sort_keys=True) if args.format == "json" else
           f"VPN {report.action}: {report.status}; cloud={report.cloudStatus}; guest={report.guestStatus}; "

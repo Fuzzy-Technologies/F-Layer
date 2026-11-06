@@ -568,3 +568,33 @@ reviewerType = "ai"
 reviewedAt = "2026-11-06T17:16:09.659727Z"
 reviewRoles = ["editorial", "technical"]
 body = "在内存中准备吊销一个对等端，保留其他所有设备、凭据及已分配地址。"
+[[units]]
+id = "module:flayer.vpn_peers"
+sourcePath = "src/flayer/vpn_peers.py"
+sourceHash = "sha256:f12a9631bc0588c651e4f21ce4a96f4d5b332f46a570aceeb5980675bbbedb3d"
+reviewedTranslationHash = "sha256:ce1d699353fb346b5c39b8fefd6862ecdfe61631f8726f88e131db5aad9865b4"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T19:47:30.103267Z"
+reviewRoles = ["editorial", "technical"]
+body = "为受管私有项目中指定的标准 WireGuard 对等端提供显式计划及恢复。"
+[[units]]
+id = "symbol:flayer.vpn_peers.VpnPeerReport"
+sourcePath = "src/flayer/vpn_peers.py"
+sourceHash = "sha256:714b26ab22267d851303c0593913a8d20c4510609d90c36105cab49fe88427a5"
+reviewedTranslationHash = "sha256:54cb922f10a79034ef18a14f907a88d6172232b75809b304941470e3d9828749"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T19:47:30.103267Z"
+reviewRoles = ["editorial", "technical"]
+body = "报告有界的对等端计划/恢复证明，不包含客户端材料，也不宣称流量已验收。"
+[[units]]
+id = "symbol:flayer.vpn_peers.RunVpnPeer"
+sourcePath = "src/flayer/vpn_peers.py"
+sourceHash = "sha256:1d3952089068b90f3932c334e8abafe1d9d7c27df014c923e1b1210ebbd2477a"
+reviewedTranslationHash = "sha256:7b6c3d2f1887dc03faee811c11d95ca6db6ce4a6c60ed6a560e446eecb434a3f"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T19:47:30.103267Z"
+reviewRoles = ["editorial", "technical"]
+body = "计划、观测或显式应用/恢复一个对等端变更，不轮换无关密钥，也不重新创建云资源。"

@@ -149,6 +149,18 @@ class SelectedGuest:
 
         return tuple((service, True) for service in services)
 
+    def WireGuardPeerOperation(self, bundle: ArtifactBundle, action: str, change: str, deviceId: str, **options: Any) -> dict[str, object]:
+        """Model only the initial committed history observation without executing a peer driver."""
+
+        from flayer._vpn_revisions import Digest
+
+        owner = json.loads(next(item.content for item in bundle.files if item.name == "deployment.json"))["owner"]
+        self.calls.append(("peer-status", bundle))
+        assert action == "status" and not options
+
+        return {"status": "active", "is_desired": True, "receipt_sha256": "a" * 64,
+                "history_sha256": Digest(lifecycle.wireguardGuest._Encode({"domain": "f-layer/wireguard/peer-history/v1", "owner": owner}))}
+
 
 @pytest.fixture(autouse=True, name="vendorReads")
 def VendorReadsFixture(monkeypatch: pytest.MonkeyPatch) -> list[str]:

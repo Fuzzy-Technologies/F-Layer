@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from flayer._vpn_creation import LoadCreationBaseline, ReadPinnedBundle
 from flayer._vpn_observation import CreationProvider
+from flayer._vpn_revisions import LoadRevisions, Pending, ProjectLock, ReadEffectiveBundle
 from flayer.core.lifecycle import LifecycleEngine, _LoadJournal
 from flayer.core.state import LoadState
 from flayer.guest import PrivatePath, SshGuestProvisioner
@@ -28,7 +28,7 @@ from flayer.vpn_project import (
     _Publish,
     _VerifyAdministrationKey,
 )
-from flayer.vpn_project_v2 import PrepareSelectedProject, ValidateSelectedProject, _Transport
+from flayer.vpn_project_v2 import ValidateSelectedProject, _PrepareSelectedProject, _Transport
 
 
 def _FreshKernelGate() -> None:
@@ -91,12 +91,24 @@ def RunSelectedProject(
     if rollback and action != "recover":
         raise VpnError("Rollback applies only to an interrupted cloud recovery")
 
+    with ProjectLock(project, readOnly=action == "status"):
+        return _RunSelectedProject(project, action, allowMutation=allowMutation, scopeConfirm=scopeConfirm, rollback=rollback,
+                                   provider=provider, guestFactory=guestFactory)
+
+
+def _RunSelectedProject(
+    project: SelectedVpnProject, action: str, *, allowMutation: bool, scopeConfirm: str, rollback: bool,
+    provider: VpnYandexProvider | None, guestFactory: Callable[..., SshGuestProvisioner],
+) -> VpnProjectReport:
+    """Keep the complete cloud, guest and artifact operation under the common project lock."""
+
     creation = project.Artifacts / ("server-" + project.vpn.identity.stack + "-creation")
 
     if action == "deploy" and not creation.exists() and not creation.is_symlink():
-        PrepareSelectedProject(project)
+        _PrepareSelectedProject(project)
 
-    baseline = LoadCreationBaseline(project)
+    revision = LoadRevisions(project)
+    baseline = revision.baseline
     statePath = project.root / "state.json"
     state = LoadState(statePath, project.vpn.identity)
     journal = _LoadJournal(statePath, baseline.plan)
@@ -105,12 +117,15 @@ def RunSelectedProject(
     materials: dict[str, ArtifactBundle] = {}
 
     if not cleaning:
-        baseline.ValidateCurrent(project)
+        if Pending(project) is not None:
+            raise VpnError("Pending peer revision requires flayer vpn peer status and explicit peer recovery before this operation")
+
+        revision.ValidateCurrent(project)
         _VerifyAdministrationKey(project)
 
-        for pin in baseline.protocols:
-            materials[pin.protocol] = ReadPinnedBundle(project, pin, material=True)
-            servers.append((pin.protocol, ReadPinnedBundle(project, pin)))
+        for pin in revision.pins:
+            materials[pin.protocol] = ReadEffectiveBundle(project, revision, pin, material=True)
+            servers.append((pin.protocol, ReadEffectiveBundle(project, revision, pin)))
 
     if action == "deploy" and (state is None or not state.resources) and any(
         path.name.startswith("device-") or path.name == "server-" + project.vpn.identity.stack + "-trust"
@@ -172,6 +187,17 @@ def RunSelectedProject(
                                 details="Receipt-bound guest recovery completed; run deploy to verify or install the selected services")
 
     if action == "deploy":
+        if wireguard is not None:
+            before = guest.WireGuardOperation(wireguard, "status")
+
+            if before["status"] == "active":
+                from flayer._vpn_peer_controller import Observe
+
+                Observe(guest, revision, wireguard)
+
+            elif revision.receipt:
+                raise VpnError("Previously committed WireGuard peer state is absent or interrupted; retain its history and recover explicitly")
+
         # Refuse an interrupted WG transaction before invoking an unrelated protocol's installer.
         guest.Install(tuple(sorted(servers, key=lambda item: item[0] != "wireguard")))
 
@@ -182,6 +208,10 @@ def RunSelectedProject(
             return VpnProjectReport(action, "incomplete", "complete", "recovery-required" if status["status"] == "recovery-required" else "absent",
                                     recoveryRequired=status["status"] == "recovery-required" or status.get("cleanup_required") is True,
                                     details="WireGuard is not verified active; retain the project and use explicit recovery when required")
+
+        from flayer._vpn_peer_controller import Observe
+
+        Observe(guest, revision, wireguard)
 
     services = _Services(project)
     observations = guest.ServiceStatus(services)

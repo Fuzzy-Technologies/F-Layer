@@ -320,12 +320,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_export.ExportVpnDevice"
 sourcePath = "src/flayer/vpn_export.py"
-sourceHash = "sha256:76be8c0d73a293f6a4f24f94a1a3e86d5f41d27afc6f364a6ad796d047232ae0"
-body = "Копирует файлы одного устройства после проверки манифеста, без обращений к облаку, генерации ключей или записи в исходные файлы."
-reviewedTranslationHash = "sha256:01a0b8bdf9ab862809db78265ca86a49784b7c9b8b7603a9af20c2cc17df411e"
+sourceHash = "sha256:e6ad4bae8e919064d47de30990fbf2378403c2a0b75d28f2f93cbd39c21ec03e"
+body = "Экспортировать одно проверенное устройство с опциональными политиками клиента без записи в исходные файлы."
+reviewedTranslationHash = "sha256:050e8e74a9318685c98b39ce8b3766a610431ac625ee46f799a45bb6cbd79455"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-04T10:34:46Z"
+reviewedAt = "2026-11-06T11:56:06.659037Z"
 reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.guest.SshGuestProvisioner.VlessRuntime"

@@ -168,6 +168,14 @@ Keep client files and QR codes private: they grant access to your VPN.
 See the [client walkthrough](https://fuzzy-technologies.github.io/F-Layer/en/guide/#4-connect-a-device)
 for protocol-specific checks and import details.
 
+## Development candidates
+
+Candidates built from `develop` for release 2.1 add opt-in VLESS export settings:
+`--tls-fragment` and `--allow-quic`. These options retain the existing device
+credentials and source artifacts. See the [candidate export guide](docs/site/content/en/guide/cli.md)
+for complete native profiles, compatibility and limits. The published 2.0.0
+package does not include these options.
+
 ## Manage your deployment
 
 Use `flayer vpn status --project ~/flayer-vpn` to inspect your server.

@@ -1,0 +1,80 @@
+schemaVersion = 1
+sourcePath = "docs/adr/0020-client-tls-fragment-export.md"
+sourceHash = "sha256:2572ea92975181f4ca65e11857667e5b74503dd7118490f0f929ac9ce267509e"
+reviewedTranslationHash = "sha256:6cf37c4b97f89c283535fe56f30e18909eb136dc5bd12e986c30361778b865d9"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T11:56:06.659037Z"
+reviewRoles = ["editorial", "technical"]
+body = '''# ADR 0020：按需导出 VLESS 客户端传输策略
+
+- 状态：提议
+- 日期：2026-11-06
+- 任务：[#114](https://github.com/Fuzzy-Technologies/F-Layer/issues/114)
+
+## 背景
+
+VPN 服务已安装，并不能证明某个客户端网络允许握手或应用流量通过。
+已有私有项目需要支持显式选择客户端传输策略，同时保留凭据、服务器标识、
+已准备的清单以及普通导出的行为。
+
+## 决策
+
+为离线 `flayer vpn export` 增加相互独立的 `--tls-fragment` 和
+`--allow-quic` 选项，适用于 VLESS Reality TCP Vision 客户端。
+Python 调用使用 `tlsFragment` 和 `allowQuic`，两者默认均为 false。
+现有 CLI 参数、文件格式、设备标识以及普通导出的逐字节保留行为保持兼容。
+
+生成任何输出前，按照所有权清单校验设备的全部原始文件。
+要求恰好一个 VLESS 出站、一个目标端点和一个用户。拒绝不支持的传输或 flow、
+重复的出站标签，以及选定出站中已有的 `proxySettings` 或
+`sockopt.dialerProxy` 代理链。私有配置的解析错误详情不对外公开。
+
+TLS 分片增加标签保留为 `tls-fragment` 的 Freedom 出站，
+仅将 VLESS 传输的 `sockopt.dialerProxy` 指向该出站。
+使用 `packets = tlshello`、`length = 100-200` 和 `interval = 10-20`。
+保留已有套接字选项以及其他出站、身份验证、Reality、DNS 和路由策略。
+辅助标签发生冲突时拒绝操作，不替换其他出站。
+
+QUIC 选项仅将选定客户端的 Vision flow 改为 `xtls-rprx-vision-udp443`。
+该后缀在客户端允许 UDP 443，并在 Vision 请求发往服务器前移除。
+服务器已有的 flow 和凭据仍然有效。此选项可与分片组合，
+默认情况下普通 Vision 仍会拦截 UDP 443。
+
+派生导出包含完整一致的客户端 JSON 和 AmneziaVPN 原生 `.vpn` 配置，
+并可按需附带带编号的原生 QR 帧。启用任一选项时均不输出普通 VLESS URI，
+确保每种受支持的导入方式都能保留完整派生策略。
+保留已验证的原始原生封装，包括 DNS 和描述，仅替换与源文件完全一致的 Xray 客户端配置。
+不从当前项目期望设置中提取原生策略；拒绝不一致或超出限制的源封装。
+选定的字节或文件集合不同时，必须使用其他输出目录；不覆盖或裁剪已有导出。
+此变更不引入云调用、来宾操作、源文件写入、密钥生成，
+也不声称设备连通性已得到验证。
+
+## 兼容性与验证
+
+保留受支持的现有客户端所使用的 Freedom 分片形式。
+Xray 26.10.31 仍实现该形式，但已将其标记为弃用并推荐 FinalMask。
+将现有客户端迁移到其他表示形式不属于本次导出变更。
+固定版本 Xray 26.9.30 和 26.10.31 的解析器测试覆盖默认导出、
+独立选项以及组合选项。原生封装携带完全一致的派生 JSON，
+扫描帧可重建相同的 Qt 压缩字节。
+
+确定性测试覆盖格式错误或含糊的输入、拒绝既有代理链、参数校验、
+全量与分流路由、源文件不可变性、私有访问权限、重复导出、输出冲突、
+原生格式往返以及公共 CLI 参数传递。测试使用合成标识；
+真实设备验收证据单独记录。
+
+## 影响
+
+操作人员可以选择传输策略，同时保留现有项目及服务器所有权和凭据。
+客户端必须支持所选 Xray 功能并导入完整配置。分片作用于客户端到 VPN 的握手；
+服务器到目标的可达性仍需单独诊断。两种选项均不保证应用或媒体可用性。
+
+## 参考资料
+
+- [固定版本 Freedom 配置](https://github.com/XTLS/Xray-core/blob/v26.10.31/infra/conf/freedom.go)
+- [固定版本 Freedom 分片实现](https://github.com/XTLS/Xray-core/blob/v26.10.31/proxy/freedom/freedom.go)
+- [固定版本 Vision 客户端 flow 处理](https://github.com/XTLS/Xray-core/blob/v26.10.31/proxy/vless/outbound/outbound.go)
+- [ADR 0019](0019-private-vpn-project-workflow.md)
+
+'''

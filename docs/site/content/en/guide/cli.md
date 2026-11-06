@@ -89,3 +89,40 @@ Profiles and QR images grant device access: keep them private. The report lists
 paths, never keys or connection URLs. Export success is not connectivity evidence;
 verify DNS, routes, exit IPv4 and client IPv6 behavior after import. Native schema
 and scanner framing follow [AmneziaVPN 5.0.3.0 source](https://github.com/amnezia-vpn/amnezia-client/tree/de93650a90739b87bb47a632872ea9d0adc9412f).
+
+## Optional VLESS transport exports (development candidate)
+
+These options are available in `develop` candidates for release 2.1. They are
+not included in the published 2.0.0 package. Ordinary exports retain their
+existing behavior, credentials and source files.
+
+- `--tls-fragment` fragments the client-to-VPN Reality TLS handshake through
+  a dedicated Freedom outbound. The fixed policy uses `tlshello`, 100–200 byte
+  fragments and 10–20 ms intervals. It affects only the VPN transport.
+- `--allow-quic` selects `xtls-rprx-vision-udp443` in the exported client.
+  This permits inner UDP 443 traffic. The ordinary Vision flow intercepts that
+  traffic so applications can fall back to TCP. The server keeps its existing flow.
+
+Select either option independently or combine them, with optional native QR frames:
+
+```bash
+flayer vpn export --project ~/flayer-vpn --device laptop --protocol vless-reality --output ~/flayer-export-options --tls-fragment --allow-quic --qr
+```
+
+The derived bundle contains `client.json`, `amnezia.vpn` and the selected QR
+frames. Import the complete native profile or scan all its frames. It omits
+`import.txt`, since a plain VLESS URI does not preserve the complete export policy.
+Changing either option requires a separate output root when existing output differs.
+
+The exporter requires one unchained VLESS Reality TCP Vision client. It refuses
+ambiguous endpoints or users, duplicate outbound tags, existing proxy chains,
+and a conflicting `tls-fragment` tag. These options are rejected for AWG.
+Source manifests are verified before any transformation; no cloud/guest operation
+or credential generation takes place.
+
+Use a client supporting the selected Xray features. Syntax checks cover Xray
+26.9.30 and 26.10.31. The Freedom fragmentation form is retained for compatibility;
+upstream marks it deprecated in 26.10.31. Export success does not establish actual
+device connectivity or media playback. Failures between the VPN server and a
+destination need separate diagnosis. See [ADR 0020](../../../../adr/0020-client-tls-fragment-export.md)
+for the contract and compatibility decision.

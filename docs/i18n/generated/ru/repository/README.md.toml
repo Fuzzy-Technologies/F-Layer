@@ -169,6 +169,14 @@ IPv4 сервера как выходной адрес, DNS, маршруты и
 Подробности импорта и проверки протоколов приведены в
 [инструкции для клиента](https://fuzzy-technologies.github.io/F-Layer/ru/guide/).
 
+## Кандидаты разработки
+
+Кандидаты из `develop` для релиза 2.1 добавляют опциональные настройки экспорта
+VLESS: `--tls-fragment` и `--allow-quic`. Эти опции сохраняют существующие учётные
+данные устройства и исходные артефакты. Полные нативные профили, совместимость
+и ограничения описаны в [руководстве по экспорту кандидата](docs/site/content/en/guide/cli.md).
+Опубликованный пакет 2.0.0 этих опций не содержит.
+
 ## Управление развёртыванием
 
 Проверяйте сервер командой `flayer vpn status --project ~/flayer-vpn`.
@@ -201,9 +209,9 @@ flayer vpn destroy --project ~/flayer-vpn --allow-mutation --scope-confirm YOUR_
 [Apache 2.0](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/LICENSE).
 Для участия в разработке начните с [CONTRIBUTING.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/CONTRIBUTING.md).
 '''
-sourceHash = "sha256:386214313fe8314d3202427716f075d6e8471f4de150522156db3ec1695db14d"
-reviewedTranslationHash = "sha256:5690b220a26a6da22c7ab7a6560f87fe2fdbfd92da8fea070b4a0fd65ae4b955"
+sourceHash = "sha256:2bf2269341848d3f355795149eb7333131889cddc8b2646229629dd4b67c420a"
+reviewedTranslationHash = "sha256:ee6ceb7d328adb234d6aad59d9b99a300f2b64ecabececdd6ff4bc00eb39f583"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-05T18:37:32.432583Z"
+reviewedAt = "2026-11-06T11:56:06.659037Z"
 reviewRoles = ["editorial", "technical"]

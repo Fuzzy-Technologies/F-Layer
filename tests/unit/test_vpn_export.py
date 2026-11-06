@@ -362,3 +362,148 @@ def test_NativeAwgRejectsUnrepresentableOrInvalidPolicy(
 
     with pytest.raises(VpnError, match="invalid or unsupported"):
         native.BuildAmneziaWgArtifacts(client.replace(original, replacement).encode(), "laptop")
+
+
+@pytest.mark.parametrize("tlsFragment,allowQuic", [(True, False), (False, True), (True, True)])
+@pytest.mark.parametrize("qr", [False, True])
+@pytest.mark.parametrize("mode", ["full", "split"])
+def test_DerivedVlessExportPreservesSourceAndNativePolicy(
+    tmp_path: Path, tlsFragment: bool, allowQuic: bool, qr: bool, mode: str,
+) -> None:
+    """Export complete opt-in native profiles without source writes or ambiguous URI output."""
+
+    project = Deployed(tmp_path, mode)
+    before = Snapshot(project.root)
+    original = json.loads((project.Artifacts / "device-laptop-vless-reality/client.json").read_bytes())
+    report = ExportVpnDevice(project, "laptop", "vless-reality", tmp_path / "derived", qr=qr,
+                             tlsFragment=tlsFragment, allowQuic=allowQuic)
+    destination = Path(report.clientExports[0])
+    client = (destination / "client.json").read_bytes()
+    _, profile = Decode((destination / "amnezia.vpn").read_bytes())
+    decoded = json.loads(client)
+
+    assert Snapshot(project.root) == before, "Derived export changed prepared artifacts or source state"
+    assert profile["containers"][0]["xray"]["last_config"].encode() == client  # type: ignore[index]
+    assert not (destination / "import.txt").exists(), "A URI cannot represent the derived client policy"
+    assert decoded["dns"] == original["dns"] and decoded["routing"] == original["routing"]
+    assert decoded["outbounds"][0]["streamSettings"]["realitySettings"] == original["outbounds"][0]["streamSettings"]["realitySettings"]
+    assert decoded["outbounds"][0]["settings"]["vnext"][0]["users"][0]["id"] == original["outbounds"][0]["settings"]["vnext"][0]["users"][0]["id"]
+    assert decoded["outbounds"][0]["settings"]["vnext"][0]["users"][0]["flow"] == (
+        "xtls-rprx-vision-udp443" if allowQuic else "xtls-rprx-vision"
+    )
+    assert bool(tuple(destination.glob("amnezia-qr-*.svg"))) is qr
+    assert report.cloudStatus == report.guestStatus == "not-requested"
+    assert report.connectivityStatus == "not-verified"
+    assert all(stat.S_IMODE(path.stat().st_mode) == 0o600 for path in destination.iterdir())
+    assert stat.S_IMODE(destination.stat().st_mode) == stat.S_IMODE(destination.parent.stat().st_mode) == 0o700
+    assert ExportVpnDevice(project, "laptop", "vless-reality", tmp_path / "derived", qr=qr,
+                           tlsFragment=tlsFragment, allowQuic=allowQuic) == report
+
+
+@pytest.mark.parametrize("tlsFragment,allowQuic", [(True, False), (False, True), (True, True)])
+def test_DerivedExportPreservesPreparedDnsAfterDesiredConfigurationDrifts(
+    tmp_path: Path, tlsFragment: bool, allowQuic: bool,
+) -> None:
+    """Keep the prepared native policy even when current desired DNS differs from the device."""
+
+    project = Deployed(tmp_path)
+    source = project.Artifacts / "device-laptop-vless-reality"
+    _, original = Decode((source / "amnezia.vpn").read_bytes())
+    project = replace(project, vpn=replace(project.vpn, routes=replace(
+        project.vpn.routes, dnsServers=("9.9.9.9",),
+    )))
+    before = Snapshot(project.root)
+    report = ExportVpnDevice(project, "laptop", "vless-reality", tmp_path / "derived",
+                             tlsFragment=tlsFragment, allowQuic=allowQuic)
+    destination = Path(report.clientExports[0])
+    _, profile = Decode((destination / "amnezia.vpn").read_bytes())
+    profile["containers"][0]["xray"]["last_config"] = original["containers"][0]["xray"]["last_config"]  # type: ignore[index]
+
+    assert profile == original, "Derived export changed prepared native metadata or DNS"
+    assert Snapshot(project.root) == before, "Configuration drift export rewrote the source"
+
+
+@pytest.mark.parametrize("tlsFragment,allowQuic", [(True, False), (False, True), (True, True)])
+def test_ChangingTransportOptionsLeavesAnExistingExportIntact(
+    tmp_path: Path, tlsFragment: bool, allowQuic: bool,
+) -> None:
+    """Require separate output when the selected transport policy changes any existing bytes."""
+
+    project = Deployed(tmp_path)
+    ExportVpnDevice(project, "laptop", "vless-reality", tmp_path / "exports")
+    before = Snapshot(tmp_path)
+
+    with pytest.raises(VpnError, match="differs"):
+        ExportVpnDevice(project, "laptop", "vless-reality", tmp_path / "exports",
+                        tlsFragment=tlsFragment, allowQuic=allowQuic)
+
+    assert Snapshot(tmp_path) == before
+
+
+@pytest.mark.parametrize("flags", [{"tlsFragment": 1}, {"allowQuic": "yes"}, {"tlsFragment": None}])
+def test_TransportOptionsRequireActualBooleans(tmp_path: Path, flags: dict[str, object]) -> None:
+    """Reject truthy non-boolean API options before creating an export destination."""
+
+    project = Deployed(tmp_path)
+
+    with pytest.raises(VpnError, match="boolean"):
+        ExportVpnDevice(project, "laptop", "vless-reality", tmp_path / "invalid", **flags)  # type: ignore[arg-type]
+
+    assert not (tmp_path / "invalid").exists()
+
+
+@pytest.mark.parametrize("flags", [{"tlsFragment": True}, {"allowQuic": True}])
+def test_AwgRejectsVlessOnlyOptions(tmp_path: Path, flags: dict[str, bool]) -> None:
+    """Keep AWG exports unchanged and refuse transport settings it cannot represent."""
+
+    project = Deployed(tmp_path)
+
+    with pytest.raises(VpnError, match="only for VLESS"):
+        ExportVpnDevice(project, "laptop", "amneziawg", tmp_path / "invalid", **flags)
+
+    assert not (tmp_path / "invalid").exists()
+
+
+@pytest.mark.parametrize("filename", ["client.json", "import.txt", "amnezia.vpn"])
+def test_DerivedExportStillVerifiesEverySourceArtifact(tmp_path: Path, filename: str) -> None:
+    """Verify the complete original manifest even when an artifact is omitted from derived output."""
+
+    project = Deployed(tmp_path)
+    source = project.Artifacts / "device-laptop-vless-reality" / filename
+    source.write_bytes(b"fixture-secret-corruption")
+    before = Snapshot(project.root)
+
+    with pytest.raises(ArtifactError):
+        ExportVpnDevice(project, "laptop", "vless-reality", tmp_path / "invalid", tlsFragment=True)
+
+    assert Snapshot(project.root) == before
+    assert not (tmp_path / "invalid").exists()
+
+
+@pytest.mark.parametrize("tlsFragment,allowQuic", [(False, True), (True, False), (True, True)])
+def test_CliWiresIndependentTransportFlags(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], tlsFragment: bool, allowQuic: bool,
+) -> None:
+    """Exercise public CLI parsing through a real private offline export and native envelope."""
+
+    project = Deployed(tmp_path)
+    arguments = ["vpn", "export", "--project", str(project.root), "--device", "laptop",
+                 "--protocol", "vless-reality", "--output", str(tmp_path / "cli"), "--format", "json"]
+
+    if tlsFragment:
+        arguments.append("--tls-fragment")
+
+    if allowQuic:
+        arguments.append("--allow-quic")
+
+    assert Main(arguments) == 0
+
+    report = json.loads(capsys.readouterr().out)
+    destination = Path(report["client_exports"][0])
+    client = json.loads((destination / "client.json").read_bytes())
+
+    assert not (destination / "import.txt").exists()
+    assert client["outbounds"][0]["settings"]["vnext"][0]["users"][0]["flow"] == (
+        "xtls-rprx-vision-udp443" if allowQuic else "xtls-rprx-vision"
+    )
+    assert ("sockopt" in client["outbounds"][0]["streamSettings"]) is tlsFragment

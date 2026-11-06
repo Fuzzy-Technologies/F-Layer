@@ -48,6 +48,54 @@ def _EncodeProfile(profile: dict[str, object], *, qr: bool) -> tuple[Artifact, .
     return artifacts + (_QrArtifacts(compressed) if qr else ())
 
 
+def _ReplaceAmneziaXrayClient(
+    connection: bytes, sourceClient: bytes, client: bytes, *, qr: bool = False,
+) -> tuple[Artifact, ...]:
+    """Replace only verified Xray bytes in a bounded native envelope, retaining its policy."""
+
+    try:
+        encoded = connection.strip().removeprefix(b"vpn://")
+
+        if not connection.startswith(b"vpn://") or not 1 <= len(encoded) <= 1048576:
+            raise ValueError
+
+        compressed = base64.b64decode(encoded + b"=" * (-len(encoded) % 4), altchars=b"-_", validate=True)
+        size = int.from_bytes(compressed[:4], "big")
+
+        if base64.urlsafe_b64encode(compressed).rstrip(b"=") != encoded or not 0 < size <= 1048576:
+            raise ValueError
+
+        decoder = zlib.decompressobj()
+        raw = decoder.decompress(compressed[4:], size + 1)
+
+        if len(raw) != size or not decoder.eof or decoder.unused_data or decoder.unconsumed_tail:
+            raise ValueError
+
+        profile = json.loads(raw)
+
+        if (not isinstance(profile, dict) or profile.get("defaultContainer") != "amnezia-xray"
+                or not isinstance(profile.get("containers"), list) or len(profile["containers"]) != 1):
+            raise ValueError
+
+        container = profile["containers"][0]
+
+        if (not isinstance(container, dict) or container.get("container") != "amnezia-xray"
+                or not isinstance(container.get("xray"), dict)):
+            raise ValueError
+
+        settings = container["xray"]
+
+        if settings.get("isThirdPartyConfig") is not True or settings.get("last_config") != sourceClient.decode("utf-8"):
+            raise ValueError
+
+        settings["last_config"] = client.decode("utf-8")
+
+    except (ValueError, TypeError, KeyError, IndexError, RecursionError, zlib.error):
+        raise VpnError("Existing AmneziaVPN Xray profile is invalid or inconsistent") from None
+
+    return _EncodeProfile(profile, qr=qr)
+
+
 def _QrArtifacts(compressed: bytes) -> tuple[Artifact, ...]:
     """Render numbered qCompress/QDataStream frames understood by the native scanner."""
 

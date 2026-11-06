@@ -43,7 +43,7 @@ def test_ApprovedPagesRecordActualAiReview(localeProject: Path) -> None:
 
     for record in registry["units"]:
         expectedReviewer = "Codex" if record["id"] in {
-            "page:development", "page:guide.configuration", "page:guide.first-deployment",
+            "page:development", "page:guide.configuration", "page:guide.first-deployment", "page:guide.cli",
         } else "AIna-Dev"
 
         for translation in record["translations"].values():

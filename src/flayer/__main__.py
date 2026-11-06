@@ -97,6 +97,8 @@ def Parser() -> argparse.ArgumentParser:
     export.add_argument("--protocol", required=True, choices=("amneziawg", "vless-reality"))
     export.add_argument("--output", required=True, help="Separate private export root")
     export.add_argument("--qr", action="store_true", help="Include numbered native AmneziaVPN QR SVGs")
+    export.add_argument("--tls-fragment", action="store_true", dest="tlsFragment", help="Fragment the VLESS Reality client TLS handshake")
+    export.add_argument("--allow-quic", action="store_true", dest="allowQuic", help="Allow VLESS Reality client UDP 443 traffic")
     export.add_argument("--format", choices=("text", "json"), default="text")
 
     return parser
@@ -172,7 +174,8 @@ def _VpnProject(args: argparse.Namespace) -> int:
         if args.action == "export":
             from .vpn_export import ExportVpnDevice
 
-            report = ExportVpnDevice(project, args.device, args.protocol, args.output, qr=args.qr)
+            report = ExportVpnDevice(project, args.device, args.protocol, args.output,
+                                     qr=args.qr, tlsFragment=args.tlsFragment, allowQuic=args.allowQuic)
 
         elif args.action in {"runtime-status", "upgrade", "rollback-upgrade", "recover-upgrade"}:
             report = RunVpnRuntime(

@@ -154,6 +154,13 @@ flayer vpn status --project ~/flayer-vpn
 
 协议检查和导入详情请参阅[客户端指南](https://fuzzy-technologies.github.io/F-Layer/zh-CN/guide/)。
 
+## 开发候选版本
+
+面向 2.1 发布的 `develop` 候选构建增加了可选 VLESS 导出设置：
+`--tls-fragment` 和 `--allow-quic`。这些选项保留现有设备凭据和源制品。
+完整原生配置、兼容性及限制见[候选版本导出指南](docs/site/content/en/guide/cli.md)。
+已发布的 2.0.0 软件包不包含这些选项。
+
 ## 管理部署
 
 使用 `flayer vpn status --project ~/flayer-vpn` 检查服务器。
@@ -184,9 +191,9 @@ VPN CLI 尚不支持原地调整资源、添加或撤销设备及轮换密钥。
 [Apache 2.0](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/LICENSE) 许可证。
 参与贡献请先阅读 [CONTRIBUTING.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/CONTRIBUTING.md)。
 '''
-sourceHash = "sha256:386214313fe8314d3202427716f075d6e8471f4de150522156db3ec1695db14d"
-reviewedTranslationHash = "sha256:369ade37a2049a660f32e48a5e2f406122d5a0ef8aa0bffaea04452f23a8e258"
+sourceHash = "sha256:2bf2269341848d3f355795149eb7333131889cddc8b2646229629dd4b67c420a"
+reviewedTranslationHash = "sha256:db0234d1f6b4fd876e6fac36c741805f58223545220a4e462fa7b44c5eed46e7"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-05T18:37:32.432583Z"
+reviewedAt = "2026-11-06T11:56:06.659037Z"
 reviewRoles = ["editorial", "technical"]

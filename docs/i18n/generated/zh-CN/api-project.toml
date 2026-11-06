@@ -320,12 +320,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_export.ExportVpnDevice"
 sourcePath = "src/flayer/vpn_export.py"
-sourceHash = "sha256:76be8c0d73a293f6a4f24f94a1a3e86d5f41d27afc6f364a6ad796d047232ae0"
-body = "验证归属清单后复制一个设备的文件，不调用云端、不生成密钥，也不修改源文件。"
-reviewedTranslationHash = "sha256:5da0317fdcc86463bdd9f8f643c41e1f7585cd1a1adf60f8b864f03c11d3c098"
+sourceHash = "sha256:e6ad4bae8e919064d47de30990fbf2378403c2a0b75d28f2f93cbd39c21ec03e"
+body = "导出经校验的单个设备，支持可选客户端策略，且不写入源文件。"
+reviewedTranslationHash = "sha256:89ec51e9e3b8bfbf1176355f2a0e83c07fb48f6f82a3ae27b8efd0d8a6238401"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-04T10:34:46Z"
+reviewedAt = "2026-11-06T11:56:06.659037Z"
 reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.guest.SshGuestProvisioner.VlessRuntime"

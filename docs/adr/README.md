@@ -55,5 +55,6 @@ index does not change their acceptance status.
 | [ADR 0017](0017-package-installation.md)                 | Package installation and the optional VPN dependency      |
 | [ADR 0018](0018-generated-documentation-translations.md) | Reviewed translations for generated documentation         |
 | [ADR 0019](0019-private-vpn-project-workflow.md)         | Private VPN projects and authenticated guest provisioning |
+| [ADR 0020](0020-client-tls-fragment-export.md)           | Opt-in VLESS client transport export policies             |
 | [ADR 0021](0021-python-naming-wire-compatibility.md)     | Python naming with stable external wire contracts         |
 | [ADR 0022](0022-explicit-xray-runtime-upgrades.md)       | Explicit, recoverable Xray runtime upgrades               |

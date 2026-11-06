@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/adr/README.md"
-sourceHash = "sha256:2b996cb1a3a0327bb9dd731d8f87cec0d2d62d21f73c5e23fbedc2d4dea9fe4b"
-reviewedTranslationHash = "sha256:2647460de8e3ceb522d6dcefd4838294bf5213c7e880ecf97894f5ae0f9f5273"
+sourceHash = "sha256:a12be43c294914acf319738df79bcff295df0b6fc443eb42de21a79a5ea66ee5"
+reviewedTranslationHash = "sha256:c0265571578efe611dcd83906c7362b12199259ed555b3426f2afa2ad30412b7"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T11:56:06.659037Z"
+reviewedAt = "2026-11-06T12:28:56.321634Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# Архитектурные решения
 
@@ -64,4 +64,5 @@ F-Layer ведёт записи архитектурных решений (ADR),
 | [ADR 0020](0020-client-tls-fragment-export.md)           | Опциональные транспортные настройки экспорта VLESS                        |
 | [ADR 0021](0021-python-naming-wire-compatibility.md)     | Имена Python с сохранением внешних форматов данных                        |
 | [ADR 0022](0022-explicit-xray-runtime-upgrades.md)       | Явное обновление Xray с восстановлением                                   |
+| [ADR 0023](0023-selectable-vpn-transports.md)            | Выбор VPN-протоколов и изолированная совместная работа                    |
 '''

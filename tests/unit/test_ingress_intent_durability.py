@@ -154,4 +154,3 @@ def test_RecoverySynchronizationRejectsChangedOrBusyIntentAndRetainsEveryDetecte
 
     if fault == "replacement":
         assert replaced and (payload.stat().st_dev, payload.stat().st_ino) != payloadId
-

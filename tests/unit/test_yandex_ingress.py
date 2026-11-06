@@ -170,8 +170,9 @@ def test_DisableOriginalCreationRuleRetainsSshOtherTransportAndAnnotatedEgress()
     """The first removal can use a proved original creation allowance whose description is empty."""
 
     identity, spec, before = Policy()
+    listener = VpnListener("amneziawg", "udp", 51820, ("0.0.0.0/0",))
     plan = IngressDelta(identity, spec, before.networkId, before,
-                        VpnListener("amneziawg", "udp", 51820, ("0.0.0.0/0",)), "disable", "b" * 32, ("awg",))
+                        listener, "disable", "b" * 32, ("awg",), creationListener=listener)
     result = replace(before, rules=tuple(rule for rule in before.rules if rule.ruleId != "awg"))
 
     assert plan.Addition is None and plan.ValidateResult(result) == ()
@@ -180,6 +181,25 @@ def test_DisableOriginalCreationRuleRetainsSshOtherTransportAndAnnotatedEgress()
 
     with pytest.raises(ValueError):
         plan.ValidateResult(before)
+
+
+@pytest.mark.parametrize("transport", ["wireguard", "openvpn", "amneziawg"])
+@pytest.mark.parametrize("binding", ["missing", "original-awg"])
+def test_OriginalRuleCannotBeAttributedToAProtocolFromPortSemanticsAlone(transport: str, binding: str) -> None:
+    """The frozen generic cloud spec has no transport names; require an independently attested original protocol role."""
+
+    identity, spec, before = Policy()
+    original = VpnListener("amneziawg", "udp", 51820, ("0.0.0.0/0",))
+    target = replace(original, transport=transport)
+    supplied = original if binding == "original-awg" else None
+
+    if transport == "amneziawg" and supplied is not None:
+        assert IngressDelta(identity, spec, before.networkId, before, target, "disable", "b" * 32,
+                            ("awg",), creationListener=supplied).deletionRuleIds == ("awg",)
+
+    else:
+        with pytest.raises(ValueError):
+            IngressDelta(identity, spec, before.networkId, before, target, "disable", "b" * 32, ("awg",), creationListener=supplied)
 
 
 def test_AddedTaggedRuleCanLaterBeRemovedWithAllSourcesAndItsActualProviderId() -> None:

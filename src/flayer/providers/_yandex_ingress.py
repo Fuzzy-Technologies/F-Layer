@@ -50,6 +50,8 @@ class IngressDelta:
     change: str
     operationId: str
     deletionRuleIds: tuple[str, ...] = ()
+    # The controller must attest this through the original manifest-bound protocol role or epoch, never infer it from L4 rules.
+    creationListener: VpnListener | None = None
 
     def __post_init__(self) -> None:
         """Refuse unknown ownership, collateral rules, open target ports and incomplete listener removals."""
@@ -64,6 +66,7 @@ class IngressDelta:
                 or self.listener.transport in {"amneziawg", "wireguard"} and self.listener.protocol != "udp"
                 or self.listener.transport == "vless-reality" and self.listener.protocol != "tcp"
                 or self.listener.protocol == "tcp" and self.listener.port == 22
+                or self.creationListener is not None and (not isinstance(self.creationListener, VpnListener) or self.creationListener != self.listener)
                 or not isinstance(self.deletionRuleIds, tuple) or len(self.deletionRuleIds) > 32
                 or any(not isinstance(value, str) for value in self.deletionRuleIds)
                 or len(set(self.deletionRuleIds)) != len(self.deletionRuleIds)):
@@ -84,10 +87,14 @@ class IngressDelta:
             prefix = "flayer:" + self.Owner + ":" + self.listener.transport + ":"
 
             for rule in covering:
+                fromCreation = _Digest(_RuleBody(rule)) in original
+
                 if (rule.protocol != self.listener.protocol or rule.fromPort != self.listener.port or rule.toPort != self.listener.port
-                        or rule.labels or (_Digest(_RuleBody(rule)) not in original
-                                          and re.fullmatch(re.escape(prefix) + r"[0-9a-f]{32}", rule.description) is None)):
+                        or rule.labels or (not fromCreation and re.fullmatch(re.escape(prefix) + r"[0-9a-f]{32}", rule.description) is None)):
                     raise ValueError("Protocol disable cannot remove a broad, annotated or unproved listener rule")
+
+                if fromCreation and self.creationListener is None:
+                    raise ValueError("Original rule removal requires a separately attested creation listener and protocol binding")
 
             if Counter(cidr for rule in covering for cidr in rule.ipv4Cidrs) != Counter(self.listener.sourceCidrs):
                 raise ValueError("Protocol disable requires its complete exact source policy without duplicate allowances")

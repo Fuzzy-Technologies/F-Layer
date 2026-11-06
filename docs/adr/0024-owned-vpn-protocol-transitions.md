@@ -29,8 +29,8 @@ compiled from new listeners. Generic cloud `state.json` remains unchanged. The
 creation baseline is permanent; effective protocol state is a separate overlay.
 
 Use immutable protocol epochs. Each new epoch binds the exact previous epoch,
-the terminal pointer/digest of its WireGuard peer segment, selected protocol pins
-and confined material/server references, static selection fingerprint, active guest
+the terminal pointer/digest of its WireGuard peer segment, configured protocol intent,
+active protocol pins and retained confined material/server references, static selection fingerprint, active guest
 receipts/histories, and complete cloud/host ingress receipts. Retain every closed
 segment and its original files. No key bodies enter epoch or journal metadata.
 
@@ -48,6 +48,13 @@ protocol request only through an owned manifest and full digest. Do not regenera
 an installer to load historical state. Nonsecret traversal and whole-cloud cleanup
 must work when client private files are lost; reading active credentials still
 requires their complete private manifests.
+
+Project schema 2 keeps a nonempty configured `protocols` declaration with retained
+settings/material. An epoch records its active subset separately; that subset may
+be empty. Disabling the final active transport preserves the VM, address, SSH and
+retained profiles, and reports that no transport is active. Ordinary deploy must
+not reactivate disabled protocols. Peer operations require an active target;
+reenabling a protocol is explicit and names the retained members it will activate.
 
 ## Planning and coordinated mutation
 
@@ -70,7 +77,7 @@ Guest ingress coordination precedes transport-specific locks in one fixed order.
 Check expected authority under the lock that actually protects each mutation.
 Persist reservation, intended hashes and operation nonce before allowing a cloud
 write. Preserve that reservation while the cloud result is unknown. Completion or
-cancellation consumes the old guest authority durably, so a delayed SSH action
+cancellation consumes the old guest authority durably, so a delayed protocol-workflow SSH action
 cannot activate after a reported rollback. Repeated recovery retains its exact
 completion; it must not create a fresh authorization epoch on every retry.
 
@@ -90,7 +97,12 @@ narrow allowance on that port blocks a new enable plan.
 
 Removal requires exactly all target-port allowance IDs from the verified receipt,
 exact listener/source semantics and either original creation semantics or a full
-owned operation tag. Refuse broad ranges, arbitrary descriptions, duplicate source
+owned operation tag. An untagged creation rule additionally requires a separately
+attested `creationListener`, including the original protocol name, which must match
+the target. The controller derives that binding from the original manifest-bound
+protocol role or epoch before constructing the delta, never from port equality
+or a caller's desired label. The generic creation spec alone has no transport
+attribution. Refuse broad ranges, arbitrary descriptions, duplicate source
 allowances, collateral IDs and TCP 22. Unrelated rules, descriptions and labels
 must be byte-equivalent after normalization. Selected rules with labels cannot yet
 be removed: the planned CLI writer cannot promise exact label restoration. This
@@ -141,7 +153,22 @@ Disabling/re-enabling WireGuard is a new installation generation with a new owne
 nonce, while server/client keys and declared addresses stay retained. Archive/reset
 its old audit only through this explicit expected-receipt/history transaction;
 ordinary installation of an absent root with retained audit remains refused.
-Changes to another protocol preserve the WireGuard root receipt and peer history.
+Keep the retained fence while its root is absent; publish the replacement
+generation and its new history under the existing WireGuard lock, without exposing
+an absent root with initial history that could authorize an old installer.
+
+A change to another protocol preserves active WireGuard keys/configuration/root
+receipt but must consume its peer history under that same existing WireGuard lock
+before the first protocol write. Use the existing valid equal-receipt cancellation
+audit shape to publish a new chained history head. Already queued peer driver bytes
+then observe a different expected history and refuse mutation; a reservation
+understood only by new code is insufficient. Refuse a pending peer transaction
+before this fence. Record the new history in the next epoch. If the protocol change
+subsequently rolls back, publish a no-op epoch completion retaining the old active
+pins/policy and recording the consumed history. Never restore the old history during
+rollback. This requires an exact healthy active WireGuard receipt. If WireGuard is
+inactive/absent, verify its separate complete namespace-absence and retained-history
+proofs instead; never fabricate a running receipt merely to fence it.
 
 ## Explicit legacy project migration
 

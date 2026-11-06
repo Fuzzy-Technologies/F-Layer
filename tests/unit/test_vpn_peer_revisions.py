@@ -19,7 +19,7 @@ from flayer import _vpn_revisions as revisions
 from flayer._vpn_creation import BundleDigest, ProtocolPin, _Json
 from flayer.core.contracts import _WireDict
 from flayer.guest import ReadPrivate
-from flayer.profiles.artifacts import Artifact, ArtifactBundle
+from flayer.profiles.artifacts import Artifact, ArtifactBundle, WriteArtifactBundle
 from flayer.profiles.vpn import VpnDevice, VpnEndpoint, VpnError
 from flayer.profiles.wireguard import (
     DecodeWireGuardMaterial,
@@ -209,7 +209,7 @@ def test_ExplicitCommitRetryReconcilesEachDurablePublicationBoundary(tmp_path: P
 @POSIX
 @pytest.mark.parametrize("prepared", [True, False])
 def test_NotAppliedRecoveryRetainsOldActivePinsAndArchivesAnyPreparedCredentials(tmp_path: Path, prepared: bool) -> None:
-    """An uncommitted operation advances local evidence while leaving the guest receipt/history and old keys intact."""
+    """A submitted cancellation consumes guest authority while retaining the receipt, active projection and old keys."""
 
     project = Project(tmp_path)
     PrepareSelectedProject(project)
@@ -228,12 +228,93 @@ def test_NotAppliedRecoveryRetainsOldActivePinsAndArchivesAnyPreparedCredentials
     facts = {"status": "active", "is_desired": False, "receipt_sha256": pending["previous_receipt_sha256"],
              "history_sha256": pending["previous_history_sha256"], "deployment_sha256": revisions.Digest(
                  next(item.content for item in oldServer.files if item.name == "deployment.json"))}
+
+    if prepared:
+        before = Snapshot(project.root)
+
+        with pytest.raises(VpnError, match="exact peer completion"):
+            revisions.Commit(project, state, pending, pin, facts, outcome="not-applied")
+
+        assert Snapshot(project.root) == before, "Unfenced completion cannot publish any local evidence"
+        facts["history_sha256"] = revisions.CommittedHistory(project, pending["change"], pending["device_id"], pending["previous_receipt_sha256"],
+            pending["previous_receipt_sha256"], str(facts["deployment_sha256"]), pending["previous_history_sha256"])
+
     revisions.Commit(project, state, pending, pin, facts, outcome="not-applied")
     active = revisions.LoadRevisions(project)
 
-    assert active.pins == state.pins and active.history == state.history and active.headDigest != state.headDigest
+    assert active.pins == state.pins and active.history == facts["history_sha256"] and active.headDigest != state.headDigest
+    assert (active.history != state.history) is prepared
     assert revisions.ReadEffectiveBundle(project, active, active.pins[-1], material=True) == original
     assert active.lastRecord is not None and active.lastRecord["outcome"] == "not-applied" and active.activeRecord is None
+    assert active.lastRecord["schema_version"] == 2
+    revisions.Commit(project, active, pending, pin, facts, outcome="not-applied")
+    assert revisions.LoadRevisions(project).head == active.head
+
+
+@POSIX
+@pytest.mark.parametrize("outcome,prepared", [("committed", True), ("not-applied", True), ("not-applied", False)])
+@pytest.mark.parametrize("interrupted", [True, False])
+def test_CompletedVersionOneEvidenceRemainsReadableWithoutRewritingItsHistory(
+    tmp_path: Path, outcome: str, prepared: bool, interrupted: bool, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Retained historical records keep their original immutable format; new cancellations require the new proof contract."""
+
+    project = Project(tmp_path)
+    PrepareSelectedProject(project)
+    state = revisions.LoadRevisions(project)
+    updated, pending, material, server, pin, facts = Change(project, state)
+
+    if prepared:
+        pending = Stage(project, pending, material, server)
+
+    else:
+        revisions.AtomicRecord(project, "wireguard-pending.json", pending)
+        pin = state.pins[-1]
+
+    record = {**pending, "desired_pin": _WireDict(pin), "receipt_sha256": facts["receipt_sha256"],
+              "history_sha256": facts["history_sha256"], "deployment_sha256": facts["deployment_sha256"], "outcome": outcome}
+
+    if outcome == "not-applied":
+        old = revisions.ReadEffectiveBundle(project, state, state.pins[-1])
+        record.update(receipt_sha256=pending["previous_receipt_sha256"], history_sha256=pending["previous_history_sha256"],
+                      deployment_sha256=revisions.Digest(next(item.content for item in old.files if item.name == "deployment.json")))
+        facts.update(receipt_sha256=record["receipt_sha256"], history_sha256=record["history_sha256"], deployment_sha256=record["deployment_sha256"])
+
+    name = project.vpn.identity.stack + "-wc-" + pending["request_name"].rsplit("-", 1)[1]
+    bundle = ArtifactBundle(project.vpn.identity, "server", name, (Artifact("record.json", _Json(record), False),))
+    WriteArtifactBundle(project.Artifacts, bundle)
+    revisions.AtomicRecord(project, "wireguard-head.json", {"name": name, "sha256": BundleDigest(bundle)})
+
+    if not interrupted:
+        revisions.AtomicRecord(project, "wireguard-pending.json", None)
+
+    before = Snapshot(project.root)
+    active = revisions.LoadRevisions(project)
+
+    assert active.history == record["history_sha256"] and active.lastRecord == record
+    assert active.pins[-1] == (pin if outcome == "committed" else state.pins[-1])
+    assert Snapshot(project.root) == before
+
+    if interrupted and (outcome == "committed" or not prepared):
+        monkeypatch.setattr(revisions, "MAX_PEER_REVISIONS", active.recordCount)
+        revisions.Commit(project, active, pending, pin, facts, outcome=outcome)
+        assert revisions.Pending(project) is None and revisions.LoadRevisions(project).head == active.head
+        assert revisions.LoadRevisions(project).lastRecord == record
+
+    elif interrupted:
+        from flayer import _vpn_peer_controller as controller
+
+        def Forbidden(*args: Any, **options: Any) -> Any:
+            """The ambiguous legacy upgrade must be rejected before any provider or guest connection."""
+
+            raise AssertionError("Legacy unfenced completion reached external observation")
+
+        monkeypatch.setattr(controller, "Connection", Forbidden)
+
+        with pytest.raises(VpnError, match="partially retired legacy"):
+            controller._Recover(updated, active, pending, "recover", "enroll", "phone", revisions.Digest(_Json(pending)), None, Forbidden, server)
+
+        assert Snapshot(project.root) == before and revisions.Pending(project) == pending
 
 
 @POSIX

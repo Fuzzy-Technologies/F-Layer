@@ -54,7 +54,7 @@ def InitialHistory(project: SelectedVpnProject) -> str:
 
 
 def CommittedHistory(project: SelectedVpnProject, change: str, deviceId: str, previous: str, current: str, deployment: str, history: str) -> str:
-    """Reproduce the exact guest commit-chain hash from bounded operation facts."""
+    """Reproduce the exact guest audit-chain hash for a commit or cancellation from bounded facts."""
 
     owner = Digest(json.dumps(_WireDict(project.vpn.identity), sort_keys=True, separators=(",", ":")).encode())
 
@@ -268,7 +268,7 @@ def LoadRevisions(project: SelectedVpnProject) -> RevisionState:
                   "request_name", "request_sha256", "change", "device_id", "previous_receipt_sha256", "receipt_sha256",
                   "previous_history_sha256", "history_sha256", "deployment_sha256", "baseline_sha256", "plan_expires_at", "outcome", "desired_fingerprint"}
 
-        if (set(record) != fields or raw != _Json(record) or type(record["schema_version"]) is not int or record["schema_version"] != 1
+        if (set(record) != fields or raw != _Json(record) or type(record["schema_version"]) is not int or record["schema_version"] not in {1, 2}
                 or record["identity"] != _WireDict(project.vpn.identity) or record["creation_sha256"] != origin
                 or not isinstance(record["change"], str) or record["change"] not in {"enroll", "revoke"} or not isinstance(record["device_id"], str)
                 or re.fullmatch(r"[a-z][a-z0-9-]{0,62}", record["device_id"]) is None
@@ -287,7 +287,10 @@ def LoadRevisions(project: SelectedVpnProject) -> RevisionState:
                     or record["history_sha256"] != CommittedHistory(project, record["change"], record["device_id"], record["previous_receipt_sha256"],
                                                                     record["receipt_sha256"], record["deployment_sha256"], record["previous_history_sha256"])))
                 or (record["outcome"] == "not-applied" and (record["receipt_sha256"] != record["previous_receipt_sha256"]
-                                                            or record["history_sha256"] != record["previous_history_sha256"]))):
+                    or record["history_sha256"] != (
+                        CommittedHistory(project, record["change"], record["device_id"], record["previous_receipt_sha256"], record["receipt_sha256"],
+                                         record["deployment_sha256"], record["previous_history_sha256"])
+                        if record["schema_version"] == 2 and record["request_sha256"] else record["previous_history_sha256"])))):
             raise VpnError("Peer commit ownership, history or proof fields are invalid")
 
         _Pin(record["previous_pin"])
@@ -331,7 +334,8 @@ def LoadRevisions(project: SelectedVpnProject) -> RevisionState:
         if (pending["creation_sha256"] != origin
                 or pending["previous_head_sha256"] != (Digest(_Json(pending["parent"])) if pending["parent"] is not None else origin)
                 or head != pending["parent"] and (not records or records[0]["request_name"] != pending["request_name"]
-                                                  or {key: records[0][key] for key in pending} != pending)
+                                                  or {key: records[0][key] for key in pending if key != "schema_version"}
+                                                  != {key: value for key, value in pending.items() if key != "schema_version"})
                 or head == pending["parent"] and (_Pin(pending["previous_pin"]) != pin or pending["previous_history_sha256"] != history
                                                    or receipt and pending["previous_receipt_sha256"] != receipt)):
             raise VpnError("Pending peer operation does not continue its exact original controller and guest state")
@@ -497,7 +501,10 @@ def Commit(
                                     or facts["history_sha256"] != CommittedHistory(project, pending["change"], pending["device_id"], pending["previous_receipt_sha256"],
                                                                                 str(facts["receipt_sha256"]), str(facts["deployment_sha256"]), pending["previous_history_sha256"]))
             or outcome == "not-applied" and (facts["receipt_sha256"] != pending["previous_receipt_sha256"]
-                                             or facts["history_sha256"] != pending["previous_history_sha256"])):
+                or facts["history_sha256"] != (
+                    CommittedHistory(project, pending["change"], pending["device_id"], pending["previous_receipt_sha256"], str(facts["receipt_sha256"]),
+                                     str(facts["deployment_sha256"]), pending["previous_history_sha256"])
+                    if pending["request_sha256"] else pending["previous_history_sha256"]))):
         raise VpnError("Guest facts do not prove the exact peer completion outcome")
 
     if pending["request_sha256"]:
@@ -511,8 +518,13 @@ def Commit(
         raise VpnError("An unstaged peer attempt can only retain its previous projection")
 
     record = dict(pending)
-    record.update(desired_pin=_WireDict(pin), receipt_sha256=facts["receipt_sha256"], history_sha256=facts["history_sha256"],
+    record.update(schema_version=2, desired_pin=_WireDict(pin), receipt_sha256=facts["receipt_sha256"], history_sha256=facts["history_sha256"],
                   deployment_sha256=facts["deployment_sha256"], outcome=outcome)
+
+    if (state.lastRecord is not None and state.lastRecord["schema_version"] == 1 and state.head != pending["parent"]
+            and (outcome == "committed" or not pending["request_sha256"]) and state.lastRecord == {**record, "schema_version": 1}):
+        record = dict(state.lastRecord)
+
     name = project.vpn.identity.stack + "-wc-" + pending["request_name"].rsplit("-", 1)[1]
     bundle = ArtifactBundle(project.vpn.identity, "server", name, (Artifact("record.json", _Json(record), False),))
     directory = project.Artifacts / ("server-" + name)

@@ -186,7 +186,7 @@ def test_ArbitraryOrDuplicateRemoteOutputIsSuppressed(response: GuestResult) -> 
                                                   (False, "previous_history_sha256", "e" * 64),
                                                   (True, "previous_receipt_sha256", "a" * 64)])
 def test_PendingStatusRejectsImpossiblePublicationAndHistoryPhases(desired: bool, field: str, value: str) -> None:
-    """An old root retains its original proofs; a published sole-peer delta necessarily changes the receipt."""
+    """An old root retains its receipt and exact original or cancellation history; a published delta changes the receipt."""
 
     bundle = Prepared().serverBundle
     facts = Facts(bundle, desired=desired, pending=True)
@@ -195,6 +195,33 @@ def test_PendingStatusRejectsImpossiblePublicationAndHistoryPhases(desired: bool
 
     with pytest.raises(VpnError):
         guest.WireGuardPeerOperation(bundle, "status", "enroll", "new-phone")
+
+
+@pytest.mark.parametrize("fault", ["none", "owner", "action", "device", "receipt", "deployment", "parent"])
+def test_PendingRollbackAcceptsOnlyItsExactOwnerBoundCancellationHistory(fault: str) -> None:
+    """A published cancellation fence is a valid cleanup prefix; an unrelated audit head remains invalid."""
+
+    bundle = Prepared().serverBundle
+    facts = Facts(bundle, pending=True)
+    owner = json.loads(next(item.content for item in bundle.files if item.name == "deployment.json"))["owner"]
+    audit = {"schema_version": 1, "owner": owner, "action": "enroll", "device_id": "new-phone",
+             "previous_receipt_sha256": "a" * 64, "receipt_sha256": "a" * 64,
+             "deployment_sha256": "c" * 64, "previous_history_sha256": "d" * 64}
+
+    if fault != "none":
+        key = {"owner": "owner", "action": "action", "device": "device_id", "receipt": "receipt_sha256",
+               "deployment": "deployment_sha256", "parent": "previous_history_sha256"}[fault]
+        audit[key] = {"action": "revoke", "device": "other"}.get(fault, "e" * 64)
+
+    facts["history_sha256"] = hashlib.sha256((json.dumps(audit, sort_keys=True, separators=(",", ":")) + "\n").encode()).hexdigest()
+    guest, _ = Provisioner(facts)
+
+    if fault == "none":
+        assert guest.WireGuardPeerOperation(bundle, "status", "enroll", "new-phone") == facts
+
+    else:
+        with pytest.raises(VpnError):
+            guest.WireGuardPeerOperation(bundle, "status", "enroll", "new-phone")
 
 
 def Request(action: str) -> bytes:

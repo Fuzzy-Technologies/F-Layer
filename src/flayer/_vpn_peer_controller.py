@@ -218,6 +218,10 @@ def _Recover(
             or action == "recover" and expectedBaseline != revisions.Digest(_Json(pending))):
         raise VpnError("Peer recovery requires the exact retained target/intent and baseline from peer status")
 
+    if (state.head != pending["parent"] and state.lastRecord is not None and state.lastRecord["schema_version"] == 1
+            and state.lastRecord["outcome"] == "not-applied" and pending["request_sha256"]):
+        raise VpnError("A partially retired legacy unapplied completion lacks a cancellation fence; retain its original journal and inspect the upgrade state before any guest operation")
+
     guest, _, cloud = Connection(project, state, provider, guestFactory)
     original = replace(state, headDigest=pending["previous_head_sha256"])
     originalFacts = {"receipt_sha256": pending["previous_receipt_sha256"], "history_sha256": pending["previous_history_sha256"]}

@@ -538,3 +538,13 @@ reviewerType = "ai"
 reviewedAt = "2026-11-06T13:14:53.729571Z"
 reviewRoles = ["editorial", "technical"]
 body = "Сформировать один стандартный клиент без полей AWG и приватных учётных данных других устройств."
+[[units]]
+id = "symbol:flayer.profiles.wireguard.PrepareWireGuard"
+sourcePath = "src/flayer/profiles/wireguard.py"
+sourceHash = "sha256:63dcff9adba9299d2be7fcf8e622d39a42bec3bc9e1b2093aaee5141fdb7795c"
+reviewedTranslationHash = "sha256:061f04d5bd0cf61dc90814a2eecec00b5077f9f845cd4811ad3b5380a83d6e1b"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T14:23:05.231890Z"
+reviewRoles = ["editorial", "technical"]
+body = "Подготовить приватные комплекты ядерной службы и стандартных клиентов без сохранения и развёртывания."

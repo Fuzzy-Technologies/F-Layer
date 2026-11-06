@@ -8,10 +8,15 @@ import ipaddress
 import json
 import secrets
 from dataclasses import dataclass, field
+from importlib.resources import files
 
 from flayer.core.contracts import _WireDict
+from flayer.profiles.artifacts import Artifact
 from flayer.profiles.vpn import (
     MAX_VPN_DEVICES,
+    BuildVpnDeviceBundle,
+    BuildVpnServerBundle,
+    PreparedVpnTransport,
     ValidateVpnTransport,
     VpnCapabilities,
     VpnEndpoint,
@@ -299,3 +304,30 @@ def RenderWireGuardClient(
     ]
 
     return "\n".join(lines).encode("utf-8")
+
+
+def PrepareWireGuard(
+    profile: VpnProfile, endpoint: VpnEndpoint, settings: WireGuardSettings, material: WireGuardMaterial,
+) -> PreparedVpnTransport:
+    """Prepare private kernel-service and standard client bundles without persisting or deploying them."""
+
+    server = RenderWireGuardServer(profile, settings, material)
+    clients = tuple(BuildVpnDeviceBundle(profile, "wireguard", device.deviceId, (
+        Artifact("wireguard.conf", RenderWireGuardClient(profile, endpoint, settings, material, device.deviceId)),
+    )) for device in sorted(profile.devices, key=lambda item: item.deviceId))
+    program = files("flayer.profiles").joinpath("_wireguard_guest.py").read_bytes().replace(b"\r\n", b"\n")
+    owner = hashlib.sha256(json.dumps(_WireDict(profile.identity), sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    peers = {peer.deviceId: peer for peer in material.peers}
+    descriptor = (json.dumps({
+        "schema_version": 1, "owner": owner, "port": endpoint.port, "tunnel_cidr": settings.tunnelCidr,
+        "mtu": settings.mtu, "ipv4_routes": list(profile.routes.ipv4Cidrs),
+        "peers": [{"device_id": device.deviceId, "public_key": peers[device.deviceId].PublicKey,
+                   "ipv4_address": device.ipv4Address} for device in sorted(profile.devices, key=lambda item: item.deviceId)],
+        "config_sha256": hashlib.sha256(server).hexdigest(), "program_sha256": hashlib.sha256(program).hexdigest(),
+        "tools_version": WIREGUARD_TOOLS_VERSION, "tools_sha256": WIREGUARD_TOOLS_SHA256,
+    }, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    bundle = BuildVpnServerBundle(profile, "wireguard", (
+        Artifact("server.conf", server), Artifact("deployment.json", descriptor), Artifact("install.py", program),
+    ))
+
+    return PreparedVpnTransport(profile, WIREGUARD_CAPABILITIES, bundle, clients)

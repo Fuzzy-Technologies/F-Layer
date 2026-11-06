@@ -538,3 +538,13 @@ reviewerType = "ai"
 reviewedAt = "2026-11-06T13:14:53.729571Z"
 reviewRoles = ["editorial", "technical"]
 body = "渲染单个标准客户端，不包含 AWG 字段或其他设备的私有凭据。"
+[[units]]
+id = "symbol:flayer.profiles.wireguard.PrepareWireGuard"
+sourcePath = "src/flayer/profiles/wireguard.py"
+sourceHash = "sha256:63dcff9adba9299d2be7fcf8e622d39a42bec3bc9e1b2093aaee5141fdb7795c"
+reviewedTranslationHash = "sha256:7639ddf431ee7025175ca6874a241057a79c324161f386ddde8fb5c7a71a7ab6"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T14:23:05.231890Z"
+reviewRoles = ["editorial", "technical"]
+body = "准备私有内核服务和标准客户端制品包，不持久化也不部署。"

@@ -59,8 +59,28 @@ jobs:
               destination.chmod(0o700)
           PYTHON
 
+      - name: Prepare pinned WireGuard tools and isolated nftables conformance
+        run: |
+          sudo -n apt-get update -qq
+          sudo -n apt-get install -y --no-install-recommends nftables build-essential
+          python - <<'PYTHON'
+          import os
+          from pathlib import Path
+          from flayer.profiles import _wireguard_guest as guest
+
+          destination = Path("_build/wireguard")
+          destination.mkdir(parents=True, exist_ok=True, mode=0o700)
+          guest._ROOT_UID = os.getuid()
+          binary, licenseText = guest._BuildTools(destination)
+          (destination / "wg").write_bytes(binary)
+          (destination / "wg").chmod(0o700)
+          (destination / "COPYING").write_bytes(licenseText)
+          PYTHON
+
       - name: Run the canonical local and CI validation gate
         env:
           FLAYER_LEGACY_XRAY_BINARY: ${{ github.workspace }}/_build/xray-legacy/xray
           FLAYER_XRAY_BINARY: ${{ github.workspace }}/_build/xray/xray
+          FLAYER_WG_TOOLS_BINARY: ${{ github.workspace }}/_build/wireguard/wg
+          FLAYER_WG_CONFORMANCE: isolated-ci
         run: python tools/validate.py

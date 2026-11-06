@@ -694,12 +694,65 @@ def Status(guest: Any, desired: Path, action: str, deviceId: str) -> dict[str, o
             "kernel_policy": "cached-named-cve-baseline"}
 
 
+def HistoryStatus(guest: Any, owner: str) -> dict[str, str]:
+    """Read owner-bound audit history even without an installed root, creating no files or managed state."""
+
+    guest._Paths(owner)
+
+    for path in (guest.BASE, *guest.BASE.parents):
+        if path.exists() or path.is_symlink():
+            guest._Directory(path)
+
+            break
+
+    return {"status": "peer-history", "owner": owner, "history_sha256": _History(guest, owner), "tools_version": guest.TOOLS_VERSION}
+
+
+def _OriginalGuest(guest: Any, stage: Path, expected: str) -> Any:
+    """Load the exact retained installer bytes already authorized by the original private server bundle."""
+
+    guest._RequireDigest(expected)
+    path = stage / "original.py"
+    content = guest._Read(path)
+
+    if guest._Digest(content) != expected:
+        raise guest.GuestError("Original installer differs from its retained program pin")
+
+    spec = importlib.util.spec_from_loader("flayer_wireguard_original", loader=None)
+
+    if spec is None:
+        raise guest.GuestError("Original installer module is unavailable")
+
+    module = importlib.util.module_from_spec(spec)
+    module.__file__ = str(path)
+    exec(compile(content, str(path), "exec"), module.__dict__)
+
+    return module
+
+
+def _StageFile(guest: Any, path: Path, content: bytes) -> None:
+    """Write one private transient input without requiring a managed installation or crossing filesystems."""
+
+    guest._Directory(path.parent, private=True)
+
+    if not isinstance(content, bytes) or not 1 <= len(content) <= 1048576:
+        raise guest.GuestError("Transient peer input exceeds its bound")
+
+    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+
+    with os.fdopen(descriptor, "wb") as stream:
+        stream.write(content)
+
+
 def Main(argv: list[str] | None = None) -> int:
     """Run only an explicit owned peer action with root, fixed staging, consent and exact receipt guards."""
 
     parser = argparse.ArgumentParser(description="Manage one owned WireGuard peer transaction")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--status", action="store_true")
+    group.add_argument("--history-status", action="store_true", dest="historyStatus")
+    group.add_argument("--install", action="store_true")
+    group.add_argument("--check-install", action="store_true", dest="checkInstall")
     group.add_argument("--apply", action="store_true")
     group.add_argument("--recover", action="store_true")
     parser.add_argument("--change", choices=("enroll", "revoke"), required=True)
@@ -720,7 +773,16 @@ def Main(argv: list[str] | None = None) -> int:
 
         _Change(guest, options.change, options.deviceId)
 
-        if options.status:
+        installing = options.install or options.checkInstall
+        readOnly = options.status or options.historyStatus or options.checkInstall
+
+        if installing:
+            if bool(options.allowMutation) != bool(options.install) or options.expectedReceipt or options.expectedPrevious:
+                raise guest.GuestError("Installation requires exact mutation consent; its check is read-only")
+
+            guest._RequireDigest(options.expectedHistory)
+
+        elif readOnly:
             if options.allowMutation or options.expectedReceipt or options.expectedPrevious or options.expectedHistory:
                 raise guest.GuestError("WireGuard peer status accepts no mutation consent or receipt options")
 
@@ -740,7 +802,7 @@ def Main(argv: list[str] | None = None) -> int:
         stage = Path(__file__).absolute().parent
         guest._Directory(stage, private=True)
 
-        if {path.name for path in stage.iterdir()} != {"install.py", "maintenance.py", "server.conf", "deployment.json"}:
+        if {path.name for path in stage.iterdir()} != {"install.py", "maintenance.py", "server.conf", "deployment.json", *({"original.py"} if installing else set())}:
             raise guest.GuestError("WireGuard peer staging has unknown or missing files")
 
         supplied = guest._Json(guest._Read(stage / "deployment.json"))
@@ -749,38 +811,73 @@ def Main(argv: list[str] | None = None) -> int:
             raise ValueError
 
         owner = supplied.get("owner")
+
+        if not isinstance(owner, str):
+            raise ValueError
+
         root, unit, _ = guest._Paths(owner)
         descriptor: int | None
 
         try:
-            descriptor = guest._OpenLock(readOnly=options.status)
+            descriptor = guest._OpenLock(readOnly=readOnly)
 
         except FileNotFoundError:
-            if not options.status or guest.LOCK.exists() or guest.LOCK.is_symlink():
+            if not readOnly or guest.LOCK.exists() or guest.LOCK.is_symlink():
                 raise
 
             descriptor = None
 
         try:
             if descriptor is not None:
-                fcntl.flock(descriptor, (fcntl.LOCK_SH if options.status else fcntl.LOCK_EX) | fcntl.LOCK_NB)
+                fcntl.flock(descriptor, (fcntl.LOCK_SH if readOnly else fcntl.LOCK_EX) | fcntl.LOCK_NB)
 
-            guest._Receipt(root, unit, owner)
+            if installing:
+                if HistoryStatus(guest, owner)["history_sha256"] != options.expectedHistory:
+                    raise guest.GuestError("Peer history changed before installation; no installer was started")
 
-            with tempfile.TemporaryDirectory(prefix=".desired-", dir=stage) as temporary:
-                desired = Path(temporary)
-                os.chmod(desired, 0o700)
+                program = supplied.get("program_sha256")
 
-                for name in ("server.conf", "deployment.json", "install.py"):
-                    guest._Atomic(desired / name, guest._Read((root if name == "install.py" else stage) / name))
+                if not isinstance(program, str):
+                    raise ValueError
 
-                if options.status:
-                    result: dict[str, object] = Status(guest, desired, options.change, options.deviceId)
+                original = _OriginalGuest(guest, stage, program)
 
-                else:
-                    outcome = (Recover(guest, desired, options.change, options.deviceId, options.expectedReceipt, options.expectedPrevious, options.expectedHistory)
-                               if options.recover else Apply(guest, desired, options.change, options.deviceId, options.expectedReceipt, options.expectedHistory))
-                    result = {"status": "complete", "outcome": outcome}
+                with tempfile.TemporaryDirectory(prefix=".original-", dir=stage) as temporary:
+                    desired = Path(temporary)
+                    os.chmod(desired, 0o700)
+
+                    for name in ("server.conf", "deployment.json", "install.py"):
+                        _StageFile(guest, desired / name, guest._Read(stage / ("original.py" if name == "install.py" else name)))
+
+                    request = original._Request(desired)[0]
+
+                    if options.install:
+                        original._Install(desired, request)
+
+                    original._Check(root, unit, request)
+
+                result: dict[str, object] = {"status": "install-complete" if options.install else "install-checked"}
+
+            elif options.historyStatus:
+                result = dict(HistoryStatus(guest, owner))
+
+            else:
+                guest._Receipt(root, unit, owner)
+
+                with tempfile.TemporaryDirectory(prefix=".desired-", dir=stage) as temporary:
+                    desired = Path(temporary)
+                    os.chmod(desired, 0o700)
+
+                    for name in ("server.conf", "deployment.json", "install.py"):
+                        _StageFile(guest, desired / name, guest._Read((root if name == "install.py" else stage) / name))
+
+                    if options.status:
+                        result = Status(guest, desired, options.change, options.deviceId)
+
+                    else:
+                        outcome = (Recover(guest, desired, options.change, options.deviceId, options.expectedReceipt, options.expectedPrevious, options.expectedHistory)
+                                   if options.recover else Apply(guest, desired, options.change, options.deviceId, options.expectedReceipt, options.expectedHistory))
+                        result = {"status": "complete", "outcome": outcome}
 
             if descriptor is None and (guest.LOCK.exists() or guest.LOCK.is_symlink()):
                 raise guest.GuestError("WireGuard operation started during observation; retry status")

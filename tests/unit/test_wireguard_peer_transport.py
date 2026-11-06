@@ -15,6 +15,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from test_selected_guest_contract import Provisioner
+from test_vpn_guest import Bundle
 from test_wireguard_guest import Prepared
 
 from flayer import _vpn_guest as receiver
@@ -200,13 +201,19 @@ def Request(action: str) -> bytes:
     """Obtain the actual controller envelope through a fake SSH boundary."""
 
     bundle = Prepared().serverBundle
-    guest, runner = Provisioner(Facts(bundle) if action == "status" else {"status": "complete", "outcome": "committed"})
-    guest.WireGuardPeerOperation(bundle, action, "enroll", "new-phone", **({} if action == "status" else Options(action)))
+    facts = Facts(bundle) if action == "status" else {"status": "complete", "outcome": "committed"}
+
+    if action == "history-status":
+        owner = json.loads(next(item.content for item in bundle.files if item.name == "deployment.json"))["owner"]
+        facts = {"status": "peer-history", "owner": owner, "history_sha256": "a" * 64, "tools_version": "1.0.20260223"}
+
+    guest, runner = Provisioner(facts)
+    guest.WireGuardPeerOperation(bundle, action, "enroll", "new-phone", **({} if action in {"status", "history-status"} else Options(action)))
 
     return runner.calls[0][1]
 
 
-@pytest.mark.parametrize("action", ["status", "apply", "recover"])
+@pytest.mark.parametrize("action", ["status", "history-status", "apply", "recover"])
 def test_RootReceiverExecutesOnlyExactPeerFlagsAndCleansItsPrivateStage(action: str, monkeypatch: pytest.MonkeyPatch) -> None:
     """Use a fully in-memory stage boundary and never launch the driver, SSH or any network command."""
 
@@ -242,7 +249,7 @@ def test_RootReceiverExecutesOnlyExactPeerFlagsAndCleansItsPrivateStage(action: 
     command = events[1]
 
     assert isinstance(command, list) and command[2:7] == ["--" + action, "--change", "enroll", "--device-id", "new-phone"]
-    assert ("--allow-mutation" in command) == (action != "status")
+    assert ("--allow-mutation" in command) == (action not in {"status", "history-status"})
     assert ("--expected-previous-receipt-sha256" in command) == (action == "recover")
     assert events[0] == "stage" and events[-1] == "cleanup"
 
@@ -313,3 +320,81 @@ def test_RootReceiverCleansOnPrivateFailureAndReturnsOnlyAllowlistedLabels(failu
 
     assert error.value.transport == "wireguard" and error.value.phase == "peer"
     assert "suppressed-private-fixture" not in str(error.value)
+
+
+@pytest.mark.parametrize("field,value", [("owner", "f" * 64), ("history_sha256", "bad"), ("private_extra", "suppressed-private-fixture")])
+def test_HistoryOnlySshResultRejectsForeignOwnerOrUnboundedFacts(field: str, value: str) -> None:
+    """A metadata-only initial-install guard still binds exact owner and accepts no private or extra output."""
+
+    bundle = Prepared().serverBundle
+    owner = json.loads(next(item.content for item in bundle.files if item.name == "deployment.json"))["owner"]
+    facts = {"status": "peer-history", "owner": owner, "history_sha256": "a" * 64, "tools_version": "1.0.20260223"}
+    facts[field] = value
+    guest, _ = Provisioner(facts)
+
+    with pytest.raises(VpnError) as error:
+        guest.WireGuardPeerOperation(bundle, "history-status", "enroll", "new-phone")
+
+    assert "suppressed-private-fixture" not in str(error.value)
+
+
+@pytest.mark.parametrize("proof", ["", "invalid", "A" * 64, None])
+def test_WireGuardInstallRequiresItsExactHistoryBeforeSsh(proof: Any) -> None:
+    """Installing from a retained server bundle does not authorize replaying unobserved history."""
+
+    guest, runner = Provisioner({})
+
+    with pytest.raises(VpnError):
+        guest.Install((("wireguard", Prepared().serverBundle),), expectedWireGuardHistory=proof)
+
+    assert not runner.calls
+
+
+def test_RootInstallGuardRunsBeforeOtherTransportsAndChecksTheSameHistory(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Even a caller-supplied AWG-first batch cannot pass a changed WG history check before unrelated installers."""
+
+    guest, runner = Provisioner({})
+    runner.result = GuestResult(0, b"FLAYER_GUEST_INSTALL_OK")
+    server = Prepared().serverBundle
+    guest.Install((("amneziawg", Bundle()), ("wireguard", server)), expectedWireGuardHistory="a" * 64)
+    request = json.loads(runner.calls[0][1])
+    packed = {name: base64.b64decode(content) for name, content in request["bundles"][1]["files"].items()}
+
+    assert packed["original.py"] == next(item.content for item in server.files if item.name == "install.py")
+    assert request["wireguard_install"] == {"expected_history_sha256": "a" * 64}
+    assert hashlib.sha256(packed["original.py"]).hexdigest() == json.loads(packed["deployment.json"])["program_sha256"]
+    staged: list[str] = []
+    commands: list[list[str]] = []
+
+    @contextmanager
+    def Stage(contents: dict[str, bytes]) -> Iterator[Path]:
+        """Inspect private payload shape using an in-memory staging boundary."""
+
+        assert set(contents) == {"install.py", "original.py", "maintenance.py", "server.conf", "deployment.json"}
+        staged.append("wireguard")
+
+        yield Path("fixture-private-stage")
+
+    def Run(command: list[str], **options: Any) -> subprocess.CompletedProcess[bytes]:
+        """Reject the post-install history check without running a single child process."""
+
+        commands.append(command)
+        assert "a" * 64 in command and "--expected-history-sha256" in command
+
+        if "--check-install" in command:
+            assert "--allow-mutation" not in command
+
+            raise subprocess.CalledProcessError(1, command)
+
+        assert "--install" in command and "--allow-mutation" in command
+
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(receiver.os, "geteuid", lambda: 0, raising=False)
+    monkeypatch.setattr(receiver, "_Staged", Stage)
+    monkeypatch.setattr(receiver.subprocess, "run", Run)
+
+    with pytest.raises(receiver.GuestInstallError) as error:
+        receiver.Install(receiver.DecodeRequest(json.dumps({"bundles": request["bundles"]}).encode()), expectedWireGuardHistory="a" * 64)
+
+    assert staged == ["wireguard"] and len(commands) == 2 and error.value.phase == "check"

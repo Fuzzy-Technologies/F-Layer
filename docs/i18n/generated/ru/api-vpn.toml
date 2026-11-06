@@ -568,3 +568,33 @@ reviewerType = "ai"
 reviewedAt = "2026-11-06T17:16:09.659727Z"
 reviewRoles = ["editorial", "technical"]
 body = "Подготовить отзыв одного клиента в памяти, сохраняя остальные устройства, ключи и назначенные адреса."
+[[units]]
+id = "module:flayer.vpn_peers"
+sourcePath = "src/flayer/vpn_peers.py"
+sourceHash = "sha256:f12a9631bc0588c651e4f21ce4a96f4d5b332f46a570aceeb5980675bbbedb3d"
+reviewedTranslationHash = "sha256:a3515e97aa6d94d3edfc1281f40b964775cceb169aac9a9f96aaa1d7e0b73984"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T19:47:30.103267Z"
+reviewRoles = ["editorial", "technical"]
+body = "Явное планирование и восстановление указанных клиентов стандартного WireGuard в собственном приватном проекте."
+[[units]]
+id = "symbol:flayer.vpn_peers.VpnPeerReport"
+sourcePath = "src/flayer/vpn_peers.py"
+sourceHash = "sha256:714b26ab22267d851303c0593913a8d20c4510609d90c36105cab49fe88427a5"
+reviewedTranslationHash = "sha256:b409b925e9715d4ec23b1694e6142ec303b661ca78aa9276fe1310b1ff0fa932"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T19:47:30.103267Z"
+reviewRoles = ["editorial", "technical"]
+body = "Сообщить ограниченные доказательства плана/восстановления клиента без клиентского материала или заявления о проверке трафика."
+[[units]]
+id = "symbol:flayer.vpn_peers.RunVpnPeer"
+sourcePath = "src/flayer/vpn_peers.py"
+sourceHash = "sha256:1d3952089068b90f3932c334e8abafe1d9d7c27df014c923e1b1210ebbd2477a"
+reviewedTranslationHash = "sha256:8853832ad29d561929563f9fc44468f0019f63129342747a799a93e0ddbad465"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T19:47:30.103267Z"
+reviewRoles = ["editorial", "technical"]
+body = "Спланировать, наблюдать или явно применить/восстановить изменение одного клиента без ротации остальных ключей или пересоздания облачных ресурсов."

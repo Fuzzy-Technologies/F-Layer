@@ -58,14 +58,14 @@ def EncodeRequest(
 ) -> bytes:
     """Validate consent and old proofs before packing transient driver/helper bytes around retained server intent."""
 
-    if (not isinstance(action, str) or action not in {"status", "apply", "recover"}
+    if (not isinstance(action, str) or action not in {"status", "history-status", "apply", "recover"}
             or not isinstance(change, str) or change not in {"enroll", "revoke"}
             or not isinstance(deviceId, str) or re.fullmatch(r"[a-z][a-z0-9-]{0,62}", deviceId) is None
             or type(allowMutation) is not bool
             or any(not isinstance(value, str) for value in (scopeConfirm, expectedReceipt, expectedPrevious, expectedHistory))):
         raise VpnError("WireGuard peer operation requires a supported action and one exact named device")
 
-    if action == "status":
+    if action in {"status", "history-status"}:
         if allowMutation or scopeConfirm or expectedReceipt or expectedPrevious or expectedHistory:
             raise VpnError("WireGuard peer status accepts no mutation consent or preconditions")
 
@@ -105,6 +105,16 @@ def DecodeResult(
 
         if not isinstance(data, dict):
             raise ValueError
+
+        if action == "history-status":
+            descriptor = json.loads(next(item.content for item in bundle.files if item.name == "deployment.json"))
+
+            if (set(data) != {"status", "history_sha256", "owner", "tools_version"} or data["status"] != "peer-history"
+                    or data["owner"] != descriptor["owner"] or data["tools_version"] != "1.0.20260223"
+                    or not isinstance(data["history_sha256"], str) or re.fullmatch(r"[0-9a-f]{64}", data["history_sha256"]) is None):
+                raise ValueError
+
+            return data
 
         if action != "status":
             if (set(data) != {"status", "outcome"} or data["status"] != "complete"

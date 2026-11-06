@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:f5aa1d742fda63e676f6c195804331f016e60956de6aad2907277039f9a3672a"
-reviewedTranslationHash = "sha256:842191d51e0cf3d4be3e9b457df58c1166fa6a93bd788d4df147ca890c85040d"
+sourceHash = "sha256:a4ba2757205fa59548c242629c318444afe25e71329277fcc44e7fdb460a9f14"
+reviewedTranslationHash = "sha256:eb9d822fff841780e2a5a3875a57565850989f7cca5afcef72783693e7c2d8be"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T19:25:57.108988Z"
+reviewedAt = "2026-11-06T20:23:53.095642Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -243,13 +243,27 @@ SSH 通道提供来宾事务。接收保留的私有服务器包、一个指定�
 变更确认区分 `committed` 与恢复的 `not-applied`，不能替代随后的健康服务观测。
 可移植测试使用内存中的 runner/staging 边界，不执行 SSH 或来宾程序。
 
-该低层 API 不持久化控制器意图，也不签发新设备密钥。在后续控制器修订流程提供
-持久日志之前，调用方必须保留完整旧/新包及原始证明。
+有界只读 `history-status` 即使在已安装根目录/服务不存在时仍观测绑定 owner 的
+审计。校验受管祖先及审计所有权，不创建目录或协调文件。普通 deploy 必须先于
+任何安装器验证该历史：删除服务不能隐藏吊销历史，也不能让旧控制器文件重新
+激活密钥。
+
+安装还通过私有 stdin 传入精确预期历史。打包驱动在与安装相同的来宾排他锁内
+再次校验，关闭观测 RPC 与变更之间的时间间隙。按原始描述符固定值校验保留的
+`original.py` 字节后，才将已批准安装器加载为模块并调用其未变更的安装/检查函数。
+这避免嵌套 CLI 锁，并保留原始已安装程序、运行时及启动回调。接收器进入其他
+传输前，只读检查再次校验相同历史；即使输入批次先列出其他协议，也始终先运行
+WG 安装保护。
+临时输入副本在请求暂存目录内以排他私有文件写入，不依赖已存在的受管根目录，
+也不假定能够跨文件系统重命名。
+
+该低层 API 不持久化控制器意图，也不签发新设备密钥。下述项目流程提供持久日志，
+并保留完整旧/新包及原始证明。
 
 ## 私有控制器修订存储
 
-私有 `_vpn_revisions.py` 为后续对等端控制器提供持久化原语，项目生命周期及
-CLI 命令尚未调用。每次尝试先写绑定 owner 的元数据日志，再写包含新材料/配置及
+私有 `_vpn_revisions.py` 为项目对等端控制器提供持久化及有效生命周期解析。
+每次尝试先写绑定 owner 的元数据日志，再写包含新材料/配置及
 保留安装程序的不可变私有包，最后在远程激活前写入包的精确摘要。摘要发布中断后
 复用完整准备文件，绝不重新生成部分保留的凭据。每次重命名前都对精确私有临时
 inode 执行 fsync，包括先前文件同步失败后的复用。不完整私有暂存会在任何远程操作前
@@ -264,14 +278,16 @@ inode 执行 fsync，包括先前文件同步失败后的复用。不完整私�
 加载器检查完整有界链（最多 4096 条记录），不依赖私有客户端密钥是否存在。
 任何发布前先校验完成摘要的类型/格式，暂存或推进新头前预检相同容量边界；
 达到容量时仍允许精确重试已完成操作。
-只有读取活动材料/服务器字节时才要求完整固定的请求清单。这使后续全云清理即使
+只有读取活动材料/服务器字节时才要求完整固定的请求清单。这使全云清理即使
 客户端密钥丢失，也能保留原始非秘密所有权证明。原始创建资源/bootstrap 与其他
 协议包保持不变。持久私有 advisory 锁覆盖完整的协作项目流程；缺失锁时的只读
-回退不创建文件，并在竞态时丢弃观测。开放新对等端 CLI 前，仍须集成所有所选
-项目入口。测试使用合成项目和真实 POSIX 私有文件/锁，不执行云、SSH 或桌面
+回退不创建文件，并在竞态时丢弃观测。所选项目 prepare/deploy/status/recovery 及
+对等端操作共用此锁；全栈 destroy 校验非秘密修订并保留私有文件。
+尚未支持的所选项目 runtime/export 仍在变更前拒绝。
+测试使用合成项目和真实 POSIX 私有文件/锁，不执行云、SSH 或桌面
 网络操作。
 
-## 尚待集成
+## 项目对等端流程
 
 `PrepareWireGuardPeerEnrollment()` 和 `PrepareWireGuardPeerRevocation()` 现在可在
 内存中准备针对一个指定对等端的确定性配置/材料变更。注册必须传入调用方已保留的
@@ -279,11 +295,47 @@ inode 执行 fsync，包括先前文件同步失败后的复用。不完整私�
 地址及其客户端配置字节保持不变。拒绝无效身份、地址/密钥复用、超出设备容量的
 注册以及吊销最后一个对等端。原私有材料保留供审计。移除最后一个对等端需要
 显式停用协议。这些准备 API 不连接来宾、不使对等端断开、不持久化修订，也不
-更新项目状态。公共项目吊销仍需要控制器修订/恢复流程；对等端 CLI
-尚未提供此能力。
+更新项目状态。`RunVpnPeer()` 现将这些 API 与保留的控制器修订及受管 SSH 事务组合。
 
-现有来宾上的协议增删、模式 1 迁移、显式云/来宾入口覆盖层及定向对等端
-注册/吊销仍属于任务 #128。模式 2 的 Xray 运行时维护与独立设备导出命令
+对已部署的模式 2 WireGuard 项目，编辑 `project.toml`，仅声明一个指定对等端的
+注册/吊销。注册时声明新设备及显式空闲隧道地址；保留所有旧对等端/地址及其他
+协议。吊销只移除该协议的成员/地址，保留其他协议仍需的共享设备声明。
+移除最后一个对等端必须停用协议。只读 plan 在外部访问前校验该差异，观测完整
+原始云图、有效入口/连接、现有 IAM 主机固定值及活动来宾回执/历史，然后输出
+`baseline_sha256` 与 `plan_expires_at`。计划期间不生成密钥。
+
+```console
+flayer vpn peer plan --project PROJECT --protocol wireguard --device phone --change enroll --format json
+flayer vpn peer enroll --project PROJECT --protocol wireguard --device phone --allow-mutation --scope-confirm FOLDER_ID --expected-baseline-sha256 BASELINE --plan-expires-at EXPIRES_AT
+flayer vpn peer status --project PROJECT --protocol wireguard --device phone --change enroll --format json
+flayer vpn peer recover --project PROJECT --protocol wireguard --device phone --change enroll --allow-mutation --scope-confirm FOLDER_ID --expected-baseline-sha256 JOURNAL_BASELINE
+```
+
+将大写占位符替换为项目、精确 scope 和报告证明。应用必须在 600 秒内回传计划。
+同意及基线匹配后仅生成并保留一个新设备密钥/PSK，持久化日志/请求，然后在远程
+应用前再次观测云/信任和来宾证明。保留原始已安装程序字节/固定值。推进本地头
+之前，验证健康目标来宾结果及计算出的链式历史。精确重试最近已完成操作只验证
+健康，不生成密钥、不变更来宾，即使原计划已过期。
+
+SSH 结果未知时保留日志。需要恢复期间，对等端 status 报告独立日志基线并返回
+非零退出码。显式恢复回传该基线、目标、scope 及同意，使用保留的原始证明/文件，
+不生成密钥；完成已发布根目录，或仅回滚未提交前缀。完整回滚候选在下次相同的新
+计划中复用。激活前缺失的暂存可归档为未应用；不完整私有字节需检查，绝不替换。
+恢复还使用当前云定位符、端点和 IAM 主机固定值，以及保留的原始头/回执/历史和
+有效期，重新计算原计划绑定。即使替换图仍属于同一 owner 且内部有效，或主机
+固定值已改变，也不能按旧计划接收恢复写入。过期本身不阻止显式恢复。
+普通 prepare/deploy/status/recover 拒绝未完成对等端日志。全项目 destroy 仍是
+单独同意的整云栈清理，不依赖客户端或管理私钥。
+
+提交后，普通生命周期使用有效协议固定值及原始六资源计划/bootstrap/SSH 标记。
+先于无关安装器检查对等端历史，因此恢复旧控制器文件不能自动接管重复的来宾
+配置。其他服务、资源、地址及已有客户端文件保持不变。客户端交付仍属任务 #129；
+对等端完成本身不导出原生配置，也不证明互联网/媒体验收。
+
+## 尚待集成
+
+现有来宾上的协议增删、模式 1 迁移及显式云/来宾入口覆盖层仍属于任务 #128。
+模式 2 的 Xray 运行时维护与独立设备导出命令
 仍在访问提供商/修改输出前拒绝。现有模式 1 AWG/VLESS 的加载、bootstrap
 字节、资源标签及指纹算法保持不变。
 

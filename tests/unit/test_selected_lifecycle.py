@@ -118,9 +118,10 @@ class SelectedGuest:
         PrivatePath(identityFile)
         assert ReadPrivate(knownHostsFile) == ("203.0.113.20 " + PUBLIC_KEY + "\n").encode()
 
-    def Install(self, bundles: tuple[tuple[str, ArtifactBundle], ...]) -> None:
+    def Install(self, bundles: tuple[tuple[str, ArtifactBundle], ...], *, expectedWireGuardHistory: str = "") -> None:
         """Capture retained original server programs and simulate a transaction refusal."""
 
+        assert bool(expectedWireGuardHistory) == any(protocol == "wireguard" for protocol, _ in bundles)
         self.calls.append(("install", bundles))
 
         if self.failInstall:
@@ -148,6 +149,22 @@ class SelectedGuest:
         self.calls.append(("services", services))
 
         return tuple((service, True) for service in services)
+
+    def WireGuardPeerOperation(self, bundle: ArtifactBundle, action: str, change: str, deviceId: str, **options: Any) -> dict[str, object]:
+        """Model only the initial committed history observation without executing a peer driver."""
+
+        from flayer._vpn_revisions import Digest
+
+        owner = json.loads(next(item.content for item in bundle.files if item.name == "deployment.json"))["owner"]
+        self.calls.append(("peer-status", bundle))
+        assert action in {"status", "history-status"} and not options
+        history = Digest(lifecycle.wireguardGuest._Encode({"domain": "f-layer/wireguard/peer-history/v1", "owner": owner}))
+
+        if action == "history-status":
+            return {"status": "peer-history", "owner": owner, "history_sha256": history, "tools_version": "1.0.20260223"}
+
+        return {"status": "active", "is_desired": True, "receipt_sha256": "a" * 64,
+                "history_sha256": history}
 
 
 @pytest.fixture(autouse=True, name="vendorReads")

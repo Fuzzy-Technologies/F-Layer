@@ -113,12 +113,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.guest.SshGuestProvisioner.Install"
 sourcePath = "src/flayer/guest.py"
-sourceHash = "sha256:dd3f975f66e9c8a207569524200c43621a6b56410f96aa2f716e77355337b806"
-body = "仅将经过校验的敏感服务器文件传送至可信来宾系统，并运行安装程序。"
-reviewedTranslationHash = "sha256:18140046ca289a8f019ce7976d56e25c12cc2044e13e674573ef48aad9ab3b50"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:3995657739d62cca116451e715e2af57bcb0f6e3a4a3d5856e288781bfa44335"
+body = "暂存已校验的私有服务器文件；WireGuard 安装必须提供精确预期对等端历史。"
+reviewedTranslationHash = "sha256:a110b121a6c16a11cebe117eb989c654119e1251b9c22d411f714609d23b5a4e"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.489396+00:00"
+reviewedAt = "2026-11-06T20:19:47.541579Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]

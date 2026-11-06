@@ -94,23 +94,33 @@ def _Staged(files: dict[str, bytes]) -> Iterator[Path]:
         shutil.rmtree(stage)
 
 
-def Install(bundles: tuple[tuple[str, dict[str, bytes]], ...]) -> None:
+def Install(bundles: tuple[tuple[str, dict[str, bytes]], ...], *, expectedWireGuardHistory: str = "") -> None:
     """Use root-owned temporary directories and suppress potentially sensitive installer output."""
 
     if os.geteuid() != 0:
         raise ValueError("Root privileges are required")
 
-    for transport, files in bundles:
+    wireguard = next((files for transport, files in bundles if transport == "wireguard"), None)
+
+    if (not isinstance(expectedWireGuardHistory, str)
+            or (re.fullmatch(r"[0-9a-f]{64}", expectedWireGuardHistory) is None if wireguard is not None else bool(expectedWireGuardHistory))
+            or wireguard is not None and set(wireguard) != {"install.py", "maintenance.py", "original.py", "server.conf", "deployment.json"}):
+        raise ValueError("WireGuard install requires a complete history-bound original-program envelope")
+
+    for transport, files in sorted(bundles, key=lambda item: item[0] != "wireguard"):
         phase = "stage"
 
         try:
             with _Staged(files) as stage:
                 command = ["/bin/bash", str(stage / "install.sh")] if transport == "amneziawg" else ["/usr/bin/python3", str(stage / "install.py")]
-                install = command + (["--allow-mutation"] if transport == "wireguard" else [])
+                guard = (["--change", "enroll", "--device-id", "flayer-installation", "--expected-history-sha256", expectedWireGuardHistory]
+                         if transport == "wireguard" else [])
+                install = command + (["--install", "--allow-mutation", *guard] if guard else [])
+                check = command + (["--check-install", *guard] if guard else ["--check"])
                 phase = "install"
                 subprocess.run(install, cwd=stage, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=1800)
                 phase = "check"
-                subprocess.run(command + ["--check"], cwd=stage, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=60)
+                subprocess.run(check, cwd=stage, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=60)
 
         except (OSError, subprocess.SubprocessError):
             raise GuestInstallError(transport, phase) from None
@@ -205,13 +215,13 @@ def WireGuardPeer(content: bytes) -> bytes:
 
     if (not isinstance(options, dict) or set(options) != fields or type(options["allow_mutation"]) is not bool
             or any(not isinstance(value, str) for key, value in options.items() if key != "allow_mutation")
-            or options["action"] not in {"status", "apply", "recover"} or options["change"] not in {"enroll", "revoke"}
+            or options["action"] not in {"status", "history-status", "apply", "recover"} or options["change"] not in {"enroll", "revoke"}
             or re.fullmatch(r"[a-z][a-z0-9-]{0,62}", options["device_id"]) is None):
         raise ValueError("Invalid WireGuard peer operation")
 
     receipt, previous, history = (options[key] for key in ("expected_receipt_sha256", "expected_previous_receipt_sha256", "expected_history_sha256"))
 
-    if options["action"] == "status":
+    if options["action"] in {"status", "history-status"}:
         if options["allow_mutation"] or receipt or previous or history:
             raise ValueError("WireGuard peer status accepts no mutation preconditions")
 
@@ -229,7 +239,7 @@ def WireGuardPeer(content: bytes) -> bytes:
         with _Staged(bundles[0][1]) as stage:
             command = ["/usr/bin/python3", str(stage / "install.py"), "--" + options["action"], "--change", options["change"], "--device-id", options["device_id"]]
 
-            if options["action"] != "status":
+            if options["action"] not in {"status", "history-status"}:
                 command += ["--allow-mutation", "--expected-receipt-sha256", receipt, "--expected-history-sha256", history]
 
                 if options["action"] == "recover":
@@ -318,8 +328,21 @@ def Main() -> int:
 
             return 0
 
-        bundles = DecodeRequest(content)
-        Install(bundles)
+        request = json.loads(content)
+
+        if isinstance(request, dict) and "wireguard_install" in request:
+            request = json.loads(content, object_pairs_hook=_UniquePeerObject)
+            options = request["wireguard_install"]
+
+            if (set(request) != {"bundles", "wireguard_install"} or not isinstance(options, dict)
+                    or set(options) != {"expected_history_sha256"}):
+                raise ValueError("Invalid history-bound WireGuard installation envelope")
+
+            Install(DecodeRequest(json.dumps({"bundles": request["bundles"]}).encode()),
+                    expectedWireGuardHistory=options["expected_history_sha256"])
+
+        else:
+            Install(DecodeRequest(content))
 
     except GuestInstallError as error:
         print(f"FLAYER_GUEST_FAILED {error.transport} {error.phase}")

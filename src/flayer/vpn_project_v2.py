@@ -328,32 +328,57 @@ def PrepareSelectedProject(project: SelectedVpnProject) -> VpnProjectReport:
 
     ValidateSelectedProject(project)
     ValidateSshPathSyntax(project.root)
+    _PreparationPreflight(project)
+
+    from flayer._vpn_revisions import ProjectLock
+
+    with ProjectLock(project, readOnly=False):
+        return _PrepareSelectedProject(project)
+
+
+def _PreparationPreflight(project: SelectedVpnProject) -> None:
+    """Refuse unexplained deployment footprints before even creating a project coordination file."""
+
     PrivatePath(project.root, directory=True)
     PrivatePath(project.Artifacts, directory=True)
+    creation = project.Artifacts / ("server-" + project.vpn.identity.stack + "-creation")
+
+    if creation.exists() or creation.is_symlink():
+        return
+
     legacy = tuple(project.Artifacts / ("server-" + project.vpn.identity.stack + "-" + suffix)
                    for suffix in ("credentials", "bootstrap", "trust"))
-
     state = (project.root / "state.json", project.root / ".state.json.operation.json")
 
     if (any(path.exists() or path.is_symlink() for path in (*state, *legacy))
             or any(path.name.startswith("device-") for path in project.Artifacts.iterdir())):
         raise VpnError("Schema-2 offline preparation cannot adopt an existing deployment or legacy material; explicit migration is pending")
 
-    from flayer._vpn_creation import LoadCreationBaseline, PrepareCreationBundle, ReadPinnedBundle
 
+def _PrepareSelectedProject(project: SelectedVpnProject) -> VpnProjectReport:
+    """Verify an effective committed revision or prepare fresh bundles while the common project lock is held."""
+
+    from flayer._vpn_creation import PrepareCreationBundle
+    from flayer._vpn_revisions import LoadRevisions, Pending, ReadEffectiveBundle
+
+    _PreparationPreflight(project)
     creation = project.Artifacts / ("server-" + project.vpn.identity.stack + "-creation")
 
     if creation.exists() or creation.is_symlink():
-        baseline = LoadCreationBaseline(project)
-        baseline.ValidateCurrent(project)
+        revision = LoadRevisions(project)
 
-        for pin in baseline.protocols:
-            ReadPinnedBundle(project, pin, material=True)
-            ReadPinnedBundle(project, pin)
+        if Pending(project) is not None:
+            raise VpnError("Pending peer revision requires explicit peer recovery before preparation")
+
+        revision.ValidateCurrent(project)
+
+        for pin in revision.pins:
+            ReadEffectiveBundle(project, revision, pin, material=True)
+            ReadEffectiveBundle(project, revision, pin)
 
         _VerifyAdministrationKey(project)
 
-        return VpnProjectReport("prepare", "complete", details="Original selected protocol and creation bundles verified offline without regeneration")
+        return VpnProjectReport("prepare", "complete", details="Effective selected protocol and immutable creation bundles verified offline without regeneration")
 
     _VerifyAdministrationKey(project)
     bundles: list[ArtifactBundle] = []

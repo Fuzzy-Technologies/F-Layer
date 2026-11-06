@@ -223,45 +223,45 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.InitializeVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:a5d7bfb52e30edbd58d93257854f1395542c799496e9cfa273d12ef57d8cd637"
-body = "以独占方式创建私有项目和管理密钥，不访问云服务。"
-reviewedTranslationHash = "sha256:d37d6fbc5081d38f2e269a291776d9b4d30d2a47f219b113019f1db4f145fef1"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:ebf29c30403d59c4155c1b6ea3a798dd0c5f4598f9a253ebe003bff4742dbc80"
+body = "创建私有项目和管理密钥；显式协议选择启用模式 2，不访问云。"
+reviewedTranslationHash = "sha256:9fb5c70b9a7c12c5b82337d0574f23256b9e1332b24f4fd6819a542c4bf0e7e0"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.489547+00:00"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.vpn_project.LoadVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:01ad5e1da22aa4d2e96b8a1c0412f44fb45dd9d8e142049cb55172ce05b84f14"
-body = "从私有存储读取明确指定、可编辑且不含秘密信息的 TOML 配置，以及管理公钥。"
-reviewedTranslationHash = "sha256:c1b02eaa716699506c6fbacfa21a48324369c1998e81ce4820e6cc6dc54e6258"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:7820e7c60fe890d45ebc345985468382c8fb143df02a1e8d94d1a530011c64a7"
+body = "从显式公共 TOML 及其管理公钥读取两种私有项目模式之一。"
+reviewedTranslationHash = "sha256:fb88a063be77d05c33609ef7c17a1b90a63a7d9c7575d753b173e366220578a7"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.vpn_project.PrepareVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:418b1acb9b2d7062571164568feae2003c6d1f4f721e2b8c984d8c7dcfbbf1d0"
-body = "在本地准备私密材料并校验两种配置生成器，不导出虚构的服务器端点。"
-reviewedTranslationHash = "sha256:dea560a6e397d2bf6c5e03ed9360502bdf0ae52f8e0727fc8e1ce670526f3f0e"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:96e9c215ae83697946354c60abef03eb50c3c71c6eeaa150a5301469b14f8659"
+body = "在本地准备私有传输材料，不导出占位客户端端点。"
+reviewedTranslationHash = "sha256:3a74d04e6c89fa79ddb34c97b386c015bbd8a2e5dfb337ff725e5811201b9f01"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.489602+00:00"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.vpn_project.CompileVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:507e20bed85a8908f53ddd014aa3e7e2848dcd1c01d64144520b1627ec8e08fa"
-body = "编译包含六个归属明确资源的部署计划，仅绑定已校验且不含敏感数据的引导文件。"
-reviewedTranslationHash = "sha256:659baf9873bd3b289bcc4456161d1e8d1b012f6ee4b749cbc29b11b3211eb3a8"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:080c0739a58c32683de6bff7cce4b6de6a7449d71469960cd3dbc2e15490e138"
+body = "编译六个旧格式受管资源；选择式项目需等待其创建基线流程实现。"
+reviewedTranslationHash = "sha256:0d538fab1b663907a700e9dc4df2b71bedde3e4180c965b8c666c841e31852a4"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -289,12 +289,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.RunVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:e8927c328b77ea0e5195005bebe89e4fb7bf657c3400e5e9b1324b8f19df6ab3"
-body = "整合明确的云操作许可、持久资源状态、经过身份验证的来宾安装和客户端文件导出。"
-reviewedTranslationHash = "sha256:04bd903e5aa4223dd0a341d458493347328fccd7c2e0a16e580ed0addf900df8"
+sourceHash = "sha256:1ffc1666cef365561bb829ee243ac0d05cbfc6214520f91563f487e05ba1a71a"
+body = "分派所选协议的离线准备，或带显式同意的旧格式受管云/来宾生命周期。"
+reviewedTranslationHash = "sha256:1a3ecf9615591a9966b63b24bb35c68180542de3776245dc3e7b0cd669732216"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-04T10:34:46Z"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -320,12 +320,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_export.ExportVpnDevice"
 sourcePath = "src/flayer/vpn_export.py"
-sourceHash = "sha256:e6ad4bae8e919064d47de30990fbf2378403c2a0b75d28f2f93cbd39c21ec03e"
-body = "导出经校验的单个设备，支持可选客户端策略，且不写入源文件。"
-reviewedTranslationHash = "sha256:89ec51e9e3b8bfbf1176355f2a0e83c07fb48f6f82a3ae27b8efd0d8a6238401"
+sourceHash = "sha256:212e9bc82636b496e687f3b4b8a614f24be1feefc6eead9e34d055dcecb0ef4b"
+body = "导出一个已验证旧格式设备，支持可选客户端策略且不写入源文件。"
+reviewedTranslationHash = "sha256:867b6d3c231eb150cb47d2b3e44dfafe4b4f5a15b4c17a5be8946e4bae3a38ac"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T11:56:06.659037Z"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
 reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.guest.SshGuestProvisioner.VlessRuntime"
@@ -350,13 +350,13 @@ body = "在外部访问前拒绝含糊的运行时操作和不完整的预期旧
 [[units]]
 id = "symbol:flayer.vpn_project.RunVpnRuntime"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:4345fb0e4601fdd0dbd91a7f375d8ed0f5e2387f846a474116ae253ecde5a17e"
-reviewedTranslationHash = "sha256:c335954e8771c5baf9d9dc34dad223a040a68f5a617473184fc3e7bce9f33736"
+sourceHash = "sha256:2ba5ee9e3c26cd2028503ef23d3e43d34580ac8e32413083f0074726ca3113c4"
+reviewedTranslationHash = "sha256:48679c16bea928532eff1a0198ace1d0e6e67c0656f236547e760b0ff5fb0c48"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-05T18:37:32.432583Z"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
 reviewRoles = ["editorial", "technical"]
-body = "在显式授权和只读云检查后，仅维护已有且属于本项目的 Xray 运行时。"
+body = "维护已有受管模式 1 Xray 运行时；选择式项目运行时集成尚待完成。"
 [[units]]
 id = "symbol:flayer.vpn_project.VpnRuntimeReport"
 sourcePath = "src/flayer/vpn_project.py"
@@ -407,3 +407,103 @@ reviewerType = "ai"
 reviewedAt = "2026-11-06T13:14:53.729571Z"
 reviewRoles = ["editorial", "technical"]
 body = "生成任何凭据前，读取精确显式成员关系及隧道地址映射。"
+[[units]]
+id = "symbol:flayer.vpn_project.SelectedVpnProject"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:ae62f8c92f3ca201d23d7a843133e0485da1201a8366d8a3b281af6dd96de54d"
+reviewedTranslationHash = "sha256:3256916ed800d98d4c775951767640cd0e684c0bfa4247100947afc57b14711b"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "显式模式 2 协议意图，成员关系、设置和凭据指纹相互独立。"
+[[units]]
+id = "symbol:flayer.vpn_project.SelectedVpnProject.Artifacts"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:ee3e8ef978e9f425b5aea1101b8ec52afdccfd4c365d08f0eef020e5e7a05717"
+reviewedTranslationHash = "sha256:3b2d3252827a7c9156fa641cb0f59f2e2d5ed33d4d6be132107f4d0a138524b0"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "仅定位该显式项目已有的私有受管制品存储。"
+[[units]]
+id = "symbol:flayer.vpn_project.SelectedVpnProject.ProtocolProfile"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:e897ac5ee259c03425277f348d502c80a238b5ce21d43a023bef218bbd94372d"
+reviewedTranslationHash = "sha256:8895107c6886595b7d173e84f13c968dea13f62b252d8eb12d178bf1265d65a1"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "仅投影一个所选协议的成员、监听和共享路由策略。"
+[[units]]
+id = "symbol:flayer.vpn_project.SelectedVpnProject.TransportFingerprint"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:baec3e6fcdeb0a157aa55f511b61de4e802e251e711c99a1834fc0abdbdcb669"
+reviewedTranslationHash = "sha256:d32bfdc3c567c9e6a713af01be737484fadb6c829f5286240714f86d84f1bad2"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "将保留材料绑定到自己的规范投影，排除无关设备或云设置。"
+[[units]]
+id = "symbol:flayer.vpn_project.SelectedVpnProject.Fingerprint"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:87f279125691c65d6f7b6eb9dfdf9db2367c34df5f533b13f1ff7eca586c9c8b"
+reviewedTranslationHash = "sha256:f906c3d097e358d780181c9924125c28e0cc6a28a92d54a71f1484b32166e8e1"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "独立标识完整所选项目意图，不与各传输保留材料混用。"
+[[units]]
+id = "module:flayer.vpn_project_v2"
+sourcePath = "src/flayer/vpn_project_v2.py"
+sourceHash = "sha256:e458dcd0da903e7374dacae6c1caa5e38d2a1f7db9f00ac9b4a98eab8d6dcc68"
+reviewedTranslationHash = "sha256:02a53cc34c3c4af8b557b48c8ecb5be0dada3f5aee81f88dbd3b496c2c711feb"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "校验并准备显式选择的协议，不接管旧项目或云状态。"
+[[units]]
+id = "symbol:flayer.vpn_project_v2.SelectedProjectTemplate"
+sourcePath = "src/flayer/vpn_project_v2.py"
+sourceHash = "sha256:a83cef83a184eba3840986185fee86cd10104559303a80a91b6224c34ec52910"
+reviewedTranslationHash = "sha256:262068d659ae0b4a610700d916aaaedd43eebc1f4f8dc9434e0173dc17baa706"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "渲染显式启用的模式 2 模板，同时逐字节保留默认模式 1 模板。"
+[[units]]
+id = "symbol:flayer.vpn_project_v2.ValidateSelectedProject"
+sourcePath = "src/flayer/vpn_project_v2.py"
+sourceHash = "sha256:ac7d873cae77ef2c149b6f63590b22a4ec49edb5485547544000f494dc4dfc9d"
+reviewedTranslationHash = "sha256:6f1be057319fc905e36b3d38acf96d21961394485d5b9644c957104016304b0f"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "生成密钥前拒绝无效成员关系、设置、冲突及原生客户端限制违规。"
+[[units]]
+id = "symbol:flayer.vpn_project_v2.ParseSelectedProject"
+sourcePath = "src/flayer/vpn_project_v2.py"
+sourceHash = "sha256:b57404489baa0dceb8c4c0367217c9367bb8b92b85dd0e0b71a2aae3314534ae"
+reviewedTranslationHash = "sha256:3f55f3cdaf2e3369b65449c950ef098a98666019ad0705caff08fb6038d6befe"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "严格解析模式 2 公共 TOML，不生成密钥、不迁移状态，也不构造提供商。"
+[[units]]
+id = "symbol:flayer.vpn_project_v2.PrepareSelectedProject"
+sourcePath = "src/flayer/vpn_project_v2.py"
+sourceHash = "sha256:70821dfb70c61d1432ef347088d822284c64694c6e2efc265348e9287302c4f6"
+reviewedTranslationHash = "sha256:f61756e1f3d579e4943c970cd686423e6e8d13aba5db08f6a12eb27b322f195d"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "离线准备所选服务器/材料制品包，保留已有协议字节和旧状态。"

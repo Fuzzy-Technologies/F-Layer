@@ -72,9 +72,9 @@ def Parser() -> argparse.ArgumentParser:
     initialize = projectActions.add_parser("init", help="Create an editable project and administration key")
     initialize.add_argument("directory")
     initialize.add_argument("--protocol", action="append", choices=("amneziawg", "vless-reality", "wireguard"),
-                            dest="protocols", help="Select schema-2 protocols explicitly; repeat for each transport")
+                            dest="protocols", help="Choose protocols explicitly; repeat to combine transports")
 
-    vpn = commands.add_parser("vpn", help="Prepare and manage a two-protocol VPN project")
+    vpn = commands.add_parser("vpn", help="Prepare and manage a private VPN project")
     vpnActions = vpn.add_subparsers(dest="action", required=True)
 
     for action in ("prepare", "deploy", "status", "destroy", "recover", "runtime-status", "upgrade", "rollback-upgrade", "recover-upgrade"):

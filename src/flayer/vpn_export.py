@@ -109,7 +109,7 @@ def ExportVpnDevice(
     project: VpnProject | SelectedVpnProject, deviceId: str, protocol: str, output: str | Path, *, qr: bool = False,
     tlsFragment: bool = False, allowQuic: bool = False,
 ) -> VpnProjectReport:
-    """Export one verified device with optional client policies and no source writes."""
+    """Export one verified legacy device with optional client policies and no source writes."""
 
     if isinstance(project, SelectedVpnProject):
         raise VpnError("Schema-2 device export requires completed deployment and protocol export integration")

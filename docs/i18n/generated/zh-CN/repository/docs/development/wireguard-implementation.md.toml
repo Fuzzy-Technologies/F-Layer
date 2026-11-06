@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:18cf8a56272a48ae55b7b7a17733ae55299fa346f272b15a432be05adc37409f"
-reviewedTranslationHash = "sha256:3908963831b9168bff8b202f68967992868aadc451aad6a8a17315ede2e6ada6"
+sourceHash = "sha256:dd13dfde1232d09aabf251ac39462856c67af4ba5d095b2fe4b0e736ea56aa43"
+reviewedTranslationHash = "sha256:f72575a1b081596cc792ad88ae9be40aef013bf618df8282557aca772d13790c"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T14:36:37.779531Z"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -95,9 +95,50 @@ Tools 从校验和固定的上游 `wireguard-tools 1.0.20260223` 归档私下构
 已提交的健康服务不会因日志收尾失败被回滚。常规安装拒绝替换、对等端变更及密钥轮换，
 这些操作必须通过显式迁移，不能隐式重新生成。
 
+## 显式项目选择与离线准备
+
+开发候选版本通过公共加载器和离线准备 CLI 接受模式 2 私有项目。
+显式重复选项才启用此格式；省略选项时保留模式 1 的精确 AWG/VLESS 模板与指纹：
+
+```bash
+flayer project init ~/flayer-wireguard --protocol wireguard
+# Edit the cloud placement and administration address in project.toml first.
+flayer vpn prepare --project ~/flayer-wireguard
+```
+
+重复 `--protocol` 可选择 `amneziawg`、`vless-reality` 和 `wireguard` 的任意非空组合。
+OpenVPN 在其独立实现前不可用。空选择、重复或未知协议均报错，不会隐式退回旧协议对。
+生成密钥前校验完整文档：拒绝未启用/未知设置、重复 UDP 监听、TCP 22、
+网络重叠、无效 MTU、额外设备地址键以及超过两个 DNS 服务器。
+
+每个所选协议表必须有显式 `device_ids`。WG 使用独立的
+`[wireguard.device_addresses]` 映射；顶层 `devices.ipv4_address` 仅属于 AWG 成员，
+VLESS 没有隧道地址。保留设备 ID 与分配地址，只规范化声明顺序。
+不按枚举顺序分配地址，任何协议都不会隐式注册全部设备。
+
+`SelectedVpnProject` 将完整公共项目指纹与 `TransportFingerprint()` 分开保存。
+各传输指纹包括自己的所选成员、监听/设置、身份和共享路由策略，
+排除其他协议的设备、监听/设置及云部署位置。
+声明尚未选入协议的设备不会改变任何已保留传输字节。
+
+准备过程创建独立受管 `server-<stack>-<protocol>-credentials` 制品包，
+包含私有 `material.json` 及 `intent.sha256` 证明，并创建该协议的服务器制品包。
+完全匹配的材料被解码而非重新生成。发布任何新制品包前，先校验所有已有包的完整清单和精确文件集。
+自己的成员/设置变化或漂移将拒绝操作，不重写其他协议。
+若后续本地制品包写入失败，已提交凭据仍可用于输入不变的重试。
+现有文件所有权和 0700/0600 私有存储权限要求保持不变。
+
+准备过程不生成 bootstrap、云状态或带占位端点的客户端文件。
+模式 2 的 deploy/status/destroy/recover、运行时维护、云计划编译及设备导出，
+在集成完成前均于构造提供商或修改输出前拒绝。离线准备不能证明客户端连通性。
+
+将旧项目编辑为模式 2 不构成迁移。保留的通用云状态、旧组合凭据、bootstrap/trust
+制品包或设备导出会阻止此次准备。保留原模式 1 配置、密钥、清单及清理引用，
+直至显式迁移/入口规则流程能够证明原有创建基线。
+
 ## 尚待集成
 
-项目模式 2、公共项目 CLI 的选择、SSH 接收器集成、云/来宾入口规则迁移及定向注册/吊销
+SSH 接收器集成、不可变创建基线、云/来宾入口规则迁移及定向注册/吊销
 仍属于任务 #128。将来宾回执/恢复/删除接入完整项目生命周期同样待完成。
 此基础不改变现有模式 1 的 AWG/VLESS 加载或指纹算法。
 

@@ -303,7 +303,7 @@ class VpnRuntimeReport(VpnProjectReport):
 
 
 def InitializeVpnProject(directory: str | Path, *, protocols: tuple[str, ...] | None = None) -> Path:
-    """Create one exclusive private project and an administration key without cloud access."""
+    """Create a private project and administration key; explicit protocols opt into schema 2 without cloud access."""
 
     template = PROJECT_TEMPLATE
 
@@ -357,7 +357,7 @@ def _Table(data: Mapping[str, object], key: str, fields: frozenset[str]) -> Mapp
 
 
 def LoadVpnProject(directory: str | Path) -> VpnProject | SelectedVpnProject:
-    """Read explicit editable public TOML and administration public key from private storage."""
+    """Read either private project schema from explicit public TOML and its administration public key."""
 
     ValidateSshPathSyntax(Path(directory).absolute())
     root = PrivatePath(Path(directory), directory=True)
@@ -611,7 +611,7 @@ def _VerifyAdministrationKey(project: VpnProject | SelectedVpnProject) -> None:
 
 
 def PrepareVpnProject(project: VpnProject | SelectedVpnProject) -> VpnProjectReport:
-    """Prepare private materials and verify both renderers locally without exporting false endpoints."""
+    """Prepare private transport materials locally without exporting placeholder client endpoints."""
 
     if isinstance(project, SelectedVpnProject):
         from flayer.vpn_project_v2 import PrepareSelectedProject
@@ -649,7 +649,7 @@ def _Freeze(value: object) -> JsonValue:
 
 
 def CompileVpnProject(project: VpnProject | SelectedVpnProject) -> DeploymentPlan:
-    """Compile six owned resources while binding only the verified nonsecret bootstrap file."""
+    """Compile six legacy owned resources; selected projects require their pending baseline workflow."""
 
     if isinstance(project, SelectedVpnProject):
         raise VpnError("Schema-2 cloud compilation requires the pending creation-baseline and ingress workflow")
@@ -831,7 +831,7 @@ def RunVpnProject(
     rollback: bool = False, provider: VpnYandexProvider | None = None,
     guestFactory: Callable[..., SshGuestProvisioner] = SshGuestProvisioner,
 ) -> VpnProjectReport:
-    """Compose explicit cloud consent, durable resources, authenticated guest install, and client export."""
+    """Dispatch selected offline preparation or legacy owned cloud/guest lifecycle with explicit consent."""
 
     ValidateSshPathSyntax(project.root)
 
@@ -919,7 +919,7 @@ def RunVpnRuntime(
     expectedVersion: str = "", expectedReceipt: str = "", provider: VpnYandexProvider | None = None,
     guestFactory: Callable[..., SshGuestProvisioner] = SshGuestProvisioner,
 ) -> VpnRuntimeReport:
-    """Maintain only an existing owned Xray runtime after explicit consent and read-only cloud checks."""
+    """Maintain an existing owned schema-1 Xray runtime; selected-project runtime integration is pending."""
 
     if isinstance(project, SelectedVpnProject):
         raise VpnError("Schema-2 runtime maintenance requires the pending owned project/ingress integration")

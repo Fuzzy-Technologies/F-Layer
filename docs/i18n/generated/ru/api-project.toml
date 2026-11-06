@@ -223,45 +223,45 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.InitializeVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:a5d7bfb52e30edbd58d93257854f1395542c799496e9cfa273d12ef57d8cd637"
-body = "Создаёт новый закрытый проект и административный ключ без доступа к облаку; существующий проект не перезаписывает."
-reviewedTranslationHash = "sha256:dc916fd4ba011daf15f408df188c0ba7e84950ffff214c72ffa988eb5d19e4e1"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:ebf29c30403d59c4155c1b6ea3a798dd0c5f4598f9a253ebe003bff4742dbc80"
+body = "Создать приватный проект и ключ администрирования; явно указанные протоколы включают схему 2 без обращения к облаку."
+reviewedTranslationHash = "sha256:fe0135746293e0ed3c73b4d343d422490d203f4dd7ba06e7150cc9388ae46d28"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.488211+00:00"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.vpn_project.LoadVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:01ad5e1da22aa4d2e96b8a1c0412f44fb45dd9d8e142049cb55172ce05b84f14"
-body = "Читает явно указанные редактируемые публичные настройки TOML и административный открытый ключ из закрытого хранилища."
-reviewedTranslationHash = "sha256:85d5183fb0e8eb13a69870b7b88ad699e823201f356358bf3ac678d2e2a8cb38"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:7820e7c60fe890d45ebc345985468382c8fb143df02a1e8d94d1a530011c64a7"
+body = "Прочитать любую из двух схем приватного проекта из явно заданного публичного TOML и открытого ключа администрирования."
+reviewedTranslationHash = "sha256:8716653946a538e2c14726be93ee2d794f747331f660f99fda5590b26585cf6e"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.488225+00:00"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.vpn_project.PrepareVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:418b1acb9b2d7062571164568feae2003c6d1f4f721e2b8c984d8c7dcfbbf1d0"
-body = "Локально готовит закрытые данные и проверяет оба генератора конфигураций, не экспортируя вымышленные адреса серверов."
-reviewedTranslationHash = "sha256:1981adbac4a701f7c6cbf921e1820c475134d7c62d388851f93592d0fca04187"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:96e9c215ae83697946354c60abef03eb50c3c71c6eeaa150a5301469b14f8659"
+body = "Подготовить приватный материал транспортов локально без экспорта фиктивных клиентских endpoint."
+reviewedTranslationHash = "sha256:af318d0d668cf24c0794aa1e76edd5b8a08d93834836ac6160dd5d75c88a5905"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.488239+00:00"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.vpn_project.CompileVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:507e20bed85a8908f53ddd014aa3e7e2848dcd1c01d64144520b1627ec8e08fa"
-body = "Компилирует шесть ресурсов своего стека, связывая план только с проверенным несекретным загрузочным файлом."
-reviewedTranslationHash = "sha256:86be01612117af24e21064c4044799648a723afd74e23e201b2642f68889c3ea"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:080c0739a58c32683de6bff7cce4b6de6a7449d71469960cd3dbc2e15490e138"
+body = "Скомпилировать шесть принадлежащих прежнему проекту ресурсов; для проектов с выбором протоколов требуется ещё не реализованный процесс базовой конфигурации."
+reviewedTranslationHash = "sha256:e4553c7edb3cdd774714b73eb2f30eb87f368cf56da4dce5bff4af36858caa05"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.488333+00:00"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -289,12 +289,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.RunVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:e8927c328b77ea0e5195005bebe89e4fb7bf657c3400e5e9b1324b8f19df6ab3"
-body = "Объединяет явное разрешение облачных операций, надёжное состояние ресурсов, аутентифицированную установку и экспорт клиентских файлов."
-reviewedTranslationHash = "sha256:2c0d58d8fc153bc386028d72b95417875bd2376babba6aa645af8a3be6667915"
+sourceHash = "sha256:1ffc1666cef365561bb829ee243ac0d05cbfc6214520f91563f487e05ba1a71a"
+body = "Выполнить автономную подготовку выбранных протоколов либо прежний жизненный цикл принадлежащего проекту облака и сервера с явным разрешением."
+reviewedTranslationHash = "sha256:05da45c8c815d9498d31c4a4279c2e1ca6eb1cd8786a9e53d32f437bb6ff4761"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-04T10:34:46Z"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -320,12 +320,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_export.ExportVpnDevice"
 sourcePath = "src/flayer/vpn_export.py"
-sourceHash = "sha256:e6ad4bae8e919064d47de30990fbf2378403c2a0b75d28f2f93cbd39c21ec03e"
-body = "Экспортировать одно проверенное устройство с опциональными политиками клиента без записи в исходные файлы."
-reviewedTranslationHash = "sha256:050e8e74a9318685c98b39ce8b3766a610431ac625ee46f799a45bb6cbd79455"
+sourceHash = "sha256:212e9bc82636b496e687f3b4b8a614f24be1feefc6eead9e34d055dcecb0ef4b"
+body = "Экспортировать одно проверенное устройство прежнего формата с необязательными клиентскими политиками без записи в источники."
+reviewedTranslationHash = "sha256:c16e058a119af2cf1d0a2c3b7998fab88e9c342016fe8973f4cc80a9932ac47a"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T11:56:06.659037Z"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
 reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.guest.SshGuestProvisioner.VlessRuntime"
@@ -350,13 +350,13 @@ body = "Отклонить неоднозначные операции и неп
 [[units]]
 id = "symbol:flayer.vpn_project.RunVpnRuntime"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:4345fb0e4601fdd0dbd91a7f375d8ed0f5e2387f846a474116ae253ecde5a17e"
-reviewedTranslationHash = "sha256:afc662a0bfc22363be451b7f4418b3d789806219f75786d494ba0feb3bcca6f9"
+sourceHash = "sha256:2ba5ee9e3c26cd2028503ef23d3e43d34580ac8e32413083f0074726ca3113c4"
+reviewedTranslationHash = "sha256:26fb5d9a1a12ab48fd96a49740ba87a44051a9a86c14c103cb99f3ee13b487eb"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-05T18:37:32.432583Z"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
 reviewRoles = ["editorial", "technical"]
-body = "Обслуживать только существующий принадлежащий проекту Xray после явного разрешения и чтения облачных данных."
+body = "Обслуживать существующий принадлежащий проекту Xray схемы 1; интеграция runtime проектов с выбором протоколов ещё не завершена."
 [[units]]
 id = "symbol:flayer.vpn_project.VpnRuntimeReport"
 sourcePath = "src/flayer/vpn_project.py"
@@ -407,3 +407,103 @@ reviewerType = "ai"
 reviewedAt = "2026-11-06T13:14:53.729571Z"
 reviewRoles = ["editorial", "technical"]
 body = "Прочитать точный явный состав клиентов и сопоставления туннельных адресов до генерации любых учётных данных."
+[[units]]
+id = "symbol:flayer.vpn_project.SelectedVpnProject"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:ae62f8c92f3ca201d23d7a843133e0485da1201a8366d8a3b281af6dd96de54d"
+reviewedTranslationHash = "sha256:fc0fd07a77003485b5fc0c2285e70746527ef033d389343a58854aa5ffc85195"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "Явные настройки протоколов схемы 2 с независимым составом устройств, параметрами и отпечатками ключевого материала."
+[[units]]
+id = "symbol:flayer.vpn_project.SelectedVpnProject.Artifacts"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:ee3e8ef978e9f425b5aea1101b8ec52afdccfd4c365d08f0eef020e5e7a05717"
+reviewedTranslationHash = "sha256:fdccd29730be00b6d87963e88fdc2b6912df51f2f0a8219f886243804e4ae314"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "Найти только существующее приватное хранилище артефактов данного явно выбранного проекта."
+[[units]]
+id = "symbol:flayer.vpn_project.SelectedVpnProject.ProtocolProfile"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:e897ac5ee259c03425277f348d502c80a238b5ce21d43a023bef218bbd94372d"
+reviewedTranslationHash = "sha256:621a6ed1e545ce0393d2dce33faf0fa82ae87ed4bf1bd1c8717593a31e7fd2ae"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "Получить проекцию только участников, слушателя и общей политики маршрутов одного выбранного протокола."
+[[units]]
+id = "symbol:flayer.vpn_project.SelectedVpnProject.TransportFingerprint"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:baec3e6fcdeb0a157aa55f511b61de4e802e251e711c99a1834fc0abdbdcb669"
+reviewedTranslationHash = "sha256:126716b3443c8152966e1fd86259c7dabe493110dae48aa3b15555e8474cd913"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "Связать сохранённый материал с его собственной канонической проекцией без посторонних устройств и облачных настроек."
+[[units]]
+id = "symbol:flayer.vpn_project.SelectedVpnProject.Fingerprint"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:87f279125691c65d6f7b6eb9dfdf9db2367c34df5f533b13f1ff7eca586c9c8b"
+reviewedTranslationHash = "sha256:4fe75e989b871e5765ee69218d68d67cd61c449590056b3790b120b5d5f61e24"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "Определить полный отпечаток настроек выбранного проекта отдельно от сохранённого материала каждого транспорта."
+[[units]]
+id = "module:flayer.vpn_project_v2"
+sourcePath = "src/flayer/vpn_project_v2.py"
+sourceHash = "sha256:e458dcd0da903e7374dacae6c1caa5e38d2a1f7db9f00ac9b4a98eab8d6dcc68"
+reviewedTranslationHash = "sha256:b69d4a37c992e7bed311ede56bbc2131bc0fcd02ed76e51bd025942bc626af64"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "Проверить и подготовить явно выбранные протоколы без присвоения прежних проектов или облачного состояния."
+[[units]]
+id = "symbol:flayer.vpn_project_v2.SelectedProjectTemplate"
+sourcePath = "src/flayer/vpn_project_v2.py"
+sourceHash = "sha256:a83cef83a184eba3840986185fee86cd10104559303a80a91b6224c34ec52910"
+reviewedTranslationHash = "sha256:c9c77253bc1fd3eb534ccc1ed672b5b9c1cff2e53659ebb5771df2bda0632964"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "Сформировать явно включаемый шаблон схемы 2, побайтно сохраняя исходный шаблон схемы 1 по умолчанию."
+[[units]]
+id = "symbol:flayer.vpn_project_v2.ValidateSelectedProject"
+sourcePath = "src/flayer/vpn_project_v2.py"
+sourceHash = "sha256:ac7d873cae77ef2c149b6f63590b22a4ec49edb5485547544000f494dc4dfc9d"
+reviewedTranslationHash = "sha256:3410b029bc9d6f81b70ed70dcad53f3d6aaecfe7a820a113ce6f27e4d985f613"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "Отклонить некорректный состав устройств, настройки, конфликты и превышение ограничений нативного клиента до генерации ключей."
+[[units]]
+id = "symbol:flayer.vpn_project_v2.ParseSelectedProject"
+sourcePath = "src/flayer/vpn_project_v2.py"
+sourceHash = "sha256:b57404489baa0dceb8c4c0367217c9367bb8b92b85dd0e0b71a2aae3314534ae"
+reviewedTranslationHash = "sha256:51cd427f2bba5d7b49f460b7651325414853f16c147295c41d909afda1c4f3ba"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "Разобрать строгий публичный TOML схемы 2 без генерации ключей, миграции состояния или создания провайдера."
+[[units]]
+id = "symbol:flayer.vpn_project_v2.PrepareSelectedProject"
+sourcePath = "src/flayer/vpn_project_v2.py"
+sourceHash = "sha256:70821dfb70c61d1432ef347088d822284c64694c6e2efc265348e9287302c4f6"
+reviewedTranslationHash = "sha256:8f4ef7330df47f114a948c73c8634bc9dc948bd47d85db43fa4de2f2640fac5f"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewRoles = ["editorial", "technical"]
+body = "Подготовить выбранные серверные комплекты и ключевой материал без сети, сохраняя байты существующих протоколов и прежнее состояние."

@@ -476,6 +476,33 @@ noncanonical or contradictory request metadata. Nonsecret epoch traversal and
 cloud cleanup must not call this private-byte reader; missing client keys are not
 permission to regenerate a projection. Epoch publication/selection remains open.
 
+## Peer segments for protocol epochs
+
+The private revision store can now read and publish a separate WireGuard peer
+segment from an explicit `PeerSegment` context. Its genesis is the complete epoch
+digest; immutable peer records still bind the permanent creation digest. Metadata
+heads and journals live in the fixed private `protocol-epochs/<digest>` directory,
+while original creation files and all immutable request/completion bundles keep
+their existing locations. The starting projection uses retained protocol sources,
+including the preceding segment's last committed peer request, without rewriting
+an installer, credential or closed head.
+
+Each segment validates its exact starting pin, guest receipt/history, parent chain
+and pending journal, and returns every referenced peer artifact name. The future
+epoch graph reader must verify all closed segments and compare their combined
+artifact names with the global store; a single segment is not the whole graph.
+Inactive WireGuard permits no peer record or pending operation. Configured sources
+may be retained with an empty active subset. Metadata traversal needs no private
+client payload; resolving a retained projection still requires its exact bytes.
+
+This component does not publish a protocol epoch or authorize remote work.
+Ordinary lifecycle/peer entrypoints refuse protocol heads, journals, interrupted
+publication files or segment directories until the protocol coordinator is
+integrated. They cannot silently fall back to the original peer head. Existing
+epoch-zero projects retain their metadata bytes and behavior. Isolated POSIX tests
+exercise both segments, stale copied heads, ownership/path checks and interrupted
+completion publication; no desktop VPN, SSH or cloud command is executed.
+
 ## Scoped asynchronous cloud ingress SDK
 
 The concrete `VpnYandexProvider` now supplies `BeginIngressChange()` and

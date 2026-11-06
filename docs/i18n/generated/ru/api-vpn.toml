@@ -548,3 +548,23 @@ reviewerType = "ai"
 reviewedAt = "2026-11-06T14:23:05.231890Z"
 reviewRoles = ["editorial", "technical"]
 body = "Подготовить приватные комплекты ядерной службы и стандартных клиентов без сохранения и развёртывания."
+[[units]]
+id = "symbol:flayer.profiles.wireguard.PrepareWireGuardPeerEnrollment"
+sourcePath = "src/flayer/profiles/wireguard.py"
+sourceHash = "sha256:ef5e95f86e7597da2f5ad2da15d3b8055437ce2607dc86de0ddf61ed8a495a85"
+reviewedTranslationHash = "sha256:5a9bc2c36a449bc252b159075ce18686f7e504846a1846ba3dbf7e6161683790"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T17:16:09.659727Z"
+reviewRoles = ["editorial", "technical"]
+body = "Подготовить регистрацию одного клиента из сохранённых ключей, не меняя ключи существующих устройств или сервера."
+[[units]]
+id = "symbol:flayer.profiles.wireguard.PrepareWireGuardPeerRevocation"
+sourcePath = "src/flayer/profiles/wireguard.py"
+sourceHash = "sha256:be27455197b5a7fad10e232ae860ac7b6369625f8d81eba410934666f7e5733d"
+reviewedTranslationHash = "sha256:3de37eb80051496c775f6d1ebd8468dbd796948223f2cbb39880f926132da5fe"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T17:16:09.659727Z"
+reviewRoles = ["editorial", "technical"]
+body = "Подготовить отзыв одного клиента в памяти, сохраняя остальные устройства, ключи и назначенные адреса."

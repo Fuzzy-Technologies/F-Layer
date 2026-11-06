@@ -7,7 +7,7 @@ import hashlib
 import ipaddress
 import json
 import secrets
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from importlib.resources import files
 
 from flayer.core.contracts import _WireDict
@@ -19,6 +19,7 @@ from flayer.profiles.vpn import (
     PreparedVpnTransport,
     ValidateVpnTransport,
     VpnCapabilities,
+    VpnDevice,
     VpnEndpoint,
     VpnError,
     VpnProfile,
@@ -261,6 +262,50 @@ def _ValidateWireGuard(
         raise VpnError("WireGuard requires retained material for exactly its selected devices")
 
     return port
+
+
+def PrepareWireGuardPeerEnrollment(
+    profile: VpnProfile, settings: WireGuardSettings, material: WireGuardMaterial,
+    device: VpnDevice, peer: WireGuardPeer,
+) -> tuple[VpnProfile, WireGuardMaterial]:
+    """Prepare one enrollment from retained credentials without rotating any existing device or server key."""
+
+    _ValidateWireGuard(profile, settings, material)
+
+    if (not isinstance(device, VpnDevice) or not isinstance(peer, WireGuardPeer) or device.deviceId != peer.deviceId
+            or device.deviceId in {item.deviceId for item in profile.devices}
+            or len(profile.devices) >= MAX_VPN_DEVICES):
+        raise VpnError("WireGuard enrollment requires one new named device with matching retained credentials")
+
+    updated = replace(profile, devices=tuple(sorted((*profile.devices, device), key=lambda item: item.deviceId)))
+    _ValidateWireGuardIntent(updated, settings)
+    credentials = WireGuardMaterial(material.serverPrivateKey, tuple(sorted((*material.peers, peer), key=lambda item: item.deviceId)))
+    _ValidateWireGuard(updated, settings, credentials)
+
+    return updated, credentials
+
+
+def PrepareWireGuardPeerRevocation(
+    profile: VpnProfile, settings: WireGuardSettings, material: WireGuardMaterial, deviceId: str,
+) -> tuple[VpnProfile, WireGuardMaterial]:
+    """Prepare one revocation in memory while preserving every other device, credential and assigned address."""
+
+    _ValidateWireGuard(profile, settings, material)
+    _Name(deviceId, "device_id")
+
+    if deviceId not in {device.deviceId for device in profile.devices}:
+        raise VpnError("WireGuard revocation requires an existing selected device")
+
+    if len(profile.devices) == 1:
+        raise VpnError("Revoking the final WireGuard peer requires explicit protocol deactivation")
+
+    updated = replace(profile, devices=tuple(sorted((device for device in profile.devices if device.deviceId != deviceId),
+                                                   key=lambda item: item.deviceId)))
+    credentials = WireGuardMaterial(material.serverPrivateKey, tuple(sorted((peer for peer in material.peers if peer.deviceId != deviceId),
+                                                                           key=lambda item: item.deviceId)))
+    _ValidateWireGuard(updated, settings, credentials)
+
+    return updated, credentials
 
 
 def RenderWireGuardServer(profile: VpnProfile, settings: WireGuardSettings, material: WireGuardMaterial) -> bytes:

@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:574652ec20744c531fe690f8a3d6f9e32d770ee07619862fa80a503d79fab34a"
-reviewedTranslationHash = "sha256:577de2a084f51390fa928bb7ca2d7d8bac2a2f9cc8463540c24b063fb623432d"
+sourceHash = "sha256:429143982ca8b0642abd4c65f308b8d22742f78b83b5a395de4ce36f06f4cfb3"
+reviewedTranslationHash = "sha256:4724ec129f1e3874377e87ace7aad9fac27abc5f3d2da9e1579c06a76c1b7e48"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T17:02:12.828029Z"
+reviewedAt = "2026-11-06T17:16:09.659727Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -183,6 +183,14 @@ Status 不接受变更选项，服务健康与客户端连通性分别报告。�
 本地制品被保留；清理后，旧信任或客户端导出会阻止再次部署。
 
 ## 尚待集成
+
+`PrepareWireGuardPeerEnrollment()` 和 `PrepareWireGuardPeerRevocation()` 现在可在
+内存中准备针对一个指定对等端的确定性配置/材料变更。注册必须传入调用方已保留的
+新设备凭据及显式空闲地址；这些函数不生成密钥。服务器密钥、其他对等端的凭据/
+地址及其客户端配置字节保持不变。拒绝无效身份、地址/密钥复用、超出设备容量的
+注册以及吊销最后一个对等端。原私有材料保留供审计。移除最后一个对等端需要
+显式停用协议。这些准备 API 不连接来宾、不使对等端断开、不持久化修订，也不
+更新项目状态；实际吊销仍需要回执绑定的配置/内核事务及控制器工作流。
 
 现有来宾上的协议增删、模式 1 迁移、显式云/来宾入口覆盖层及定向对等端
 注册/吊销仍属于任务 #128。模式 2 的 Xray 运行时维护与独立设备导出命令

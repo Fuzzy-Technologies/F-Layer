@@ -188,6 +188,9 @@ def _RunSelectedProject(
 
     if action == "deploy":
         if wireguard is not None:
+            from flayer._vpn_peer_controller import ObserveHistory
+
+            ObserveHistory(guest, revision, wireguard)
             before = guest.WireGuardOperation(wireguard, "status")
 
             if before["status"] == "active":

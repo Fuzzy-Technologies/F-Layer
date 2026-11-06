@@ -156,10 +156,14 @@ class SelectedGuest:
 
         owner = json.loads(next(item.content for item in bundle.files if item.name == "deployment.json"))["owner"]
         self.calls.append(("peer-status", bundle))
-        assert action == "status" and not options
+        assert action in {"status", "history-status"} and not options
+        history = Digest(lifecycle.wireguardGuest._Encode({"domain": "f-layer/wireguard/peer-history/v1", "owner": owner}))
+
+        if action == "history-status":
+            return {"status": "peer-history", "owner": owner, "history_sha256": history, "tools_version": "1.0.20260223"}
 
         return {"status": "active", "is_desired": True, "receipt_sha256": "a" * 64,
-                "history_sha256": Digest(lifecycle.wireguardGuest._Encode({"domain": "f-layer/wireguard/peer-history/v1", "owner": owner}))}
+                "history_sha256": history}
 
 
 @pytest.fixture(autouse=True, name="vendorReads")

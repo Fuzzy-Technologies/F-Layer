@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:9998600313a8b80ff701be7611904ab7f18acc3770804ba8a9c978cda12fa6ce"
-reviewedTranslationHash = "sha256:1ff38816b7cfcf845bc7fa412d432348e41aaafdcbe370f45532e1dfcd5d5613"
+sourceHash = "sha256:13f3b8e5dc3fd991ef4eb3c58f611c932556d1c5ef9635b885968b7517d7238b"
+reviewedTranslationHash = "sha256:d31bb20e12e06ba3098419ee76d4d8391d17935c1e1cefe81bdbd5fc97d0db0f"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T19:47:30.103267Z"
+reviewedAt = "2026-11-06T20:05:04.474089Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -243,6 +243,11 @@ SSH 通道提供来宾事务。接收保留的私有服务器包、一个指定�
 变更确认区分 `committed` 与恢复的 `not-applied`，不能替代随后的健康服务观测。
 可移植测试使用内存中的 runner/staging 边界，不执行 SSH 或来宾程序。
 
+有界只读 `history-status` 即使在已安装根目录/服务不存在时仍观测绑定 owner 的
+审计。校验受管祖先及审计所有权，不创建目录或协调文件。普通 deploy 必须先于
+任何安装器验证该历史：删除服务不能隐藏吊销历史，也不能让旧控制器文件重新
+激活密钥。
+
 该低层 API 不持久化控制器意图，也不签发新设备密钥。下述项目流程提供持久日志，
 并保留完整旧/新包及原始证明。
 
@@ -307,6 +312,9 @@ SSH 结果未知时保留日志。需要恢复期间，对等端 status 报告�
 非零退出码。显式恢复回传该基线、目标、scope 及同意，使用保留的原始证明/文件，
 不生成密钥；完成已发布根目录，或仅回滚未提交前缀。完整回滚候选在下次相同的新
 计划中复用。激活前缺失的暂存可归档为未应用；不完整私有字节需检查，绝不替换。
+恢复还使用当前云定位符、端点和 IAM 主机固定值，以及保留的原始头/回执/历史和
+有效期，重新计算原计划绑定。即使替换图仍属于同一 owner 且内部有效，或主机
+固定值已改变，也不能按旧计划接收恢复写入。过期本身不阻止显式恢复。
 普通 prepare/deploy/status/recover 拒绝未完成对等端日志。全项目 destroy 仍是
 单独同意的整云栈清理，不依赖客户端或管理私钥。
 

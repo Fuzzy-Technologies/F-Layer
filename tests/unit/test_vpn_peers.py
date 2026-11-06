@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import os
 import shutil
+import struct
 from dataclasses import replace
 from functools import partial
 from pathlib import Path
@@ -22,7 +24,13 @@ from flayer import _vpn_selected_lifecycle as lifecycle
 from flayer import vpn_peers as peers
 from flayer import vpn_project as projects
 from flayer.__main__ import Main
-from flayer.profiles.artifacts import ArtifactBundle
+from flayer.core.state import LoadState, SaveState
+from flayer.profiles.artifacts import (
+    Artifact,
+    ArtifactBundle,
+    RemoveArtifactBundle,
+    WriteArtifactBundle,
+)
 from flayer.profiles.vpn import VpnDevice, VpnError
 from flayer.vpn_peers import RunVpnPeer
 from flayer.vpn_project import RunVpnProject, SelectedVpnProject
@@ -90,6 +98,13 @@ class PeerGuest(SelectedGuest):
 
         cls = type(self)
         cls.peerCalls.append((action, change, deviceId))
+
+        if action == "history-status":
+            assert not options
+            owner = json.loads(next(item.content for item in bundle.files if item.name == "deployment.json"))["owner"]
+
+            return {"status": "peer-history", "owner": owner, "history_sha256": cls.history or revisions.InitialHistory(cls.project), "tools_version": "1.0.20260223"}
+
         assert cls.server is not None
 
         if action == "status":
@@ -233,7 +248,7 @@ def test_PublicEnrollmentRetryRevocationAndLifecycleUseEffectiveRevisionWithoutC
     plan = Run(updated, cloud, "plan")
 
     assert Snapshot(project.root) == before and plan.baselineSha256 and plan.planExpiresAt > 0
-    assert not any(action != "status" for action, _, _ in PeerGuest.peerCalls)
+    assert not any(action not in {"status", "history-status"} for action, _, _ in PeerGuest.peerCalls)
     result = Run(updated, cloud, "enroll", allowMutation=True, scopeConfirm="example-folder", expectedBaseline=plan.baselineSha256, planExpiresAt=plan.planExpiresAt)
 
     assert result.status == "complete" and revisions.Pending(updated) is None
@@ -244,7 +259,7 @@ def test_PublicEnrollmentRetryRevocationAndLifecycleUseEffectiveRevisionWithoutC
     retry = Run(updated, cloud, "enroll", allowMutation=True, scopeConfirm="example-folder", expectedBaseline=plan.baselineSha256, planExpiresAt=plan.planExpiresAt)
 
     assert retry.status == "complete" and Snapshot(project.root) == before
-    assert all(action == "status" for action, _, _ in PeerGuest.peerCalls[calls:])
+    assert all(action in {"status", "history-status"} for action, _, _ in PeerGuest.peerCalls[calls:])
     assert PrepareSelectedProject(updated).status == "complete"
     assert RunVpnProject(updated, "status", provider=cloud, guestFactory=PeerGuest).status == "complete"
     assert RunVpnProject(updated, "deploy", allowMutation=True, scopeConfirm="example-folder", provider=cloud, guestFactory=PeerGuest).status == "complete"
@@ -458,7 +473,8 @@ def test_PublicCliPrintsTheExactPlanAndDispatchesEnrollmentAndRecovery(
 
 
 @POSIX
-def test_RestoringOldControllerFilesCannotAdoptARepeatedGuestConfiguration(deployment: tuple[SelectedVpnProject, SelectedCloud]) -> None:
+@pytest.mark.parametrize("absent", [False, True])
+def test_RestoringOldControllerFilesCannotAdoptARepeatedGuestConfiguration(deployment: tuple[SelectedVpnProject, SelectedCloud], absent: bool) -> None:
     """An ABA cycle retains changed guest history even after all local overlay files are lost."""
 
     project, cloud = deployment
@@ -474,8 +490,17 @@ def test_RestoringOldControllerFilesCannotAdoptARepeatedGuestConfiguration(deplo
             assert path.parent == project.Artifacts
             shutil.rmtree(path)
 
+    if absent:
+        PeerGuest.server = None
+
+    PeerGuest.calls.clear()
+    created = list(cloud.created)
+
     with pytest.raises(VpnError, match="history"):
-        RunVpnProject(revoked, "status", provider=cloud, guestFactory=PeerGuest)
+        RunVpnProject(revoked, "deploy", allowMutation=True, scopeConfirm="example-folder", provider=cloud, guestFactory=PeerGuest)
+
+    assert not any(action == "install" for action, _ in PeerGuest.calls)
+    assert list(cloud.created) == created and not cloud.deleted
 
 
 @POSIX
@@ -512,3 +537,57 @@ def test_UnsupportedIntentChangesFailBeforeAProviderOrSshConnection(
 
     with pytest.raises(VpnError):
         Run(updated, cloud, "plan")
+
+
+@POSIX
+@pytest.mark.parametrize("changed", ["locator", "host-pin", "endpoint"])
+def test_PendingRecoveryRefusesAnInternallyValidReplacementOfTheOriginalCloudOrTrustProof(
+    deployment: tuple[SelectedVpnProject, SelectedCloud], monkeypatch: pytest.MonkeyPatch, changed: str,
+) -> None:
+    """Exact scope and restored guest receipts do not authorize replaying recovery against a different target graph."""
+
+    project, cloud = deployment
+    updated = Desired(project)
+    PeerGuest.fail = "response"
+
+    with pytest.raises(VpnError):
+        Apply(updated, cloud)
+
+    status = Run(updated, cloud, "status")
+
+    if changed == "locator":
+        state = LoadState(project.root / "state.json", project.vpn.identity)
+        assert state is not None
+        resource = cloud.resources["instance"]
+        cloud.resources["instance"] = replace(resource, reference=replace(resource.reference, resourceId="replacement-instance"))
+        SaveState(project.root / "state.json", replace(state, resources=tuple(
+            replace(item, resourceId="replacement-instance") if item.logicalId == "instance" else item for item in state.resources)), project.vpn.identity)
+
+    else:
+        key = PUBLIC_KEY
+        endpoint = "203.0.113.20"
+
+        if changed == "host-pin":
+            key = "ssh-ed25519 " + base64.b64encode(struct.pack(">I", 11) + b"ssh-ed25519" + struct.pack(">I", 32) + b"r" * 32).decode()
+            monkeypatch.setattr(cloud, "ReadHostKey", lambda instance, fingerprint: key)
+
+        else:
+            endpoint = cloud.publicAddress = "203.0.113.21"
+
+            for logicalId in ("instance", "address"):
+                cloud.resources[logicalId] = replace(cloud.resources[logicalId], publicAddresses=(endpoint,))
+
+        name = project.vpn.identity.stack + "-trust"
+        assert RemoveArtifactBundle(project.Artifacts, project.vpn.identity, kind="server", name=name)
+        WriteArtifactBundle(project.Artifacts, ArtifactBundle(project.vpn.identity, "server", name, (
+            Artifact("known-hosts.txt", f"{endpoint} {key}\n".encode(), False),)))
+        # Connection still validates the actual owned graph/IAM pin; this test model accepts its changed endpoint/key.
+        monkeypatch.setattr(PeerGuest, "__init__", lambda self, *arguments: None)
+
+    before = len(PeerGuest.peerCalls)
+
+    with pytest.raises(VpnError, match="original plan"):
+        Run(updated, cloud, "recover", allowMutation=True, scopeConfirm="example-folder", expectedBaseline=status.baselineSha256)
+
+    assert not any(action == "recover" for action, _, _ in PeerGuest.peerCalls[before:])
+    assert revisions.Pending(updated) is not None

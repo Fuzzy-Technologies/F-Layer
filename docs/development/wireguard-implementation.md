@@ -305,6 +305,12 @@ Mutation acknowledgments distinguish `committed` and recovery `not-applied`;
 they do not replace a following healthy-service observation. Portable tests use
 in-memory runner/staging boundaries and execute no SSH or guest program.
 
+A bounded read-only `history-status` observes the owner-bound audit even when
+the installed root/unit are absent. It validates managed ancestry and audit
+ownership without creating a directory or coordination file. Ordinary deployment
+requires this history proof before any installer: removing the service cannot
+hide retained revocation history or permit old controller files to reactivate keys.
+
 This low-level API does not persist controller intent or issue fresh device keys.
 The project workflow below supplies its durable journal and retains complete
 old/new bundles and original proofs.
@@ -392,6 +398,10 @@ proofs and files without key generation, finalizing a published root or rolling
 back only an uncommitted prefix. A complete rolled-back candidate is reused on
 the next identical fresh plan. Missing pre-activation staging can be archived as
 unapplied; incomplete private bytes require inspection and are never replaced.
+Recovery also recomputes the original plan binding using current cloud locators,
+endpoint and IAM host pin plus the stored original head/receipt/history and expiry.
+A valid same-owner replacement graph or changed host pin cannot receive recovery
+writes under the old plan. Expiry itself does not prevent explicit recovery.
 Ordinary prepare/deploy/status/recover refuse a pending peer journal. Full-project
 destroy remains a separately consented whole-cloud cleanup and never needs client
 or administration private keys.

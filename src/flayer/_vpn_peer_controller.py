@@ -131,6 +131,15 @@ def Observe(guest: SshGuestProvisioner, state: revisions.RevisionState, server: 
     return facts
 
 
+def ObserveHistory(guest: SshGuestProvisioner, state: revisions.RevisionState, server: ArtifactBundle) -> None:
+    """Refuse retained or changed revocation history before any installer, including an absent owned root."""
+
+    facts = guest.WireGuardPeerOperation(server, "history-status", "enroll", "flayer-observation")
+
+    if facts["history_sha256"] != state.history:
+        raise VpnError("WireGuard guest peer history differs from the controller; no installer was started")
+
+
 def _Baseline(project: SelectedVpnProject, state: revisions.RevisionState, cloud: str, facts: dict[str, object], change: str, deviceId: str, expires: int) -> str:
     """Bind a short-lived reviewed plan to exact desired intent, cloud/trust, local history and guest proofs."""
 
@@ -209,7 +218,12 @@ def _Recover(
             or action == "recover" and expectedBaseline != revisions.Digest(_Json(pending))):
         raise VpnError("Peer recovery requires the exact retained target/intent and baseline from peer status")
 
-    guest, _, _ = Connection(project, state, provider, guestFactory)
+    guest, _, cloud = Connection(project, state, provider, guestFactory)
+    original = replace(state, headDigest=pending["previous_head_sha256"])
+    originalFacts = {"receipt_sha256": pending["previous_receipt_sha256"], "history_sha256": pending["previous_history_sha256"]}
+
+    if _Baseline(project, original, cloud, originalFacts, change, deviceId, pending["plan_expires_at"]) != pending["baseline_sha256"]:
+        raise VpnError("Peer recovery cloud resources, endpoint or host pin differ from its original plan; no guest mutation was requested")
 
     if not pending["request_sha256"]:
         if action == "status":

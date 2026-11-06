@@ -76,28 +76,29 @@ def ProjectLock(project: SelectedVpnProject, *, readOnly: bool) -> Iterator[None
 
     try:
         try:
-            descriptor = os.open(path, (os.O_RDONLY if readOnly else os.O_RDWR | os.O_CREAT) | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
+            try:
+                descriptor = os.open(path, (os.O_RDONLY if readOnly else os.O_RDWR | os.O_CREAT) | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
 
-        except FileNotFoundError:
-            if not readOnly or path.exists() or path.is_symlink():
-                raise
+            except FileNotFoundError:
+                if not readOnly or path.exists() or path.is_symlink():
+                    raise
 
-        if descriptor is not None:
-            info = os.fstat(descriptor)
+            if descriptor is not None:
+                info = os.fstat(descriptor)
 
-            if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_nlink != 1
-                    or stat.S_IMODE(info.st_mode) != 0o600 or info.st_size != 0):
-                raise VpnError("Project coordination file has unsafe ownership or content")
+                if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_nlink != 1
+                        or stat.S_IMODE(info.st_mode) != 0o600 or info.st_size != 0):
+                    raise VpnError("Project coordination file has unsafe ownership or content")
 
-            fcntl.flock(descriptor, (fcntl.LOCK_SH if readOnly else fcntl.LOCK_EX) | fcntl.LOCK_NB)
+                fcntl.flock(descriptor, (fcntl.LOCK_SH if readOnly else fcntl.LOCK_EX) | fcntl.LOCK_NB)
+
+        except OSError:
+            raise VpnError("Selected project is busy or its coordination file is unavailable") from None
 
         yield
 
         if descriptor is None and (path.exists() or path.is_symlink()):
             raise VpnError("Project mutation started during observation; repeat status or plan")
-
-    except OSError:
-        raise VpnError("Selected project is busy or its coordination file is unavailable") from None
 
     finally:
         if descriptor is not None:

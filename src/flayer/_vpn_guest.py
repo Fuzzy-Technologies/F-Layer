@@ -205,13 +205,13 @@ def WireGuardPeer(content: bytes) -> bytes:
 
     if (not isinstance(options, dict) or set(options) != fields or type(options["allow_mutation"]) is not bool
             or any(not isinstance(value, str) for key, value in options.items() if key != "allow_mutation")
-            or options["action"] not in {"status", "apply", "recover"} or options["change"] not in {"enroll", "revoke"}
+            or options["action"] not in {"status", "history-status", "apply", "recover"} or options["change"] not in {"enroll", "revoke"}
             or re.fullmatch(r"[a-z][a-z0-9-]{0,62}", options["device_id"]) is None):
         raise ValueError("Invalid WireGuard peer operation")
 
     receipt, previous, history = (options[key] for key in ("expected_receipt_sha256", "expected_previous_receipt_sha256", "expected_history_sha256"))
 
-    if options["action"] == "status":
+    if options["action"] in {"status", "history-status"}:
         if options["allow_mutation"] or receipt or previous or history:
             raise ValueError("WireGuard peer status accepts no mutation preconditions")
 
@@ -229,7 +229,7 @@ def WireGuardPeer(content: bytes) -> bytes:
         with _Staged(bundles[0][1]) as stage:
             command = ["/usr/bin/python3", str(stage / "install.py"), "--" + options["action"], "--change", options["change"], "--device-id", options["device_id"]]
 
-            if options["action"] != "status":
+            if options["action"] not in {"status", "history-status"}:
                 command += ["--allow-mutation", "--expected-receipt-sha256", receipt, "--expected-history-sha256", history]
 
                 if options["action"] == "recover":

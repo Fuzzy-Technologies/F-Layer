@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import json
 import os
+import shutil
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -292,6 +293,75 @@ def test_PartialBackupDeletionCanResumeWithoutRollingBackTheCommittedPeer(
 
     assert peers.Recover(guest, desired, "enroll", model.deviceId, str(status["receipt_sha256"]), previous, model.history) == "committed"
     assert model.events == events and not transaction.exists()
+
+
+def test_HistoryObservationBeforeFirstInstallationCreatesNoBaseOrLock(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Initial audit absence is owner-bound and requires no installed root, managed directory or network command."""
+
+    _, request, _ = Seed(tmp_path, monkeypatch)
+
+    def Forbidden(*arguments: Any, **options: Any) -> Any:
+        """Refuse any service/kernel command during metadata-only history observation."""
+
+        raise AssertionError("History observation crossed the external command boundary")
+
+    monkeypatch.setattr(guest, "_Run", Forbidden)
+    facts = peers.HistoryStatus(guest, request["owner"])
+
+    assert facts == {"status": "peer-history", "owner": request["owner"], "tools_version": guest.TOOLS_VERSION,
+                     "history_sha256": guest._Digest(guest._Encode({"domain": "f-layer/wireguard/peer-history/v1", "owner": request["owner"]}))}
+    assert not guest.BASE.exists() and not guest.LOCK.exists()
+
+
+def test_HistoryEntrypointReadsRetainedAuditAfterTheInstalledRootWasRemoved(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Removed root/unit files cannot hide non-initial peer history from the next installer preflight."""
+
+    model, desired, previous, _ = Environment(tmp_path, monkeypatch, "enroll")
+    peers.Apply(guest, desired, "enroll", model.deviceId, previous, model.history)
+    owner = model.originalRequest["owner"]
+    expected = peers._History(guest, owner)
+    Envelope(tmp_path, monkeypatch, model, desired)
+    assert model.root.parent == guest.BASE
+    shutil.rmtree(model.root)
+    model.unit.unlink()
+    guest.LOCK.unlink(missing_ok=True)
+    events = list(model.events)
+
+    assert peers.Main(["--history-status", "--change", "enroll", "--device-id", model.deviceId]) == 0
+    assert json.loads(capsys.readouterr().out)["history_sha256"] == expected != model.history
+    assert not model.root.exists() and not guest.LOCK.exists() and model.events == events
+
+
+@pytest.mark.parametrize("fault", ["symlink", "writable", "foreign-audit"])
+def test_HistoryObservationRejectsUnsafeAbsenceOrForeignAudit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fault: str) -> None:
+    """An absent installation cannot bypass ancestry, directory ownership or complete audit-owner validation."""
+
+    _, request, _ = Seed(tmp_path, monkeypatch)
+    guest.BASE.parent.mkdir(parents=True, mode=0o755)
+
+    if fault == "symlink":
+        target = tmp_path / "foreign-base"
+        target.mkdir()
+        guest.BASE.symlink_to(target)
+
+    else:
+        guest.BASE.mkdir(mode=0o755)
+
+        if fault == "writable":
+            guest.BASE.chmod(0o777)
+
+        else:
+            guest._Atomic(guest.BASE / ("peer-" + request["owner"] + ".json"), guest._Encode({
+                "schema_version": 1, "owner": "f" * 64, "action": "enroll", "device_id": "phone",
+                "previous_receipt_sha256": "a" * 64, "receipt_sha256": "b" * 64,
+                "deployment_sha256": "c" * 64, "previous_history_sha256": "d" * 64}))
+
+    with pytest.raises(guest.GuestError):
+        peers.HistoryStatus(guest, request["owner"])
+
+    assert not guest.LOCK.exists()
 
 
 def test_MainReadOnlyStatusNeedsNoVolatileLockAndMutationConsentPrecedesLockCreation(

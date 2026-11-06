@@ -694,12 +694,27 @@ def Status(guest: Any, desired: Path, action: str, deviceId: str) -> dict[str, o
             "kernel_policy": "cached-named-cve-baseline"}
 
 
+def HistoryStatus(guest: Any, owner: str) -> dict[str, str]:
+    """Read owner-bound audit history even without an installed root, creating no files or managed state."""
+
+    guest._Paths(owner)
+
+    for path in (guest.BASE, *guest.BASE.parents):
+        if path.exists() or path.is_symlink():
+            guest._Directory(path)
+
+            break
+
+    return {"status": "peer-history", "owner": owner, "history_sha256": _History(guest, owner), "tools_version": guest.TOOLS_VERSION}
+
+
 def Main(argv: list[str] | None = None) -> int:
     """Run only an explicit owned peer action with root, fixed staging, consent and exact receipt guards."""
 
     parser = argparse.ArgumentParser(description="Manage one owned WireGuard peer transaction")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--status", action="store_true")
+    group.add_argument("--history-status", action="store_true", dest="historyStatus")
     group.add_argument("--apply", action="store_true")
     group.add_argument("--recover", action="store_true")
     parser.add_argument("--change", choices=("enroll", "revoke"), required=True)
@@ -720,7 +735,9 @@ def Main(argv: list[str] | None = None) -> int:
 
         _Change(guest, options.change, options.deviceId)
 
-        if options.status:
+        readOnly = options.status or options.historyStatus
+
+        if readOnly:
             if options.allowMutation or options.expectedReceipt or options.expectedPrevious or options.expectedHistory:
                 raise guest.GuestError("WireGuard peer status accepts no mutation consent or receipt options")
 
@@ -749,38 +766,46 @@ def Main(argv: list[str] | None = None) -> int:
             raise ValueError
 
         owner = supplied.get("owner")
+
+        if not isinstance(owner, str):
+            raise ValueError
+
         root, unit, _ = guest._Paths(owner)
         descriptor: int | None
 
         try:
-            descriptor = guest._OpenLock(readOnly=options.status)
+            descriptor = guest._OpenLock(readOnly=readOnly)
 
         except FileNotFoundError:
-            if not options.status or guest.LOCK.exists() or guest.LOCK.is_symlink():
+            if not readOnly or guest.LOCK.exists() or guest.LOCK.is_symlink():
                 raise
 
             descriptor = None
 
         try:
             if descriptor is not None:
-                fcntl.flock(descriptor, (fcntl.LOCK_SH if options.status else fcntl.LOCK_EX) | fcntl.LOCK_NB)
+                fcntl.flock(descriptor, (fcntl.LOCK_SH if readOnly else fcntl.LOCK_EX) | fcntl.LOCK_NB)
 
-            guest._Receipt(root, unit, owner)
+            if options.historyStatus:
+                result: dict[str, object] = dict(HistoryStatus(guest, owner))
 
-            with tempfile.TemporaryDirectory(prefix=".desired-", dir=stage) as temporary:
-                desired = Path(temporary)
-                os.chmod(desired, 0o700)
+            else:
+                guest._Receipt(root, unit, owner)
 
-                for name in ("server.conf", "deployment.json", "install.py"):
-                    guest._Atomic(desired / name, guest._Read((root if name == "install.py" else stage) / name))
+                with tempfile.TemporaryDirectory(prefix=".desired-", dir=stage) as temporary:
+                    desired = Path(temporary)
+                    os.chmod(desired, 0o700)
 
-                if options.status:
-                    result: dict[str, object] = Status(guest, desired, options.change, options.deviceId)
+                    for name in ("server.conf", "deployment.json", "install.py"):
+                        guest._Atomic(desired / name, guest._Read((root if name == "install.py" else stage) / name))
 
-                else:
-                    outcome = (Recover(guest, desired, options.change, options.deviceId, options.expectedReceipt, options.expectedPrevious, options.expectedHistory)
-                               if options.recover else Apply(guest, desired, options.change, options.deviceId, options.expectedReceipt, options.expectedHistory))
-                    result = {"status": "complete", "outcome": outcome}
+                    if options.status:
+                        result = Status(guest, desired, options.change, options.deviceId)
+
+                    else:
+                        outcome = (Recover(guest, desired, options.change, options.deviceId, options.expectedReceipt, options.expectedPrevious, options.expectedHistory)
+                                   if options.recover else Apply(guest, desired, options.change, options.deviceId, options.expectedReceipt, options.expectedHistory))
+                        result = {"status": "complete", "outcome": outcome}
 
             if descriptor is None and (guest.LOCK.exists() or guest.LOCK.is_symlink()):
                 raise guest.GuestError("WireGuard operation started during observation; retry status")

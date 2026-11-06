@@ -479,3 +479,17 @@ def test_ReusedTemporaryRecordIsFileSyncedBeforeRenameAfterAnActualSyncFailure(t
 
     assert events == ["file-sync", "replace", "directory-sync"]
     assert ReadPrivate(project.root / "wireguard-pending.json") == _Json(data)
+
+
+@POSIX
+def test_ProjectLockPreservesBodyIoFailureInsteadOfReportingLockContention(tmp_path: Path) -> None:
+    """An operation's failed durable write must remain distinguishable from failure acquiring coordination."""
+
+    project = Project(tmp_path)
+
+    with pytest.raises(OSError, match="Synthetic operation write failure"):
+        with revisions.ProjectLock(project, readOnly=False):
+            raise OSError("Synthetic operation write failure")
+
+    with revisions.ProjectLock(project, readOnly=False):
+        assert ReadPrivate(project.root / ".vpn-project.lock") == b""

@@ -200,13 +200,19 @@ def Request(action: str) -> bytes:
     """Obtain the actual controller envelope through a fake SSH boundary."""
 
     bundle = Prepared().serverBundle
-    guest, runner = Provisioner(Facts(bundle) if action == "status" else {"status": "complete", "outcome": "committed"})
-    guest.WireGuardPeerOperation(bundle, action, "enroll", "new-phone", **({} if action == "status" else Options(action)))
+    facts = Facts(bundle) if action == "status" else {"status": "complete", "outcome": "committed"}
+
+    if action == "history-status":
+        owner = json.loads(next(item.content for item in bundle.files if item.name == "deployment.json"))["owner"]
+        facts = {"status": "peer-history", "owner": owner, "history_sha256": "a" * 64, "tools_version": "1.0.20260223"}
+
+    guest, runner = Provisioner(facts)
+    guest.WireGuardPeerOperation(bundle, action, "enroll", "new-phone", **({} if action in {"status", "history-status"} else Options(action)))
 
     return runner.calls[0][1]
 
 
-@pytest.mark.parametrize("action", ["status", "apply", "recover"])
+@pytest.mark.parametrize("action", ["status", "history-status", "apply", "recover"])
 def test_RootReceiverExecutesOnlyExactPeerFlagsAndCleansItsPrivateStage(action: str, monkeypatch: pytest.MonkeyPatch) -> None:
     """Use a fully in-memory stage boundary and never launch the driver, SSH or any network command."""
 
@@ -242,7 +248,7 @@ def test_RootReceiverExecutesOnlyExactPeerFlagsAndCleansItsPrivateStage(action: 
     command = events[1]
 
     assert isinstance(command, list) and command[2:7] == ["--" + action, "--change", "enroll", "--device-id", "new-phone"]
-    assert ("--allow-mutation" in command) == (action != "status")
+    assert ("--allow-mutation" in command) == (action not in {"status", "history-status"})
     assert ("--expected-previous-receipt-sha256" in command) == (action == "recover")
     assert events[0] == "stage" and events[-1] == "cleanup"
 
@@ -312,4 +318,20 @@ def test_RootReceiverCleansOnPrivateFailureAndReturnsOnlyAllowlistedLabels(failu
         receiver.WireGuardPeer(Request("apply"))
 
     assert error.value.transport == "wireguard" and error.value.phase == "peer"
+    assert "suppressed-private-fixture" not in str(error.value)
+
+
+@pytest.mark.parametrize("field,value", [("owner", "f" * 64), ("history_sha256", "bad"), ("private_extra", "suppressed-private-fixture")])
+def test_HistoryOnlySshResultRejectsForeignOwnerOrUnboundedFacts(field: str, value: str) -> None:
+    """A metadata-only initial-install guard still binds exact owner and accepts no private or extra output."""
+
+    bundle = Prepared().serverBundle
+    owner = json.loads(next(item.content for item in bundle.files if item.name == "deployment.json"))["owner"]
+    facts = {"status": "peer-history", "owner": owner, "history_sha256": "a" * 64, "tools_version": "1.0.20260223"}
+    facts[field] = value
+    guest, _ = Provisioner(facts)
+
+    with pytest.raises(VpnError) as error:
+        guest.WireGuardPeerOperation(bundle, "history-status", "enroll", "new-phone")
+
     assert "suppressed-private-fixture" not in str(error.value)

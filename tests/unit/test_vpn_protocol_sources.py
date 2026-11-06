@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +16,7 @@ from flayer import _vpn_protocol_sources as sources
 from flayer import _vpn_revisions as revisions
 from flayer import vpn_project_v2 as selected
 from flayer._vpn_creation import BundleDigest, ProtocolPin, _Json
-from flayer.core.contracts import _WireDict
+from flayer.core.contracts import StackIdentity, _WireDict
 from flayer.profiles.artifacts import Artifact, ArtifactBundle, WriteArtifactBundle
 from flayer.profiles.vpn import VpnError
 from flayer.vpn_project import SelectedVpnProject
@@ -115,6 +115,76 @@ def test_ForeignSourceCannotSelectAnotherProjectsFiles(tmp_path: Path, monkeypat
 
     with pytest.raises(VpnError):
         sources.ReadSource(project, foreign)
+
+
+@pytest.mark.parametrize("protocol", [[], {}, True, None])
+def test_MalformedProtocolScalarCannotEscapeTheSourceCodecAsATypeError(tmp_path: Path, protocol: Any) -> None:
+    """Untrusted complete JSON-shaped pins fail with the source contract error before any file access."""
+
+    project, pin, _, _ = Projection(tmp_path / "never-created")
+    record = sources.ProtocolSource(project.vpn.identity, pin).Record()
+    record["pin"] = {**_WireDict(pin), "protocol": protocol}
+
+    with pytest.raises(VpnError):
+        sources.DecodeSource(record, project.vpn.identity)
+
+    assert not project.root.exists()
+
+
+def test_ExtendedModelsCannotCopyPrivateFieldsIntoNonsecretSourceMetadata(tmp_path: Path) -> None:
+    """Recursive dataclass encoders must never turn a caller's credential-bearing subtype into public metadata."""
+
+    @dataclass(frozen=True, slots=True)
+    class ExtendedPin(ProtocolPin):
+        """Model an unrelated caller extension that the closed source schema does not authorize."""
+
+        privateKey: str = "suppressed-private-fixture"
+
+    @dataclass(frozen=True, slots=True)
+    class ExtendedIdentity(StackIdentity):
+        """Keep extra credentials outside the canonical ownership schema."""
+
+        privateToken: str = "suppressed-private-fixture"
+
+    @dataclass(frozen=True, slots=True)
+    class ExtendedSource(sources.ProtocolSource):
+        """Do not let Record silently serialize fields that DecodeSource would refuse."""
+
+        privateKey: str = "suppressed-private-fixture"
+
+    @dataclass(frozen=True, slots=True)
+    class UnvalidatedSource(sources.ProtocolSource):
+        """A caller may override construction; the metadata serialization boundary must still reject extra fields."""
+
+        privateKey: str = "suppressed-private-fixture"
+
+        def __post_init__(self) -> None:
+            """Represent an extension that omitted its base model's validation."""
+
+    project, pin, material, server = Projection(tmp_path / "never-created")
+    extended = ExtendedPin(pin.protocol, pin.intentFingerprint, pin.materialDigest, pin.serverDigest)
+    identity = project.vpn.identity
+    extendedIdentity = ExtendedIdentity(identity.project, identity.stack, identity.provider, identity.scopeId, identity.ownerId)
+
+    for candidate in ((identity, extended), (extendedIdentity, pin)):
+        with pytest.raises(VpnError):
+            sources.ProtocolSource(*candidate)
+
+    with pytest.raises(VpnError):
+        ExtendedSource(identity, pin)
+
+    with pytest.raises(VpnError):
+        UnvalidatedSource(identity, pin).Record()
+
+    with pytest.raises(VpnError):
+        sources.PrepareProtocolRequest(project, extended, material, server, operationId="a" * 32, previousState="b" * 64)
+
+    changed = replace(project, vpn=replace(project.vpn, identity=extendedIdentity))
+
+    with pytest.raises(VpnError):
+        sources.PrepareProtocolRequest(changed, pin, material, server, operationId="a" * 32, previousState="b" * 64)
+
+    assert not project.root.exists()
 
 
 @pytest.mark.parametrize("fault", ["owner", "material-role", "server-role", "material-proof", "server-proof", "material-public",

@@ -460,8 +460,9 @@ does not export native profiles or establish Internet/media acceptance.
 The private `_vpn_protocol_sources.py` now names an exact source independently
 from its active/disabled state. An owner-bound `ProtocolSource` contains only the
 canonical protocol pin and a fixed original, peer-request or protocol-request
-reference. It contains no configuration or key body. Current peer lifecycle reads
-use this resolver; original bundle names, manifests, installer bytes and client
+reference. It contains no configuration or key body. Closed source/identity/pin
+models reject unsupported extensions before nonsecret serialization. Current peer
+lifecycle reads use this resolver; original bundle names, manifests, installer bytes and client
 files remain unchanged. A source reference alone neither commits an epoch nor
 activates a service.
 

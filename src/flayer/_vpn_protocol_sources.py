@@ -15,7 +15,7 @@ from flayer._vpn_creation import (
     _Decode,
     _Json,
 )
-from flayer.core.contracts import ParseIdentity, StackIdentity, _WireDict
+from flayer.core.contracts import StackIdentity, _WireDict
 from flayer.guest import PrivatePath
 from flayer.profiles.artifacts import Artifact, ArtifactBundle, ReadOwnedArtifactFile
 from flayer.profiles.vpn import VpnError
@@ -46,7 +46,7 @@ class ProtocolSource:
     def __post_init__(self) -> None:
         """Keep historical role and request locators explicit, confined and separate from their virtual protocol bundle names."""
 
-        if (not isinstance(self.identity, StackIdentity) or not isinstance(self.pin, ProtocolPin)
+        if (type(self) is not ProtocolSource or type(self.identity) is not StackIdentity or type(self.pin) is not ProtocolPin
                 or not isinstance(self.kind, str) or self.kind not in {"initial", "peer", "protocol"}
                 or not isinstance(self.requestName, str) or not isinstance(self.requestSha256, str)):
             raise VpnError("Protocol source requires exact ownership, projection and supported source kind")
@@ -67,16 +67,21 @@ class ProtocolSource:
     def Record(self) -> dict[str, object]:
         """Serialize only hashes and bounded public ownership references for a future epoch record."""
 
+        if type(self) is not ProtocolSource or type(self.identity) is not StackIdentity or type(self.pin) is not ProtocolPin:
+            raise VpnError("Protocol source metadata does not accept extended data models")
+
         return {"schema_version": 1, **_WireDict(self)}
 
 
 def DecodeSource(value: object, identity: StackIdentity) -> ProtocolSource:
     """Decode complete source metadata without reading private files or adopting an implicit protocol role."""
 
-    if (not isinstance(value, dict) or set(value) != {"schema_version", "identity", "pin", "kind", "request_name", "request_sha256"}
+    if (type(identity) is not StackIdentity or not isinstance(value, dict)
+            or set(value) != {"schema_version", "identity", "pin", "kind", "request_name", "request_sha256"}
             or type(value["schema_version"]) is not int or value["schema_version"] != 1
-            or ParseIdentity(value["identity"]) != identity or not isinstance(value["pin"], dict)
-            or set(value["pin"]) != {"protocol", "intent_fingerprint", "material_digest", "server_digest"}):
+            or value["identity"] != _WireDict(identity) or not isinstance(value["pin"], dict)
+            or set(value["pin"]) != {"protocol", "intent_fingerprint", "material_digest", "server_digest"}
+            or any(not isinstance(item, str) for item in value["pin"].values())):
         raise VpnError("Protocol source metadata is malformed or belongs to another owner")
 
     pin = value["pin"]
@@ -108,7 +113,7 @@ def _Request(project: SelectedVpnProject, source: ProtocolSource) -> ArtifactBun
 def ReadSource(project: SelectedVpnProject, source: ProtocolSource, *, material: bool = False) -> ArtifactBundle:
     """Resolve exact retained projection bytes only; metadata traversal and cloud cleanup need not call this private reader."""
 
-    if not isinstance(source, ProtocolSource) or source.identity != project.vpn.identity or type(material) is not bool:
+    if type(source) is not ProtocolSource or source.identity != project.vpn.identity or type(material) is not bool:
         raise VpnError("Protocol source cannot read another owner or an ambiguous bundle role")
 
     if source.kind == "initial":
@@ -147,7 +152,8 @@ def PrepareProtocolRequest(
 ) -> tuple[ProtocolSource, ArtifactBundle]:
     """Prepare a retained protocol source in memory; publication, journaling and remote mutation remain separate operations."""
 
-    if (not isinstance(pin, ProtocolPin) or not isinstance(operationId, str) or re.fullmatch(r"[0-9a-f]{32}", operationId) is None
+    if (type(project.vpn.identity) is not StackIdentity or type(pin) is not ProtocolPin
+            or not isinstance(operationId, str) or re.fullmatch(r"[0-9a-f]{32}", operationId) is None
             or not isinstance(previousState, str) or _HASH.fullmatch(previousState) is None
             or any(not isinstance(bundle, ArtifactBundle) or bundle.identity != project.vpn.identity or bundle.kind != "server" for bundle in (material, server))
             or (material.name, server.name) != (project.vpn.identity.stack + "-" + pin.protocol + "-credentials", project.vpn.identity.stack + "-" + pin.protocol)

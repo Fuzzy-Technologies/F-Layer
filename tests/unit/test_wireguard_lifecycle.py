@@ -601,3 +601,94 @@ def test_RequestedRouteChangeCannotPassInstalledHealth(
 
     with pytest.raises(guest.GuestError, match="differs"):
         guest._Check(root, unit, {**request, "ipv4_routes": ["1.1.1.1/32"]})
+
+
+def test_ModuleLoadedDuringInterfaceCreationMustMatchBeforeTraffic(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Admission of an available module cannot authorize a different module loaded by ip link add."""
+
+    stage, request, model = Seed(tmp_path, monkeypatch)
+    run = model.Run
+
+    def Run(command: list[str], **kwargs: Any) -> tuple[int, bytes]:
+        """Introduce a changed loaded source exactly after creating the still-down interface."""
+
+        result = run(command, **kwargs)
+
+        if command[:3] == ["ip", "link", "add"]:
+            (guest.MODULE_STATE / "srcversion").write_text("E" * 24, encoding="ascii")
+
+        return result
+
+    monkeypatch.setattr(guest, "_Run", Run)
+
+    with pytest.raises(guest.GuestError, match="rolled back"):
+        guest._Install(stage, request)
+
+    assert model.interface is None and not model.network
+    assert not any(command[:3] == ["ip", "link", "set"] for command in model.commands)
+
+
+def test_StagedDurabilityFailureCannotActivateTheService(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A failed staged-directory fsync must stop before publishing a journal, unit or network object."""
+
+    stage, request, model = Seed(tmp_path, monkeypatch)
+    sync = guest._SyncDirectory
+
+    def Sync(path: Path) -> None:
+        """Fail the actual staging durability boundary, leaving normal temporary cleanup available."""
+
+        if path.name == "new":
+            raise OSError("Synthetic fsync failure")
+
+        sync(path)
+
+    monkeypatch.setattr(guest, "_SyncDirectory", Sync)
+
+    with pytest.raises(OSError):
+        guest._Install(stage, request)
+
+    root, unit, transaction = guest._Paths(request["owner"])
+
+    assert not root.exists() and not unit.exists() and not transaction.exists()
+    assert model.interface is None and not model.network
+    assert not any(command[0] == "systemctl" for command in model.commands)
+
+
+@pytest.mark.parametrize("kind", ["symlink", "hardlink", "permissions"])
+def test_LinkedOrOverexposedPrivateFilesCannotBeAdoptedForCleanup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str,
+) -> None:
+    """Even byte-identical configuration is foreign when its filesystem ownership boundary changes."""
+
+    stage, request, model = Seed(tmp_path, monkeypatch)
+    guest._Install(stage, request)
+    root, _, _ = guest._Paths(request["owner"])
+    expected = guest._Digest((root / "receipt.json").read_bytes())
+    config = root / "server.conf"
+    external = tmp_path / "foreign-copy"
+
+    if kind == "permissions":
+        config.chmod(0o644)
+
+    else:
+        config.rename(external)
+
+        if kind == "symlink":
+            config.symlink_to(external)
+
+        else:
+            os.link(external, config)
+
+    model.commands.clear()
+
+    with pytest.raises((guest.GuestError, OSError)):
+        guest._Remove(request["owner"], expected)
+
+    assert not model.commands and model.interface is not None and model.network
+
+    if kind != "permissions":
+        assert external.read_bytes() == config.read_bytes()

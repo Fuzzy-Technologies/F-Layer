@@ -99,7 +99,7 @@ declared destination routes. Their exact JSON policy is compiled first in an
 ephemeral network namespace and then compared with observed guest rules.
 The program never flushes the host ruleset, edits global input policy, restarts
 shared networking or resets IPv4 forwarding used by other tunnels. Guest IPv6
-must already be disabled. Cloud and guest input ingress are separate integration
+must already be disabled. Existing-guest cloud and input-ingress transitions are separate integration
 work; running a service alone does not prove that its UDP listener is reachable.
 
 A complete private journal and staged files are published together before any
@@ -187,6 +187,16 @@ snapshot. All surviving original resources are checked before each deletion, so
 a drifted firewall stops cleanup before the first VM is deleted. Cleanup never
 adopts an unrecorded or replaced resource. No cloud rule update is implemented by
 this slice and no existing resource is relabeled.
+
+The VM's actual sole IPv4 interface must also reference the exact owned subnet
+and only the original security group, with the reserved public NAT address and
+an internal address in that subnet. IPv6, extra interfaces and unknown attachment
+fields are refused. Its exact owned boot disk must remain writable and excluded
+from automatic deletion; extra disks, filesystems or local disks are refused.
+The final ID-bound instance deletion repeats the complete attachment read and
+compares its pinned snapshot. This prevents a changed VM attachment from bypassing
+ingress checks or deleting an unrelated auto-delete disk. See the provider's
+[instance attachment schema](https://yandex.cloud/en/docs/compute/api-ref/Instance/get).
 
 The SSH receiver accepts at most three selected transports. WG install runs first
 so an interrupted WG transaction cannot trigger another transport's installer;

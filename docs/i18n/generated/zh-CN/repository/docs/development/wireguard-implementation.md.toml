@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:9b1de995ccc3a2d401cf809d396dcec4044b247c68bb86bac6cf220d9d246c14"
-reviewedTranslationHash = "sha256:f39f848f8e74e59759f1a19aa62cff293c251f13a509e3c6e052788ff6ed9920"
+sourceHash = "sha256:d5b4d213be9467600da9250e00e1c65f5507ddc2caff85152abeb86e3796003c"
+reviewedTranslationHash = "sha256:06a317768de7e0726c5d389ab8ae68b8f6a37800d69e49bef9a53146bd6ab158"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T16:42:36.488155Z"
+reviewedAt = "2026-11-06T16:56:43.901995Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -86,7 +86,7 @@ Tools 从校验和固定的上游 `wireguard-tools 1.0.20260223` 归档私下构
 精确 JSON 策略先在临时网络命名空间编译，再与来宾实际规则比较。
 程序不清空主机 ruleset、不修改全局 input 策略、不重启共享网络，
 也不重置其他隧道使用的 IPv4 转发。来宾 IPv6 必须事先禁用。
-云及来宾入站规则属于独立集成工作；服务运行本身不能证明 UDP 监听可达。
+现有来宾的云及入站规则迁移属于独立集成工作；服务运行本身不能证明 UDP 监听可达。
 
 在任何服务/接口激活前，完整私有日志与暂存文件一起发布。
 激活前和删除清理证据前，文件及目录边界均通过 fsync 持久化。
@@ -155,6 +155,13 @@ Security group 还校验网络绑定及完整有效 IPv4 规则多重集，包�
 有界快照保留规则 ID。每次删除前检查所有尚存原始资源，因此 firewall 漂移
 会在首台虚拟机被删除前停止清理。清理不接管未记录或已被替换的资源。
 此实现部分不更新云规则，也不重写任何现有资源标签。
+
+虚拟机实际唯一 IPv4 接口必须引用精确受管子网及唯一原始 security group，
+使用保留公网 NAT 地址，且内网地址属于该子网。拒绝 IPv6、额外接口及未知绑定字段。
+精确受管启动盘必须保持可写且不自动删除；拒绝额外磁盘、文件系统及本地盘。
+最终按 ID 删除实例前再次完整读取绑定，并与固定快照比较，避免被更改的绑定
+绕过入口检查，或删除无关的自动删除磁盘。参见提供商的
+[实例绑定模式](https://yandex.cloud/en/docs/compute/api-ref/Instance/get)。
 
 SSH 接收器最多接受三个所选传输。首先安装 WG，避免中断的 WG 事务触发
 其他传输安装器；仅安装携带变更同意，随后检查为只读。

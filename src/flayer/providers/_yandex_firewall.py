@@ -73,6 +73,79 @@ class SecurityGroupSnapshot:
         object.__setattr__(self, "rules", tuple(sorted(self.rules, key=lambda rule: rule.ruleId)))
 
 
+@dataclass(frozen=True, slots=True)
+class InstanceAttachments:
+    """Exact single-NIC IPv4 and non-auto-deleting boot attachment, excluding raw instance metadata."""
+
+    resource: ProviderResource
+    subnetId: str
+    securityGroupIds: tuple[str, ...]
+    privateAddress: str
+    publicAddress: str
+    bootDiskId: str
+
+    def __post_init__(self) -> None:
+        """Retain only bounded complete attachment identities and canonical IPv4 addresses."""
+
+        if not isinstance(self.resource, ProviderResource) or self.resource.reference.kind != ResourceKind.INSTANCE:
+            raise ValueError("Instance attachment snapshot requires an exact instance")
+
+        ValidateIdentifier(self.subnetId, "instance subnet identifier")
+        ValidateIdentifier(self.bootDiskId, "instance boot-disk identifier")
+
+        if (not isinstance(self.securityGroupIds, tuple) or not 1 <= len(self.securityGroupIds) <= 16
+                or len(set(self.securityGroupIds)) != len(self.securityGroupIds)):
+            raise ValueError("Instance security-group attachments are missing or ambiguous")
+
+        for group in self.securityGroupIds:
+            ValidateIdentifier(group, "instance security-group identifier")
+
+        for address in (self.privateAddress, self.publicAddress):
+            if not isinstance(address, str) or str(ipaddress.IPv4Address(address)) != address:
+                raise ValueError("Instance attachment requires canonical IPv4 addresses")
+
+        object.__setattr__(self, "securityGroupIds", tuple(sorted(self.securityGroupIds)))
+
+
+def ParseInstanceAttachments(payload: object, resource: ProviderResource) -> InstanceAttachments:
+    """Read the documented single-NIC instance shape and reject collateral storage or address attachments."""
+
+    if (not isinstance(payload, dict) or payload.get("id") != resource.reference.resourceId
+            or payload.get("folder_id") != resource.reference.scopeId
+            or not isinstance(payload.get("network_interfaces"), list) or len(payload["network_interfaces"]) != 1
+            or any(payload.get(key, []) != [] for key in ("secondary_disks", "filesystems", "local_disks"))):
+        raise ValueError("Instance has unknown, missing or additional attachments")
+
+    boot = payload.get("boot_disk")
+    nic = payload["network_interfaces"][0]
+
+    if (not isinstance(boot, dict) or set(boot) - {"mode", "device_name", "auto_delete", "disk_id"}
+            or boot.get("mode") != "READ_WRITE" or boot.get("auto_delete", False) is not False
+            or not isinstance(nic, dict) or set(nic) - {"index", "mac_address", "subnet_id", "security_group_ids", "primary_v4_address", "primary_v6_address"}
+            or type(nic.get("index")) not in {str, int} or nic["index"] not in ("0", 0)
+            or nic.get("primary_v6_address") not in (None, {}) or not isinstance(nic.get("security_group_ids"), list)):
+        raise ValueError("Instance boot-disk or interface policy is unsupported")
+
+    primary = nic.get("primary_v4_address")
+
+    if not isinstance(primary, dict) or set(primary) - {"address", "one_to_one_nat", "dns_records"}:
+        raise ValueError("Instance IPv4 address policy is unsupported")
+
+    nat = primary.get("one_to_one_nat")
+
+    if not isinstance(nat, dict) or set(nat) - {"address", "ip_version", "dns_records"} or nat.get("ip_version") != "IPV4":
+        raise ValueError("Instance requires the exact original IPv4 NAT attachment")
+
+    fields = (nic.get("subnet_id"), primary.get("address"), nat.get("address"), boot.get("disk_id"))
+
+    if any(not isinstance(value, str) for value in fields):
+        raise ValueError("Instance attachment identities and addresses are missing")
+
+    subnet, private, public, disk = cast(tuple[str, str, str, str], fields)
+
+    return InstanceAttachments(resource, subnet, tuple(nic["security_group_ids"]), private, public, disk)
+
+
 def _Port(value: object) -> int:
     """Interpret documented protobuf int64 JSON values without accepting booleans or alternate numeric syntax."""
 

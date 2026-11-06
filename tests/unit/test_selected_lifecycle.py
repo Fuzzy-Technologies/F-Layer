@@ -26,6 +26,7 @@ from flayer.profiles.artifacts import ArtifactBundle, ArtifactError
 from flayer.profiles.vpn import VpnEndpoint, VpnError
 from flayer.providers._yandex_firewall import (
     ExpectedRules,
+    InstanceAttachments,
     SecurityGroupRule,
     SecurityGroupSnapshot,
 )
@@ -54,6 +55,11 @@ class SelectedCloud(FakeCloud):
         self.networkId = "id-network"
         self.fingerprints: list[str] = []
         self.policyReads = 0
+        self.subnetId = "id-subnet"
+        self.groups = ("id-firewall",)
+        self.bootDiskId = "id-boot-disk"
+        self.publicAddress = "203.0.113.20"
+        self.privateAddress = "10.42.0.2"
 
     def CreateResource(self, spec: ResourceSpec, *args: Any) -> ProviderResource:
         """Remember the submitted original firewall parameters without invoking the real adapter."""
@@ -73,14 +79,21 @@ class SelectedCloud(FakeCloud):
 
     def DeleteCreationResource(
         self, resource: ProviderResource, spec: ResourceSpec, identity: StackIdentity, *,
-        policy: SecurityGroupSnapshot | None = None, operationId: str | None = None,
+        policy: SecurityGroupSnapshot | None = None, attachments: InstanceAttachments | None = None,
+        operationId: str | None = None,
     ) -> None:
         """Model the final checked deletion boundary without executing any real provider command."""
 
         assert resource.HasLabels(spec.OwnershipLabels(identity))
         assert operationId is None or dict(resource.labels)["flayer-operation"] == operationId
         assert spec.kind != ResourceKind.SECURITY_GROUP or policy == self.ReadSecurityGroupRules(resource)
+        assert spec.kind != ResourceKind.INSTANCE or attachments == self.ReadInstanceAttachments(resource)
         super().DeleteResource(resource.reference, identity, spec.logicalId, operationId)
+
+    def ReadInstanceAttachments(self, resource: ProviderResource) -> InstanceAttachments:
+        """Model the separate actual attachment read without falling through to any real CLI boundary."""
+
+        return InstanceAttachments(resource, self.subnetId, self.groups, self.privateAddress, self.publicAddress, self.bootDiskId)
 
     def ReadHostKey(self, instance: ProviderResource, fingerprint: str) -> str | None:
         """Require the original bootstrap marker to remain independently observable."""
@@ -240,7 +253,8 @@ def test_UnreleasedKernelFixBlocksBeforeAnyPaidResourceOrAuthentication(
     assert not (project.root / "state.json").exists()
 
 
-@pytest.mark.parametrize("fault", ["labels", "name", "zone", "rules", "network", "duplicate-rule"])
+@pytest.mark.parametrize("fault", ["labels", "name", "zone", "rules", "network", "duplicate-rule",
+                                  "extra-group", "replaced-group", "subnet", "boot-disk", "private-address", "nat-address"])
 @pytest.mark.parametrize("action", ["deploy", "status", "destroy"])
 def test_AnyFrozenOwnershipOrPolicyDriftStopsBeforeCloudOrGuestMutation(
     tmp_path: Path, fault: str, action: str,
@@ -263,6 +277,18 @@ def test_AnyFrozenOwnershipOrPolicyDriftStopsBeforeCloudOrGuestMutation(
 
     elif fault == "network":
         cloud.networkId = "foreign-network"
+
+    elif fault in {"extra-group", "replaced-group", "subnet", "boot-disk", "private-address", "nat-address"}:
+        if fault == "extra-group":
+            cloud.groups += ("foreign-firewall",)
+
+        elif fault == "replaced-group":
+            cloud.groups = ("foreign-firewall",)
+
+        else:
+            field, value = {"subnet": ("subnetId", "foreign-subnet"), "boot-disk": ("bootDiskId", "foreign-disk"),
+                            "private-address": ("privateAddress", "10.45.0.2"), "nat-address": ("publicAddress", "203.0.113.21")}[fault]
+            setattr(cloud, field, value)
 
     else:
         assert cloud.firewallSpec is not None

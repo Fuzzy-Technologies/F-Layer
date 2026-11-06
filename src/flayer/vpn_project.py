@@ -70,7 +70,12 @@ from flayer.profiles.vpn import (
     VpnProfile,
 )
 from flayer.profiles.wireguard import WireGuardSettings
-from flayer.providers._yandex_firewall import ParseSecurityGroup, SecurityGroupSnapshot
+from flayer.providers._yandex_firewall import (
+    InstanceAttachments,
+    ParseInstanceAttachments,
+    ParseSecurityGroup,
+    SecurityGroupSnapshot,
+)
 from flayer.providers.contracts import (
     ProviderError,
     ProviderErrorCode,
@@ -769,9 +774,10 @@ class VpnYandexProvider(YandexLifecycleProvider):
 
     def DeleteCreationResource(
         self, resource: ProviderResource, spec: ResourceSpec, identity: StackIdentity, *,
-        policy: SecurityGroupSnapshot | None = None, operationId: str | None = None,
+        policy: SecurityGroupSnapshot | None = None, attachments: InstanceAttachments | None = None,
+        operationId: str | None = None,
     ) -> None:
-        """Recheck exact creation labels and any pinned full firewall policy immediately before an ID-bound deletion."""
+        """Recheck exact creation labels, effective firewall policy and VM attachments before an ID-bound deletion."""
 
         self._ValidateIdentity(identity)
         self.ValidateSpec(spec)
@@ -807,6 +813,16 @@ class VpnYandexProvider(YandexLifecycleProvider):
         elif policy is not None:
             raise VpnError("Firewall policy cannot authorize a different resource kind")
 
+        if spec.kind == ResourceKind.INSTANCE:
+            if attachments is None or attachments.resource.reference != reference:
+                raise VpnError("Creation instance deletion requires its exact attachment proof")
+
+            if self.ReadInstanceAttachments(current) != attachments:
+                raise MutationError(ProviderErrorCode.CONFLICT, "creation-delete-attachments", False)
+
+        elif attachments is not None:
+            raise VpnError("Instance attachments cannot authorize a different resource kind")
+
         command = self._CommandForKind(reference.kind)
         self._MutationRun((*command, "delete", "--id", reference.resourceId), "creation-delete")
 
@@ -820,6 +836,28 @@ class VpnYandexProvider(YandexLifecycleProvider):
             raise
 
         raise ProviderError(ProviderErrorCode.CONFLICT, "creation-delete-confirmation")
+
+    def ReadInstanceAttachments(self, resource: ProviderResource) -> InstanceAttachments:
+        """Observe exact scoped VM network and storage attachments without reading guest secrets."""
+
+        reference = resource.reference
+
+        if (reference.kind != ResourceKind.INSTANCE or reference.providerId != self.Identity.providerId
+                or reference.scopeId != self.Identity.scopeId):
+            raise VpnError("Instance attachments require an exact resource in the configured scope")
+
+        payload = self._ReadJson(("compute", "instance", "get", "--id", reference.resourceId), "vpn-instance-attachments")
+        observed = self._ValidateObservation(self._NormalizeResource(payload, ResourceKind.INSTANCE, "vpn-instance-attachments"))
+
+        if (observed.reference != reference or observed.name != resource.name or observed.zoneId != resource.zoneId
+                or not observed.HasLabels(resource.labels)):
+            raise VpnError("Instance ownership changed before attachment observation")
+
+        try:
+            return ParseInstanceAttachments(payload, observed)
+
+        except (ValueError, TypeError, KeyError, AttributeError, RecursionError):
+            raise VpnError("Instance attachment policy is unavailable or unsupported; no resources were changed") from None
 
 
 def _OwnedEndpoints(project: VpnProject | SelectedVpnProject, provider: LifecycleProvider) -> tuple[ProviderResource, str]:

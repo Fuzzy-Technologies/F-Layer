@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
+import ipaddress
 from collections.abc import Mapping
 from types import MappingProxyType
 
 from flayer._vpn_creation import CreationBaseline
 from flayer.core.contracts import StackIdentity
 from flayer.profiles.vpn import VpnError
-from flayer.providers._yandex_firewall import ExpectedRules, RuleSemantics, SecurityGroupSnapshot
+from flayer.providers._yandex_firewall import (
+    ExpectedRules,
+    InstanceAttachments,
+    RuleSemantics,
+    SecurityGroupSnapshot,
+)
 from flayer.providers.contracts import (
     ProviderCapability,
     ProviderError,
@@ -75,7 +81,38 @@ class CreationProvider:
         if spec.kind == ResourceKind.SECURITY_GROUP:
             self.Firewall(resource)
 
+        if spec.kind == ResourceKind.INSTANCE:
+            self.Attachments(resource)
+
         return resource
+
+    def Attachments(self, resource: ProviderResource) -> InstanceAttachments:
+        """Bind effective instance ingress and deletion side effects to the original owned dependency graph."""
+
+        dependencies = {}
+
+        for logicalId in ("subnet", "firewall", "address", "boot-disk"):
+            spec = self.specs[logicalId]
+            current = self.provider.FindResource(spec, self.baseline.plan.identity)
+
+            if current is None:
+                raise VpnError("Instance creation dependency is absent")
+
+            dependencies[logicalId] = self._Verify(spec, current)
+
+        observed = self.provider.ReadInstanceAttachments(resource)
+        subnet = ipaddress.IPv4Network(str(dict(self.specs["subnet"].parameters)["ipv4_cidr"]))
+        address = ipaddress.IPv4Address(observed.privateAddress)
+
+        if (observed.subnetId != dependencies["subnet"].reference.resourceId
+                or observed.securityGroupIds != (dependencies["firewall"].reference.resourceId,)
+                or observed.bootDiskId != dependencies["boot-disk"].reference.resourceId
+                or dependencies["address"].publicAddresses != (observed.publicAddress,)
+                or resource.publicAddresses != (observed.publicAddress,)
+                or address not in subnet or address in {subnet.network_address, subnet.broadcast_address}):
+            raise VpnError("Effective instance network/storage attachments differ from the frozen creation graph")
+
+        return observed
 
     def Firewall(self, resource: ProviderResource) -> SecurityGroupSnapshot:
         """Compare the complete effective rule multiset and original owned network attachment."""
@@ -174,4 +211,5 @@ class CreationProvider:
             raise
 
         policy = self.Firewall(resource) if spec.kind == ResourceKind.SECURITY_GROUP else None
-        self.provider.DeleteCreationResource(resource, spec, identity, policy=policy, operationId=operationId)
+        attachments = self.Attachments(resource) if spec.kind == ResourceKind.INSTANCE else None
+        self.provider.DeleteCreationResource(resource, spec, identity, policy=policy, attachments=attachments, operationId=operationId)

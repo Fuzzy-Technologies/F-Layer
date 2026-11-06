@@ -530,10 +530,20 @@ body = "读取精确 scope 内完整 IPv4 策略及网络绑定，不修改云�
 [[units]]
 id = "symbol:flayer.vpn_project.VpnYandexProvider.DeleteCreationResource"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:7d1e2636439cf8b9bb78bdd5f18176765ca1dff2ca4b01e73109d719d3653161"
-reviewedTranslationHash = "sha256:b8ab09d99602f796edd826598a7236df6d063dd8891ab78a28e7bd6225f2d02f"
+sourceHash = "sha256:e141673032953468eca78a24cc26fee589027af7033eb53b47daafbd6f616f26"
+reviewedTranslationHash = "sha256:c886e67df0667e2e84a39498fb27bc2c2c58ae7e683e9a641dbb3b40a7c4360f"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T16:42:36.488155Z"
+reviewedAt = "2026-11-06T16:56:43.901995Z"
 reviewRoles = ["editorial", "technical"]
-body = "在按 ID 删除前立即复核精确创建标签及任何固定的完整 firewall 策略。"
+body = "在按 ID 删除前复核精确创建标签、有效 firewall 策略及虚拟机挂载与网络绑定。"
+[[units]]
+id = "symbol:flayer.vpn_project.VpnYandexProvider.ReadInstanceAttachments"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:8a5801e8bf37d21337f562c593ed26ea9fb349b31f2b576346231736765a6485"
+reviewedTranslationHash = "sha256:f7b08f3935a69f3127359ac16e7df248b7875489bb6c8a5320e4097ca4ff37d0"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T16:56:43.901995Z"
+reviewRoles = ["editorial", "technical"]
+body = "观测精确 scope 内虚拟机网络及存储绑定，不读取来宾秘密。"

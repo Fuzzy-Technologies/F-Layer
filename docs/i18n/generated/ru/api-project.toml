@@ -530,10 +530,20 @@ body = "Читать полную IPv4-политику и привязку к �
 [[units]]
 id = "symbol:flayer.vpn_project.VpnYandexProvider.DeleteCreationResource"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:7d1e2636439cf8b9bb78bdd5f18176765ca1dff2ca4b01e73109d719d3653161"
-reviewedTranslationHash = "sha256:ffd56ea4f38306fb30b16038aaa665e636a6afda898934b41b0560a63a3d4246"
+sourceHash = "sha256:e141673032953468eca78a24cc26fee589027af7033eb53b47daafbd6f616f26"
+reviewedTranslationHash = "sha256:674c3a2640ecc6dbe4d0c82b703c837b2c87c1319ddc125852c2b90ff93f0d0c"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T16:42:36.488155Z"
+reviewedAt = "2026-11-06T16:56:43.901995Z"
 reviewRoles = ["editorial", "technical"]
-body = "Повторно проверить точные метки создания и закреплённую полную политику firewall непосредственно перед удалением по ID."
+body = "Повторно проверить точные метки создания, действующую политику firewall и привязки ВМ перед удалением по ID."
+[[units]]
+id = "symbol:flayer.vpn_project.VpnYandexProvider.ReadInstanceAttachments"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:8a5801e8bf37d21337f562c593ed26ea9fb349b31f2b576346231736765a6485"
+reviewedTranslationHash = "sha256:6d37e3294e78a42d745705010c62e59d1bd13a0441c77f2468bd8d7e7f41fede"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T16:56:43.901995Z"
+reviewRoles = ["editorial", "technical"]
+body = "Наблюдать точные сетевые привязки и подключения хранилищ ВМ в заданном scope без чтения серверных секретов."

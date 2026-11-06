@@ -135,6 +135,20 @@ def Environment(tmpPath: Path, monkeypatch: pytest.MonkeyPatch, action: str) -> 
     return model, desired, expected, clientSecret
 
 
+def Envelope(tmpPath: Path, monkeypatch: pytest.MonkeyPatch, model: Any, desired: Path) -> None:
+    """Create only the exact private receiver input shape for package-mode entrypoint tests."""
+
+    envelope = tmpPath / "envelope"
+    envelope.mkdir(mode=0o700)
+
+    for name in ("server.conf", "deployment.json"):
+        guest._Atomic(envelope / name, (desired / name).read_bytes())
+
+    guest._Atomic(envelope / "install.py", Path(peers.__file__).read_bytes())
+    guest._Atomic(envelope / "maintenance.py", (model.root / "install.py").read_bytes())
+    monkeypatch.setattr(peers, "__file__", str(envelope / "install.py"))
+
+
 @pytest.mark.parametrize("action", ["enroll", "revoke"])
 def test_PeerApplyRepeatsWithoutRestartOrRotationAndKeepsOriginalProgram(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, action: str,
@@ -206,7 +220,7 @@ def test_InterruptedPeerChangeReconcilesOnlyItsRecordedPrefixAndPreservesPublish
     guest._Check(root, unit, guest._Request(root)[0])
 
 
-@pytest.mark.parametrize("fault", ["receipt", "config", "unit", "kernel", "firewall", "listener"])
+@pytest.mark.parametrize("fault", ["receipt", "noncanonical-receipt", "config", "unit", "kernel", "firewall", "listener"])
 def test_ForeignOrChangedStateStopsBeforeAnyPeerOrTableMutation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fault: str,
 ) -> None:
@@ -217,6 +231,10 @@ def test_ForeignOrChangedStateStopsBeforeAnyPeerOrTableMutation(
 
     if fault == "receipt":
         previous = "0" * 64
+
+    elif fault == "noncanonical-receipt":
+        path = root / "receipt.json"
+        path.write_text(json.dumps(json.loads(path.read_bytes()), indent=2))
 
     elif fault == "config":
         (root / "server.conf").write_bytes((root / "server.conf").read_bytes() + b"# foreign change\n")
@@ -278,15 +296,7 @@ def test_MainReadOnlyStatusNeedsNoVolatileLockAndMutationConsentPrecedesLockCrea
     """Exercise the actual entrypoint through its exact private flat staging envelope."""
 
     model, desired, _, _ = Environment(tmp_path, monkeypatch, "enroll")
-    envelope = tmp_path / "envelope"
-    envelope.mkdir(mode=0o700)
-
-    for name in ("server.conf", "deployment.json"):
-        guest._Atomic(envelope / name, (desired / name).read_bytes())
-
-    guest._Atomic(envelope / "install.py", Path(peers.__file__).read_bytes())
-    guest._Atomic(envelope / "maintenance.py", (model.root / "install.py").read_bytes())
-    monkeypatch.setattr(peers, "__file__", str(envelope / "install.py"))
+    Envelope(tmp_path, monkeypatch, model, desired)
     common = ["--change", "enroll", "--device-id", model.deviceId]
 
     assert peers.Main(["--status", *common]) == 0
@@ -296,3 +306,129 @@ def test_MainReadOnlyStatusNeedsNoVolatileLockAndMutationConsentPrecedesLockCrea
     assert peers.Main(["--apply", *common]) == 1
     assert not guest.LOCK.exists() and not model.events
     assert "private" not in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("boundary", ["exchange-fsync", "audit-publication"])
+def test_FailedPostPublicationDurabilityDoesNotAuthorizeRollbackOfAHealthyCommit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, boundary: str,
+) -> None:
+    """Retain the new peer and the journal after uncertain durability, then re-establish commit before cleanup."""
+
+    model, desired, previous, _ = Environment(tmp_path, monkeypatch, "enroll")
+    sync, atomic = guest._SyncDirectory, guest._Atomic
+    failed = False
+
+    def Sync(path: Path) -> None:
+        """Fail only after the complete desired root became visible through atomic exchange."""
+
+        nonlocal failed
+
+        if (boundary == "exchange-fsync" and not failed and path == guest.BASE
+                and (model.root / "server.conf").read_bytes() == (desired / "server.conf").read_bytes()):
+            failed = True
+
+            raise OSError("Synthetic post-exchange durability failure")
+
+        sync(path)
+
+    def Atomic(path: Path, content: bytes, mode: int = 0o600) -> None:
+        """Fail after the commit proof was replaced, preserving recovery metadata and the old backup."""
+
+        nonlocal failed
+        atomic(path, content, mode)
+
+        if boundary == "audit-publication" and not failed and path.name == "peer-" + model.originalRequest["owner"] + ".json":
+            failed = True
+
+            raise OSError("Synthetic commit-proof durability failure")
+
+    monkeypatch.setattr(guest, "_SyncDirectory", Sync)
+    monkeypatch.setattr(guest, "_Atomic", Atomic)
+
+    with pytest.raises((guest.GuestError, OSError)):
+        peers.Apply(guest, desired, "enroll", model.deviceId, previous)
+
+    status = peers.Status(guest, desired, "enroll", model.deviceId)
+    events = list(model.events)
+
+    assert status["is_desired"] is True
+    assert peers.Recover(guest, desired, "enroll", model.deviceId, str(status["receipt_sha256"]), previous) == "committed"
+    assert model.events == events
+
+
+def test_UnknownTransitionPrefixCannotBeRepairedByGuessingItsOrigin(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """An enrollment cannot produce a permissive new firewall while the old kernel configuration remains active."""
+
+    model, desired, previous, _ = Environment(tmp_path, monkeypatch, "enroll")
+    _, transaction = peers._Publish(guest, desired, "enroll", model.deviceId, previous)
+    model.policy = (transaction / "new" / "firewall.nft").read_bytes()
+
+    with pytest.raises(guest.GuestError, match="unrecorded"):
+        peers.Status(guest, desired, "enroll", model.deviceId)
+
+    with pytest.raises(guest.GuestError, match="unrecorded"):
+        peers.Recover(guest, desired, "enroll", model.deviceId, previous, previous)
+
+    assert not model.events and transaction.exists()
+
+
+@pytest.mark.parametrize("committed", [False, True])
+@pytest.mark.parametrize("priorCommit", [False, True])
+def test_EmptyFinalJournalAfterLockLossCanRecoverThroughMainWithTheCorrectPreviousProof(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], committed: bool, priorCommit: bool,
+) -> None:
+    """A prior historical audit must not replace the current pending plan's old receipt after rollback cleanup."""
+
+    model, desired, previous, _ = Environment(tmp_path, monkeypatch, "enroll")
+    owner = model.originalRequest["owner"]
+    _, _, transaction = guest._Paths(owner)
+
+    if priorCommit:
+        guest._Atomic(guest.BASE / ("peer-" + owner + ".json"), guest._Encode({
+            "schema_version": 1, "owner": owner, "action": "revoke", "device_id": "retired",
+            "previous_receipt_sha256": "e" * 64, "receipt_sha256": previous,
+            "deployment_sha256": model.oldReceipt["deployment_sha256"],
+        }))
+
+    if not committed:
+        model.failure = "after-wg"
+
+        with pytest.raises(Interrupted):
+            peers.Apply(guest, desired, "enroll", model.deviceId, previous)
+
+    unlink = Path.unlink
+
+    def Unlink(path: Path, *args: Any, **kwargs: Any) -> None:
+        """Leave an empty transaction directory after retiring its complete metadata file."""
+
+        unlink(path, *args, **kwargs)
+
+        if path == transaction / "transaction.json":
+            raise Interrupted
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "unlink", Unlink)
+
+        with pytest.raises(Interrupted):
+            if committed:
+                peers.Apply(guest, desired, "enroll", model.deviceId, previous)
+
+            else:
+                peers.Recover(guest, desired, "enroll", model.deviceId, previous, previous)
+
+    assert transaction.exists() and not tuple(transaction.iterdir()) and not guest.LOCK.exists()
+    Envelope(tmp_path, monkeypatch, model, desired)
+    common = ["--change", "enroll", "--device-id", model.deviceId]
+
+    assert peers.Main(["--status", *common]) == 0
+    status = json.loads(capsys.readouterr().out)
+    assert status["is_desired"] is committed and status["previous_receipt_sha256"] == previous
+    assert not guest.LOCK.exists()
+    events = list(model.events)
+
+    assert peers.Main(["--recover", *common, "--allow-mutation", "--expected-receipt-sha256", status["receipt_sha256"],
+                       "--expected-previous-receipt-sha256", status["previous_receipt_sha256"]]) == 0
+    result = json.loads(capsys.readouterr().out)
+
+    assert result == {"status": "complete", "outcome": "committed" if committed else "not-applied"}
+    assert guest.LOCK.exists() and not transaction.exists() and model.events == events

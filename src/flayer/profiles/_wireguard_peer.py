@@ -17,6 +17,21 @@ from typing import Any
 HELPER_SHA256 = "__FLAYER_WIREGUARD_HELPER_SHA256__"
 
 
+def Programs() -> tuple[bytes, bytes]:
+    """Pack the exact stdlib-only driver and checksum-bound helper for private controller-to-guest staging."""
+
+    from importlib.resources import files
+
+    source = files("flayer.profiles").joinpath("_wireguard_peer.py").read_bytes().replace(b"\r\n", b"\n")
+    helper = files("flayer.profiles").joinpath("_wireguard_guest.py").read_bytes().replace(b"\r\n", b"\n")
+    marker = HELPER_SHA256.encode("ascii")
+
+    if source.count(marker) != 1:
+        raise ValueError("WireGuard peer driver template has an unexpected helper pin")
+
+    return source.replace(marker, hashlib.sha256(helper).hexdigest().encode("ascii")), helper
+
+
 def _Guest() -> Any:
     """Load only the package helper or a checksum-bound private standalone copy, never a supplied module path."""
 
@@ -182,7 +197,7 @@ def _Journal(guest: Any, owner: str) -> tuple[dict[str, Any], Path]:
 
 
 def _Publish(guest: Any, desired: Path, action: str, deviceId: str, expected: str) -> tuple[dict[str, Any], Path]:
-    """Durably stage complete candidate files and hash-only recovery intent before kernel or firewall mutation."""
+    """Durably stage complete candidate files and nonsecret receipt-bound recovery intent before live mutation."""
 
     request, _, _ = guest._Request(desired)
     owner = request["owner"]
@@ -325,7 +340,8 @@ def _Audit(guest: Any, owner: str) -> dict[str, Any] | None:
     if not path.exists() and not path.is_symlink():
         return None
 
-    value = guest._Json(guest._Read(path))
+    content = guest._Read(path)
+    value = guest._Json(content)
 
     if (not isinstance(value, dict) or set(value) != {"schema_version", "owner", "action", "device_id", "previous_receipt_sha256",
                                                     "receipt_sha256", "deployment_sha256"}
@@ -333,6 +349,9 @@ def _Audit(guest: Any, owner: str) -> dict[str, Any] | None:
             or value["action"] not in {"enroll", "revoke"} or not isinstance(value["device_id"], str)
             or guest._NAME.fullmatch(value["device_id"]) is None):
         raise guest.GuestError("WireGuard peer commit proof is invalid")
+
+    if content != guest._Encode(value):
+        raise guest.GuestError("WireGuard peer commit proof has changed noncanonical bytes")
 
     for key in ("previous_receipt_sha256", "receipt_sha256", "deployment_sha256"):
         guest._RequireDigest(value[key])
@@ -422,6 +441,9 @@ def Apply(guest: Any, desired: Path, action: str, deviceId: str, expected: str) 
     if not transaction.exists() and not transaction.is_symlink():
         actual = guest._Check(root, unit, guest._Request(root)[0])
 
+        if guest._Read(root / "receipt.json") != guest._Encode(actual):
+            raise guest.GuestError("WireGuard peer operation found changed root receipt bytes")
+
         if audit is not None and (audit["action"], audit["device_id"], audit["previous_receipt_sha256"], audit["deployment_sha256"]) == (
             action, deviceId, expected, guest._Digest(raw),
         ):
@@ -473,6 +495,9 @@ def Recover(
         guest._Check(root, unit, actualRequest)
         audit = _Audit(guest, owner)
 
+        if audit is not None and audit["receipt_sha256"] != expected:
+            raise guest.GuestError("WireGuard peer root differs from its last completed operation proof")
+
         if audit is not None and audit == {"schema_version": 1, "owner": owner, "action": action, "device_id": deviceId,
                                           "previous_receipt_sha256": expectedPrevious, "receipt_sha256": expected,
                                           "deployment_sha256": guest._Digest(raw)}:
@@ -488,6 +513,9 @@ def Recover(
     if not tuple(transaction.iterdir()):
         guest._Check(root, unit, actualRequest)
         audit = _Audit(guest, owner)
+
+        if audit is not None and audit["receipt_sha256"] != expected:
+            raise guest.GuestError("Empty peer journal has changed commit history")
 
         if expected != expectedPrevious and (audit is None or audit["receipt_sha256"] != expected
                                              or audit["previous_receipt_sha256"] != expectedPrevious
@@ -562,7 +590,13 @@ def Status(guest: Any, desired: Path, action: str, deviceId: str) -> dict[str, o
         if not tuple(transaction.iterdir()):
             guest._Check(root, unit, actualRequest)
             audit = _Audit(guest, owner)
-            previous = audit["previous_receipt_sha256"] if audit is not None and audit["receipt_sha256"] == digest else digest
+
+            if audit is not None and audit["receipt_sha256"] != digest:
+                raise guest.GuestError("Empty peer journal has unexplained commit history")
+
+            previous = (audit["previous_receipt_sha256"]
+                        if audit is not None and (audit["action"], audit["device_id"], audit["deployment_sha256"]) == (action, deviceId, guest._Digest(raw))
+                        else digest)
 
         else:
             record, _ = _Journal(guest, owner)

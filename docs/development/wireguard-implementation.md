@@ -223,6 +223,59 @@ the coordination file before effects. Whole-project destroy uses the frozen nons
 when private client or SSH keys have been lost. Local artifacts are retained;
 old trust or client exports block another deployment after cleanup.
 
+## Owned peer runtime transaction
+
+The private `_wireguard_peer.py` implements a guest transaction for one explicit
+enrollment or revocation. Its controller packer emits a stdlib-only driver and a
+checksum-bound maintenance helper. Standalone loading accepts only the exact
+private root-owned regular helper file with no links or symbolic ancestry;
+the approved bytes are verified before execution. The helper is transient: the
+original installed program, tools binary, license, unit, owner, nonce and cached
+kernel/build evidence stay unchanged. Device private keys never reach the guest.
+
+Before activation, verify the exact previous canonical receipt, complete active
+runtime and one-device delta. Changing another peer's key/address, server key,
+listener, subnet, route policy or runtime pin is an error. Stage a complete private
+candidate and a schema-2 nonsecret metadata journal in the existing transaction namespace.
+Probe atomic directory-exchange support on that same filesystem before live
+changes. No peer action downloads tools, generates credentials, upgrades a kernel,
+changes cloud ingress, recreates an interface or restarts a service.
+
+Use upstream [`wg syncconf`](https://raw.githubusercontent.com/WireGuard/wireguard-tools/v1.0.20260223/src/man/wg.8)
+to change only differences while preserving unchanged sessions. Enrollment changes
+the kernel peer before admitting its address through nftables; revocation denies
+that source before removing its kernel peer. Replace only the proved owned table
+with one delete-and-create nft batch; never flush the host ruleset. Accept only
+the recorded old/new prefixes in that order. Unexplained combinations or unrelated
+interface, kernel or firewall drift stop before the next mutation. Endpoint roaming,
+handshake times and traffic counters remain outside managed configuration.
+
+Publish the complete candidate through Linux
+[`RENAME_EXCHANGE`](https://man7.org/linux/man-pages/man2/renameat2.2.html), so boot
+never sees missing or mixed configuration files. The complete active root receipt
+decides whether commit occurred: recovery restores only the selected old peer/
+policy prefix before publication, and preserves a healthy desired root afterward,
+including a failed post-publication fsync. Persist the commit proof and directory
+boundaries before retiring backups or the journal. Partial backup deletion and an
+empty final journal are recoverable without rolling back an already committed peer.
+Recovery requires both the current receipt and the original previous receipt hash.
+
+A separate nonsecret `peer-<owner>.json` records the last exact action/device and
+old/new receipt/deployment digests. It permits an identical completed retry without
+another kernel/table change. Canonical metadata bytes, unknown files, wrong old
+proofs or changed commit history fail closed. Status exposes bounded facts only.
+The entrypoint requires explicit mutation consent and the shared exclusive lock;
+read-only status creates no coordination file and discards an observation if a
+lock appears while reading after reboot. Temporary private request staging does
+not change the managed installation.
+
+Deterministic POSIX tests simulate independent kernel/table state and interrupt
+each activation/publication/cleanup boundary while using actual private files,
+directory exchange and fsync calls. These model tests do not attest a live kernel
+or nft policy. Separate isolated Linux CI checks real pinned-tool peer updates,
+interface identity, nft echo/live equivalence, rejected-batch atomicity and
+unrelated-table preservation. No desktop network or production guest is exercised.
+
 ## Remaining integration
 
 `PrepareWireGuardPeerEnrollment()` and `PrepareWireGuardPeerRevocation()` now
@@ -234,8 +287,9 @@ unchanged. Invalid identities, address/key reuse, an over-capacity enrollment or
 revocation of the final peer are refused. The original private material remains
 available for audit. Removing the final peer requires protocol deactivation.
 These preparation APIs do not contact the guest, disconnect a peer, persist a
-revision or update project state; live revocation still requires the pending
-receipt-bound configuration/kernel transaction and controller workflow.
+revision or update project state. Public live revocation still requires the
+controller revision/recovery workflow and SSH integration with the private guest
+transaction; the peer CLI does not yet expose it.
 
 Adding/removing a protocol on an existing guest, schema-1 migration, explicit
 cloud/guest ingress overlays and scoped peer enrollment/revocation remain Task

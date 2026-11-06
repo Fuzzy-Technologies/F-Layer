@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import base64
 import copy
+import hashlib
+import io
 import json
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
+from unittest.mock import MagicMock
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
@@ -22,6 +25,51 @@ from flayer.profiles.wireguard import (
     PrepareWireGuardPeerEnrollment,
     WireGuardSettings,
 )
+
+
+def test_ControllerPacksAnExactHelperPinAndTheStandaloneBodyOnlyDefinesOperations() -> None:
+    """Compile and load definitions in memory without invoking Main, a guest helper, native syscalls or any network."""
+
+    program, helper = peers.Programs()
+    namespace: dict[str, Any] = {"__name__": "fixture_peer_driver", "__package__": None, "__file__": "fixture/install.py"}
+    exec(compile(program, "fixture/install.py", "exec"), namespace)
+
+    assert namespace["HELPER_SHA256"] == hashlib.sha256(helper).hexdigest()
+    assert b"__FLAYER_WIREGUARD_HELPER_SHA256__" not in program
+    assert callable(namespace["Main"]) and callable(namespace["Recover"])
+    assert peers.Programs() == (program, helper), "Program packing must not depend on a guest or generated credentials"
+
+
+@pytest.mark.parametrize("fault", ["none", "symlink", "owner", "mode", "hardlink", "size", "hash"])
+def test_StandaloneHelperExecutesOnlyItsPinnedSourceAfterAnIsolatedMetadataProof(fault: str) -> None:
+    """Model the loader's read-only IO boundary entirely in memory; never invoke Main or guest/native operations."""
+
+    import stat
+
+    program, helper = peers.Programs()
+    namespace: dict[str, Any] = {"__name__": "fixture_driver", "__package__": None, "__file__": "/fixture/install.py"}
+    exec(compile(program, "/fixture/install.py", "exec"), namespace)
+    content = b"raise AssertionError('unapproved-helper-executed')" if fault == "hash" else helper
+    info = SimpleNamespace(st_mode=stat.S_IFREG | (0o644 if fault == "mode" else 0o600), st_uid=1 if fault == "owner" else 0,
+                           st_nlink=2 if fault == "hardlink" else 1, st_size=1048577 if fault == "size" else len(content))
+    path = MagicMock()
+    path.configure_mock(**{"absolute.return_value": path, "parent": path, "parents": (),
+                           "__truediv__.return_value": path, "__str__.return_value": "/fixture/maintenance.py",
+                           "is_symlink.return_value": fault == "symlink"})
+    closed = []
+    namespace["Path"] = MagicMock(return_value=path)
+    namespace["os"] = SimpleNamespace(O_RDONLY=0, O_NOFOLLOW=1, open=lambda *args: 42, fstat=lambda descriptor: info,
+                                      fdopen=lambda *args, **options: io.BytesIO(content), close=closed.append)
+
+    if fault == "none":
+        module = namespace["_Guest"]()
+        assert module.TOOLS_VERSION == guest.TOOLS_VERSION and module.__file__ == "/fixture/maintenance.py"
+
+    else:
+        with pytest.raises(ValueError):
+            namespace["_Guest"]()
+
+    assert closed == ([] if fault == "symlink" else [42])
 
 
 def Pair(monkeypatch: pytest.MonkeyPatch) -> tuple[Any, dict[str, Any], dict[str, Any], dict[str, bytes]]:

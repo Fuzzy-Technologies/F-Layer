@@ -455,6 +455,27 @@ guest configuration. Other services, resources, addresses and existing client
 files remain unchanged. Client delivery remains Task #129; peer completion alone
 does not export native profiles or establish Internet/media acceptance.
 
+## Immutable protocol source references
+
+The private `_vpn_protocol_sources.py` now names an exact source independently
+from its active/disabled state. An owner-bound `ProtocolSource` contains only the
+canonical protocol pin and a fixed original, peer-request or protocol-request
+reference. It contains no configuration or key body. Closed source/identity/pin
+models reject unsupported extensions before nonsecret serialization. Current peer
+lifecycle reads use this resolver; original bundle names, manifests, installer bytes and client
+files remain unchanged. A source reference alone neither commits an epoch nor
+activates a service.
+
+Protocol-request preparation copies retained material/server roles in memory and
+records their original pin, operation nonce and preceding-state digest. It does
+not generate credentials, render a new installer or publish files. A future epoch
+controller must journal before publication or remote mutation. Full owned request
+manifests, exact file sets, role names and digests are checked before reconstructing
+the canonical virtual bundles. Reject foreign owners, redirected paths,
+noncanonical or contradictory request metadata. Nonsecret epoch traversal and
+cloud cleanup must not call this private-byte reader; missing client keys are not
+permission to regenerate a projection. Epoch publication/selection remains open.
+
 ## Scoped asynchronous cloud ingress SDK
 
 The concrete `VpnYandexProvider` now supplies `BeginIngressChange()` and

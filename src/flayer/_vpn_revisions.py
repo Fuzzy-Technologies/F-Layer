@@ -17,7 +17,6 @@ from flayer._vpn_creation import (
     CreationBaseline,
     LoadCreationBaseline,
     ProtocolPin,
-    ReadPinnedBundle,
     StaticFingerprint,
     _Decode,
     _Json,
@@ -466,16 +465,15 @@ def ValidateRequest(project: SelectedVpnProject, pending: dict[str, Any], pin: P
 def ReadEffectiveBundle(project: SelectedVpnProject, state: RevisionState, pin: ProtocolPin, *, material: bool = False) -> ArtifactBundle:
     """Resolve only the last committed transport revision while preserving all unrelated original pins."""
 
+    from flayer._vpn_protocol_sources import ProtocolSource, ReadSource
+
     if pin.protocol != "wireguard" or state.activeRecord is None:
-        return ReadPinnedBundle(project, pin, material=material)
+        source = ProtocolSource(project.vpn.identity, pin)
 
-    credentials, server = RequestBundles(project, state.activeRecord["request_name"], state.activeRecord["request_sha256"])
-    result = credentials if material else server
+    else:
+        source = ProtocolSource(project.vpn.identity, pin, "peer", state.activeRecord["request_name"], state.activeRecord["request_sha256"])
 
-    if BundleDigest(result) != (pin.materialDigest if material else pin.serverDigest):
-        raise VpnError("Effective peer material/server bundle differs from its committed projection")
-
-    return result
+    return ReadSource(project, source, material=material)
 
 
 def PublishRequest(project: SelectedVpnProject, pending: dict[str, Any], material: ArtifactBundle, server: ArtifactBundle) -> str:

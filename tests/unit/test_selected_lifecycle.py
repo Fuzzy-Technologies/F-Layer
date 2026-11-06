@@ -456,7 +456,7 @@ def test_DestroyRefusesUnrecordedCreationInsteadOfClaimingCleanupComplete(tmp_pa
 def test_PublicCliDispatchesSelectedLifecycleWithoutLegacyFallback(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
     """Exercise actual CLI parsing and JSON reporting while replacing only its cloud/guest constructor boundary."""
 
-    from flayer import __main__ as cli
+    from flayer import vpn_project as projects
 
     project = Project(tmp_path)
     cloud = SelectedCloud(project)
@@ -467,7 +467,7 @@ def test_PublicCliDispatchesSelectedLifecycleWithoutLegacyFallback(tmp_path: Pat
 
         return publicRun(project, action, provider=cloud, guestFactory=SelectedGuest, **options)
 
-    monkeypatch.setattr(cli, "RunVpnProject", Dispatch)
+    monkeypatch.setattr(projects, "RunVpnProject", Dispatch)
 
     assert Main(["vpn", "deploy", "--project", str(project.root), "--allow-mutation", "--scope-confirm", "example-folder", "--format", "json"]) == 0
     report = json.loads(capsys.readouterr().out)

@@ -548,8 +548,8 @@ def _SyncArtifactBundle(root: str | Path, bundle: ArtifactBundle) -> None:
 
     try:
         with _Directory(rootPath) as parent:
-            with _BundleLock(parent, bundleName):
-                try:
+            try:
+                with _BundleLock(parent, bundleName):
                     directory = os.open(bundleName, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
                     _AssertDirectory(parent, bundleName, directory)
                     snapshot = _ValidateManifest(directory, bundle.identity, bundle.kind, bundle.name)
@@ -581,16 +581,21 @@ def _SyncArtifactBundle(root: str | Path, bundle: ArtifactBundle) -> None:
                     _AssertDirectory(parent, bundleName, directory)
                     os.fsync(parent)
 
-                    for name, receipt in receipts:
-                        _AssertFile(directory, name, receipt)
+                    if _ValidateManifest(directory, bundle.identity, bundle.kind, bundle.name) != snapshot:
+                        raise ArtifactError("Artifact bundle changed during durable synchronization")
 
                     _AssertDirectory(parent, bundleName, directory)
 
-                finally:
-                    if directory is not None:
-                        os.close(directory)
+                os.fsync(parent)
 
-            os.fsync(parent)
+                if _ValidateManifest(directory, bundle.identity, bundle.kind, bundle.name) != snapshot:
+                    raise ArtifactError("Artifact bundle changed at its final publication barrier")
+
+                _AssertDirectory(parent, bundleName, directory)
+
+            finally:
+                if directory is not None:
+                    os.close(directory)
 
     except (OSError, ValueError, RecursionError):
         raise ArtifactError("Unable to durably synchronize the exact existing artifact bundle; all payloads were retained") from None

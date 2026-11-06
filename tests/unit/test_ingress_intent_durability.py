@@ -154,3 +154,55 @@ def test_RecoverySynchronizationRejectsChangedOrBusyIntentAndRetainsEveryDetecte
 
     if fault == "replacement":
         assert replaced and (payload.stat().st_dev, payload.stat().st_ino) != payloadId
+
+
+@pytest.mark.parametrize("barrier", ["intent", "bundle", "parent", "final-parent"])
+@pytest.mark.parametrize("entry", ["file", "link"])
+def test_FullMembershipIsRevalidatedAfterEveryPublicationBarrierAndUnexpectedEntriesAreRetained(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, barrier: str, entry: str,
+) -> None:
+    """A new directory entry cannot become an accepted immutable prefix merely because all original file receipts match."""
+
+    project, prepared = Setup(tmp_path)
+    journal.PublishIntent(project, prepared)
+    directory = project.Artifacts / ("server-" + prepared.Bundle().name)
+    unexpected = directory / "unknown.json"
+    handles = Handles(project, prepared)
+    original = artifacts.os.fsync
+    parentCount = 0
+    injected = False
+    before = Snapshot(project.root)
+
+    def AddEntry(descriptor: int) -> None:
+        """Model external drift during a barrier, including the final artifact-parent sync after lock retirement."""
+
+        nonlocal parentCount, injected
+        info = os.fstat(descriptor)
+        name = handles.get((info.st_dev, info.st_ino))
+
+        if name == "parent":
+            parentCount += 1
+
+            if parentCount == 2:
+                name = "final-parent"
+
+        if not injected and name == barrier:
+            if entry == "file":
+                unexpected.write_bytes(b"{}\n")
+                unexpected.chmod(0o600)
+
+            else:
+                unexpected.symlink_to(directory / "never-created.json")
+
+            injected = True
+
+        original(descriptor)
+
+    monkeypatch.setattr(artifacts.os, "fsync", AddEntry)
+
+    with pytest.raises(artifacts.ArtifactError, match="durably synchronize"):
+        journal.BeginDispatch(project, prepared)
+
+    assert injected and (unexpected.exists() or unexpected.is_symlink())
+    assert journal.LoadJournal(project) == prepared
+    assert all(Snapshot(project.root)[name] == value for name, value in before.items())

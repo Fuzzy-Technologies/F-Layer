@@ -14,14 +14,14 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 COVERAGE_FLOOR = 80
 
 
-def BuildEnvironment(repo_root: Path, coverage_path: Path) -> dict[str, str]:
+def BuildEnvironment(repoRoot: Path, coveragePath: Path) -> dict[str, str]:
     """Prefer this checkout's sources over any ambient editable installation."""
 
     environment = dict(os.environ)
-    environment["PYTHONPATH"] = os.pathsep.join((str(repo_root / "src"), str(repo_root)))
+    environment["PYTHONPATH"] = os.pathsep.join((str(repoRoot / "src"), str(repoRoot)))
     environment["PYTHONSAFEPATH"] = "1"
-    environment["COVERAGE_FILE"] = str(coverage_path)
-    environment["COVERAGE_RCFILE"] = str(repo_root / "pyproject.toml")
+    environment["COVERAGE_FILE"] = str(coveragePath)
+    environment["COVERAGE_RCFILE"] = str(repoRoot / "pyproject.toml")
     environment["PYTEST_ADDOPTS"] = ""
     environment["PYTEST_PLUGINS"] = ""
     environment["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
@@ -33,32 +33,32 @@ def BuildEnvironment(repo_root: Path, coverage_path: Path) -> dict[str, str]:
 
 
 def RunCommand(
-    stage_name: str,
+    stageName: str,
     arguments: Sequence[str],
-    working_directory: Path,
+    workingDirectory: Path,
     environment: Mapping[str, str],
 ) -> int:
     """Execute one bounded stage and preserve a nonzero result without retries."""
 
-    print(f"Validation: {stage_name}", flush=True)
+    print(f"Validation: {stageName}", flush=True)
 
     try:
         result = subprocess.run(
             arguments,
-            cwd=working_directory,
+            cwd=workingDirectory,
             env=environment,
             check=False,
             timeout=600,
         )
 
     except (OSError, subprocess.TimeoutExpired) as error:
-        print(f"Validation failed during {stage_name}: {error}", file=sys.stderr)
+        print(f"Validation failed during {stageName}: {error}", file=sys.stderr)
 
         return 1
 
     if result.returncode != 0:
         print(
-            f"Validation failed during {stage_name}: exit code {result.returncode}",
+            f"Validation failed during {stageName}: exit code {result.returncode}",
             file=sys.stderr,
         )
 
@@ -76,136 +76,137 @@ def ReadCounter(totals: Mapping[str, object], name: str) -> int:
     return value
 
 
-def CheckCoverage(report_path: Path) -> None:
+def CheckCoverage(reportPath: Path) -> None:
     """Enforce the overall and branch floors independently from coverage JSON."""
 
-    report = json.loads(report_path.read_text(encoding="utf-8"))
+    report = json.loads(reportPath.read_text(encoding="utf-8"))
 
     if not isinstance(report, dict) or not isinstance(report.get("totals"), dict):
         raise ValueError("Coverage report must contain a totals object")
 
     totals = report["totals"]
     statements = ReadCounter(totals, "num_statements")
-    covered_lines = ReadCounter(totals, "covered_lines")
+    coveredLines = ReadCounter(totals, "covered_lines")
     branches = ReadCounter(totals, "num_branches")
-    covered_branches = ReadCounter(totals, "covered_branches")
+    coveredBranches = ReadCounter(totals, "covered_branches")
 
-    if statements == 0 or covered_lines > statements or covered_branches > branches:
+    if statements == 0 or coveredLines > statements or coveredBranches > branches:
         raise ValueError("Coverage totals are empty or contain inconsistent counters")
 
-    covered_total = covered_lines + covered_branches
-    measured_total = statements + branches
+    coveredTotal = coveredLines + coveredBranches
+    measuredTotal = statements + branches
 
-    if covered_total * 100 < COVERAGE_FLOOR * measured_total:
+    if coveredTotal * 100 < COVERAGE_FLOOR * measuredTotal:
         raise ValueError(f"Overall coverage is below {COVERAGE_FLOOR}%")
 
-    if branches and covered_branches * 100 < COVERAGE_FLOOR * branches:
+    if branches and coveredBranches * 100 < COVERAGE_FLOOR * branches:
         raise ValueError(f"Branch coverage is below {COVERAGE_FLOOR}%")
 
-    overall_percent = covered_total * 100 / measured_total
-    branch_percent = covered_branches * 100 / branches if branches else 100.0
+    overallPercent = coveredTotal * 100 / measuredTotal
+    branchPercent = coveredBranches * 100 / branches if branches else 100.0
     print(
-        f"Coverage: overall {overall_percent:.2f}%, branches {branch_percent:.2f}% "
+        f"Coverage: overall {overallPercent:.2f}%, branches {branchPercent:.2f}% "
         f"({branches} measured branches)",
         flush=True,
     )
 
 
-def BuildImportSmoke(import_root: Path) -> str:
+def BuildImportSmoke(importRoot: Path) -> str:
     """Check that the imported package belongs to the intended source or install root."""
 
     return (
         "from pathlib import Path\nimport sys\n"
-        f"expected_root = Path({str(import_root)!r}).resolve()\n"
-        "sys.path.insert(0, str(expected_root))\nimport flayer\n\n"
+        f"expectedRoot = Path({str(importRoot)!r}).resolve()\n"
+        "sys.path.insert(0, str(expectedRoot))\nimport flayer\n\n"
         "assert flayer.__file__ is not None, 'Package has no concrete import location'\n\n"
-        "actual_path = Path(flayer.__file__).resolve()\n\n"
-        "assert actual_path.is_relative_to(expected_root), "
-        "f'Imported package outside expected root: {actual_path}'\n\n"
-        "print(f'Package import: {actual_path}')"
+        "actualPath = Path(flayer.__file__).resolve()\n\n"
+        "assert actualPath.is_relative_to(expectedRoot), "
+        "f'Imported package outside expected root: {actualPath}'\n\n"
+        "print(f'Package import: {actualPath}')"
     )
 
 
-def RunGate(repo_root: Path) -> int:
+def RunGate(repoRoot: Path) -> int:
     """Stop at the first failed stage and discard temporary coverage and install output."""
 
-    repo_root = repo_root.resolve()
+    repoRoot = repoRoot.resolve()
 
-    with tempfile.TemporaryDirectory(prefix="flayer-validation-") as temporary_directory:
-        temporary_root = Path(temporary_directory)
-        environment = BuildEnvironment(repo_root, temporary_root / ".coverage")
+    with tempfile.TemporaryDirectory(prefix="flayer-validation-") as temporaryDirectory:
+        temporaryRoot = Path(temporaryDirectory)
+        environment = BuildEnvironment(repoRoot, temporaryRoot / ".coverage")
         commands: tuple[tuple[str, tuple[str, ...]], ...] = (
             ("compile", ("-m", "compileall", "-q", "-f", "src", "tests", "tools")),
+            ("Python naming", ("-m", "tools.python_naming")),
             ("Ruff", ("-m", "ruff", "check", ".")),
             ("mypy", ("-m", "mypy")),
             ("pytest", ("-m", "pytest", "-p", "pytest_cov.plugin")),
             (
                 "coverage report",
-                ("-m", "coverage", "json", "-o", str(temporary_root / "coverage.json")),
+                ("-m", "coverage", "json", "-o", str(temporaryRoot / "coverage.json")),
             ),
         )
 
-        for stage_name, arguments in commands:
-            exit_code = RunCommand(
-                stage_name, (sys.executable, *arguments), repo_root, environment,
+        for stageName, arguments in commands:
+            exitCode = RunCommand(
+                stageName, (sys.executable, *arguments), repoRoot, environment,
             )
 
-            if exit_code != 0:
-                return exit_code
+            if exitCode != 0:
+                return exitCode
 
         try:
-            CheckCoverage(temporary_root / "coverage.json")
+            CheckCoverage(temporaryRoot / "coverage.json")
 
         except (OSError, ValueError) as error:
             print(f"Validation failed during coverage floor: {error}", file=sys.stderr)
 
             return 1
 
-        source_result = RunCommand(
+        sourceResult = RunCommand(
             "local source import",
-            (sys.executable, "-I", "-c", BuildImportSmoke(repo_root / "src")),
-            temporary_root,
+            (sys.executable, "-I", "-c", BuildImportSmoke(repoRoot / "src")),
+            temporaryRoot,
             environment,
         )
 
-        if source_result != 0:
-            return source_result
+        if sourceResult != 0:
+            return sourceResult
 
-        install_root = temporary_root / "installed"
-        install_result = RunCommand(
+        installRoot = temporaryRoot / "installed"
+        installResult = RunCommand(
             "offline package installation",
             (
                 sys.executable, "-m", "pip", "--disable-pip-version-check", "--no-input",
                 "install", "--no-index", "--no-deps", "--no-build-isolation",
-                "--target", str(install_root), str(repo_root),
+                "--target", str(installRoot), str(repoRoot),
             ),
-            temporary_root,
+            temporaryRoot,
             environment,
         )
 
-        if install_result != 0:
-            return install_result
+        if installResult != 0:
+            return installResult
 
-        installed_result = RunCommand(
+        installedResult = RunCommand(
             "installed package import",
-            (sys.executable, "-I", "-c", BuildImportSmoke(install_root)),
-            temporary_root,
+            (sys.executable, "-I", "-c", BuildImportSmoke(installRoot)),
+            temporaryRoot,
             environment,
         )
 
-        if installed_result != 0:
-            return installed_result
+        if installedResult != 0:
+            return installedResult
 
-        if (repo_root / "src" / "flayer" / "__main__.py").is_file():
-            cli_result = RunCommand(
+        if (repoRoot / "src" / "flayer" / "__main__.py").is_file():
+            cliResult = RunCommand(
                 "CLI help",
                 (sys.executable, "-m", "flayer", "--help"),
-                repo_root,
+                repoRoot,
                 environment,
             )
 
-            if cli_result != 0:
-                return cli_result
+            if cliResult != 0:
+                return cliResult
 
         else:
             print("CLI smoke: no package CLI in this checkout", flush=True)

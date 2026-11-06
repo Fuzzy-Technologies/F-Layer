@@ -169,9 +169,19 @@ IPv4 сервера как выходной адрес, DNS, маршруты и
 Подробности импорта и проверки протоколов приведены в
 [инструкции для клиента](https://fuzzy-technologies.github.io/F-Layer/ru/guide/).
 
+## Кандидаты разработки
+
+Кандидаты из `develop` для релиза 2.1 добавляют опциональные настройки экспорта
+VLESS: `--tls-fragment` и `--allow-quic`. Эти опции сохраняют существующие учётные
+данные устройства и исходные артефакты. Полные нативные профили, совместимость
+и ограничения описаны в [руководстве по экспорту кандидата](docs/site/content/en/guide/cli.md#optional-vless-transport-exports-development-candidate).
+Опубликованный пакет 2.0.0 этих опций не содержит.
+
 ## Управление развёртыванием
 
 Проверяйте сервер командой `flayer vpn status --project ~/flayer-vpn`.
+Версию Xray, явное обновление и откат описывает
+[руководство по обслуживанию](docs/architecture/xray-runtime-maintenance.md).
 При прерывании облачной операции сохраните проект и следуйте
 [инструкции восстановления](https://fuzzy-technologies.github.io/F-Layer/ru/guide/).
 Чтобы удалить облачные ресурсы этого проекта:
@@ -199,9 +209,9 @@ flayer vpn destroy --project ~/flayer-vpn --allow-mutation --scope-confirm YOUR_
 [Apache 2.0](https://github.com/Fuzzy-Technologies/F-Layer/blob/master/LICENSE).
 Для участия в разработке начните с [CONTRIBUTING.md](https://github.com/Fuzzy-Technologies/F-Layer/blob/develop/CONTRIBUTING.md).
 '''
-sourceHash = "sha256:345b3110787e1d01c16a3a9cedc222a153f2a0e88897e032bb94561befe4096e"
-reviewedTranslationHash = "sha256:7c0bf5d7bf33c785f7d8b76b6852268e72a9b2bc0b4418c9ebc5d1e2eda72a40"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:5d03ab37d80c86092661b340a3dab1d49627c8bb573a12a21d625948cf1ef196"
+reviewedTranslationHash = "sha256:90cd27722317ce3f03368d94a0b01931022190ab2929af503eb06dfe4e024ff1"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-11T01:00:56Z"
+reviewedAt = "2026-11-06T11:40:55.306761Z"
 reviewRoles = ["editorial", "technical"]

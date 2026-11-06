@@ -8,7 +8,7 @@ import os
 import re
 import stat
 from contextlib import contextmanager
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterator
 
@@ -19,6 +19,7 @@ from flayer.core.contracts import (
     StackIdentity,
     ValidateFields,
     ValidateName,
+    _WireDict,
 )
 
 MAX_ARTIFACT_BYTES = 1048576
@@ -40,8 +41,8 @@ class _FileReceipt:
     device: int
     inode: int
     size: int
-    modified_ns: int
-    changed_ns: int
+    modifiedNs: int
+    changedNs: int
     sha256: str
 
 
@@ -122,12 +123,12 @@ class ArtifactBundle:
 
 
 def BuildDeviceBundle(
-    identity: StackIdentity, device_id: str, transport: str, files: tuple[Artifact, ...],
+    identity: StackIdentity, deviceId: str, transport: str, files: tuple[Artifact, ...],
 ) -> ArtifactBundle:
     """Wrap externally issued transport files without generating or validating credentials."""
 
     ValidateName(transport, "transport")
-    ValidateName(device_id, "device_id")
+    ValidateName(deviceId, "device_id")
 
     if not isinstance(files, tuple) or not 1 <= len(files) < MAX_BUNDLE_FILES or any(
         not isinstance(item, Artifact) for item in files
@@ -138,11 +139,11 @@ def BuildDeviceBundle(
         raise ArtifactError("Externally issued device profiles must be marked sensitive")
 
     descriptor = Artifact("device-info.json", (json.dumps({
-        "schema_version": 1, "transport": transport, "device_id": device_id,
+        "schema_version": 1, "transport": transport, "device_id": deviceId,
         "status": "externally-issued-unverified",
     }, sort_keys=True) + "\n").encode("utf-8"), sensitive=False)
 
-    return ArtifactBundle(identity, "device", device_id, files + (descriptor,))
+    return ArtifactBundle(identity, "device", deviceId, files + (descriptor,))
 
 
 def _ValidatePath(path: Path) -> None:
@@ -158,9 +159,9 @@ def _ValidatePath(path: Path) -> None:
 def _RequireOwned(info: os.stat_result, *, directory: bool) -> None:
     """Require private POSIX ownership and reject special files on every platform."""
 
-    expected_type = stat.S_ISDIR if directory else stat.S_ISREG
+    expectedType = stat.S_ISDIR if directory else stat.S_ISREG
 
-    if not expected_type(info.st_mode):
+    if not expectedType(info.st_mode):
         raise ArtifactError("Artifact storage requires regular files and directories")
 
     if not directory and info.st_nlink != 1:
@@ -268,7 +269,7 @@ def _UnlinkFile(directory: int, name: str, expected: _FileReceipt) -> None:
     _RequireOwned(info, directory=False)
 
     if _StatKey(info) != (
-        expected.device, expected.inode, expected.size, expected.modified_ns, expected.changed_ns,
+        expected.device, expected.inode, expected.size, expected.modifiedNs, expected.changedNs,
     ):
         raise ArtifactError("Artifact changed before cleanup; removal is refused")
 
@@ -290,13 +291,13 @@ def _AssertDirectory(parent: int, name: str, descriptor: int) -> None:
 def ReadArtifactFile(path: str | Path) -> bytes:
     """Read only a private artifact; never expose filesystem paths or bytes in failures."""
 
-    artifact_path = Path(path)
+    artifactPath = Path(path)
 
     try:
-        _ValidatePath(artifact_path)
+        _ValidatePath(artifactPath)
 
-        with _Directory(artifact_path.parent) as directory:
-            return _ReadFile(directory, artifact_path.name, MAX_ARTIFACT_BYTES)
+        with _Directory(artifactPath.parent) as directory:
+            return _ReadFile(directory, artifactPath.name, MAX_ARTIFACT_BYTES)
 
     except (OSError, ValueError, RecursionError):
         raise ArtifactError("Unable to read a valid private artifact") from None
@@ -306,7 +307,7 @@ def _Manifest(bundle: ArtifactBundle) -> bytes:
     """Record exact ownership and content digests while excluding payloads and credentials."""
 
     data = {
-        "schema_version": 1, "identity": asdict(bundle.identity), "kind": bundle.kind,
+        "schema_version": 1, "identity": _WireDict(bundle.identity), "kind": bundle.kind,
         "name": bundle.name, "files": [{
             "name": item.name, "size": len(item.content), "sensitive": item.sensitive,
             "sha256": hashlib.sha256(item.content).hexdigest(),
@@ -324,7 +325,7 @@ def _WriteFile(directory: int, name: str, content: bytes) -> _FileReceipt:
         0o600, dir_fd=directory,
     )
 
-    written_count = 0
+    writtenCount = 0
 
     try:
         remaining = memoryview(content)
@@ -336,13 +337,13 @@ def _WriteFile(directory: int, name: str, content: bytes) -> _FileReceipt:
                 raise OSError("Incomplete artifact write")
 
             remaining = remaining[written:]
-            written_count += written
+            writtenCount += written
 
         os.fsync(descriptor)
 
     except BaseException:
         try:
-            receipt = _Receipt(os.fstat(descriptor), content[:written_count])
+            receipt = _Receipt(os.fstat(descriptor), content[:writtenCount])
 
         finally:
             os.close(descriptor)
@@ -365,8 +366,8 @@ def _WriteFile(directory: int, name: str, content: bytes) -> _FileReceipt:
 def _BundleLock(directory: int, name: str) -> Iterator[None]:
     """Serialize cooperating operations without deleting an existing crash or foreign lock."""
 
-    lock_name = f".{name}.lock"
-    descriptor = os.open(lock_name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600, dir_fd=directory)
+    lockName = f".{name}.lock"
+    descriptor = os.open(lockName, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600, dir_fd=directory)
 
     try:
         receipt = _Receipt(os.fstat(descriptor), b"")
@@ -378,7 +379,7 @@ def _BundleLock(directory: int, name: str) -> Iterator[None]:
         yield
 
     finally:
-        _UnlinkFile(directory, lock_name, receipt)
+        _UnlinkFile(directory, lockName, receipt)
 
 
 def WriteArtifactBundle(root: str | Path, bundle: ArtifactBundle) -> Path:
@@ -387,27 +388,27 @@ def WriteArtifactBundle(root: str | Path, bundle: ArtifactBundle) -> Path:
     if not isinstance(bundle, ArtifactBundle):
         raise ArtifactError("bundle must be an ArtifactBundle")
 
-    root_path = Path(root)
-    bundle_name = f"{bundle.kind}-{bundle.name}"
+    rootPath = Path(root)
+    bundleName = f"{bundle.kind}-{bundle.name}"
     created: list[tuple[str, _FileReceipt]] = []
     directory: int | None = None
 
     try:
-        with _Directory(root_path, create=True) as parent:
-            with _BundleLock(parent, bundle_name):
+        with _Directory(rootPath, create=True) as parent:
+            with _BundleLock(parent, bundleName):
                 try:
-                    os.mkdir(bundle_name, 0o700, dir_fd=parent)
-                    directory = os.open(bundle_name, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0), dir_fd=parent)
+                    os.mkdir(bundleName, 0o700, dir_fd=parent)
+                    directory = os.open(bundleName, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0), dir_fd=parent)
 
                     for artifact in bundle.files:
-                        _AssertDirectory(parent, bundle_name, directory)
+                        _AssertDirectory(parent, bundleName, directory)
                         receipt = _WriteFile(directory, artifact.name, artifact.content)
                         created.append((artifact.name, receipt))
 
                     for name, receipt in created:
                         _AssertFile(directory, name, receipt)
 
-                    _AssertDirectory(parent, bundle_name, directory)
+                    _AssertDirectory(parent, bundleName, directory)
                     receipt = _WriteFile(directory, _MANIFEST_NAME, _Manifest(bundle))
                     created.append((_MANIFEST_NAME, receipt))
                     os.fsync(directory)
@@ -415,13 +416,13 @@ def WriteArtifactBundle(root: str | Path, bundle: ArtifactBundle) -> Path:
 
                 except BaseException:
                     if directory is not None:
-                        _AssertDirectory(parent, bundle_name, directory)
+                        _AssertDirectory(parent, bundleName, directory)
 
                         for name, receipt in reversed(created):
                             _UnlinkFile(directory, name, receipt)
 
-                        _AssertDirectory(parent, bundle_name, directory)
-                        os.rmdir(bundle_name, dir_fd=parent)
+                        _AssertDirectory(parent, bundleName, directory)
+                        os.rmdir(bundleName, dir_fd=parent)
 
                     raise
 
@@ -432,7 +433,7 @@ def WriteArtifactBundle(root: str | Path, bundle: ArtifactBundle) -> Path:
     except (OSError, ValueError, RecursionError):
         raise ArtifactError("Unable to publish artifact bundle; existing bundles are never replaced") from None
 
-    return root_path / bundle_name
+    return rootPath / bundleName
 
 
 def _UniqueObject(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -454,7 +455,7 @@ def _ValidateManifest(
 ) -> _BundleSnapshot:
     """Check the complete manifest and every file before authorizing any removal."""
 
-    raw, manifest_receipt = _ReadSnapshot(directory, _MANIFEST_NAME, MAX_MANIFEST_BYTES)
+    raw, manifestReceipt = _ReadSnapshot(directory, _MANIFEST_NAME, MAX_MANIFEST_BYTES)
     data = RequireTable(json.loads(raw, object_pairs_hook=_UniqueObject), "artifact manifest")
     ValidateFields(data, frozenset({"schema_version", "identity", "kind", "name", "files"}), frozenset(), "artifact manifest")
 
@@ -471,10 +472,10 @@ def _ValidateManifest(
 
     names: list[str] = []
     snapshots: list[_OwnedFile] = []
-    total_size = 0
+    totalSize = 0
 
-    for raw_file in files:
-        item = RequireTable(raw_file, "artifact entry")
+    for rawFile in files:
+        item = RequireTable(rawFile, "artifact entry")
         ValidateFields(item, frozenset({"name", "size", "sha256", "sensitive"}), frozenset(), "artifact entry")
         filename, size, digest = item["name"], item["size"], item["sha256"]
 
@@ -494,15 +495,15 @@ def _ValidateManifest(
 
         names.append(filename)
         snapshots.append(_OwnedFile(filename, content, receipt))
-        total_size += size
+        totalSize += size
 
-    if len(set(names)) != len(names) or total_size > MAX_BUNDLE_BYTES:
+    if len(set(names)) != len(names) or totalSize > MAX_BUNDLE_BYTES:
         raise ArtifactError("Artifact manifest has duplicates or exceeds its total size limit")
 
     if set(os.listdir(directory)) != {*names, _MANIFEST_NAME}:
         raise ArtifactError("Artifact bundle contains unowned files; cleanup is refused")
 
-    return _BundleSnapshot(tuple(snapshots), manifest_receipt)
+    return _BundleSnapshot(tuple(snapshots), manifestReceipt)
 
 
 def ReadOwnedArtifactFile(
@@ -514,17 +515,17 @@ def ReadOwnedArtifactFile(
         raise ArtifactError("Artifact read requires explicit identity and bundle kind")
 
     ValidateName(name, "artifact name")
-    artifact_path = Path(path)
+    artifactPath = Path(path)
 
-    if artifact_path.parent.name != f"{kind}-{name}":
+    if artifactPath.parent.name != f"{kind}-{name}":
         raise ArtifactError("Artifact path does not match the expected bundle name")
 
     try:
-        _ValidatePath(artifact_path)
+        _ValidatePath(artifactPath)
 
-        with _Directory(artifact_path.parent) as directory:
+        with _Directory(artifactPath.parent) as directory:
             snapshot = _ValidateManifest(directory, identity, kind, name)
-            file = next((item for item in snapshot.files if item.name == artifact_path.name), None)
+            file = next((item for item in snapshot.files if item.name == artifactPath.name), None)
 
             if file is None:
                 raise ArtifactError("Artifact filename is not owned by its bundle manifest")
@@ -537,7 +538,7 @@ def ReadOwnedArtifactFile(
 
 def RemoveArtifactBundle(
     root: str | Path, identity: StackIdentity, *, kind: str, name: str,
-    expected_bundle: ArtifactBundle | None = None,
+    expectedBundle: ArtifactBundle | None = None,
 ) -> bool:
     """Remove unchanged owned files, optionally binding cleanup to exact caller-expected content."""
 
@@ -546,26 +547,26 @@ def RemoveArtifactBundle(
 
     ValidateName(name, "artifact name")
 
-    if expected_bundle is not None and (
-        not isinstance(expected_bundle, ArtifactBundle)
-        or expected_bundle.identity != identity or expected_bundle.kind != kind
-        or expected_bundle.name != name
+    if expectedBundle is not None and (
+        not isinstance(expectedBundle, ArtifactBundle)
+        or expectedBundle.identity != identity or expectedBundle.kind != kind
+        or expectedBundle.name != name
     ):
         raise ArtifactError("Expected cleanup bundle must match the complete requested ownership")
 
-    root_path = Path(root)
-    bundle_name = f"{kind}-{name}"
+    rootPath = Path(root)
+    bundleName = f"{kind}-{name}"
 
     try:
-        _ValidatePath(root_path)
+        _ValidatePath(rootPath)
 
-        if not root_path.exists():
+        if not rootPath.exists():
             return False
 
-        with _Directory(root_path) as parent:
-            with _BundleLock(parent, bundle_name):
+        with _Directory(rootPath) as parent:
+            with _BundleLock(parent, bundleName):
                 try:
-                    descriptor = os.open(bundle_name, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0), dir_fd=parent)
+                    descriptor = os.open(bundleName, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0), dir_fd=parent)
 
                 except FileNotFoundError:
                     return False
@@ -574,15 +575,15 @@ def RemoveArtifactBundle(
                     _RequireOwned(os.fstat(descriptor), directory=True)
                     snapshot = _ValidateManifest(descriptor, identity, kind, name)
 
-                    if expected_bundle is not None and (
+                    if expectedBundle is not None and (
                         {item.name: item.content for item in snapshot.files}
-                        != {item.name: item.content for item in expected_bundle.files}
+                        != {item.name: item.content for item in expectedBundle.files}
                         or snapshot.manifest.sha256
-                        != hashlib.sha256(_Manifest(expected_bundle)).hexdigest()
+                        != hashlib.sha256(_Manifest(expectedBundle)).hexdigest()
                     ):
                         raise ArtifactError("Artifact bundle differs from the expected cleanup content")
 
-                    _AssertDirectory(parent, bundle_name, descriptor)
+                    _AssertDirectory(parent, bundleName, descriptor)
 
                     for file in snapshot.files:
                         _AssertFile(descriptor, file.name, file.receipt)
@@ -590,13 +591,13 @@ def RemoveArtifactBundle(
                     _AssertFile(descriptor, _MANIFEST_NAME, snapshot.manifest)
 
                     for file in snapshot.files:
-                        _AssertDirectory(parent, bundle_name, descriptor)
+                        _AssertDirectory(parent, bundleName, descriptor)
                         _UnlinkFile(descriptor, file.name, file.receipt)
 
                     _UnlinkFile(descriptor, _MANIFEST_NAME, snapshot.manifest)
                     os.fsync(descriptor)
-                    _AssertDirectory(parent, bundle_name, descriptor)
-                    os.rmdir(bundle_name, dir_fd=parent)
+                    _AssertDirectory(parent, bundleName, descriptor)
+                    os.rmdir(bundleName, dir_fd=parent)
 
                 finally:
                     os.close(descriptor)

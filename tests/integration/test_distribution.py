@@ -26,10 +26,10 @@ class DistributionArtifacts:
 
     wheel: Path
     sdist: Path
-    rebuilt_wheel: Path
+    rebuiltWheel: Path
     python: Path
     console: Path
-    outside_source: Path
+    outsideSource: Path
 
 
 def _Run(command: list[str], cwd: Path) -> str:
@@ -54,15 +54,15 @@ def _Run(command: list[str], cwd: Path) -> str:
     return result.stdout
 
 
-@pytest.fixture(scope="module")
-def distribution_artifacts(tmp_path_factory: pytest.TempPathFactory) -> DistributionArtifacts:
+@pytest.fixture(scope="module", name='distributionArtifacts')
+def DistributionArtifactsFixture(tmp_path_factory: pytest.TempPathFactory) -> DistributionArtifacts:
     """Build, safely unpack, rebuild and install distributions without an index."""
 
-    temporary_root = tmp_path_factory.mktemp("distribution")
-    supplied_directory = os.environ.get("FLAYER_DISTRIBUTION_DIRECTORY")
-    output = Path(supplied_directory).resolve() if supplied_directory else temporary_root / "original"
+    temporaryRoot = tmp_path_factory.mktemp("distribution")
+    suppliedDirectory = os.environ.get("FLAYER_DISTRIBUTION_DIRECTORY")
+    output = Path(suppliedDirectory).resolve() if suppliedDirectory else temporaryRoot / "original"
 
-    if not supplied_directory:
+    if not suppliedDirectory:
         _Run(
             [sys.executable, "-m", "hatchling", "build", "--directory", str(output)],
             PROJECT_ROOT,
@@ -74,65 +74,65 @@ def distribution_artifacts(tmp_path_factory: pytest.TempPathFactory) -> Distribu
     assert len(wheels) == len(sdists) == 1, "Installation smoke requires one wheel and one sdist"
 
     wheel, sdist = wheels[0], sdists[0]
-    unpacked = temporary_root / "unpacked"
+    unpacked = temporaryRoot / "unpacked"
     unpacked.mkdir()
 
     with tarfile.open(sdist) as archive:
         for member in archive.getmembers():
-            relative_path = Path(member.name)
+            relativePath = Path(member.name)
 
             assert (
-                not relative_path.is_absolute() and ".." not in relative_path.parts
+                not relativePath.is_absolute() and ".." not in relativePath.parts
                 and (member.isdir() or member.isfile())
             ), "Built sdist contains an unsafe path or nonregular member"
 
             if member.isdir():
-                (unpacked / relative_path).mkdir(parents=True, exist_ok=True)
+                (unpacked / relativePath).mkdir(parents=True, exist_ok=True)
                 continue
 
             stream = archive.extractfile(member)
 
             assert stream is not None, "Built sdist regular member has no content"
 
-            destination = unpacked / relative_path
+            destination = unpacked / relativePath
             destination.parent.mkdir(parents=True, exist_ok=True)
 
             with stream:
                 destination.write_bytes(stream.read())
 
-    source_root = next(unpacked.iterdir())
-    rebuilt_output = temporary_root / "rebuilt"
+    sourceRoot = next(unpacked.iterdir())
+    rebuiltOutput = temporaryRoot / "rebuilt"
     _Run(
         [sys.executable, "-m", "hatchling", "build", "--target", "wheel",
-         "--directory", str(rebuilt_output)],
-        source_root,
+         "--directory", str(rebuiltOutput)],
+        sourceRoot,
     )
-    environment_root = temporary_root / "environment"
-    venv.EnvBuilder(with_pip=False).create(environment_root)
-    binary_root = environment_root / ("Scripts" if os.name == "nt" else "bin")
-    python = binary_root / ("python.exe" if os.name == "nt" else "python")
+    environmentRoot = temporaryRoot / "environment"
+    venv.EnvBuilder(with_pip=False).create(environmentRoot)
+    binaryRoot = environmentRoot / ("Scripts" if os.name == "nt" else "bin")
+    python = binaryRoot / ("python.exe" if os.name == "nt" else "python")
     _Run(
         [sys.executable, "-m", "pip", "--python", str(python), "install",
          "--no-index", str(wheel)],
-        temporary_root,
+        temporaryRoot,
     )
 
     return DistributionArtifacts(
-        wheel, sdist, next(rebuilt_output.glob("*.whl")), python,
-        binary_root / ("flayer.exe" if os.name == "nt" else "flayer"), temporary_root,
+        wheel, sdist, next(rebuiltOutput.glob("*.whl")), python,
+        binaryRoot / ("flayer.exe" if os.name == "nt" else "flayer"), temporaryRoot,
     )
 
 
 def test_DistributionMetadataAndTypedEntryPoint(
-    distribution_artifacts: DistributionArtifacts,
+    distributionArtifacts: DistributionArtifacts,
 ) -> None:
     """The wheel carries real public metadata, types, license and the correct entry point."""
 
-    with zipfile.ZipFile(distribution_artifacts.wheel) as archive:
+    with zipfile.ZipFile(distributionArtifacts.wheel) as archive:
         names = archive.namelist()
-        metadata_path = next(name for name in names if name.endswith(".dist-info/METADATA"))
-        metadata = BytesParser().parsebytes(archive.read(metadata_path))
-        entry_points = next(name for name in names if name.endswith("/entry_points.txt"))
+        metadataPath = next(name for name in names if name.endswith(".dist-info/METADATA"))
+        metadata = BytesParser().parsebytes(archive.read(metadataPath))
+        entryPoints = next(name for name in names if name.endswith("/entry_points.txt"))
 
         assert metadata["Name"] == "f-layer", "Distribution name drifted from its public identity"
         assert metadata["Requires-Python"] == ">=3.11", "Supported Python floor drifted"
@@ -140,7 +140,7 @@ def test_DistributionMetadataAndTypedEntryPoint(
         assert metadata["Description-Content-Type"] == "text/markdown", "README metadata is wrong"
         assert "flayer/py.typed" in names, "Typed package marker is absent from the wheel"
         assert any(name.endswith("/licenses/LICENSE") for name in names), "License file is absent"
-        assert "flayer = flayer.__main__:Main" in archive.read(entry_points).decode(), (
+        assert "flayer = flayer.__main__:Main" in archive.read(entryPoints).decode(), (
             "Installed console entry point targets a different function"
         )
         assert all(
@@ -160,7 +160,7 @@ def test_DistributionMetadataAndTypedEntryPoint(
             for value in metadata.get_all("Project-URL", [])
         ), "Installed package metadata has no documentation link"
 
-    with tarfile.open(distribution_artifacts.sdist) as archive:
+    with tarfile.open(distributionArtifacts.sdist) as archive:
         names = archive.getnames()
 
         assert any(name.endswith("/tools/validate.py") for name in names), (
@@ -173,12 +173,12 @@ def test_DistributionMetadataAndTypedEntryPoint(
 
 
 def test_SdistRebuildAndIsolatedConsoleParity(
-    distribution_artifacts: DistributionArtifacts,
+    distributionArtifacts: DistributionArtifacts,
 ) -> None:
     """An exported sdist rebuilds the same wheel and its installed CLI runs in isolation."""
 
-    assert hashlib.sha256(distribution_artifacts.wheel.read_bytes()).digest() == hashlib.sha256(
-        distribution_artifacts.rebuilt_wheel.read_bytes()
+    assert hashlib.sha256(distributionArtifacts.wheel.read_bytes()).digest() == hashlib.sha256(
+        distributionArtifacts.rebuiltWheel.read_bytes()
     ).digest(), "Wheel rebuilt from sdist differs from the original distribution"
 
     code = (
@@ -187,8 +187,8 @@ def test_SdistRebuildAndIsolatedConsoleParity(
         "'path':flayer.__file__}))"
     )
     result = json.loads(_Run(
-        [str(distribution_artifacts.python), "-I", "-c", code],
-        distribution_artifacts.outside_source,
+        [str(distributionArtifacts.python), "-I", "-c", code],
+        distributionArtifacts.outsideSource,
     ))
 
     assert result["runtime"] == result["metadata"], "Runtime and installed versions disagree"
@@ -196,43 +196,43 @@ def test_SdistRebuildAndIsolatedConsoleParity(
         "Isolated installation test imported the checkout instead of the wheel"
     )
 
-    console_help = _Run(
-        [str(distribution_artifacts.console), "--help"], distribution_artifacts.outside_source,
+    consoleHelp = _Run(
+        [str(distributionArtifacts.console), "--help"], distributionArtifacts.outsideSource,
     )
-    module_help = _Run(
-        [str(distribution_artifacts.python), "-I", "-m", "flayer", "--help"],
-        distribution_artifacts.outside_source,
+    moduleHelp = _Run(
+        [str(distributionArtifacts.python), "-I", "-m", "flayer", "--help"],
+        distributionArtifacts.outsideSource,
     )
 
-    assert console_help == module_help, "Console and module CLI help surfaces disagree"
+    assert consoleHelp == moduleHelp, "Console and module CLI help surfaces disagree"
 
 
 def test_InstalledConsoleRunsWithoutSourceOrCloudTools(
-    distribution_artifacts: DistributionArtifacts,
+    distributionArtifacts: DistributionArtifacts,
 ) -> None:
     """A fresh wheel installation performs real local diagnostics without cloud credentials."""
 
     result = json.loads(_Run(
-        [str(distribution_artifacts.console), "check", "--format", "json"],
-        distribution_artifacts.outside_source,
+        [str(distributionArtifacts.console), "check", "--format", "json"],
+        distributionArtifacts.outsideSource,
     ))
 
     assert result["command"] == "check", "Installed console ran the wrong diagnostic command"
     assert result["status"] == "ok", "Installed wheel cannot complete local runtime checks"
     assert result["checks"][0]["name"] == "python-runtime", "Runtime diagnostic is missing"
     assert "No broken requirements found" in _Run(
-        [sys.executable, "-m", "pip", "--python", str(distribution_artifacts.python), "check"],
-        distribution_artifacts.outside_source,
+        [sys.executable, "-m", "pip", "--python", str(distributionArtifacts.python), "check"],
+        distributionArtifacts.outsideSource,
     ), "Fresh core installation has unresolved dependencies"
     assert _Run(
-        [str(distribution_artifacts.python), "-I", "-c",
+        [str(distributionArtifacts.python), "-I", "-c",
          "import importlib.util; print(importlib.util.find_spec('cryptography') is None)"],
-        distribution_artifacts.outside_source,
+        distributionArtifacts.outsideSource,
     ).strip() == "True", "Core installation unexpectedly pulled in the optional VPN dependency"
 
 
 def test_VpnExtraInstallsAndGeneratesKeys(
-    distribution_artifacts: DistributionArtifacts, tmp_path: Path,
+    distributionArtifacts: DistributionArtifacts, tmp_path: Path,
 ) -> None:
     """The documented VPN extra resolves offline and provides working key generation."""
 
@@ -241,14 +241,14 @@ def test_VpnExtraInstallsAndGeneratesKeys(
     if not wheelhouse:
         pytest.skip("VPN dependency wheelhouse is required; release CI downloads it before smoke")
 
-    environment_root = tmp_path / "vpn-environment"
-    venv.EnvBuilder(with_pip=False).create(environment_root)
-    binary_root = environment_root / ("Scripts" if os.name == "nt" else "bin")
-    python = binary_root / ("python.exe" if os.name == "nt" else "python")
-    wheel_specification = f"f-layer[vpn] @ {distribution_artifacts.wheel.as_uri()}"
+    environmentRoot = tmp_path / "vpn-environment"
+    venv.EnvBuilder(with_pip=False).create(environmentRoot)
+    binaryRoot = environmentRoot / ("Scripts" if os.name == "nt" else "bin")
+    python = binaryRoot / ("python.exe" if os.name == "nt" else "python")
+    wheelSpecification = f"f-layer[vpn] @ {distributionArtifacts.wheel.as_uri()}"
     _Run(
         [sys.executable, "-m", "pip", "--python", str(python), "install", "--no-index",
-         "--find-links", str(Path(wheelhouse).resolve()), wheel_specification],
+         "--find-links", str(Path(wheelhouse).resolve()), wheelSpecification],
         tmp_path,
     )
     code = (

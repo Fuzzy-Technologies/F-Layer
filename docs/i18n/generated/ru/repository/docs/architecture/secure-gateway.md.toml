@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/secure-gateway.md"
-sourceHash = "sha256:5070d94048f2c94795a66213a8e5f9b83e02e7f283ff8bc7c979320ab7f9593a"
-reviewedTranslationHash = "sha256:c32da2bf34be7fcc3ee7e632041572ace31071368a1f090e785fce545ff7f761"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:38b6d383458bf9fd8ae47d53a9759d359c8f7eb9d203ce342189c7a30e7376e5"
+reviewedTranslationHash = "sha256:a4c4c56d49957b8108dfd7d09b3df141cc2cd933f2fbcfd0c83a7a864c426d4c"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:58:35Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # Профиль защищённого шлюза
@@ -57,14 +57,14 @@ from flayer.profiles import (
 )
 
 profile = LoadGatewayProfile("gateway.toml")
-server_directory = WriteArtifactBundle("generated-artifacts", BuildServerBundle(profile))
-plan_text = RenderPlan(
+serverDirectory = WriteArtifactBundle("generated-artifacts", BuildServerBundle(profile))
+planText = RenderPlan(
     CompileGateway(profile),
-    user_data_file=server_directory / "server-cloud-init.json",
+    userDataFile=serverDirectory / "server-cloud-init.json",
 )
 ```
 
-Сохраняйте `plan_text` только в закрытом локальном хранилище. Абсолютный путь
+Сохраняйте `planText` только в закрытом локальном хранилище. Абсолютный путь
 к cloud-init нужен для запуска на этой машине и не является переносимой
 конфигурацией репозитория. План читается обработчиком TOML жизненного цикла;
 создание облачных ресурсов запускается отдельными командами. Вызовы выше
@@ -101,15 +101,15 @@ plan_text = RenderPlan(
 ```python
 from flayer.profiles import BuildSshDeviceBundle, WriteArtifactBundle
 
-device_directory = WriteArtifactBundle(
+deviceDirectory = WriteArtifactBundle(
     "generated-artifacts",
     BuildSshDeviceBundle(
         profile,
         "laptop",
         endpoint="203.0.113.42",
-        identity_file="/path/to/laptop-key",
-        known_hosts_file="/path/to/trusted-known-hosts",
-        local_ports=(8443,),
+        identityFile="/path/to/laptop-key",
+        knownHostsFile="/path/to/trusted-known-hosts",
+        localPorts=(8443,),
     ),
 )
 ```

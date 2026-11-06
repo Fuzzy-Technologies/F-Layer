@@ -16,8 +16,8 @@ records the discovery and loading boundary.
 | `CompiledProfile`            | Expose identity, server bundle generation, and verified lifecycle TOML rendering. |
 | `ExtensionRegistry`          | Register, select, and explicitly load exact validated descriptors.                |
 
-`ProviderContext` contains only `scope_id`, an external CLI
-`authentication_reference`, and bounded command timeout/inventory limits. It does
+`ProviderContext` contains only `scopeId`, an external CLI
+`authenticationReference`, and bounded command timeout/inventory limits. It does
 not resolve credentials, read credential files, accept credential bytes, select
 executables, or carry an arbitrary options dictionary. An authentication reference
 is an identifier naming an already configured external authentication source;
@@ -68,7 +68,7 @@ For a gateway, select `ExtensionKind.PROFILE` and `secure-gateway`, then call
 `CompileProfile(configuration, ProfileContext(identity))`. The compiled adapter
 rejects any configuration ownership mismatch. `BuildServerBundle()` produces the
 existing owned artifact bundle in memory. Store it with `WriteArtifactBundle()`
-before calling `RenderPlan(user_data_file=...)`; rendering verifies the exact
+before calling `RenderPlan(userDataFile=...)`; rendering verifies the exact
 owned server bytes and manifest. It does not deploy the plan or prove guest or
 transport readiness.
 

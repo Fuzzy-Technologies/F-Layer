@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/extensions.md"
-sourceHash = "sha256:50eb83811347e4081383f461951f3ffbcd59a881bc10dc8aa3c0847f24ccdb0b"
-reviewedTranslationHash = "sha256:d52411424e98dc4a37af74894d3c3740cdfc09950fd81c6933c372dd2c3b2031"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:f71dc6aa75d490c775c967ef402443610f5aa966b56eda9e995b4e6d32334ba2"
+reviewedTranslationHash = "sha256:f9c7c0c2857e0a1887506de9e9c81dfcf29d0d6bfb4ea8d7b5bd44b160b928ba"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:47:08Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # Интерфейсы расширений и их обнаружение
@@ -25,8 +25,8 @@ body = '''
 | `CompiledProfile`            | Идентификаторы, формирование серверного набора и проверенный план TOML.     |
 | `ExtensionRegistry`          | Регистрация, выбор и явная загрузка проверенных описаний.                   |
 
-`ProviderContext` содержит только `scope_id`, имя внешнего источника CLI
-`authentication_reference`, таймаут и предел размера списка. Он не читает
+`ProviderContext` содержит только `scopeId`, имя внешнего источника CLI
+`authenticationReference`, таймаут и предел размера списка. Он не читает
 учётные данные, не принимает их содержимое, не выбирает исполняемые файлы
 и не содержит произвольного словаря опций. Имя аутентификации обозначает уже
 настроенный внешний источник; токен или ключ нельзя передавать вместо имени.
@@ -76,7 +76,7 @@ provider = extension.CreateProvider(ProviderContext("example-folder", "external-
 `CompileProfile(configuration, ProfileContext(identity))`. Несовпадение
 принадлежности отклоняется. `BuildServerBundle()` создаёт набор в памяти.
 Сохраните его через `WriteArtifactBundle()` до вызова
-`RenderPlan(user_data_file=...)`: тот проверит точные байты и манифест.
+`RenderPlan(userDataFile=...)`: тот проверит точные байты и манифест.
 Создание плана не развёртывает сервер и не подтверждает работу транспорта.
 
 ## Статическое обнаружение метаданных

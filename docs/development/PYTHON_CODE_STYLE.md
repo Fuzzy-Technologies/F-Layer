@@ -14,12 +14,23 @@ Project-owned identifiers use:
 
 - functions and methods: `PascalCase`, including `Main()`;
 - classes, protocols, and enums: `PascalCase`;
-- variables, parameters, and fields: `snake_case`; a leading underscore is allowed for internal implementation details;
+- variables, parameters, and fields: `camelCase`; leading underscores are allowed for internal and name-mangled implementation details;
 - constants: `UPPER_SNAKE_CASE`, with underscores between words;
 - test files: `test_*.py`;
 - test functions: the required `test_` prefix followed by `PascalCase`.
 
 Preserve names imposed by Python, frameworks, SDKs, schemas, protocols, and third-party APIs. This includes dunder methods, pytest fixtures and hooks, callbacks, CLI options, configuration keys, and compatibility contracts.
+
+Examples: `ycProfile`, `projectRoot`, `_statePath`, `LoadVpnProject()` and
+`SCHEMA_VERSION`. Keep `subprocess.run(capture_output=True)` and
+`Path.unlink(missing_ok=True)` exactly as their external APIs define them.
+The same applies to standard-library overrides and test doubles implementing
+those interfaces. Computed properties may retain their callable PascalCase
+names; protocol properties describing stored data fields use those fields' camelCase names.
+
+The owner reconfirmed these rules on 2026-11-04. The foundation's former
+snake_case variable instruction is superseded. See
+[the naming audit and migration](python-naming-audit.md) for scope and compatibility.
 
 ## Docstrings
 
@@ -47,6 +58,14 @@ Use Ruff for lint and static checks:
 python -m ruff check .
 ```
 
+The canonical gate also runs `python -m tools.python_naming`. This checks all
+tracked and newly authored Python modules and stubs without importing them,
+plus embedded modules, Markdown examples and workflow Python heredocs.
+External overrides are identified by exact file and qualified definition in
+the validator; unrelated names receive no exemption. Built-in pytest fixture
+parameters retain their registered injection names. The validator's intentionally
+invalid test strings are data; their containing test module is still checked.
+
 Formatting-only changes must not rename protected interfaces, modify behavior, or collapse logical blocks.
 
 ## Validation
@@ -55,6 +74,7 @@ Typical repository gates:
 
 ```bash
 python -m compileall -q src tests
+python -m tools.python_naming
 python -m ruff check .
 python -m mypy
 python -m pytest

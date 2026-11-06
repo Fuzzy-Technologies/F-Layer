@@ -14,56 +14,56 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.amneziawg.AmneziaWgDeviceKey"
 sourcePath = "src/flayer/profiles/amneziawg.py"
-sourceHash = "sha256:a0e6bab3043fe25a19b4855dfe330b05c822df61843e4e7e32c40941680052d1"
+sourceHash = "sha256:d7f7bc9d7a625645dfd2d0d98621b7619d416015286ffccb94150c2e67a59a02"
 body = "单台设备的凭据，不包含在对象的诊断表示中。"
 reviewedTranslationHash = "sha256:6654ce95ca05287f03431032b6de809bc3673c5c88e5a4382e6d74df02197366"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.138402+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.amneziawg.AmneziaWgSecrets"
 sourcePath = "src/flayer/profiles/amneziawg.py"
-sourceHash = "sha256:775d9fbea410c221d61705cf20828fcacd9ea3e0df3fc15d93bae97238ad4e1d"
+sourceHash = "sha256:401a54ab8958ffa9d702ce1614d0bd0a84dbd0ddfc500ab4c6a577ceebbdd4bb"
 body = "准备配置所需的敏感输入，不写入通用配置、状态或对象的 repr 表示。"
 reviewedTranslationHash = "sha256:388ade56ce23f33528ac41d0a62f8b3a675baeafed64aeae74effc7d1ee2ab78"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.amneziawg.AmneziaWgSettings"
 sourcePath = "src/flayer/profiles/amneziawg.py"
-sourceHash = "sha256:c58db5cf4d46fa00ff94070109efabad8e1e1782c9ad698f17ced61a5fc20635"
+sourceHash = "sha256:85a1da3939296aa39b18cdbac7d515ddcd59af5a1d64733f5540de223f4f044c"
 body = "限定的 IPv4 隧道子网及保守的客户端报文大小设置。"
 reviewedTranslationHash = "sha256:63e8955907ee17eefc0b84f3cca1f67954315800190080192ef7fc208693c49c"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.138485+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.amneziawg.GenerateAmneziaWgSecrets"
 sourcePath = "src/flayer/profiles/amneziawg.py"
-sourceHash = "sha256:68636deeade5fbba48a93495fef72bc8e5ece5bc554ddef7ade718710f0c4510"
+sourceHash = "sha256:1d54b4733915ece29f6eb109170f3bad9076d3114657fdca752d29d44e6eb31b"
 body = "在显式添加、轮换或删除设备时，保留其他未更改的凭据。"
 reviewedTranslationHash = "sha256:8bd32237e0f6a53a9423c3e0dc931b42c4d531f0d0e8a41c00546ee9cff1d9e8"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.138505+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.amneziawg.EncodeAmneziaWgSecrets"
 sourcePath = "src/flayer/profiles/amneziawg.py"
-sourceHash = "sha256:8e044e135d178b9267c5595d90081088e07a6c2e846492e175c4616256efa49c"
+sourceHash = "sha256:e44a5e6402a85f64e84d50a31f36db888cb799a63242d6a0574628daac0cb46b"
 body = "将仅供控制端使用的凭据序列化到归属明确的私有材料包中。"
 reviewedTranslationHash = "sha256:d96d8b4d0618eada5e5295ba1923d291c2c2468500a9c22aea69acb18317cb86"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.138525+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -91,12 +91,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.amneziawg.PrepareAmneziaWg"
 sourcePath = "src/flayer/profiles/amneziawg.py"
-sourceHash = "sha256:7e447174fa8ac72130e48330b890faa6f2bfdfd1c6d80438b215a26f96f88460"
+sourceHash = "sha256:70963adfecb709e15bca6fa36ed83b62cb0c69b3d84ab967389d848b0fdb29bd"
 body = "以确定方式生成私有服务器和客户端文件，不执行任何外部操作。"
 reviewedTranslationHash = "sha256:e72bcdafc6ff9612079685be3223d9655bd4c42f66b26adf88eadec7d33d6054"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.138583+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -124,34 +124,34 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.vless.VlessRealitySettings"
 sourcePath = "src/flayer/profiles/vless.py"
-sourceHash = "sha256:7f1d57592fd5158ca083a63a6fcd0020a5ce5d55d7aa6f3871e663b98b58ed96"
+sourceHash = "sha256:c2baebfec75490b8503ad9aef575fa037688d4704fb6f231448f4bf1ebe7e6d2"
 body = "不含凭据的 Reality 握手目标和本地应用代理监听设置。"
 reviewedTranslationHash = "sha256:e4fa60e9d742cb5721f34cd32a1ae72c839470606e038f361434323023f93933"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.vless.VlessDeviceCredential"
 sourcePath = "src/flayer/profiles/vless.py"
-sourceHash = "sha256:c964312a3ab413e5a5fce863aeff1e63e11194ba0e5f50e46a766b30fab55dcd"
+sourceHash = "sha256:fe9ee93b049b36b3330f0af517bd744741647fb17af8a8f6c90873f48703ba96"
 body = "每台设备独立且可撤销的 VLESS UUID，不包含在对象表示中。"
 reviewedTranslationHash = "sha256:713882bd4b4cddf3f247a7e816d78ef8a3c558e9032af905eb7d39892f4859dd"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.138661+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.vless.VlessMaterial"
 sourcePath = "src/flayer/profiles/vless.py"
-sourceHash = "sha256:14bd48b87a4eab96160ef007cf02463d7386fb66ccc6aa936f15d88d52c11d3b"
+sourceHash = "sha256:9168cb0a2b084144247662fc1ef20a31a1d82eb041b58e332437629c2eeaf144"
 body = "明确提供的密钥等敏感材料仅保存在私有文件包中，不写入通用生命周期状态。"
 reviewedTranslationHash = "sha256:104cbab0f0ed38ce9da2670379ab746062a212470688f6b3c20ae33cfdd13f30"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -201,23 +201,23 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.vless.RenderVlessClient"
 sourcePath = "src/flayer/profiles/vless.py"
-sourceHash = "sha256:610d0960cf4af9bd597de691d4aa6e55629c4c441bd96e4e05d41d8f202c82dd"
+sourceHash = "sha256:ee5c4da71d14118c80ec2d1b38557d3423da59c0cbb6b28a4d083cec055e13da"
 body = "生成仅监听回环地址的 SOCKS 客户端；分流模式下拒绝允许列表之外的目标。"
 reviewedTranslationHash = "sha256:ebccd92c8385a6246b7b11bb43178f39d1df87d5ec86b3b26b73e2ada7c12168"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.138778+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.vless.BuildVlessUri"
 sourcePath = "src/flayer/profiles/vless.py"
-sourceHash = "sha256:558d7f85293666fa738f1fea28824727913eb2fefafdde9b1a173eb205cf2434"
+sourceHash = "sha256:f18fcde882e9f8d13dc11a768fed857cf8c04fd389d73a8d55b55884d76c25fa"
 body = "生成传输配置导入 URI；客户端路由和 DNS 策略需单独配置。"
 reviewedTranslationHash = "sha256:b9eb7eaf7e05ad039cb7e4e6dfcdf896a247d48ef1bac6ff97bf741ec13a1a4a"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.138799+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -234,12 +234,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.vless.PrepareVless"
 sourcePath = "src/flayer/profiles/vless.py"
-sourceHash = "sha256:8b676027a04102e8fcb0e30dda79406ff722957e7a997db201c5e2c08cadf21f"
-body = "为归属明确的栈准备安装程序，并为每台已声明设备生成独立的私有导入文件包。"
-reviewedTranslationHash = "sha256:e184450c556bcbd8edcd9d84518e297577f5bc073b3864fcc396adfdccfe3fdd"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:e483a5cc9eef366661a3c86080bb31f1de71a5858f3e16dbe13037dbb1bb8fc6"
+body = "以显式选择的当前版本或保留的旧运行时基线准备私密文件包。"
+reviewedTranslationHash = "sha256:b09cc5d5169281069137cd49241cba51f6ec5a4497a48922f33b6060e068db2a"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.138839+00:00"
+reviewedAt = "2026-11-05T18:37:32.432583Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -267,23 +267,23 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.vpn.VpnDevice"
 sourcePath = "src/flayer/profiles/vpn.py"
-sourceHash = "sha256:cb883c68a3c622e1d2c85bc3477bcdb0ac2f52c0676fa33297bacda8a3b74613"
+sourceHash = "sha256:d1d88474abc7c19a93640740fc3b8432cc709ae897c218b4fdec516374b87ea4"
 body = "一台具名客户端；可选的私有 IPv4 地址用于 IP 隧道。"
 reviewedTranslationHash = "sha256:9a8be3133abe5929e755ad2a804e739b284805a0b3872d7ed0dbcbd223eb1821"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.138897+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.vpn.VpnRoutes"
 sourcePath = "src/flayer/profiles/vpn.py"
-sourceHash = "sha256:1bd1a2e7e2563c449ccf8bae5195aed31f6090e45662c7b3b53fdafef3d51696"
+sourceHash = "sha256:f526eb593a0932e03a11e0dcc173bc0d5d80bcd09475416155cb81d2c4c761aa"
 body = "IPv4 目标路由策略；在这一初始契约范围内，客户端必须禁用 IPv6。"
 reviewedTranslationHash = "sha256:38751aba144b718ef98f5dcaec24735c0e635e44ef9bbafdb889bab215ad7d9e"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.138916+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -300,34 +300,34 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.vpn.VpnListener"
 sourcePath = "src/flayer/profiles/vpn.py"
-sourceHash = "sha256:20110c6760b9d6a9bd02132cd9fc137f6543093eae9a3171f3b3c48c894e4dea"
+sourceHash = "sha256:309c8245f10425fa0722835c535f69dba0c41d39e2e9a46de42cf8fa71fc34ae"
 body = "为具名传输实现明确开放的一条 TCP 或 UDP 入站规则。"
 reviewedTranslationHash = "sha256:faa0eb55f30005e293201af0819b01ab8ebf46c69b6e2c3e646ae9ee80dd5885"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.138955+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.vpn.VpnCapabilities"
 sourcePath = "src/flayer/profiles/vpn.py"
-sourceHash = "sha256:4104d69fd2d70b1f3cb1e09fb883fcfc9d0390a37b63353a5cfe61d42ee592ca"
+sourceHash = "sha256:d3babd537a51adaf7946e9464647c0ff757f102cd368a713c99d95a65038da31"
 body = "传输实现声明的流量范围；应用代理不等同于覆盖整个操作系统的隧道。"
 reviewedTranslationHash = "sha256:f7658be2c0c6e643ecb04d5f8a68f43fc1417160cd562d80288ff32a8710ee0b"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.138974+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.vpn.VpnProfile"
 sourcePath = "src/flayer/profiles/vpn.py"
-sourceHash = "sha256:6202fdce9a8bae3a150eacd3fe8fb419ad924e7fe8e598fa23e320dc17db14d2"
+sourceHash = "sha256:6b718cf778640ab1eceec3d341278c3ad7dd02b75e9cabd96d7ba62eb448e403"
 body = "不含凭据的设备和路由配置，归属于一个明确标识的基础设施资源栈。"
 reviewedTranslationHash = "sha256:b3d1b6455aabde63f1ef2b48a98f276282fdccee783d95b77aecc7de9dd7298c"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -366,23 +366,23 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.vpn.BuildVpnDeviceBundle"
 sourcePath = "src/flayer/profiles/vpn.py"
-sourceHash = "sha256:837c17be80f2668fcb2a1d0562891fb13b9ebb67851c1f3a5ce589487249ee8f"
+sourceHash = "sha256:4117ee0463a61723b18ad6de8f294c738d4684f83b5bf2f3f9334bbee8cbb261"
 body = "准备归属明确的客户端文件，不覆盖或撤销已有凭据。"
 reviewedTranslationHash = "sha256:e5153917e1bb2c1d36cb5acbe01428c3b017201d36242fd20ea839d70cae7591"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.139070+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.vpn.PreparedVpnTransport"
 sourcePath = "src/flayer/profiles/vpn.py"
-sourceHash = "sha256:aa82f93d4c7ff5409f2da82288fe3ba731001119c8f1a4b0ecfb5d6d6a6a5274"
+sourceHash = "sha256:5f9d49b08e1416c747d8d6f9da492d4c433e48e88e5be7bb100f14c955bd1152"
 body = "敏感的服务器与客户端文件；准备完成不代表已部署或健康检查通过。"
 reviewedTranslationHash = "sha256:f6268f7462f3eebdb19a8741c1314936219242ee7580cd6cb5c09e8867ae6c98"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.139089+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -399,12 +399,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.vpn.ValidateVpnReplacement"
 sourcePath = "src/flayer/profiles/vpn.py"
-sourceHash = "sha256:3b231857aae76f3b81d09ec2678c7f9886a0e582d1e83d2429eed5333695a270"
+sourceHash = "sha256:fe5fb568babc61d0260ac1a2beb73374d59980f65fb1657acf72e25612b2e0ae"
 body = "要求对确切旧文件的替换许可；服务器端撤销与本地清理仍分别执行。"
 reviewedTranslationHash = "sha256:11b30b852b9604682152d787037a65872b9c67f9f233fac72e7f76a5865d0d92"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.139129+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]

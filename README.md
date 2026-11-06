@@ -165,39 +165,22 @@ This version routes **IPv4**; disable IPv6 on the client/device to prevent bypas
 The project's IPv6 setting does not change your device settings.
 Keep client files and QR codes private: they grant access to your VPN.
 
-If a network disrupts the direct VLESS Reality handshake, export a client profile
-with `flayer vpn export --project ~/flayer-vpn --device laptop --protocol vless-reality --output ~/flayer-export-fragment --tls-fragment`
-and import the resulting `amnezia.vpn`. This changes only the exported client;
-existing keys, server settings and source artifacts remain unchanged.
-This export contains `client.json` and `amnezia.vpn`; it omits `import.txt`
-because a plain VLESS URI cannot carry the fragmentation policy.
-
-Vision normally intercepts UDP 443 so applications fall back to TCP. If an
-application requires QUIC, add `--allow-quic` to the VLESS export command.
-This selects `xtls-rprx-vision-udp443` only in the exported client, preserves
-the existing server and keys, and can be combined with `--tls-fragment` and `--qr`.
-Derived exports contain the complete native profile and omit `import.txt`.
-
-For a TCP fallback from the project's original Vision client, export with TLS
-fragmentation and leave QUIC disabled:
-
-```bash
-flayer vpn export --project ~/flayer-vpn --device laptop --protocol vless-reality --output ~/flayer-export-tcp --tls-fragment --qr
-```
-
-This keeps `xtls-rprx-vision` and adds TLS ClientHello fragmentation; applications
-can fall back to TCP for UDP 443 traffic. Import the complete `amnezia.vpn` or
-scan its native QR frames. The export retains the existing server and keys.
-An Android browser check restored ordinary video playback with this combination;
-Shorts remain unresolved. See the [intermediate validation checkpoint](docs/adr/0020-client-tls-fragment-export.md#intermediate-playback-checkpoint)
-for the tested policy and limits. This is not a general playback guarantee.
-
 See the [client walkthrough](https://fuzzy-technologies.github.io/F-Layer/en/guide/#4-connect-a-device)
 for protocol-specific checks and import details.
+
+## Development candidates
+
+Candidates built from `develop` for release 2.1 add opt-in VLESS export settings:
+`--tls-fragment` and `--allow-quic`. These options retain the existing device
+credentials and source artifacts. See the [candidate export guide](docs/site/content/en/guide/cli.md#optional-vless-transport-exports-development-candidate)
+for complete native profiles, compatibility and limits. The published 2.0.0
+package does not include these options.
 
 ## Manage your deployment
 
 Use `flayer vpn status --project ~/flayer-vpn` to inspect your server.
+For explicit Xray version inventory, upgrades and rollback, follow
+[runtime maintenance](docs/architecture/xray-runtime-maintenance.md).
 For an interrupted cloud operation, retain the project and follow the
 [recovery guide](https://fuzzy-technologies.github.io/F-Layer/en/guide/#5-recover-or-remove-the-deployment).
 When you want to remove this project's cloud resources:

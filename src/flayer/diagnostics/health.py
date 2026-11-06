@@ -94,18 +94,18 @@ def ProviderStatus(observation: Mapping[str, object] | None = None) -> CheckResu
 
 def EvaluateHealthReport(
     report: Mapping[str, object] | None,
-    max_age_seconds: float = 300,
-    current_time: float | None = None,
+    maxAgeSeconds: float = 300,
+    currentTime: float | None = None,
 ) -> CheckResult:
     """Validate versioned health evidence and separate stale evidence from failed health."""
 
-    now = time.time() if current_time is None else current_time
+    now = time.time() if currentTime is None else currentTime
 
     if (
-        isinstance(max_age_seconds, bool)
-        or not isinstance(max_age_seconds, (int, float))
-        or not math.isfinite(max_age_seconds)
-        or max_age_seconds <= 0
+        isinstance(maxAgeSeconds, bool)
+        or not isinstance(maxAgeSeconds, (int, float))
+        or not math.isfinite(maxAgeSeconds)
+        or maxAgeSeconds <= 0
         or isinstance(now, bool)
         or not isinstance(now, (int, float))
         or not math.isfinite(now)
@@ -141,9 +141,9 @@ def EvaluateHealthReport(
         )
 
     age = now - timestamp
-    details: dict[str, object] = {"age_seconds": age, "max_age_seconds": max_age_seconds}
+    details: dict[str, object] = {"age_seconds": age, "max_age_seconds": maxAgeSeconds}
 
-    if age < 0 or age > max_age_seconds:
+    if age < 0 or age > maxAgeSeconds:
         return CheckResult(
             "health-report", DiagnosticStatus.STALE,
             "Health report is expired or dated in the future", details,

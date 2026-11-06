@@ -8,7 +8,7 @@ import json
 import re
 import tomllib
 from collections.abc import Mapping
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from flayer.core.contracts import (
@@ -19,6 +19,7 @@ from flayer.core.contracts import (
     ValidateFields,
     ValidateName,
     ValidateSchemaVersion,
+    _WireDict,
 )
 from flayer.profiles.artifacts import Artifact, ArtifactBundle
 
@@ -110,16 +111,16 @@ def _Cidrs(value: object, label: str) -> tuple[str, ...]:
 class VpnDevice:
     """One named client; an optional private IPv4 address belongs to an IP tunnel."""
 
-    device_id: str
-    ipv4_address: str | None = None
+    deviceId: str
+    ipv4Address: str | None = None
 
     def __post_init__(self) -> None:
         """Validate public device intent without accepting any credential material."""
 
-        _Name(self.device_id, "device_id")
+        _Name(self.deviceId, "device_id")
 
-        if self.ipv4_address is not None:
-            address = ipaddress.IPv4Address(_Address(self.ipv4_address, "device IPv4 address"))
+        if self.ipv4Address is not None:
+            address = ipaddress.IPv4Address(_Address(self.ipv4Address, "device IPv4 address"))
 
             if not any(address in network for network in _PRIVATE_NETWORKS):
                 raise VpnError("Device tunnel addresses must belong to an RFC1918 network")
@@ -130,9 +131,9 @@ class VpnRoutes:
     """IPv4 destination policy; clients must disable IPv6 outside this initial contract."""
 
     mode: str
-    ipv4_cidrs: tuple[str, ...]
-    dns_servers: tuple[str, ...]
-    ipv6_policy: str
+    ipv4Cidrs: tuple[str, ...]
+    dnsServers: tuple[str, ...]
+    ipv6Policy: str
 
     def __post_init__(self) -> None:
         """Reject incomplete full routes, unbounded split routes, and unsupported IPv6."""
@@ -140,7 +141,7 @@ class VpnRoutes:
         if not isinstance(self.mode, str) or self.mode not in _ROUTE_MODES:
             raise VpnError("VPN route mode must be full or split")
 
-        cidrs = _Cidrs(self.ipv4_cidrs, "VPN routes")
+        cidrs = _Cidrs(self.ipv4Cidrs, "VPN routes")
 
         if self.mode == "full" and cidrs != ("0.0.0.0/0",):
             raise VpnError("Full IPv4 routing requires exactly 0.0.0.0/0")
@@ -152,13 +153,13 @@ class VpnRoutes:
         if self.mode == "split" and any(item.prefixlen == 0 for item in collapsed):
             raise VpnError("Split routing must not cover the complete IPv4 address space")
 
-        if self.ipv6_policy != "disabled":
+        if self.ipv6Policy != "disabled":
             raise VpnError("IPv6 routing is unsupported; explicitly select ipv6_policy=disabled")
 
-        if not isinstance(self.dns_servers, tuple) or not 1 <= len(self.dns_servers) <= 4:
+        if not isinstance(self.dnsServers, tuple) or not 1 <= len(self.dnsServers) <= 4:
             raise VpnError("VPN DNS requires 1..4 immutable IPv4 addresses")
 
-        addresses = tuple(_Address(item, "VPN DNS") for item in self.dns_servers)
+        addresses = tuple(_Address(item, "VPN DNS") for item in self.dnsServers)
 
         if len(set(addresses)) != len(addresses):
             raise VpnError("VPN DNS addresses must be unique")
@@ -199,7 +200,7 @@ class VpnListener:
     transport: str
     protocol: str
     port: int
-    source_cidrs: tuple[str, ...]
+    sourceCidrs: tuple[str, ...]
 
     def __post_init__(self) -> None:
         """Validate ingress intent without claiming that the service is installed or healthy."""
@@ -210,7 +211,7 @@ class VpnListener:
         if not isinstance(self.protocol, str) or self.protocol not in {"tcp", "udp"}:
             raise VpnError("VPN listener protocol must be tcp or udp")
 
-        _Cidrs(self.source_cidrs, "VPN listener sources")
+        _Cidrs(self.sourceCidrs, "VPN listener sources")
 
 
 @dataclass(frozen=True, slots=True)
@@ -218,8 +219,8 @@ class VpnCapabilities:
     """Transport-declared traffic scope; an application proxy is not an OS-wide tunnel."""
 
     transport: str
-    network_mode: str
-    route_modes: tuple[str, ...]
+    networkMode: str
+    routeModes: tuple[str, ...]
     ipv4: bool = True
     ipv6: bool = False
 
@@ -228,13 +229,13 @@ class VpnCapabilities:
 
         _Name(self.transport, "transport")
 
-        if not isinstance(self.network_mode, str) or self.network_mode not in {"ip-tunnel", "application-proxy"}:
+        if not isinstance(self.networkMode, str) or self.networkMode not in {"ip-tunnel", "application-proxy"}:
             raise VpnError("VPN network_mode must be ip-tunnel or application-proxy")
 
         if (
-            not isinstance(self.route_modes, tuple) or not 1 <= len(self.route_modes) <= 2
-            or any(not isinstance(item, str) or item not in _ROUTE_MODES for item in self.route_modes)
-            or len(set(self.route_modes)) != len(self.route_modes)
+            not isinstance(self.routeModes, tuple) or not 1 <= len(self.routeModes) <= 2
+            or any(not isinstance(item, str) or item not in _ROUTE_MODES for item in self.routeModes)
+            or len(set(self.routeModes)) != len(self.routeModes)
         ):
             raise VpnError("VPN route capabilities must contain unique full or split values")
 
@@ -250,13 +251,13 @@ class VpnProfile:
     devices: tuple[VpnDevice, ...]
     routes: VpnRoutes
     listeners: tuple[VpnListener, ...]
-    schema_version: int = VPN_SCHEMA_VERSION
+    schemaVersion: int = VPN_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
         """Reject duplicate identities, addresses, listeners, or mutable nested values."""
 
         try:
-            ValidateSchemaVersion(self.schema_version)
+            ValidateSchemaVersion(self.schemaVersion)
 
         except ContractError:
             raise VpnError("VPN schema_version must be the supported integer 1") from None
@@ -270,9 +271,9 @@ class VpnProfile:
         ):
             raise VpnError("VPN profile requires 1..16 immutable VpnDevice values")
 
-        addresses = [item.ipv4_address for item in self.devices if item.ipv4_address is not None]
+        addresses = [item.ipv4Address for item in self.devices if item.ipv4Address is not None]
 
-        if len({item.device_id for item in self.devices}) != len(self.devices) or len(set(addresses)) != len(addresses):
+        if len({item.deviceId for item in self.devices}) != len(self.devices) or len(set(addresses)) != len(addresses):
             raise VpnError("VPN devices must have unique IDs and unique assigned IPv4 addresses")
 
         if (
@@ -287,23 +288,23 @@ class VpnProfile:
         ):
             raise VpnError("VPN listeners require unique transports and protocol/port pairs")
 
-        device_names: set[str] = set()
+        deviceNames: set[str] = set()
 
         for listener in self.listeners:
             _Name(f"{self.identity.stack}-{listener.transport}", "VPN server artifact name")
 
             for device in self.devices:
-                name = _Name(f"{device.device_id}-{listener.transport}", "VPN device artifact name")
+                name = _Name(f"{device.deviceId}-{listener.transport}", "VPN device artifact name")
 
-                if name in device_names:
+                if name in deviceNames:
                     raise VpnError("VPN device and transport names create an ambiguous artifact name")
 
-                device_names.add(name)
+                deviceNames.add(name)
 
     def Fingerprint(self) -> str:
         """Hash only public intent for binding prepared artifacts to an exact profile."""
 
-        payload = json.dumps(asdict(self), sort_keys=True, separators=(",", ":"))
+        payload = json.dumps(_WireDict(self), sort_keys=True, separators=(",", ":"))
 
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
@@ -319,10 +320,10 @@ def ValidateVpnTransport(profile: VpnProfile, capabilities: VpnCapabilities) -> 
     if listener is None:
         raise VpnError("VPN transport must have an explicitly declared listener")
 
-    if profile.routes.mode not in capabilities.route_modes:
+    if profile.routes.mode not in capabilities.routeModes:
         raise VpnError("VPN implementation does not support the requested routing mode")
 
-    if capabilities.network_mode == "ip-tunnel" and any(item.ipv4_address is None for item in profile.devices):
+    if capabilities.networkMode == "ip-tunnel" and any(item.ipv4Address is None for item in profile.devices):
         raise VpnError("IP tunnel devices require explicit private IPv4 addresses")
 
     return listener
@@ -362,18 +363,18 @@ def BuildVpnServerBundle(
 
 
 def BuildVpnDeviceBundle(
-    profile: VpnProfile, transport: str, device_id: str, files: tuple[Artifact, ...],
+    profile: VpnProfile, transport: str, deviceId: str, files: tuple[Artifact, ...],
 ) -> ArtifactBundle:
     """Prepare owned client bytes without overwriting or revoking existing credentials."""
 
     _Transport(profile, transport)
-    _Name(device_id, "device_id")
+    _Name(deviceId, "device_id")
     _SensitiveFiles(files)
 
-    if not any(item.device_id == device_id for item in profile.devices):
+    if not any(item.deviceId == deviceId for item in profile.devices):
         raise VpnError("VPN client artifacts require an explicitly declared device")
 
-    return ArtifactBundle(profile.identity, "device", f"{device_id}-{transport}", files)
+    return ArtifactBundle(profile.identity, "device", f"{deviceId}-{transport}", files)
 
 
 @dataclass(frozen=True, slots=True)
@@ -382,8 +383,8 @@ class PreparedVpnTransport:
 
     profile: VpnProfile
     capabilities: VpnCapabilities
-    server_bundle: ArtifactBundle = field(repr=False)
-    device_bundles: tuple[ArtifactBundle, ...] = field(repr=False)
+    serverBundle: ArtifactBundle = field(repr=False)
+    deviceBundles: tuple[ArtifactBundle, ...] = field(repr=False)
 
     def __post_init__(self) -> None:
         """Require exact stack ownership, transport naming, and a complete device artifact set."""
@@ -392,27 +393,27 @@ class PreparedVpnTransport:
         transport = self.capabilities.transport
 
         if (
-            not isinstance(self.server_bundle, ArtifactBundle)
-            or self.server_bundle.identity != self.profile.identity
-            or self.server_bundle.kind != "server"
-            or self.server_bundle.name != f"{self.profile.identity.stack}-{transport}"
+            not isinstance(self.serverBundle, ArtifactBundle)
+            or self.serverBundle.identity != self.profile.identity
+            or self.serverBundle.kind != "server"
+            or self.serverBundle.name != f"{self.profile.identity.stack}-{transport}"
         ):
             raise VpnError("VPN server bundle must match the exact stack and transport")
 
-        _SensitiveFiles(self.server_bundle.files)
+        _SensitiveFiles(self.serverBundle.files)
 
-        if not isinstance(self.device_bundles, tuple) or any(
-            not isinstance(item, ArtifactBundle) for item in self.device_bundles
+        if not isinstance(self.deviceBundles, tuple) or any(
+            not isinstance(item, ArtifactBundle) for item in self.deviceBundles
         ):
             raise VpnError("VPN client bundles must be immutable ArtifactBundle values")
 
-        names = [item.name for item in self.device_bundles]
-        expected = {f"{item.device_id}-{transport}" for item in self.profile.devices}
+        names = [item.name for item in self.deviceBundles]
+        expected = {f"{item.deviceId}-{transport}" for item in self.profile.devices}
 
         if len(set(names)) != len(names) or set(names) != expected:
             raise VpnError("VPN client bundles must match every declared device exactly once")
 
-        for bundle in self.device_bundles:
+        for bundle in self.deviceBundles:
             if bundle.identity != self.profile.identity or bundle.kind != "device":
                 raise VpnError("VPN client bundle ownership must match the exact stack")
 
@@ -421,9 +422,9 @@ class PreparedVpnTransport:
     def Fingerprint(self) -> str:
         """Bind replacement approval to public intent and exact private payload digests."""
 
-        bundles = (self.server_bundle, *self.device_bundles)
+        bundles = (self.serverBundle, *self.deviceBundles)
         document = {
-            "profile": self.profile.Fingerprint(), "capabilities": asdict(self.capabilities),
+            "profile": self.profile.Fingerprint(), "capabilities": _WireDict(self.capabilities),
             "artifacts": sorted((
                 bundle.kind, bundle.name, artifact.name,
                 hashlib.sha256(artifact.content).hexdigest(),
@@ -435,7 +436,7 @@ class PreparedVpnTransport:
 
 
 def ValidateVpnReplacement(
-    previous: PreparedVpnTransport, replacement: PreparedVpnTransport, *, expected_fingerprint: str,
+    previous: PreparedVpnTransport, replacement: PreparedVpnTransport, *, expectedFingerprint: str,
 ) -> None:
     """Require exact old artifact consent; guest revocation and local cleanup remain separate."""
 
@@ -445,7 +446,7 @@ def ValidateVpnReplacement(
     if previous.profile.identity != replacement.profile.identity or previous.capabilities.transport != replacement.capabilities.transport:
         raise VpnError("VPN replacement must preserve exact stack identity and transport")
 
-    if not isinstance(expected_fingerprint, str) or previous.Fingerprint() != expected_fingerprint:
+    if not isinstance(expectedFingerprint, str) or previous.Fingerprint() != expectedFingerprint:
         raise VpnError("VPN replacement requires the exact expected previous fingerprint")
 
 
@@ -472,8 +473,8 @@ def ParseVpnProfile(data: Mapping[str, object]) -> VpnProfile:
         devices: list[VpnDevice] = []
         listeners: list[VpnListener] = []
 
-        for raw_device in data["devices"]:
-            device = RequireTable(raw_device, "VPN device")
+        for rawDevice in data["devices"]:
+            device = RequireTable(rawDevice, "VPN device")
             ValidateFields(device, frozenset({"device_id"}), frozenset({"ipv4_address"}), "VPN device")
             address = device.get("ipv4_address")
 
@@ -482,8 +483,8 @@ def ParseVpnProfile(data: Mapping[str, object]) -> VpnProfile:
 
             devices.append(VpnDevice(_Name(device["device_id"], "device_id"), address))
 
-        for raw_listener in data["listeners"]:
-            listener = RequireTable(raw_listener, "VPN listener")
+        for rawListener in data["listeners"]:
+            listener = RequireTable(rawListener, "VPN listener")
             ValidateFields(listener, frozenset({
                 "transport", "protocol", "port", "source_cidrs",
             }), frozenset(), "VPN listener")

@@ -1,0 +1,117 @@
+schemaVersion = 1
+sourcePath = "docs/architecture/xray-runtime-maintenance.md"
+sourceHash = "sha256:b7bb6006e22d083376bada90b963fff5fc6054dd16877e12af126020b1300691"
+reviewedTranslationHash = "sha256:ca46c91bb0871c8f9ea884d7da98f7519b388cb51be5ab5bc01eb02024a001dc"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-05T18:37:32.432583Z"
+reviewRoles = ["editorial", "technical"]
+body = '''# Xray 运行时维护
+
+使用已安装且经过验证的 F-Layer 候选包维护现有自有 VLESS 运行时。
+无须公开发布新版本；保留候选的精确提交、wheel SHA-256 和 CI/构建证据。
+不要安装任意工作目录或手工替换二进制文件。
+
+## 范围与前提
+
+支持在 Ubuntu 24.04 amd64 或 arm64 上将 **Xray 26.9.30 升级至 26.10.31**。
+需要现有私有项目、完整的自有云资源状态、管理员密钥和经过认证的 SSH 主机密钥固定。
+控制端继续遵循 POSIX 文件系统契约。这些命令不会启动 WSL、VPN 客户端，
+也不会修改控制端网络。
+
+只改变自有 Xray 可执行文件及其回执。服务器配置、Reality 密钥、设备 UUID、
+short ID、端点、DNS/路由、AWG、现有设备导出文件和云资源标识保持不变。
+现有项目保留原始运行时描述符和文件包清单。
+
+运行时操作只读取云端数据来检查所有权与信任，不创建、修改或删除云资源。
+请使用独立于待维护 VLESS 服务的稳定管理连接。应用更新前，安排短暂的
+VLESS 中断并保存回滚步骤。
+
+## 观察当前运行时
+
+```bash
+flayer vpn runtime-status --project ~/flayer-vpn --format json
+```
+
+报告包含 `version`、`receipt_sha256`、`binary_sha256`、
+`previous_receipt_sha256`、`upgrade_status`、`kernel_release`、
+`kernel_package_version` 和 `kernel_patch_status`。版本描述经过验证的磁盘回执，
+不能证明正在运行的进程版本或客户端流量。`kernel_patch_status` 始终为
+`not-assessed`；发行商可能在不改变上游内核版本的情况下回移修复。
+
+`upgrade_status` 可为 `none`、`rollback-available` 或 `interrupted`。
+中断事务返回不完整报告、非零退出码以及 `recovery_required: true`。
+升级前保存完整的旧 `receipt_sha256`。事务存在时，状态还会通过
+`previous_receipt_sha256` 返回该值。不要将私密服务器配置或连接文件粘贴到诊断中。
+
+## 应用显式升级
+
+核对精确候选包、作用域、旧版本、回执摘要、管理访问及回滚步骤，
+然后用已记录的实际值替换两个占位符：
+
+```bash
+flayer vpn upgrade --project ~/flayer-vpn \
+  --allow-mutation --scope-confirm YOUR_FOLDER_ID \
+  --expected-version 26.9.30 --expected-receipt-sha256 OLD_RECEIPT_SHA256 \
+  --format json
+```
+
+控制端在访问来宾前检查保留文件包的所有权和项目设置。切换运行时前，
+来宾拒绝不匹配的授权、版本、回执、私密配置、服务布局、额外文件及不完整安装。
+先验证固定下载摘要，再用不变的配置检查候选二进制文件的语法。
+
+停止 VLESS 前，原子发布完整的私密事务，保存精确的新旧二进制文件和回执。
+替换可执行文件及回执后，仅启动该 VLESS 服务，并检查 Reality 目标、语法、
+活动状态和本地监听端口。保留旧运行时以便显式回滚。
+携带原预期回执重复已成功的命令，仅验证已提交事务，不重启服务。
+
+普通 `deploy` 不升级旧运行时，也不降级已升级的运行时。
+已识别的旧项目无需改写私密文件包即可继续使用。
+不会接受任意或被修改的历史安装程序。
+
+## 回滚或恢复
+
+对已完成的升级执行有意回滚时，使用从 `runtime-status` 获取的
+**当前新回执**：
+
+```bash
+flayer vpn rollback-upgrade --project ~/flayer-vpn \
+  --allow-mutation --scope-confirm YOUR_FOLDER_ID \
+  --expected-version 26.10.31 --expected-receipt-sha256 NEW_RECEIPT_SHA256 \
+  --format json
+```
+
+升级失败时会尝试自动恢复。如果进程被终止、SSH 会话丢失或恢复失败，
+请先检查 `runtime-status`。对于**已中断**事务，使用**原始旧回执**：
+
+```bash
+flayer vpn recover-upgrade --project ~/flayer-vpn \
+  --allow-mutation --scope-confirm YOUR_FOLDER_ID \
+  --expected-version 26.9.30 --expected-receipt-sha256 OLD_RECEIPT_SHA256 \
+  --format json
+```
+
+恢复操作还原保存的精确旧可执行文件及回执，不猜测新版本是否健康。
+写入前，两种操作均检查当前配置、服务、二进制文件及日志中的每个保存文件。
+意外状态会阻止恢复，而非覆盖它。重试前应恢复管理访问并检查已知私有部署，
+切勿编辑回执来绕过漂移检查。
+
+普通安装与删除会拒绝中断事务。范围受限的服务删除包括已验证的已提交备份。
+在日志发布前或脱离部署目录的清理期间强制终止，可能留下不生效的私密暂存目录；
+不会依据猜测删除未知目录。
+
+## 内核维护与验收
+
+Xray 26.10.31 默认禁用 MPTCP，以减少 CVE-2026-98432 的攻击面。
+它**不会修复 Linux 内核**。确认实际运行的内核类型和安装包，
+再查阅最新的 [Ubuntu 公告](https://ubuntu.com/security/CVE-2026-98432) 和
+[Xray 安全版本说明](https://github.com/XTLS/Xray-core/releases/tag/v26.10.31)。
+不要仅凭版本字符串判断修复状态，也不要无条件升级发行版、照搬防火墙规则或重启。
+若已有修复包，应准备明确授权的维护窗口、回滚方案和重启后的验证。
+内核重启会中断两种 VPN 协议。
+
+维护后，使用现有设备配置手动检查两种协议：主机名/IPv4 HTTPS、DNS、出口地址、
+Telegram、重连及实际媒体播放。记录精确的客户端、候选包和所用网络。
+AmneziaVPN 5.1.0.6 的原生导入模式检查与 CI 固定二进制文件的语法/事务测试，
+都不能证明 Android 或桌面的实际流量。YouTube/Shorts 验收仍独立于基本连通性。
+'''

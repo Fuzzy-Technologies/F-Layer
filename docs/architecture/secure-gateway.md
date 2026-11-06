@@ -48,14 +48,14 @@ from flayer.profiles import (
 )
 
 profile = LoadGatewayProfile("gateway.toml")
-server_directory = WriteArtifactBundle("generated-artifacts", BuildServerBundle(profile))
-plan_text = RenderPlan(
+serverDirectory = WriteArtifactBundle("generated-artifacts", BuildServerBundle(profile))
+planText = RenderPlan(
     CompileGateway(profile),
-    user_data_file=server_directory / "server-cloud-init.json",
+    userDataFile=serverDirectory / "server-cloud-init.json",
 )
 ```
 
-Persist `plan_text` only in explicit private local storage. Its absolute artifact
+Persist `planText` only in explicit private local storage. Its absolute artifact
 path is a local execution reference and is not portable repository configuration.
 The lifecycle parser consumes its versioned TOML; orchestration and provider
 mutation require their own explicit commands. No cloud resources are created by
@@ -92,15 +92,15 @@ file and does not accept a host key automatically.
 ```python
 from flayer.profiles import BuildSshDeviceBundle, WriteArtifactBundle
 
-device_directory = WriteArtifactBundle(
+deviceDirectory = WriteArtifactBundle(
     "generated-artifacts",
     BuildSshDeviceBundle(
         profile,
         "laptop",
         endpoint="203.0.113.42",
-        identity_file="/path/to/laptop-key",
-        known_hosts_file="/path/to/trusted-known-hosts",
-        local_ports=(8443,),
+        identityFile="/path/to/laptop-key",
+        knownHostsFile="/path/to/trusted-known-hosts",
+        localPorts=(8443,),
     ),
 )
 ```

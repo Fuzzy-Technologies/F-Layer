@@ -17,12 +17,21 @@ body = '''
 
 - 函数和方法：`PascalCase`，包括 `Main()`；
 - 类、协议和枚举：`PascalCase`；
-- 变量、参数和字段：`snake_case`，内部实现细节允许使用前导下划线；
+- 变量、参数和字段：`camelCase`，内部细节和 Python 私有名称改写允许使用前导下划线；
 - 常量：`UPPER_SNAKE_CASE`，单词之间使用下划线；
 - 测试文件：`test_*.py`；
 - 测试函数：必需的 `test_` 前缀后接 `PascalCase`。
 
 保留 Python、框架、SDK、模式、协议和第三方 API 规定的名称，包括特殊方法、pytest 夹具与钩子、回调、CLI 选项、配置键和兼容性约定。
+
+示例：`ycProfile`、`projectRoot`、`_statePath`、`LoadVpnProject()` 和
+`SCHEMA_VERSION`。保留外部 API 的 `subprocess.run(capture_output=True)` 和
+`Path.unlink(missing_ok=True)` 参数拼写；标准库接口的重写和测试替身也遵循
+这些接口。计算属性可保留 `PascalCase`；描述存储字段的协议属性使用对应的
+`camelCase` 字段名。
+
+所有者于 2026-11-04 再次确认这些规则，初始版本中变量使用 `snake_case` 的
+规定被取代。范围和兼容性见[命名审计与迁移](python-naming-audit.md)。
 
 ## 文档字符串
 
@@ -50,6 +59,12 @@ body = '''
 python -m ruff check .
 ```
 
+完整检查还运行 `python -m tools.python_naming`，不导入模块即可检查所有受跟踪
+及新编写的 Python 模块和存根，并检查嵌入模块、Markdown 示例与工作流中的
+Python heredoc。外部重写例外绑定到准确的文件和定义，不豁免其他名称。
+pytest 内置夹具参数保留其注册名称。验证器测试中故意无效的字符串属于数据；
+包含它们的测试模块本身仍接受检查。
+
 仅调整格式的变更不得重命名受保护接口、修改行为或合并逻辑块。
 
 ## 验证
@@ -58,6 +73,7 @@ python -m ruff check .
 
 ```bash
 python -m compileall -q src tests
+python -m tools.python_naming
 python -m ruff check .
 python -m mypy
 python -m pytest
@@ -80,9 +96,9 @@ python -m pytest
 
 代码应一致、易读、可复现且可验证：明确行为优于隐式机制，证据优于假设，测试优于个人信心，稳定性优于表面上的重构。
 '''
-sourceHash = "sha256:5c3161d4b872fc313fd73998d30812797ad58e0986a18b6796d30cc7ea6f8c6d"
-reviewedTranslationHash = "sha256:68d8ceb0c6426d1c6f5ea4a0a3c2fa1781a19d9acb7dbe0dd7a0f88d941a78e8"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:14f29a73b0606db536b48c78607973eba593667694b91f9442478b605f36684f"
+reviewedTranslationHash = "sha256:ab98252332cb8c89dac62b578c8db76f0ef4c74463086970914ea8677ef4ab8d"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:54Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]

@@ -90,14 +90,14 @@ class _SnapshotImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
 def _ReadSources(descriptor: ExtensionDescriptor) -> tuple[_ModuleSource, ...]:
     """Validate exact metadata and every parent/target source before any plugin execution."""
 
-    directory = descriptor.metadata_directory
+    directory = descriptor.metadataDirectory
 
     if directory is None:
         raise ExtensionError("External loading requires a selected metadata directory")
 
     contents, digest = ReadMetadataSnapshot(directory)
 
-    if digest != descriptor.metadata_sha256 or descriptor not in DiscoverExtensions((directory,)):
+    if digest != descriptor.metadataSha256 or descriptor not in DiscoverExtensions((directory,)):
         raise ExtensionError("Selected extension metadata changed after discovery")
 
     records: dict[str, tuple[str, str]] = {}
@@ -146,9 +146,9 @@ def _ReadSources(descriptor: ExtensionDescriptor) -> tuple[_ModuleSource, ...]:
             raise ExtensionError("Unable to resolve exact non-redirected extension source") from None
 
         content = ReadMetadataFile(path, MAX_MODULE_BYTES)
-        source_digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode().rstrip("=")
+        sourceDigest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode().rstrip("=")
 
-        if records[relative] != ("sha256=" + source_digest, str(len(content))):
+        if records[relative] != ("sha256=" + sourceDigest, str(len(content))):
             raise ExtensionError("Extension source does not match its exact RECORD hash and size")
 
         sources.append(_ModuleSource(
@@ -192,8 +192,8 @@ def _LoadFactory(descriptor: ExtensionDescriptor) -> ProviderExtension | Profile
             importer.exec_module(module)
 
             if "." in source.name:
-                parent_name, _, child_name = source.name.rpartition(".")
-                setattr(sys.modules[parent_name], child_name, module)
+                parentName, _, childName = source.name.rpartition(".")
+                setattr(sys.modules[parentName], childName, module)
 
         factory: object = sys.modules[sources[-1].name]
 
@@ -216,11 +216,11 @@ def _LoadFactory(descriptor: ExtensionDescriptor) -> ProviderExtension | Profile
                 del _LOADED_SOURCES[name]
 
             if "." in name:
-                parent_name, _, child_name = name.rpartition(".")
-                parent = sys.modules.get(parent_name)
+                parentName, _, childName = name.rpartition(".")
+                parent = sys.modules.get(parentName)
 
-                if parent is not None and parent.__dict__.get(child_name) is module:
-                    del parent.__dict__[child_name]
+                if parent is not None and parent.__dict__.get(childName) is module:
+                    del parent.__dict__[childName]
 
         raise ExtensionError("Selected extension factory failed to load") from None
 
@@ -269,14 +269,14 @@ class ExtensionRegistry:
     """A bounded explicit catalog; neither construction nor lookup imports external code."""
 
     def __init__(
-        self, descriptors: Sequence[ExtensionDescriptor] = (), *, include_builtins: bool = True,
+        self, descriptors: Sequence[ExtensionDescriptor] = (), *, includeBuiltins: bool = True,
     ) -> None:
         """Validate complete registration before publishing any catalog entries."""
 
-        if type(include_builtins) is not bool or not isinstance(descriptors, (tuple, list)):
+        if type(includeBuiltins) is not bool or not isinstance(descriptors, (tuple, list)):
             raise ExtensionError("Registry requires explicit bounded descriptor registration")
 
-        entries = (*BuiltinDescriptors(), *descriptors) if include_builtins else tuple(descriptors)
+        entries = (*BuiltinDescriptors(), *descriptors) if includeBuiltins else tuple(descriptors)
 
         if len(entries) > MAX_EXTENSIONS:
             raise ExtensionError("Registry exceeds its extension bound")
@@ -287,12 +287,12 @@ class ExtensionRegistry:
             if not isinstance(descriptor, ExtensionDescriptor):
                 raise ExtensionError("Registry accepts only validated ExtensionDescriptor objects")
 
-            identity = (descriptor.kind, descriptor.plugin_id)
+            identity = (descriptor.kind, descriptor.pluginId)
 
             if identity in registered:
                 raise ExtensionError("Duplicate extension identity would shadow a registered extension")
 
-            if descriptor.metadata_directory is None and descriptor not in BuiltinDescriptors():
+            if descriptor.metadataDirectory is None and descriptor not in BuiltinDescriptors():
                 raise ExtensionError("Registry rejects invented or incompatible built-in identities")
 
             registered[identity] = descriptor
@@ -303,15 +303,15 @@ class ExtensionRegistry:
     def Descriptors(self) -> tuple[ExtensionDescriptor, ...]:
         """Return immutable descriptors in deterministic kind and identifier order."""
 
-        return tuple(sorted(self._descriptors.values(), key=lambda item: (item.kind.value, item.plugin_id)))
+        return tuple(sorted(self._descriptors.values(), key=lambda item: (item.kind.value, item.pluginId)))
 
-    def Get(self, kind: ExtensionKind, plugin_id: str) -> ExtensionDescriptor:
+    def Get(self, kind: ExtensionKind, pluginId: str) -> ExtensionDescriptor:
         """Select one registered identity without imports or capability probes."""
 
-        if not isinstance(kind, ExtensionKind) or not isinstance(plugin_id, str):
+        if not isinstance(kind, ExtensionKind) or not isinstance(pluginId, str):
             raise ExtensionError("Registry lookup requires an exact extension kind and identifier")
 
-        descriptor = self._descriptors.get((kind, plugin_id))
+        descriptor = self._descriptors.get((kind, pluginId))
 
         if descriptor is None:
             raise ExtensionError("Extension identity is not registered")
@@ -325,14 +325,14 @@ class ExtensionRegistry:
 
         if (
             not isinstance(descriptor, ExtensionDescriptor)
-            or self.Get(descriptor.kind, descriptor.plugin_id) != descriptor
+            or self.Get(descriptor.kind, descriptor.pluginId) != descriptor
             or not isinstance(allowed, (tuple, list)) or len(allowed) > MAX_EXTENSIONS
             or any(not isinstance(item, ExtensionDescriptor) for item in allowed)
             or len(set(allowed)) != len(allowed)
         ):
             raise ExtensionError("Loading requires an exact registered descriptor and bounded unique pins")
 
-        if descriptor.metadata_directory is not None and descriptor not in allowed:
+        if descriptor.metadataDirectory is not None and descriptor not in allowed:
             raise ExtensionError("External loading requires an explicit exact descriptor allowlist")
 
         if descriptor in self._loaded:
@@ -340,7 +340,7 @@ class ExtensionRegistry:
 
         loaded = (
             _ValidateExtension(LoadBuiltin(descriptor), descriptor)
-            if descriptor.metadata_directory is None else _LoadFactory(descriptor)
+            if descriptor.metadataDirectory is None else _LoadFactory(descriptor)
         )
         self._loaded[descriptor] = loaded
 

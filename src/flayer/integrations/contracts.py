@@ -66,19 +66,19 @@ class IntegrationRequest:
     """Non-authorizing observation intent bound to exact scope, owner, and correlation."""
 
     identity: StackIdentity
-    request_id: str
+    requestId: str
     operation: IntegrationOperation
-    schema_version: int = 1
+    schemaVersion: int = 1
 
     def __post_init__(self) -> None:
         """Validate direct requests with the same strict rules as decoded requests."""
 
-        ValidateSchemaVersion(self.schema_version)
+        ValidateSchemaVersion(self.schemaVersion)
 
         if (
             not isinstance(self.identity, StackIdentity)
-            or not isinstance(self.request_id, str)
-            or REQUEST_ID_PATTERN.fullmatch(self.request_id) is None
+            or not isinstance(self.requestId, str)
+            or REQUEST_ID_PATTERN.fullmatch(self.requestId) is None
             or not isinstance(self.operation, IntegrationOperation)
         ):
             raise IntegrationError("Integration request fields do not match the contract")
@@ -166,12 +166,12 @@ class DiagnosticEvidence:
 class StateEvidence:
     """A local owned-state count makes no remote existence or health assertion."""
 
-    resource_count: int
+    resourceCount: int
 
     def __post_init__(self) -> None:
         """Validate the minimal non-identifying inventory summary."""
 
-        ValidateCount(self.resource_count)
+        ValidateCount(self.resourceCount)
 
 
 @dataclass(frozen=True, slots=True)
@@ -196,7 +196,7 @@ class LifecycleEvidence:
 
     action: str
     status: str
-    recovery_required: bool
+    recoveryRequired: bool
     resources: tuple[ResourceCount, ...]
 
     def __post_init__(self) -> None:
@@ -205,7 +205,7 @@ class LifecycleEvidence:
         if (
             not isinstance(self.action, str) or self.action not in LIFECYCLE_ACTIONS
             or not isinstance(self.status, str) or self.status not in LIFECYCLE_STATUSES
-            or type(self.recovery_required) is not bool
+            or type(self.recoveryRequired) is not bool
             or not isinstance(self.resources, tuple)
             or len(self.resources) > len(RESOURCE_STATUSES)
             or any(not isinstance(resource, ResourceCount) for resource in self.resources)
@@ -232,10 +232,10 @@ class IntegrationResult:
         if not isinstance(self.request, IntegrationRequest):
             raise IntegrationError("Integration result requires a validated request")
 
-        expected_type: type[Evidence] = {
+        expectedType: type[Evidence] = {
             IntegrationOperation.STATE: StateEvidence,
             IntegrationOperation.LIFECYCLE_REPORT: LifecycleEvidence,
         }.get(self.request.operation, DiagnosticEvidence)
 
-        if not isinstance(self.evidence, expected_type):
+        if not isinstance(self.evidence, expectedType):
             raise IntegrationError("Integration evidence does not match the requested operation")

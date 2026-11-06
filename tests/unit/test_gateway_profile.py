@@ -140,17 +140,17 @@ def test_GatewaySettingsRejectUnsafeInput(field: str, value: object) -> None:
     assert "synthetic-private-value" not in str(caught.value)
 
 
-@pytest.mark.parametrize("public_key", [
+@pytest.mark.parametrize('publicKey', [
     "", "ssh-rsa AAAA", "ssh-ed25519 !!!!", "ssh-ed25519 AAAA",
     PUBLIC_KEY + " private-comment", PUBLIC_KEY.replace("ssh-ed25519 ", "ssh-ed25519  "),
     " ".join(("-----BEGIN", "OPENSSH", "PRIVATE", "KEY-----")), 123, "x" * 257,
 ])
-def test_PublicKeyWireBoundary(public_key: object) -> None:
+def test_PublicKeyWireBoundary(publicKey: object) -> None:
     """Reject malformed blobs, comments, unsupported algorithms, and private material."""
 
     data = ProfileData()
     settings = dict(data["gateway"])  # type: ignore[arg-type]
-    settings["ssh_public_key"] = public_key
+    settings["ssh_public_key"] = publicKey
     data["gateway"] = settings
 
     with pytest.raises(GatewayError):
@@ -185,9 +185,9 @@ def test_DirectModelsValidateAsStrictlyAsParser() -> None:
     profile = Profile()
 
     for changes in (
-        {"identity": "foreign"}, {"schema_version": True}, {"service_ports": []},
-        {"service_ports": ("bad",)}, {"management_cidrs": ["198.51.100.42/32"]},
-        {"management_cidrs": tuple(f"198.51.100.{index}/32" for index in range(17))},
+        {"identity": "foreign"}, {'schemaVersion': True}, {'servicePorts': []},
+        {'servicePorts': ("bad",)}, {'managementCidrs': ["198.51.100.42/32"]},
+        {'managementCidrs': tuple(f"198.51.100.{index}/32" for index in range(17))},
     ):
         with pytest.raises(ValueError):
             replace(profile, **changes)
@@ -205,7 +205,7 @@ def test_CompiledPlanBindsSixOwnedResourcesAndArtifact(tmp_path: Path) -> None:
     profile = Profile()
     directory = WriteArtifactBundle(tmp_path / "artifacts", BuildServerBundle(profile))
     path = directory / "server-cloud-init.json"
-    rendered = RenderPlan(CompileGateway(profile), user_data_file=path)
+    rendered = RenderPlan(CompileGateway(profile), userDataFile=path)
     data = tomllib.loads(rendered)
     resources = {resource["logical_id"]: resource for resource in data["resources"]}
     parameters = resources["instance"]["parameters"]
@@ -218,14 +218,14 @@ def test_CompiledPlanBindsSixOwnedResourcesAndArtifact(tmp_path: Path) -> None:
     assert "boot_disk_gib" not in parameters and "image_id" not in parameters
     assert parameters["user_data_file"] == str(path.absolute())
     assert parameters["user_data_sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
-    assert parameters["ssh_username"] == profile.ssh_username
+    assert parameters["ssh_username"] == profile.sshUsername
     assert resources["firewall"]["kind"] == "security-group"
     assert resources["firewall"]["parameters"]["rules"] == [
         {"direction": "ingress", "protocol": "tcp", "from_port": 22, "to_port": 22, "cidr": "198.51.100.42/32"},
         {"direction": "ingress", "protocol": "udp", "from_port": 51820, "to_port": 51820, "cidr": "0.0.0.0/0"},
         {"direction": "egress", "protocol": "any", "cidr": "0.0.0.0/0"},
     ]
-    assert rendered == RenderPlan(CompileGateway(profile), user_data_file=path)
+    assert rendered == RenderPlan(CompileGateway(profile), userDataFile=path)
 
 
 def test_RenderRefusesWrongArtifactAndInvalidPlan(tmp_path: Path) -> None:
@@ -236,12 +236,12 @@ def test_RenderRefusesWrongArtifactAndInvalidPlan(tmp_path: Path) -> None:
     path.write_bytes(b"synthetic-secret-replacement")
 
     with pytest.raises(GatewayError) as caught:
-        RenderPlan(CompileGateway(Profile()), user_data_file=path)
+        RenderPlan(CompileGateway(Profile()), userDataFile=path)
 
     assert "synthetic-secret" not in str(caught.value)
 
     with pytest.raises(GatewayError):
-        RenderPlan("invalid", user_data_file=path)  # type: ignore[arg-type]
+        RenderPlan("invalid", userDataFile=path)  # type: ignore[arg-type]
 
 
 def test_LoadBoundedProfileAndSuppressReadFailures(tmp_path: Path) -> None:
@@ -268,9 +268,9 @@ def test_LoadBoundedProfileAndSuppressReadFailures(tmp_path: Path) -> None:
 def test_OptionalServicesAndCustomSshSettings(tmp_path: Path) -> None:
     """Preserve an explicit custom management port without installing any service."""
 
-    profile = replace(Profile(), ssh_port=2222, service_ports=(), ssh_username="operator")
+    profile = replace(Profile(), sshPort=2222, servicePorts=(), sshUsername="operator")
     directory = WriteArtifactBundle(tmp_path / "artifacts", BuildServerBundle(profile))
-    data = tomllib.loads(RenderPlan(CompileGateway(profile), user_data_file=directory / "server-cloud-init.json"))
+    data = tomllib.loads(RenderPlan(CompileGateway(profile), userDataFile=directory / "server-cloud-init.json"))
     rules = next(item for item in data["resources"] if item["kind"] == "security-group")["parameters"]["rules"]
 
     assert rules[0]["from_port"] == 2222
@@ -333,7 +333,7 @@ def test_TransportRoleKeysAndCollectionsCannotBeAmbiguous() -> None:
 
     for changes in (
         {"transport": "invalid"},
-        {"transport": replace(transport, username=profile.ssh_username)},
+        {"transport": replace(transport, username=profile.sshUsername)},
         {"transport": replace(transport, devices=(GatewayDevice("laptop", PUBLIC_KEY, ("198.51.100.42/32",)),))},
     ):
         with pytest.raises(GatewayError):
@@ -350,11 +350,11 @@ def test_TransportRoleKeysAndCollectionsCannotBeAmbiguous() -> None:
 
     first = GatewayDevice("laptop", DEVICE_KEY, tuple(f"198.51.100.{index}/32" for index in range(16)))
     second = GatewayDevice("phone", PUBLIC_KEY, tuple(f"203.0.113.{index}/32" for index in range(16)))
-    third_key = DEVICE_KEY[:-4] + "enp6"
+    thirdKey = DEVICE_KEY[:-4] + "enp6"
 
     with pytest.raises(GatewayError):
         GatewayTransport("gateway-tunnel", transport.targets, (
-            first, second, GatewayDevice("tablet", third_key, ("192.0.2.1/32",)),
+            first, second, GatewayDevice("tablet", thirdKey, ("192.0.2.1/32",)),
         ))
 
 
@@ -384,8 +384,8 @@ def test_DeviceConfigurationHasExactLoopbackForwardsAndExplicitTrust(tmp_path: P
     """Generate a directly usable client configuration without reading key or trust files."""
 
     bundle = BuildSshDeviceBundle(
-        Profile(), "laptop", endpoint="203.0.113.42", identity_file="/example/device key",
-        known_hosts_file="/example/trusted hosts", local_ports=(8443,),
+        Profile(), "laptop", endpoint="203.0.113.42", identityFile="/example/device key",
+        knownHostsFile="/example/trusted hosts", localPorts=(8443,),
     )
     directory = WriteArtifactBundle(tmp_path / "artifacts", bundle)
     config = (directory / "ssh-client.conf").read_text()
@@ -403,19 +403,19 @@ def test_DeviceConfigurationHasExactLoopbackForwardsAndExplicitTrust(tmp_path: P
 
 
 @pytest.mark.parametrize("changes", [
-    {"device_id": "unknown"}, {"endpoint": "host;reboot"}, {"local_ports": []},
-    {"local_ports": ()}, {"local_ports": (1023,)}, {"local_ports": (65536,)},
-    {"local_ports": (True,)}, {"local_ports": (8443, 8444)},
-    {"identity_file": "relative-key"}, {"identity_file": "/key/%h"},
-    {"identity_file": "/key/../private"}, {"identity_file": '/key/"\nProxyCommand reboot'},
-    {"known_hosts_file": "/trust/${HOME}"}, {"known_hosts_file": "/trust/~user"},
+    {'deviceId': "unknown"}, {"endpoint": "host;reboot"}, {'localPorts': []},
+    {'localPorts': ()}, {'localPorts': (1023,)}, {'localPorts': (65536,)},
+    {'localPorts': (True,)}, {'localPorts': (8443, 8444)},
+    {'identityFile': "relative-key"}, {'identityFile': "/key/%h"},
+    {'identityFile': "/key/../private"}, {'identityFile': '/key/"\nProxyCommand reboot'},
+    {'knownHostsFile': "/trust/${HOME}"}, {'knownHostsFile': "/trust/~user"},
 ])
 def test_DeviceConfigurationRejectsExpansionAndBindingErrors(changes: dict[str, object]) -> None:
     """Block SSH directive injection and undeclared devices before exporting client intent."""
 
     settings = {
-        "device_id": "laptop", "endpoint": "203.0.113.42", "identity_file": "/example/key",
-        "known_hosts_file": "/example/trust", "local_ports": (8443,),
+        'deviceId': "laptop", "endpoint": "203.0.113.42", 'identityFile': "/example/key",
+        'knownHostsFile': "/example/trust", 'localPorts': (8443,),
     }
     settings.update(changes)
 
@@ -431,10 +431,10 @@ def test_DuplicateLocalPortsAndExpandedRulesAreRejected() -> None:
     profile = replace(profile, transport=replace(profile.transport, targets=targets))
 
     with pytest.raises(GatewayError):
-        BuildSshDeviceBundle(profile, "laptop", endpoint="gateway.example.org", identity_file="/example/key", known_hosts_file="/example/trust", local_ports=(8443, 8443))
+        BuildSshDeviceBundle(profile, "laptop", endpoint="gateway.example.org", identityFile="/example/key", knownHostsFile="/example/trust", localPorts=(8443, 8443))
 
     with pytest.raises(GatewayError):
-        replace(profile, service_ports=tuple(GatewayPort("udp", 600 + index, tuple(f"192.0.2.{host}/32" for host in range(16))) for index in range(8)))
+        replace(profile, servicePorts=tuple(GatewayPort("udp", 600 + index, tuple(f"192.0.2.{host}/32" for host in range(16))) for index in range(8)))
 
     with pytest.raises(ValueError):
         CompileGateway(replace(profile, identity=replace(IDENTITY, stack="x" * 63)))
@@ -447,15 +447,15 @@ def test_RuleBudgetReservesMandatoryEgressSlot(tmp_path: Path) -> None:
     ports = tuple(GatewayPort("udp", 700 + index, tuple(
         f"192.0.2.{host}/32" for host in range(count)
     )) for index, count in enumerate((16, 16, 16, 14)))
-    profile = replace(profile, service_ports=ports)
+    profile = replace(profile, servicePorts=ports)
     directory = WriteArtifactBundle(tmp_path / "artifacts", BuildServerBundle(profile))
-    plan = tomllib.loads(RenderPlan(CompileGateway(profile), user_data_file=directory / "server-cloud-init.json"))
+    plan = tomllib.loads(RenderPlan(CompileGateway(profile), userDataFile=directory / "server-cloud-init.json"))
     rules = next(item for item in plan["resources"] if item["kind"] == "security-group")["parameters"]["rules"]
 
     assert len(rules) == 64, "The 63 ingress rule boundary must preserve one explicit egress rule"
 
     with pytest.raises(GatewayError):
-        replace(profile, service_ports=ports[:-1] + (GatewayPort("udp", 703, tuple(f"192.0.2.{host}/32" for host in range(15))),))
+        replace(profile, servicePorts=ports[:-1] + (GatewayPort("udp", 703, tuple(f"192.0.2.{host}/32" for host in range(15))),))
 
 
 @pytest.mark.skipif(shutil.which("sshd") is None, reason="OpenSSH server is an optional development validator")
@@ -487,19 +487,19 @@ def test_InstalledOpenSshEnforcesServerRoleConfig(tmp_path: Path) -> None:
 
     profile = Profile()
     data = json.loads(BuildServerBundle(profile).files[0].content.removeprefix(b"#cloud-config\n"))
-    server_config = next(item["content"] for item in data["write_files"] if item["path"] == "/etc/ssh/sshd_config")
-    server_path = tmp_path / "sshd_config"
-    server_path.write_text(server_config)
-    host_key = tmp_path / "synthetic-host-key"
+    serverConfig = next(item["content"] for item in data["write_files"] if item["path"] == "/etc/ssh/sshd_config")
+    serverPath = tmp_path / "sshd_config"
+    serverPath.write_text(serverConfig)
+    hostKey = tmp_path / "synthetic-host-key"
     result = subprocess.run([
-        str(shutil.which("ssh-keygen")), "-t", "ed25519", "-N", "", "-f", str(host_key),
+        str(shutil.which("ssh-keygen")), "-t", "ed25519", "-N", "", "-f", str(hostKey),
     ], capture_output=True, check=False, text=True, timeout=5)
 
     assert result.returncode == 0, "Synthetic host key must remain inside the isolated test directory"
 
     for user, forwarding in (("gateway-tunnel", "local"), ("gateway-admin", "no")):
         result = subprocess.run([
-            str(shutil.which("sshd")), "-T", "-f", str(server_path), "-h", str(host_key), "-C",
+            str(shutil.which("sshd")), "-T", "-f", str(serverPath), "-h", str(hostKey), "-C",
             f"user={user},host=client.example.org,addr=198.51.100.42",
         ], capture_output=True, check=False, text=True, timeout=5)
 
@@ -515,10 +515,10 @@ def test_InstalledOpenSshParsesDeviceConfiguration(tmp_path: Path) -> None:
     """Verify client syntax without reading a private key, resolving DNS, or opening a socket."""
 
     profile = Profile()
-    bundle = BuildSshDeviceBundle(profile, "laptop", endpoint="203.0.113.42", identity_file="/example/key", known_hosts_file="/example/trust", local_ports=(8443,))
-    client_path = tmp_path / "ssh_client"
-    client_path.write_bytes(bundle.files[0].content)
-    result = subprocess.run([str(shutil.which("ssh")), "-G", "-F", str(client_path), "laptop"], capture_output=True, text=True, check=False, timeout=5)
+    bundle = BuildSshDeviceBundle(profile, "laptop", endpoint="203.0.113.42", identityFile="/example/key", knownHostsFile="/example/trust", localPorts=(8443,))
+    clientPath = tmp_path / "ssh_client"
+    clientPath.write_bytes(bundle.files[0].content)
+    result = subprocess.run([str(shutil.which("ssh")), "-G", "-F", str(clientPath), "laptop"], capture_output=True, text=True, check=False, timeout=5)
 
     assert result.returncode == 0, "Generated device configuration must parse without network access"
     assert "stricthostkeychecking true\n" in result.stdout
@@ -530,12 +530,12 @@ def test_UnicodeArtifactPathsAndWindowsDeviceReferencesRemainLiteral(tmp_path: P
 
     profile = Profile()
     directory = WriteArtifactBundle(tmp_path / "artifacts-🚀", BuildServerBundle(profile))
-    plan = tomllib.loads(RenderPlan(CompileGateway(profile), user_data_file=directory / "server-cloud-init.json"))
+    plan = tomllib.loads(RenderPlan(CompileGateway(profile), userDataFile=directory / "server-cloud-init.json"))
     instance = next(item for item in plan["resources"] if item["kind"] == "instance")
 
     assert instance["parameters"]["user_data_file"] == str(directory / "server-cloud-init.json")
 
-    bundle = BuildSshDeviceBundle(profile, "laptop", endpoint="203.0.113.42", identity_file="C:/Keys/laptop-key", known_hosts_file="C:/Keys/trusted-hosts", local_ports=(8443,))
+    bundle = BuildSshDeviceBundle(profile, "laptop", endpoint="203.0.113.42", identityFile="C:/Keys/laptop-key", knownHostsFile="C:/Keys/trusted-hosts", localPorts=(8443,))
 
     assert 'IdentityFile "C:/Keys/laptop-key"' in bundle.files[0].content.decode("utf-8")
 
@@ -544,21 +544,21 @@ def test_ServerInitializationRequiresMatchingOwnedProfile(tmp_path: Path) -> Non
     """Reject a foreign manifest even when its initialization bytes are identical."""
 
     profile = Profile()
-    foreign = replace(profile, identity=replace(profile.identity, owner_id="different-owner"))
+    foreign = replace(profile, identity=replace(profile.identity, ownerId="different-owner"))
     directory = WriteArtifactBundle(tmp_path / "artifacts", BuildServerBundle(foreign))
 
     with pytest.raises(GatewayError):
-        RenderPlan(CompileGateway(profile), user_data_file=directory / "server-cloud-init.json")
+        RenderPlan(CompileGateway(profile), userDataFile=directory / "server-cloud-init.json")
 
-    other = replace(profile, ssh_port=2222)
+    other = replace(profile, sshPort=2222)
     directory = WriteArtifactBundle(tmp_path / "second-root", BuildServerBundle(other))
 
     with pytest.raises(GatewayError):
-        RenderPlan(CompileGateway(profile), user_data_file=directory / "server-cloud-init.json")
+        RenderPlan(CompileGateway(profile), userDataFile=directory / "server-cloud-init.json")
 
 
-@pytest.mark.parametrize("lookup_status,useradd_status", [(0, 0), (2, 0), (3, 0), (2, 1)])
-def test_BootstrapAccountGuardAndPersistentServiceActivation(tmp_path: Path, lookup_status: int, useradd_status: int) -> None:
+@pytest.mark.parametrize('lookupStatus,useraddStatus', [(0, 0), (2, 0), (3, 0), (2, 1)])
+def test_BootstrapAccountGuardAndPersistentServiceActivation(tmp_path: Path, lookupStatus: int, useraddStatus: int) -> None:
     """Execute shell sequencing against isolated command fakes without touching host accounts or services."""
 
     data = json.loads(BuildServerBundle(Profile()).files[0].content.removeprefix(b"#cloud-config\n"))
@@ -571,7 +571,7 @@ def test_BootstrapAccountGuardAndPersistentServiceActivation(tmp_path: Path, loo
 
     for command in ("getent", "useradd", "usermod", "install", "sshd", "nft", "sysctl", "systemctl", "touch"):
         fake = commands / command
-        status = lookup_status if command == "getent" else useradd_status if command == "useradd" else 0
+        status = lookupStatus if command == "getent" else useraddStatus if command == "useradd" else 0
         fake.write_text(
             '#!/bin/sh\n' + f'printf "%s\\n" "{command} $*" >> "$GATEWAY_TEST_LOG_PATH"\n'
             + f"exit {status}\n"
@@ -583,17 +583,17 @@ def test_BootstrapAccountGuardAndPersistentServiceActivation(tmp_path: Path, loo
     })
     calls = log.read_text().splitlines()
 
-    if lookup_status != 2 or useradd_status:
+    if lookupStatus != 2 or useraddStatus:
         assert result.returncode == 1
         assert not any("systemctl" in call or "touch" in call for call in calls)
 
-        if lookup_status != 2:
+        if lookupStatus != 2:
             assert calls == ["getent passwd gateway-tunnel"]
 
-        if lookup_status == 0:
+        if lookupStatus == 0:
             assert "already exists" in result.stderr
 
-        elif lookup_status == 3:
+        elif lookupStatus == 3:
             assert "Unable to verify" in result.stderr
 
     else:

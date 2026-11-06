@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from flayer import vpn_project
+from flayer import vpn_project as vpnProject
 from flayer.__main__ import Main
 from flayer.core.contracts import StackIdentity
 from flayer.core.lifecycle import LifecycleEngine
@@ -50,31 +50,23 @@ from flayer.vpn_project import (
 
 PUBLIC_KEY = "ssh-ed25519 " + base64.b64encode(struct.pack(">I", 11) + b"ssh-ed25519" + struct.pack(">I", 32) + b"p" * 32).decode("ascii")
 OTHER_KEY = "ssh-ed25519 " + base64.b64encode(struct.pack(">I", 11) + b"ssh-ed25519" + struct.pack(">I", 32) + b"q" * 32).decode("ascii")
-SIZING_TOML = '''
-[resources]
-platform_id = "standard-v3"
-cores = 2
-core_fraction = 50
-memory_gib = 2
-disk_size_gib = 10
-disk_type = "network-hdd"
-'''
+SIZING_TOML = '\n[resources]\nplatform_id = "standard-v3"\ncores = 2\ncore_fraction = 50\nmemory_gib = 2\ndisk_size_gib = 10\ndisk_type = "network-hdd"\n'
 
 
-def Project(tmp_path: Path) -> VpnProject:
+def Project(tmpPath: Path) -> VpnProject:
     """Create an actual private local project with example placement and no cloud connection."""
 
-    directory = InitializeVpnProject(tmp_path / "project")
+    directory = InitializeVpnProject(tmpPath / "project")
     config = directory / "project.toml"
     config.write_text(config.read_text().replace("replace-with-folder-id", "example-folder").replace("replace-with-ubuntu-2404-amd64-image-id", "example-image"))
 
     return LoadVpnProject(directory)
 
 
-def SizedProject(tmp_path: Path) -> VpnProject:
+def SizedProject(tmpPath: Path) -> VpnProject:
     """Configure the economical Intel shape through the actual public TOML loader."""
 
-    project = Project(tmp_path)
+    project = Project(tmpPath)
     config = project.root / "project.toml"
     config.write_text(config.read_text() + SIZING_TOML)
 
@@ -85,9 +77,9 @@ def test_LegacySizingPreservesFingerprintAndPlan(tmp_path: Path) -> None:
     """Keep the fingerprint captured from develop 4d75acc and its implicit resource plan."""
 
     project = Project(tmp_path)
-    fixed_key_project = replace(project, ssh_public_key=PUBLIC_KEY)
+    fixedKeyProject = replace(project, sshPublicKey=PUBLIC_KEY)
 
-    assert fixed_key_project.Fingerprint() == "2fef1d60f4a576029e9066c73ea2bbfd43397197a8f0de52a196bc0a342a21e5", "Legacy prepared credentials would become unusable"
+    assert fixedKeyProject.Fingerprint() == "2fef1d60f4a576029e9066c73ea2bbfd43397197a8f0de52a196bc0a342a21e5", "Legacy prepared credentials would become unusable"
     assert project.resources is None
     PrepareVpnProject(project)
     plan = CompileVpnProject(project)
@@ -98,16 +90,16 @@ def test_LegacySizingPreservesFingerprintAndPlan(tmp_path: Path) -> None:
     assert "platform_id" not in instance and "core_fraction" not in instance, "Legacy resource ownership digest changed"
 
 
-@pytest.mark.parametrize("disk_type,disk_size,cores,memory,fraction", [
+@pytest.mark.parametrize('diskType,diskSize,cores,memory,fraction', [
     ("network-hdd", 10, 2, 2, 50), ("network-ssd", 80, 4, 8, 100),
 ])
 def test_PublicSizingCompilesIntoOwnedProviderResources(
-    tmp_path: Path, disk_type: str, disk_size: int, cores: int, memory: int, fraction: int,
+    tmp_path: Path, diskType: str, diskSize: int, cores: int, memory: int, fraction: int,
 ) -> None:
     """Propagate all public sizing settings into validated independent disk and VM resources."""
 
     project = SizedProject(tmp_path)
-    project = replace(project, resources=VpnResources("standard-v3", cores, fraction, memory, disk_size, disk_type))
+    project = replace(project, resources=VpnResources("standard-v3", cores, fraction, memory, diskSize, diskType))
     PrepareVpnProject(project)
     plan = CompileVpnProject(project)
     cloud = FakeCloud(project)
@@ -117,7 +109,7 @@ def test_PublicSizingCompilesIntoOwnedProviderResources(
 
     disk, instance = (dict(item.parameters) for item in plan.resources[-2:])
 
-    assert (disk["size_gib"], disk["type"]) == (disk_size, disk_type), "Requested disk was replaced by the preset"
+    assert (disk["size_gib"], disk["type"]) == (diskSize, diskType), "Requested disk was replaced by the preset"
     assert (instance["cores"], instance["memory_gib"], instance["platform_id"], instance["core_fraction"]) == (cores, memory, "standard-v3", fraction), "Requested compute shape was lost"
 
 
@@ -169,8 +161,8 @@ def test_SizingSchemaAndRegionFailClosed(tmp_path: Path, change: str) -> None:
 
 
 @pytest.mark.parametrize("action", ["prepare", "deploy", "status", "recover", "destroy"])
-@pytest.mark.parametrize("change", [{"cores": 4}, {"memory_gib": 4}, {"platform_id": "standard-v2"},
-                                    {"core_fraction": 20}, {"disk_size_gib": 20}, {"disk_type": "network-ssd"}, None])
+@pytest.mark.parametrize("change", [{"cores": 4}, {'memoryGib': 4}, {'platformId': "standard-v2"},
+                                    {'coreFraction': 20}, {'diskSizeGib': 20}, {'diskType': "network-ssd"}, None])
 def test_PreparedSizingCannotChangeBeforeAnyCloudAccess(tmp_path: Path, action: str, change: dict[str, Any] | None, monkeypatch: pytest.MonkeyPatch) -> None:
     """Bind every sizing field, including removal of the block, across all lifecycle commands."""
 
@@ -187,7 +179,7 @@ def test_PreparedSizingCannotChangeBeforeAnyCloudAccess(tmp_path: Path, action: 
     monkeypatch.setattr("flayer.vpn_project.VpnYandexProvider", RejectCloud)
 
     with pytest.raises(VpnError, match="changed after preparation|does not match"):
-        RunVpnProject(altered, action, allow_mutation=True, scope_confirm="example-folder")
+        RunVpnProject(altered, action, allowMutation=True, scopeConfirm="example-folder")
 
 
 class FakeCloud(VpnYandexProvider):
@@ -196,29 +188,29 @@ class FakeCloud(VpnYandexProvider):
     def __init__(self, project: VpnProject) -> None:
         """Create an isolated resource inventory, injectable failure windows, and public host key."""
 
-        super().__init__(YandexCloudSettings(project.vpn.identity.scope_id, project.cloud.yc_profile))
+        super().__init__(YandexCloudSettings(project.vpn.identity.scopeId, project.cloud.ycProfile))
         self.resources: dict[str, ProviderResource] = {}
         self.created: list[str] = []
         self.deleted: list[str] = []
-        self.fail_create: str | None = None
-        self.fail_delete: str | None = None
-        self.uncertain_create: str | None = None
-        self.host_key: str | None = PUBLIC_KEY
-        self.host_key_reads = 0
-        self.authentication_checks = 0
-        self.authentication_status = ProviderStatus(self.Identity, True, True)
+        self.failCreate: str | None = None
+        self.failDelete: str | None = None
+        self.uncertainCreate: str | None = None
+        self.hostKey: str | None = PUBLIC_KEY
+        self.hostKeyReads = 0
+        self.authenticationChecks = 0
+        self.authenticationStatus = ProviderStatus(self.Identity, True, True)
 
     def CheckAuthentication(self) -> ProviderStatus:
         """Return explicit fixture access without executing the external CLI."""
 
-        self.authentication_checks += 1
+        self.authenticationChecks += 1
 
-        return self.authentication_status
+        return self.authenticationStatus
 
     def FindResource(self, spec: ResourceSpec, identity: StackIdentity) -> ProviderResource | None:
         """Return only an existing fixture resource under its declared logical ID."""
 
-        return self.resources.get(spec.logical_id)
+        return self.resources.get(spec.logicalId)
 
     def GetResource(self, reference: ResourceReference) -> ProviderResource:
         """Respect exact resource references while distinguishing absence from an observation."""
@@ -229,66 +221,67 @@ class FakeCloud(VpnYandexProvider):
 
         raise ProviderError(ProviderErrorCode.NOT_FOUND, "get")
 
-    def CreateResource(self, spec: ResourceSpec, identity: StackIdentity, dependencies: Mapping[str, ProviderResource], operation_id: str) -> ProviderResource:
+    def CreateResource(self, spec: ResourceSpec, identity: StackIdentity, dependencies: Mapping[str, ProviderResource], operationId: str) -> ProviderResource:
         """Model dependency ordering, failure before dispatch, and uncertain submission."""
 
         assert set(dependencies) == set(spec.dependencies), "Resources must be created in dependency order"
 
-        if spec.logical_id == self.fail_create:
+        if spec.logicalId == self.failCreate:
             raise MutationError(ProviderErrorCode.UNSUPPORTED, "create", False)
 
         addresses = ("203.0.113.20",) if spec.kind in {ResourceKind.INSTANCE, ResourceKind.ADDRESS} else ()
         resource = ProviderResource(
-            ResourceReference(identity.provider, identity.scope_id, spec.kind, "id-" + spec.logical_id),
+            ResourceReference(identity.provider, identity.scopeId, spec.kind, "id-" + spec.logicalId),
             spec.name, "RUNNING" if spec.kind == ResourceKind.INSTANCE else "READY", "ru-central1-a",
-            tuple(sorted((*spec.OwnershipLabels(identity), ("flayer-operation", operation_id)))), addresses,
+            tuple(sorted((*spec.OwnershipLabels(identity), ("flayer-operation", operationId)))), addresses,
         )
-        self.resources[spec.logical_id] = resource
-        self.created.append(spec.logical_id)
+        self.resources[spec.logicalId] = resource
+        self.created.append(spec.logicalId)
 
-        if spec.logical_id == self.uncertain_create:
+        if spec.logicalId == self.uncertainCreate:
             raise MutationError(ProviderErrorCode.TIMEOUT, "create", True)
 
         return resource
 
-    def DeleteResource(self, reference: ResourceReference, identity: StackIdentity, logical_id: str, operation_id: str | None = None) -> None:
+    def DeleteResource(self, reference: ResourceReference, identity: StackIdentity, logicalId: str, operationId: str | None = None) -> None:
         """Delete one exactly owned fixture while allowing interrupted cleanup tests."""
 
-        assert reference.scope_id == identity.scope_id, "Deletion must remain inside the confirmed scope"
+        assert reference.scopeId == identity.scopeId, "Deletion must remain inside the confirmed scope"
 
-        if logical_id == self.fail_delete:
+        if logicalId == self.failDelete:
             raise MutationError(ProviderErrorCode.TIMEOUT, "delete", True)
 
-        self.deleted.append(logical_id)
-        del self.resources[logical_id]
+        self.deleted.append(logicalId)
+        del self.resources[logicalId]
 
     def ReadHostKey(self, instance: ProviderResource, fingerprint: str) -> str | None:
         """Return a public fixture key representing the separately authenticated IAM channel."""
 
-        self.host_key_reads += 1
+        self.hostKeyReads += 1
 
-        return self.host_key
+        return self.hostKey
 
 
 class FakeGuest:
     """Record private installation input without running a process or connecting to a network."""
 
     instances: list[FakeGuest] = []
-    fail_install = False
+    failInstall = False
     active = True
 
-    def __init__(self, endpoint: object, username: str, identity_file: Path, known_hosts_file: Path) -> None:
+    def __init__(self, endpoint: object, username: str, identityFile: Path, knownHostsFile: Path) -> None:
         """Verify that the controller already pinned host trust and retained private key modes."""
 
-        PrivatePath(identity_file)
-        self.trust = ReadPrivate(known_hosts_file)
+        PrivatePath(identityFile)
+        self.trust = ReadPrivate(knownHostsFile)
         self.installations: list[object] = []
+        self.runtimeCalls: list[tuple[object, str, dict[str, object]]] = []
         self.instances.append(self)
 
     def Install(self, bundles: object) -> None:
         """Simulate successful or failed guest installation without reporting live health."""
 
-        if self.fail_install:
+        if self.failInstall:
             raise VpnError("Fixture guest installation failed")
 
         self.installations.append(bundles)
@@ -298,21 +291,116 @@ class FakeGuest:
 
         return tuple((service, self.active) for service in services)
 
+    def VlessRuntime(self, bundle: object, action: str, **options: object) -> dict[str, str]:
+        """Return bounded fixture runtime facts without any guest or cloud mutation."""
+
+        self.runtimeCalls.append((bundle, action, options))
+
+        return {"version": "26.10.31", "receipt_sha256": "a" * 64, "previous_receipt_sha256": "c" * 64, "binary_sha256": "b" * 64,
+                "upgrade_status": "rollback-available", "kernel_release": "6.8.0-fixture",
+                "kernel_package_version": "unavailable", "kernel_patch_status": "not-assessed"}
+
 
 @pytest.fixture(autouse=True)
 def ResetGuest() -> None:
     """Prevent fixture settings from leaking between independent deployment tests."""
 
     FakeGuest.instances = []
-    FakeGuest.fail_install = False
+    FakeGuest.failInstall = False
     FakeGuest.active = True
 
 
 def Run(project: VpnProject, action: str, cloud: FakeCloud, **options: Any) -> Any:
     """Dispatch only through the real orchestration with fake external boundaries."""
 
-    return RunVpnProject(project, action, allow_mutation=True, scope_confirm=project.vpn.identity.scope_id,
-                         provider=cloud, guest_factory=FakeGuest, **options)
+    return RunVpnProject(project, action, allowMutation=True, scopeConfirm=project.vpn.identity.scopeId,
+                         provider=cloud, guestFactory=FakeGuest, **options)
+
+
+def test_RuntimeMutationConsentFailsBeforeCloudOrGuest(tmp_path: Path) -> None:
+    """A runtime receipt alone cannot authorize operating on an existing deployment."""
+
+    project = Project(tmp_path)
+    cloud = FakeCloud(project)
+
+    for options in ({}, {"allowMutation": True}, {"allowMutation": True, "scopeConfirm": "other-folder"}):
+        with pytest.raises(VpnError, match="scope-confirm"):
+            vpnProject.RunVpnRuntime(project, "upgrade", expectedVersion="26.9.30", expectedReceipt="a" * 64,
+                                     provider=cloud, guestFactory=FakeGuest, **options)
+
+    assert not cloud.authenticationChecks and not FakeGuest.instances
+    assert not cloud.created and not cloud.deleted
+
+
+def test_RuntimeUpgradeReusesLegacyProjectWithoutRewritingArtifacts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A trusted current installer must be sent in memory while old private manifests remain exact."""
+
+    import hashlib
+
+    from flayer.profiles.artifacts import Artifact, ArtifactBundle
+
+    project = Project(tmp_path)
+    originalPrepare = vpnProject.PrepareVless
+    legacyInstaller = b"# known historical installer fixture\n"
+
+    def PrepareLegacy(*args: Any, **kwargs: Any) -> Any:
+        """Produce a declared old-version bundle using a deterministic historical-program fixture."""
+
+        kwargs["runtimeVersion"] = "26.9.30"
+        transport = originalPrepare(*args, **kwargs)
+        bundle = transport.serverBundle
+        legacy = ArtifactBundle(bundle.identity, bundle.kind, bundle.name, tuple(
+            Artifact(item.name, legacyInstaller) if item.name == "install.py" else item for item in bundle.files
+        ))
+
+        return replace(transport, serverBundle=legacy)
+
+    monkeypatch.setattr(vpnProject, "PrepareVless", PrepareLegacy)
+    monkeypatch.setattr(vpnProject, "LEGACY_VLESS_INSTALLERS", frozenset({hashlib.sha256(legacyInstaller).hexdigest()}))
+    PrepareVpnProject(project)
+    cloud = FakeCloud(project)
+    Run(project, "deploy", cloud)
+    before = {path.relative_to(project.root): path.read_bytes() for path in project.root.rglob("*") if path.is_file()}
+    created, deleted = list(cloud.created), list(cloud.deleted)
+    monkeypatch.setattr(vpnProject, "PrepareVless", originalPrepare)
+    PrepareVpnProject(project)
+    report = vpnProject.RunVpnRuntime(
+        project, "upgrade", allowMutation=True, scopeConfirm=project.vpn.identity.scopeId,
+        expectedVersion="26.9.30", expectedReceipt="c" * 64, provider=cloud, guestFactory=FakeGuest,
+    )
+
+    assert report.version == "26.10.31" and report.connectivityStatus == "not-verified"
+    assert report.kernelPatchStatus == "not-assessed"
+    assert cloud.created == created and cloud.deleted == deleted
+    assert before == {path.relative_to(project.root): path.read_bytes() for path in project.root.rglob("*") if path.is_file()}
+
+    bundle, action, options = FakeGuest.instances[-1].runtimeCalls[0]
+
+    assert action == "upgrade" and options == {"expectedVersion": "26.9.30", "expectedReceipt": "c" * 64}
+    assert next(item.content for item in bundle.files if item.name == "install.py") != legacyInstaller
+    assert json.loads(next(item.content for item in bundle.files if item.name == "deployment.json"))["xray_version"] == "26.9.30"
+    assert Run(project, "status", cloud).status == "complete"
+
+
+def test_RuntimeStatusRequiresPreparedOwnershipAndCompleteCloudState(tmp_path: Path) -> None:
+    """Read-only maintenance cannot infer a deployment from an unprepared or incomplete project."""
+
+    project = Project(tmp_path)
+    cloud = FakeCloud(project)
+
+    with pytest.raises(ArtifactError):
+        vpnProject.RunVpnRuntime(project, "runtime-status", provider=cloud, guestFactory=FakeGuest)
+
+    assert not cloud.authenticationChecks and not FakeGuest.instances
+
+    PrepareVpnProject(project)
+
+    with pytest.raises(VpnError, match="complete owned cloud"):
+        vpnProject.RunVpnRuntime(project, "runtime-status", provider=cloud, guestFactory=FakeGuest)
+
+    assert not FakeGuest.instances and not cloud.created
 
 
 def test_ProjectInitializationIsPrivateAndExclusive(tmp_path: Path) -> None:
@@ -360,26 +448,26 @@ def test_PreparationIsIdempotentAndKeepsClientKeysOutOfBootstrap(tmp_path: Path)
     assert b"chain forward" not in bootstrap, "Bootstrap must not override the transport-owned forwarding rules"
 
     document = json.loads(bootstrap.removeprefix(b"#cloud-config\n"))
-    ssh_configuration = next(item["content"] for item in document["write_files"] if item["path"] == "/etc/ssh/sshd_config")
+    sshConfiguration = next(item["content"] for item in document["write_files"] if item["path"] == "/etc/ssh/sshd_config")
 
     assert document["users"][0]["lock_passwd"] is True
-    assert "UsePAM yes" in ssh_configuration, "Locked Ubuntu accounts need PAM for public-key administration"
-    assert "PasswordAuthentication no" in ssh_configuration and "KbdInteractiveAuthentication no" in ssh_configuration
+    assert "UsePAM yes" in sshConfiguration, "Locked Ubuntu accounts need PAM for public-key administration"
+    assert "PasswordAuthentication no" in sshConfiguration and "KbdInteractiveAuthentication no" in sshConfiguration
 
 
-@pytest.mark.parametrize("explicit_sizing", [False, True])
-def test_RealOrchestrationCreatesExportsObservesAndDestroys(tmp_path: Path, explicit_sizing: bool) -> None:
+@pytest.mark.parametrize('explicitSizing', [False, True])
+def test_RealOrchestrationCreatesExportsObservesAndDestroys(tmp_path: Path, explicitSizing: bool) -> None:
     """Exercise the complete controller flow with real durable state and isolated cloud/guest fakes."""
 
-    project = SizedProject(tmp_path) if explicit_sizing else Project(tmp_path)
+    project = SizedProject(tmp_path) if explicitSizing else Project(tmp_path)
     cloud = FakeCloud(project)
     deployed = Run(project, "deploy", cloud)
 
-    assert deployed.status == "complete" and deployed.guest_status == "services-active"
-    assert deployed.connectivity_status == "not-verified"
+    assert deployed.status == "complete" and deployed.guestStatus == "services-active"
+    assert deployed.connectivityStatus == "not-verified"
     assert len(cloud.created) == 6 and len(FakeGuest.instances[-1].installations) == 1
     assert PUBLIC_KEY.encode() in FakeGuest.instances[-1].trust
-    assert deployed.client_exports == ("artifacts/device-laptop-amneziawg", "artifacts/device-laptop-vless-reality")
+    assert deployed.clientExports == ("artifacts/device-laptop-amneziawg", "artifacts/device-laptop-vless-reality")
     assert "203.0.113.20:51820" in ReadPrivate(project.Artifacts / "device-laptop-amneziawg" / "amneziawg.conf").decode()
     assert "203.0.113.20:443" in ReadPrivate(project.Artifacts / "device-laptop-vless-reality" / "import.txt").decode()
 
@@ -392,7 +480,7 @@ def test_RealOrchestrationCreatesExportsObservesAndDestroys(tmp_path: Path, expl
     observed = Run(project, "status", cloud)
 
     assert observed.status == "complete" and not FakeGuest.instances[-1].installations
-    assert observed.connectivity_status == "not-verified"
+    assert observed.connectivityStatus == "not-verified"
 
     destroyed = Run(project, "destroy", cloud)
 
@@ -410,10 +498,10 @@ def test_MutationRequiresExactScopeBeforePreparation(tmp_path: Path, action: str
 
     for allow, scope in ((False, "example-folder"), (True, "other-folder")):
         with pytest.raises(VpnError, match="exact --scope-confirm"):
-            RunVpnProject(project, action, allow_mutation=allow, scope_confirm=scope, provider=cloud)
+            RunVpnProject(project, action, allowMutation=allow, scopeConfirm=scope, provider=cloud)
 
     assert not cloud.created and not tuple(project.Artifacts.iterdir())
-    assert cloud.authentication_checks == 0, "Consent rejection accessed the cloud"
+    assert cloud.authenticationChecks == 0, "Consent rejection accessed the cloud"
 
 
 @pytest.mark.parametrize("action", ["deploy", "status", "destroy", "recover"])
@@ -426,21 +514,21 @@ def test_AuthenticationFailurePreservesProjectBeforeAnyLifecycleOperation(tmp_pa
     PrepareVpnProject(project)
 
     if pending:
-        cloud.uncertain_create = "instance"
-        assert Run(project, "deploy", cloud).recovery_required
+        cloud.uncertainCreate = "instance"
+        assert Run(project, "deploy", cloud).recoveryRequired
 
     snapshot = {path: path.read_bytes() for path in project.root.rglob("*") if path.is_file()}
     inventory = dict(cloud.resources)
     created, deleted = tuple(cloud.created), tuple(cloud.deleted)
-    checks, host_reads = cloud.authentication_checks, cloud.host_key_reads
-    cloud.authentication_status = ProviderStatus(cloud.Identity, True, False, ProviderErrorCode.AUTHENTICATION)
+    checks, hostReads = cloud.authenticationChecks, cloud.hostKeyReads
+    cloud.authenticationStatus = ProviderStatus(cloud.Identity, True, False, ProviderErrorCode.AUTHENTICATION)
 
     with pytest.raises(VpnError, match=r"preflight failed \(authentication\).*Reauthenticate"):
         Run(project, action, cloud, rollback=action == "recover")
 
-    assert cloud.authentication_checks == checks + 1, "Cloud access must be checked on each invocation"
+    assert cloud.authenticationChecks == checks + 1, "Cloud access must be checked on each invocation"
     assert cloud.resources == inventory and tuple(cloud.created) == created and tuple(cloud.deleted) == deleted
-    assert cloud.host_key_reads == host_reads, "Failed authentication reached guest discovery"
+    assert cloud.hostKeyReads == hostReads, "Failed authentication reached guest discovery"
     assert {path: path.read_bytes() for path in project.root.rglob("*") if path.is_file()} == snapshot, "Failed preflight changed retained state or artifacts"
 
 
@@ -457,12 +545,12 @@ def test_AccessPreflightDistinguishesFailuresAndUnknownAuthentication(tmp_path: 
     project = Project(tmp_path)
     cloud = FakeCloud(project)
     PrepareVpnProject(project)
-    cloud.authentication_status = ProviderStatus(cloud.Identity, code != ProviderErrorCode.UNAVAILABLE, None, code)
+    cloud.authenticationStatus = ProviderStatus(cloud.Identity, code != ProviderErrorCode.UNAVAILABLE, None, code)
 
     with pytest.raises(VpnError, match=expected):
         Run(project, "status", cloud)
 
-    assert not cloud.created and cloud.authentication_checks == 1
+    assert not cloud.created and cloud.authenticationChecks == 1
 
 
 def test_PrepareSkipsCloudAuthentication(tmp_path: Path) -> None:
@@ -470,14 +558,14 @@ def test_PrepareSkipsCloudAuthentication(tmp_path: Path) -> None:
 
     project = Project(tmp_path)
     cloud = FakeCloud(project)
-    cloud.authentication_status = ProviderStatus(cloud.Identity, True, False, ProviderErrorCode.AUTHENTICATION)
+    cloud.authenticationStatus = ProviderStatus(cloud.Identity, True, False, ProviderErrorCode.AUTHENTICATION)
 
     assert Run(project, "prepare", cloud).status == "complete"
-    assert cloud.authentication_checks == 0 and not cloud.created
+    assert cloud.authenticationChecks == 0 and not cloud.created
 
 
-@pytest.mark.parametrize("output_format", ["json", "text"])
-def test_PublicCliReportsExpiredProfileWithoutVendorSecrets(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], output_format: str) -> None:
+@pytest.mark.parametrize('outputFormat', ["json", "text"])
+def test_PublicCliReportsExpiredProfileWithoutVendorSecrets(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], outputFormat: str) -> None:
     """Exercise the real provider probe and console error path with captured secret-bearing rejection."""
 
     project = Project(tmp_path)
@@ -496,14 +584,14 @@ def test_PublicCliReportsExpiredProfileWithoutVendorSecrets(tmp_path: Path, monk
 
     monkeypatch.setattr("flayer.providers.yandex.SubprocessCommandRunner.Run", RunCommand)
 
-    assert Main(["vpn", "deploy", "--project", str(project.root), "--allow-mutation", "--scope-confirm", "example-folder", "--format", output_format]) == 2
+    assert Main(["vpn", "deploy", "--project", str(project.root), "--allow-mutation", "--scope-confirm", "example-folder", "--format", outputFormat]) == 2
     output = capsys.readouterr().out
-    message = json.loads(output)["message"] if output_format == "json" else output
+    message = json.loads(output)["message"] if outputFormat == "json" else output
 
     assert "preflight failed (authentication)" in message and "Reauthenticate" in message
     assert "fixture-secret" not in output and "rpc error" not in output, "Vendor output escaped sanitization"
     assert len(calls) == 1 and calls[0][1:6] == ("resource-manager", "folder", "get", "--id", "example-folder")
-    assert calls[0][calls[0].index("--profile") + 1] == project.cloud.yc_profile
+    assert calls[0][calls[0].index("--profile") + 1] == project.cloud.ycProfile
     assert not (project.root / "state.json").exists() and not (project.root / ".state.json.operation.json").exists()
 
 
@@ -512,10 +600,10 @@ def test_CreateFailureRollsBackOnlyNewCloudResources(tmp_path: Path) -> None:
 
     project = Project(tmp_path)
     cloud = FakeCloud(project)
-    cloud.fail_create = "instance"
+    cloud.failCreate = "instance"
     report = Run(project, "deploy", cloud)
 
-    assert report.status == "incomplete" and report.cloud_status == "rolled-back"
+    assert report.status == "incomplete" and report.cloudStatus == "rolled-back"
     assert not cloud.resources and not FakeGuest.instances
     assert (project.Artifacts / "server-gateway-credentials").exists()
 
@@ -525,18 +613,18 @@ def test_UncertainCreationRequiresExplicitRecovery(tmp_path: Path) -> None:
 
     project = Project(tmp_path)
     cloud = FakeCloud(project)
-    cloud.uncertain_create = "instance"
+    cloud.uncertainCreate = "instance"
     report = Run(project, "deploy", cloud)
 
-    assert report.recovery_required and report.cloud_status == "uncertain"
+    assert report.recoveryRequired and report.cloudStatus == "uncertain"
     assert (project.root / ".state.json.operation.json").exists()
     assert not FakeGuest.instances
 
-    cloud.uncertain_create = None
+    cloud.uncertainCreate = None
     arriving = cloud.resources.pop("instance")
     unresolved = Run(project, "recover", cloud)
 
-    assert unresolved.recovery_required and unresolved.cloud_status == "uncertain"
+    assert unresolved.recoveryRequired and unresolved.cloudStatus == "uncertain"
 
     cloud.resources["instance"] = arriving
     recovered = Run(project, "recover", cloud)
@@ -550,7 +638,7 @@ def test_GuestFailureRetainsCloudAndCredentialsForRetry(tmp_path: Path) -> None:
 
     project = Project(tmp_path)
     cloud = FakeCloud(project)
-    FakeGuest.fail_install = True
+    FakeGuest.failInstall = True
 
     with pytest.raises(VpnError, match="Fixture guest installation failed"):
         Run(project, "deploy", cloud)
@@ -558,7 +646,7 @@ def test_GuestFailureRetainsCloudAndCredentialsForRetry(tmp_path: Path) -> None:
     assert len(cloud.resources) == 6 and len(LoadState(project.root / "state.json", project.vpn.identity).resources) == 6
 
     material = ReadPrivate(project.Artifacts / "server-gateway-credentials" / "amneziawg.json")
-    FakeGuest.fail_install = False
+    FakeGuest.failInstall = False
 
     assert Run(project, "deploy", cloud).status == "complete"
     assert material == ReadPrivate(project.Artifacts / "server-gateway-credentials" / "amneziawg.json")
@@ -573,7 +661,7 @@ def test_ServiceInactivityIsNotReportedAsVpnReadiness(tmp_path: Path) -> None:
     FakeGuest.active = False
     report = Run(project, "deploy", cloud)
 
-    assert report.status == "incomplete" and report.guest_status == "inactive"
+    assert report.status == "incomplete" and report.guestStatus == "inactive"
     assert not tuple(project.Artifacts.glob("device-*"))
 
 
@@ -582,7 +670,7 @@ def test_ModifiedArtifactsAndChangedProjectSettingsBlockReuse(tmp_path: Path) ->
 
     project = Project(tmp_path)
     PrepareVpnProject(project)
-    changed = replace(project, cloud=replace(project.cloud, zone_id="another-zone"))
+    changed = replace(project, cloud=replace(project.cloud, zoneId="another-zone"))
 
     with pytest.raises(VpnError, match="changed after preparation"):
         PrepareVpnProject(changed)
@@ -603,23 +691,23 @@ def test_LegacyInstallerNewlinesReuseOnlyVerifiedEquivalentContent(
     """Retain old CRLF bundles intact without accepting code drift or bypassing manifests."""
 
     project = Project(tmp_path)
-    prepare = vpn_project.PrepareVless
+    prepare = vpnProject.PrepareVless
 
     def PrepareLegacy(*args: Any, **kwargs: Any) -> Any:
         """Emulate a previous package while preserving the actual artifact writer contract."""
 
         prepared = prepare(*args, **kwargs)
         filename = "server.json" if variation == "configuration" else "install.py"
-        bundle = prepared.server_bundle
+        bundle = prepared.serverBundle
         artifacts = tuple(replace(item, content=(
             item.content.replace(b"\n", b"\r\n")
             + (b"# different implementation\r\n" if variation == "changed" else b"")
         )) if item.name == filename else item for item in bundle.files)
 
-        return replace(prepared, server_bundle=replace(bundle, files=artifacts))
+        return replace(prepared, serverBundle=replace(bundle, files=artifacts))
 
     with monkeypatch.context() as patch:
-        patch.setattr(vpn_project, "PrepareVless", PrepareLegacy)
+        patch.setattr(vpnProject, "PrepareVless", PrepareLegacy)
         PrepareVpnProject(project)
 
     installer = project.Artifacts / "server-gateway-vless-reality" / "install.py"
@@ -649,7 +737,7 @@ def test_ForeignOrMismatchedEndpointsBlockTrustAndGuestAccess(tmp_path: Path) ->
     PrepareVpnProject(project)
     LifecycleEngine(CompileVpnProject(project), cloud, project.root / "state.json").Create()
     original = cloud.resources["instance"]
-    cloud.resources["instance"] = replace(original, public_addresses=("203.0.113.21",))
+    cloud.resources["instance"] = replace(original, publicAddresses=("203.0.113.21",))
 
     with pytest.raises(VpnError, match="reserved address"):
         _OwnedEndpoints(project, cloud)
@@ -669,14 +757,14 @@ def test_AuthenticatedHostKeyPinCannotChangeSilently(tmp_path: Path) -> None:
     cloud = FakeCloud(project)
     Run(project, "deploy", cloud)
     instance, endpoint = _OwnedEndpoints(project, cloud)
-    cloud.host_key = OTHER_KEY
+    cloud.hostKey = OTHER_KEY
 
     with pytest.raises(VpnError, match="artifacts differ"):
         _HostTrust(project, cloud, instance, endpoint, wait=False)
 
     assert PUBLIC_KEY.encode() in ReadPrivate(project.Artifacts / "server-gateway-trust" / "known-hosts.txt")
 
-    cloud.host_key = None
+    cloud.hostKey = None
     delays: list[float] = []
 
     with pytest.raises(VpnError, match="not available yet"):
@@ -735,9 +823,9 @@ def test_PublicKeysFailWithoutEchoingPrivateInput(content: bytes) -> None:
 
 
 @pytest.mark.parametrize("changes", [
-    {"image_id": "replace-with-image"}, {"subnet_cidr": "8.8.0.0/16"},
-    {"subnet_cidr": "10.0.0.1/24"}, {"management_cidrs": ("0.0.0.0/0",)},
-    {"management_cidrs": ("198.51.100.0/24", "198.51.100.42/32")},
+    {'imageId': "replace-with-image"}, {'subnetCidr': "8.8.0.0/16"},
+    {'subnetCidr': "10.0.0.1/24"}, {'managementCidrs': ("0.0.0.0/0",)},
+    {'managementCidrs': ("198.51.100.0/24", "198.51.100.42/32")},
 ])
 def test_PlacementRejectsUnsafeAdministrationAndPublicSubnets(changes: dict[str, Any]) -> None:
     """Keep cloud management access narrow and separate from protocol ingress."""
@@ -867,9 +955,9 @@ def test_CloudCleanupDoesNotRequireLostGuestPrivateKey(tmp_path: Path) -> None:
     assert Run(project, "deploy", cloud).status == "complete"
 
     (project.root / "admin-key").unlink()
-    public_project = LoadVpnProject(project.root)
+    publicProject = LoadVpnProject(project.root)
 
-    assert Run(public_project, "destroy", cloud).status == "complete"
+    assert Run(publicProject, "destroy", cloud).status == "complete"
     assert not cloud.resources
 
 
@@ -895,7 +983,7 @@ def test_DestroyedProjectCannotAllocateAgainBeforeResolvingOldEndpointArtifacts(
     assert Run(project, "deploy", cloud).status == "complete"
     assert Run(project, "destroy", cloud).status == "complete"
 
-    cloud.host_key = OTHER_KEY
+    cloud.hostKey = OTHER_KEY
     created = tuple(cloud.created)
 
     with pytest.raises(VpnError, match="Initialize a new private project"):

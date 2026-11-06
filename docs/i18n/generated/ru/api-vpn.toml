@@ -14,56 +14,56 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.amneziawg.AmneziaWgDeviceKey"
 sourcePath = "src/flayer/profiles/amneziawg.py"
-sourceHash = "sha256:a0e6bab3043fe25a19b4855dfe330b05c822df61843e4e7e32c40941680052d1"
+sourceHash = "sha256:d7f7bc9d7a625645dfd2d0d98621b7619d416015286ffccb94150c2e67a59a02"
 body = "Учётные данные одного устройства, исключённые из диагностического представления объекта."
 reviewedTranslationHash = "sha256:cb7328c11e8e9017fba052f1e929e263fa6d0a013af556a4048a8ce1fd825b86"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.136976+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.amneziawg.AmneziaWgSecrets"
 sourcePath = "src/flayer/profiles/amneziawg.py"
-sourceHash = "sha256:775d9fbea410c221d61705cf20828fcacd9ea3e0df3fc15d93bae97238ad4e1d"
+sourceHash = "sha256:401a54ab8958ffa9d702ce1614d0bd0a84dbd0ddfc500ab4c6a577ceebbdd4bb"
 body = "Закрытые данные для подготовки конфигураций; не попадают в общие настройки, состояние и repr."
 reviewedTranslationHash = "sha256:d0de3184c8fbd3b8c832f165d3fb47bbf94016126e159ff03f0acccd8452eda1"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137012+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.amneziawg.AmneziaWgSettings"
 sourcePath = "src/flayer/profiles/amneziawg.py"
-sourceHash = "sha256:c58db5cf4d46fa00ff94070109efabad8e1e1782c9ad698f17ced61a5fc20635"
+sourceHash = "sha256:85a1da3939296aa39b18cdbac7d515ddcd59af5a1d64733f5540de223f4f044c"
 body = "Ограниченная IPv4-подсеть туннеля и консервативный размер пакетов клиента."
 reviewedTranslationHash = "sha256:3c81b1613d220c4aaa5dded5bf2403694e37341446fefe54bc738afe2f75082b"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137039+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.amneziawg.GenerateAmneziaWgSecrets"
 sourcePath = "src/flayer/profiles/amneziawg.py"
-sourceHash = "sha256:68636deeade5fbba48a93495fef72bc8e5ece5bc554ddef7ade718710f0c4510"
+sourceHash = "sha256:1d54b4733915ece29f6eb109170f3bad9076d3114657fdca752d29d44e6eb31b"
 body = "Сохраняет неизменённые учётные данные при явно запрошенном добавлении, смене ключей или удалении устройств."
 reviewedTranslationHash = "sha256:f8d819710a3d88414c7a8e8af49f8d45c4b7a1e7a45e1d1415f7133e5be11164"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137064+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.amneziawg.EncodeAmneziaWgSecrets"
 sourcePath = "src/flayer/profiles/amneziawg.py"
-sourceHash = "sha256:8e044e135d178b9267c5595d90081088e07a6c2e846492e175c4616256efa49c"
+sourceHash = "sha256:e44a5e6402a85f64e84d50a31f36db888cb799a63242d6a0574628daac0cb46b"
 body = "Сериализует учётные данные только для контроллера в закрытый набор файлов своего стека."
 reviewedTranslationHash = "sha256:e6185bd84e40148392ad8060a95bea00ef662cb6d44b8cfd0238e7f89d6cdff6"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137088+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -91,12 +91,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.amneziawg.PrepareAmneziaWg"
 sourcePath = "src/flayer/profiles/amneziawg.py"
-sourceHash = "sha256:7e447174fa8ac72130e48330b890faa6f2bfdfd1c6d80438b215a26f96f88460"
+sourceHash = "sha256:70963adfecb709e15bca6fa36ed83b62cb0c69b3d84ab967389d848b0fdb29bd"
 body = "Формирует воспроизводимые закрытые файлы сервера и клиентов без внешних операций."
 reviewedTranslationHash = "sha256:405afa762677a80979ad15926f18c97c38186903ac75b8b04a49e124d4ca4ac3"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137155+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -124,34 +124,34 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.vless.VlessRealitySettings"
 sourcePath = "src/flayer/profiles/vless.py"
-sourceHash = "sha256:7f1d57592fd5158ca083a63a6fcd0020a5ce5d55d7aa6f3871e663b98b58ed96"
+sourceHash = "sha256:c2baebfec75490b8503ad9aef575fa037688d4704fb6f231448f4bf1ebe7e6d2"
 body = "Публичный адрес рукопожатия Reality и настройки локального прокси для приложений."
 reviewedTranslationHash = "sha256:3b974e92c9cdb2bf310f68fefffbeec7411c0f1f7ccbcc6ff85d38aeac996b11"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137221+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.vless.VlessDeviceCredential"
 sourcePath = "src/flayer/profiles/vless.py"
-sourceHash = "sha256:c964312a3ab413e5a5fce863aeff1e63e11194ba0e5f50e46a766b30fab55dcd"
+sourceHash = "sha256:fe9ee93b049b36b3330f0af517bd744741647fb17af8a8f6c90873f48703ba96"
 body = "Отдельный отзываемый UUID VLESS для устройства, исключённый из представления объекта."
 reviewedTranslationHash = "sha256:2eda100437ba8497553bc423f21275db3b58dd4f46b7d502a443d5e022cf4aa6"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137243+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.vless.VlessMaterial"
 sourcePath = "src/flayer/profiles/vless.py"
-sourceHash = "sha256:14bd48b87a4eab96160ef007cf02463d7386fb66ccc6aa936f15d88d52c11d3b"
+sourceHash = "sha256:9168cb0a2b084144247662fc1ef20a31a1d82eb041b58e332437629c2eeaf144"
 body = "Явно переданные секреты хранятся только в закрытых наборах файлов, без записи в общее состояние жизненного цикла."
 reviewedTranslationHash = "sha256:ccaf8e3d6e6a06fa09ac69198dd327832e5b8f15b92b2d8e94bd55da9a3b1397"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137266+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -201,23 +201,23 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.vless.RenderVlessClient"
 sourcePath = "src/flayer/profiles/vless.py"
-sourceHash = "sha256:610d0960cf4af9bd597de691d4aa6e55629c4c441bd96e4e05d41d8f202c82dd"
+sourceHash = "sha256:ee5c4da71d14118c80ec2d1b38557d3423da59c0cbb6b28a4d083cec055e13da"
 body = "Формирует SOCKS-клиент, доступный только локально; при раздельной маршрутизации отклоняет назначения вне разрешённого списка."
 reviewedTranslationHash = "sha256:80558a9f162a0c5e5a122d97f9906c622d10d29dff67a32c599869476aa1e5e4"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137374+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.vless.BuildVlessUri"
 sourcePath = "src/flayer/profiles/vless.py"
-sourceHash = "sha256:558d7f85293666fa738f1fea28824727913eb2fefafdde9b1a173eb205cf2434"
+sourceHash = "sha256:f18fcde882e9f8d13dc11a768fed857cf8c04fd389d73a8d55b55884d76c25fa"
 body = "Создаёт URI для импорта транспорта; маршруты и DNS клиента настраиваются отдельно."
 reviewedTranslationHash = "sha256:6b7f3205870d65e59813171bb89f7ce668917c78c3912ffbac5d7481c7b202f3"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137395+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -234,12 +234,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.vless.PrepareVless"
 sourcePath = "src/flayer/profiles/vless.py"
-sourceHash = "sha256:8b676027a04102e8fcb0e30dda79406ff722957e7a997db201c5e2c08cadf21f"
-body = "Готовит установщик своего стека и отдельный закрытый набор файлов импорта для каждого объявленного устройства."
-reviewedTranslationHash = "sha256:1297b8c38de356b321c9ede8fcb904914f92a1008e8d5a2dfcd11fc260ce0da4"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:e483a5cc9eef366661a3c86080bb31f1de71a5858f3e16dbe13037dbb1bb8fc6"
+body = "Подготовить приватные наборы с явно выбранной текущей или сохранённой старой версией."
+reviewedTranslationHash = "sha256:fd4889a0f950f0aeeabd5652bd3c4c712a6d473a01b4900ca00e09f9ee276761"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137456+00:00"
+reviewedAt = "2026-11-05T18:37:32.432583Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -267,23 +267,23 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.vpn.VpnDevice"
 sourcePath = "src/flayer/profiles/vpn.py"
-sourceHash = "sha256:cb883c68a3c622e1d2c85bc3477bcdb0ac2f52c0676fa33297bacda8a3b74613"
+sourceHash = "sha256:d1d88474abc7c19a93640740fc3b8432cc709ae897c218b4fdec516374b87ea4"
 body = "Один именованный клиент; необязательный частный IPv4-адрес используется для IP-туннеля."
 reviewedTranslationHash = "sha256:ee7ae6808d259d8d576fb10a4a8defc57ad42e988c43912bede13ef246ef4828"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137639+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.vpn.VpnRoutes"
 sourcePath = "src/flayer/profiles/vpn.py"
-sourceHash = "sha256:1bd1a2e7e2563c449ccf8bae5195aed31f6090e45662c7b3b53fdafef3d51696"
+sourceHash = "sha256:f526eb593a0932e03a11e0dcc173bc0d5d80bcd09475416155cb81d2c4c761aa"
 body = "Правила IPv4-маршрутизации; в этой первой версии контракта клиенты должны отключать IPv6."
 reviewedTranslationHash = "sha256:f13afffc741f279dd541051326222c13eed9f70bf47433511590d5b8d9a3b3e5"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137674+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -300,34 +300,34 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.vpn.VpnListener"
 sourcePath = "src/flayer/profiles/vpn.py"
-sourceHash = "sha256:20110c6760b9d6a9bd02132cd9fc137f6543093eae9a3171f3b3c48c894e4dea"
+sourceHash = "sha256:309c8245f10425fa0722835c535f69dba0c41d39e2e9a46de42cf8fa71fc34ae"
 body = "Одно явно разрешённое входящее TCP- или UDP-подключение для именованной реализации транспорта."
 reviewedTranslationHash = "sha256:76a6d9f2b5849477d5a0b10e5fdab03a42eec7aa58e888e12eba56f6c4393e6d"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137723+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.vpn.VpnCapabilities"
 sourcePath = "src/flayer/profiles/vpn.py"
-sourceHash = "sha256:4104d69fd2d70b1f3cb1e09fb883fcfc9d0390a37b63353a5cfe61d42ee592ca"
+sourceHash = "sha256:d3babd537a51adaf7946e9464647c0ff757f102cd368a713c99d95a65038da31"
 body = "Заявленная транспортом область обработки трафика; прокси приложений не является туннелем для всей ОС."
 reviewedTranslationHash = "sha256:eee321e23b49a405b12b845be49a04bd58443eedcb3bfbdb9eebcaa3e3853b2c"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137745+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.vpn.VpnProfile"
 sourcePath = "src/flayer/profiles/vpn.py"
-sourceHash = "sha256:6202fdce9a8bae3a150eacd3fe8fb419ad924e7fe8e598fa23e320dc17db14d2"
+sourceHash = "sha256:6b718cf778640ab1eceec3d341278c3ad7dd02b75e9cabd96d7ba62eb448e403"
 body = "Публичные настройки устройств и маршрутов, принадлежащие одному точно определённому инфраструктурному стеку."
 reviewedTranslationHash = "sha256:b317e2a0b7b5d7a13f47b32b7fdf7819f8e9484b39ea8003e07e90af6b922bb9"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137767+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -366,23 +366,23 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.vpn.BuildVpnDeviceBundle"
 sourcePath = "src/flayer/profiles/vpn.py"
-sourceHash = "sha256:837c17be80f2668fcb2a1d0562891fb13b9ebb67851c1f3a5ce589487249ee8f"
+sourceHash = "sha256:4117ee0463a61723b18ad6de8f294c738d4684f83b5bf2f3f9334bbee8cbb261"
 body = "Готовит клиентские файлы своего стека без перезаписи и отзыва существующих учётных данных."
 reviewedTranslationHash = "sha256:b9a847cb838338f358211b2dbd46a0fcb6957ea2167044b586b9d32dde496a03"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137910+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.vpn.PreparedVpnTransport"
 sourcePath = "src/flayer/profiles/vpn.py"
-sourceHash = "sha256:aa82f93d4c7ff5409f2da82288fe3ba731001119c8f1a4b0ecfb5d6d6a6a5274"
+sourceHash = "sha256:5f9d49b08e1416c747d8d6f9da492d4c433e48e88e5be7bb100f14c955bd1152"
 body = "Закрытые файлы сервера и клиентов; их подготовка не подтверждает развёртывание и работоспособность."
 reviewedTranslationHash = "sha256:9eeb7c00f90f65b9cfab6c9ff03d9fab61690c0891b283928fe5bcc6cbb42f76"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137933+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -399,12 +399,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.vpn.ValidateVpnReplacement"
 sourcePath = "src/flayer/profiles/vpn.py"
-sourceHash = "sha256:3b231857aae76f3b81d09ec2678c7f9886a0e582d1e83d2429eed5333695a270"
+sourceHash = "sha256:fe5fb568babc61d0260ac1a2beb73374d59980f65fb1657acf72e25612b2e0ae"
 body = "Требует разрешения на замену точного старого набора файлов; отзыв на сервере и локальная очистка выполняются отдельно."
 reviewedTranslationHash = "sha256:36e57265fb705112ecbc3b6c8db8179d417c986722ab401c8fdeb499fba90cff"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:51:22.137977+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]

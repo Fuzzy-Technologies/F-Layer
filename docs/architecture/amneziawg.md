@@ -65,7 +65,7 @@ Store those bytes using the existing private owned-artifact contract.
 To add or remove a device, change public intent and call
 `GenerateAmneziaWgSecrets(profile, previous)` with the retained credentials.
 Unchanged devices and the server retain their keys. To replace one compromised
-device key, explicitly supply `rotate_device_ids=("phone",)`.
+device key, explicitly supply `rotateDeviceIds=("phone",)`.
 Preparation alone does not revoke a device. The initial guest installer accepts
 only a new deployment or an identical retry; it refuses changed existing
 deployments until an explicit expected-deployment receipt is supported end to

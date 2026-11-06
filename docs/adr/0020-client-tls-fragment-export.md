@@ -1,82 +1,72 @@
-# ADR 0020: Optional TLS fragmentation for existing Reality clients
+# ADR 0020: Opt-in VLESS client transport exports
 
 - Status: Proposed
-- Date: 2026-10-16
+- Date: 2026-11-06
+- Task: [#114](https://github.com/Fuzzy-Technologies/F-Layer/issues/114)
 
 ## Context
 
-A running Reality service and valid credentials do not prove that a client's
-network passes the authenticated TLS handshake. A client can work through a
-separate encrypted transport while the same direct connection fails. Replacing
-the server or rotating credentials does not address this condition.
+An installed VPN service does not prove that a particular client network passes
+its handshake or application traffic. Existing private projects must support
+explicit client transport choices while retaining credentials, server identity,
+prepared manifests and ordinary export behavior.
 
 ## Decision
 
-Add the opt-in `flayer vpn export --tls-fragment` option for VLESS Reality TCP.
-Verify the complete existing device bundle before transforming its client JSON.
-Chain only the VPN transport through a named Freedom outbound that fragments
-TLS ClientHello records into 100–200 byte pieces with 10–20 ms intervals.
-Retain device credentials, endpoints, DNS, routing, and the other outbounds.
-Reject existing proxy chains instead of replacing them implicitly.
+Extend offline `flayer vpn export` with independent `--tls-fragment` and
+`--allow-quic` options for VLESS Reality TCP Vision clients. Python callers use
+`tlsFragment` and `allowQuic`; both default to false. Existing CLI flags, file
+formats, device identities and byte-preserving default exports remain compatible.
 
-Also expose the independent opt-in `--allow-quic` option for existing Vision
-clients. Vision's default client flow intercepts UDP 443; application fallback
-and QUIC media transport can behave differently even when HTTPS checks pass.
-Select the documented `xtls-rprx-vision-udp443` client flow without changing the
-server's Vision setting. Preserve the default export behavior and all other
-authentication, routing, DNS, and transport fields. Allow composition with TLS
-fragmentation and reject unsupported transports or ambiguous client selections.
+Verify all original device files against their ownership manifest before deriving
+any output. Require exactly one VLESS outbound, endpoint and user. Reject
+unsupported transports/flows, duplicate outbound tags and existing selected
+`proxySettings` or `sockopt.dialerProxy` chains. Keep parser diagnostics private.
 
-The native AmneziaVPN envelope contains the exact transformed JSON. Omit the
-plain VLESS URI because it cannot carry the fragmentation policy. Normal
-exports remain byte-preserving. Changing export options requires separate
-output when the existing owned output differs. No server operation, source
-write, credential generation, or implicit connectivity claim is introduced.
+TLS fragmentation adds a reserved `tls-fragment` Freedom outbound and points
+only the VLESS transport's `sockopt.dialerProxy` at it. Use `packets = tlshello`,
+`length = 100-200` and `interval = 10-20`. Preserve existing socket options and
+other outbound, authentication, Reality, DNS and route policy. Refuse a helper-tag
+collision rather than replacing another outbound.
 
-## Validation
+QUIC selection changes only the selected client's Vision flow to
+`xtls-rprx-vision-udp443`. The suffix permits UDP 443 at the client; it is removed
+before the Vision request reaches the server. The server's existing flow and
+credentials remain valid. Compose this choice with fragmentation without changing
+ordinary Vision's UDP 443 interception by default.
 
-Tests cover native-envelope round trips, unchanged authentication and routing,
-source immutability, unsafe composition, protocol restrictions, QR selection,
-repeated exports, and refusal to overwrite differently selected outputs.
-QUIC tests verify exact flow-only changes, independent and combined options,
-CLI exposure, input validation, and unchanged source credentials and policy.
-Network acceptance remains an explicit operator action outside the test gate.
+Derived exports contain the exact client JSON and a complete native AmneziaVPN
+`.vpn`, plus numbered native QR frames when requested. Omit the plain VLESS URI
+for either option, so every supported import preserves the complete derived policy.
+Require separate output when selected bytes or files differ; never overwrite or
+prune an existing export. No cloud call, guest operation, source write, key
+generation or device-connectivity claim is introduced.
 
-## Intermediate playback checkpoint
+## Compatibility and validation
 
-Task: [#114](https://github.com/Fuzzy-Technologies/F-Layer/issues/114).
-On 2026-11-03, an operator-reported Android browser check found that ordinary
-YouTube videos played after selecting a derived client with the following policy:
+Retain the Freedom fragmentation form used by supported existing clients.
+Xray 26.10.31 still implements it but marks it deprecated in favor of FinalMask.
+Migrating existing clients to another representation is outside this export change.
+Pinned Xray 26.9.30 and 26.10.31 parser tests cover default, independent and combined
+options. Native envelopes carry the exact derived JSON; scanner frames reconstruct
+the same Qt-compressed bytes.
 
-- Reality over TCP with the `xtls-rprx-vision` client flow; UDP 443 remains intercepted.
-- The `tls-fragment` Freedom chain uses `packets = tlshello`, `length = 100-200`,
-  and `interval = 10-20`.
-- IPv4-only client routing and DNS through `1.1.1.1`, with `queryStrategy = UseIPv4`.
-- Existing credentials, endpoint, Reality parameters, routes and client log policy retained.
-- The existing server continued using Vision, IPv4 DNS and Freedom egress,
-  with access and error logging disabled; no server change accompanied the test.
-
-Shorts still failed. The preceding QUIC-enabled client had intermittently played
-ordinary videos before losing playback, so this observation does not establish
-QUIC as the sole cause or demonstrate sustained reliability. It provides a
-reproducible client policy for the next acceptance checks, not Windows acceptance
-or a completed YouTube fix. The ADR remains proposed.
-
-Reproduce the client policy from an original prepared Vision bundle using
-`flayer vpn export --tls-fragment --qr`, with the project's declared device and
-a separate private output directory. Do not add `--allow-quic` for this baseline.
-Keep previously exported profiles for comparison. Native-envelope and QR tests
-pin the TCP fallback and fragmentation parameters using synthetic credentials;
-they cannot establish live playback.
+Deterministic tests cover malformed/ambiguous inputs, proxy-chain refusal, flag
+validation, full/split routes, source immutability, private permissions, repeated
+exports, output conflicts, native round trips and public CLI wiring. Tests use
+synthetic identities; real-device acceptance is recorded separately.
 
 ## Consequences
 
-Clients must support Xray Freedom fragmentation and import the complete native
-profile or client JSON. Fragmentation is an optional network compatibility
-setting and cannot fix unavailable destinations on the server's outbound path.
+Operators can select a transport policy while keeping existing project/server
+ownership and credentials. Clients must support the chosen Xray features and
+import the complete profile. Fragmentation affects the client-to-VPN handshake;
+server-to-destination reachability remains a separate concern. Neither option
+guarantees application or media availability.
 
 ## References
 
-- [Project X Freedom fragmentation](https://xtls.github.io/en/config/outbounds/freedom.html)
-- [Project X Vision UDP 443 client flow](https://xtls.github.io/en/config/outbounds/vless.html)
+- [Pinned Freedom configuration](https://github.com/XTLS/Xray-core/blob/v26.10.31/infra/conf/freedom.go)
+- [Pinned Freedom fragmentation implementation](https://github.com/XTLS/Xray-core/blob/v26.10.31/proxy/freedom/freedom.go)
+- [Pinned Vision client flow handling](https://github.com/XTLS/Xray-core/blob/v26.10.31/proxy/vless/outbound/outbound.go)
 - [ADR 0019](0019-private-vpn-project-workflow.md)

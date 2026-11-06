@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/secure-gateway.md"
-sourceHash = "sha256:5070d94048f2c94795a66213a8e5f9b83e02e7f283ff8bc7c979320ab7f9593a"
-reviewedTranslationHash = "sha256:d7a345ad4ce0ca1e22ca9ec9f115c5a2e67c7c3ff29318d486f3ef67698ad3ac"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:38b6d383458bf9fd8ae47d53a9759d359c8f7eb9d203ce342189c7a30e7376e5"
+reviewedTranslationHash = "sha256:164e78e693e989b5838b69d6891159deeccce6efa242616ebfd87801e87d49b3"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # 安全网关配置
@@ -52,14 +52,14 @@ from flayer.profiles import (
 )
 
 profile = LoadGatewayProfile("gateway.toml")
-server_directory = WriteArtifactBundle("generated-artifacts", BuildServerBundle(profile))
-plan_text = RenderPlan(
+serverDirectory = WriteArtifactBundle("generated-artifacts", BuildServerBundle(profile))
+planText = RenderPlan(
     CompileGateway(profile),
-    user_data_file=server_directory / "server-cloud-init.json",
+    userDataFile=serverDirectory / "server-cloud-init.json",
 )
 ```
 
-仅将 `plan_text` 保存在明确的私有本地存储中。文件绝对路径是本机执行引用，
+仅将 `planText` 保存在明确的私有本地存储中。文件绝对路径是本机执行引用，
 不是可移植的仓库配置。生命周期解析器读取版本化 TOML；编排和云变更需要独立
 明确命令。上述准备调用不创建云资源。
 
@@ -86,15 +86,15 @@ socket activation 后，启用 `ssh.service` 供后续启动使用。这是新�
 ```python
 from flayer.profiles import BuildSshDeviceBundle, WriteArtifactBundle
 
-device_directory = WriteArtifactBundle(
+deviceDirectory = WriteArtifactBundle(
     "generated-artifacts",
     BuildSshDeviceBundle(
         profile,
         "laptop",
         endpoint="203.0.113.42",
-        identity_file="/path/to/laptop-key",
-        known_hosts_file="/path/to/trusted-known-hosts",
-        local_ports=(8443,),
+        identityFile="/path/to/laptop-key",
+        knownHostsFile="/path/to/trusted-known-hosts",
+        localPorts=(8443,),
     ),
 )
 ```

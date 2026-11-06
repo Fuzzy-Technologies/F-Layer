@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/yandex-lifecycle.md"
-sourceHash = "sha256:24a145662327d26f80845b583ca9666cf4b48e9edf577dd5c11a320118fb3f1d"
-reviewedTranslationHash = "sha256:9139eb3100eeab74df99791226d01cb28774b1e48f4d63cfe579fa7102f900b8"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:0325f53bb74360d7fb77cfeb5aebfe443a6aaf9e26f632c53ab4311464c3aef7"
+reviewedTranslationHash = "sha256:503369fc56d4cf6d1bfb9600d76425dd1d7c1568be857acb660498ec1007e195"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-11T00:25:19Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # Yandex 生命周期适配器
@@ -72,7 +72,7 @@ CLI 命名配置和 JSON 输出，关闭浏览器认证，设置 `--retry 0`，�
 本地 CLI 解析拒绝是严格限定的例外。在退出码为 1 且 stdout 为空时，适配器仅识别
 安全组规则缺少端口的精确错误，以及指出本次创建参数中某个未知选项的精确错误。
 这些 RPC 前拒绝已用 `yc` 1.40.0 和不可达的回环端点重现。它们返回
-`outcome_unknown=False`，使现有核心回滚仅删除本次操作确认创建的资源。
+`outcomeUnknown=False`，使现有核心回滚仅删除本次操作确认创建的资源。
 结果为 `rolled-back` 后，可显式重新部署；回滚未完成时保留日志供
 `recover --rollback` 使用。原始 CLI 输出不会被保留。配额/RPC 错误、未知文本、
 非空 stdout、超时和响应丢失仍属于不确定结果；子串匹配或清单缺失不能授权重试。

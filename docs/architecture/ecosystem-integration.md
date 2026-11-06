@@ -29,12 +29,12 @@ contains `evidence`; requests have no parameters or evidence payload.
 `identity` contains `project`, `stack`, `provider`, `scope_id`, and `owner_id`.
 All five must match independently held caller expectations. State projection
 checks the identity retained by `StackState`. Diagnostic and lifecycle reports
-have no identity field, so their adapters require an explicit `observed_identity`
+have no identity field, so their adapters require an explicit `observedIdentity`
 from the host that selected the source. This checks contract binding; it is not
 remote attestation and cannot verify source provenance.
 
-`ParseRequest(payload, expected_identity)` returns validated intent.
-`ParseResult(payload, expected_request)` additionally requires identical
+`ParseRequest(payload, expectedIdentity)` returns validated intent.
+`ParseResult(payload, expectedRequest)` additionally requires identical
 operation, request identifier, version, scope, and ownership. Result correlation
 does not authenticate the sender, establish freshness, prevent replay, or prove
 guest readiness. Parsed requests and result payloads remain untrusted

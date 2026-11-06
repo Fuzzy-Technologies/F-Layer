@@ -9,6 +9,7 @@ F-Layer использует `master` для стабильной публика
 ```bash
 python -m pip install -e ".[dev]"
 python -m compileall -q src tests tools
+python -m tools.python_naming
 python -m ruff check .
 python -m mypy
 python -m pytest

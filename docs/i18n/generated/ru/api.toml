@@ -113,23 +113,23 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.core.config.DesiredResource"
 sourcePath = "src/flayer/core/config.py"
-sourceHash = "sha256:88752564cc51e76c2c3f8ad78bd48a29ea5066cc236ab743fcf090ed939c04a4"
+sourceHash = "sha256:b526cf60a5e75bc2e88b0984b0c1185fd36368c420fa91f2d519077c2f09bce3"
 body = "Логическое имя ресурса до его создания в облаке, не зависящее от провайдера."
 reviewedTranslationHash = "sha256:6628fc308848844a717901aae82bb17fac2b778d3dd602ab86624869f38f390b"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.486971+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.core.config.DesiredConfig"
 sourcePath = "src/flayer/core/config.py"
-sourceHash = "sha256:1727f1f23e6d6826720e1080c5cb470c3368796ba9e8ce1d2898ea5be509cb24"
+sourceHash = "sha256:65557ed882dabc45e26744fa874090dd954c46356f7d61668e60481e7a72f52a"
 body = "Проверенные неизменяемые настройки требуемых ресурсов без облачных идентификаторов и учётных данных."
 reviewedTranslationHash = "sha256:f9d496b4bd75d17891cfd8ecab95a7a4f318f55b08438fcb50d44bc0e48f2915"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.486992+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -234,12 +234,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.core.contracts.StackIdentity"
 sourcePath = "src/flayer/core/contracts.py"
-sourceHash = "sha256:447ba78cb703d57515bf11de5a356c9e20e814d7ddac16cd131873011977871c"
+sourceHash = "sha256:dcbf705772bfac7062c2fdd851e8d9b4a84fcef5c087cdaffd7dd3ad79c5f358"
 body = "Точно определяет владельца и область управления одного стека у одного провайдера."
 reviewedTranslationHash = "sha256:0e3dd1d55832ab5587ee057e3975c230a6a2c9cc30efbb4c4e225d8e947e34f8"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.487181+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -355,23 +355,23 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.core.lifecycle.LifecycleObservation"
 sourcePath = "src/flayer/core/lifecycle.py"
-sourceHash = "sha256:4bc166a12abf8a516dad7eb8cdc9b13b3fc9d91eda65179d6098159cc0e20b0b"
+sourceHash = "sha256:5b9a4b219f928672e3c77e919fd5b3966925e275a17e3de64bedbdc6d179826a"
 body = "Сводка о локально записанной принадлежности одного ресурса и его наличии в облаке, без конфиденциальных данных."
 reviewedTranslationHash = "sha256:addb800fcbde0da6097be5027e7f0383e421528a6cd8b8dbc4fd9514d4055889"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.487536+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.core.lifecycle.LifecycleReport"
 sourcePath = "src/flayer/core/lifecycle.py"
-sourceHash = "sha256:2d706ca6ce61ec875ff3bbe532eafe3ac69b1e417324e709adda396b15ad5c8b"
+sourceHash = "sha256:74dca5e6267a31ef3c8c4be129cc656eb84ec54a4d324e9804093bec78d8c6e2"
 body = "Результат операции без необработанных команд, ошибок и параметров провайдера."
 reviewedTranslationHash = "sha256:4088644639008effbdfb9af314f3c4ba000dbfafbccc571822015a255bb16734"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.487556+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -443,12 +443,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.core.lifecycle.LifecycleEngine.__init__"
 sourcePath = "src/flayer/core/lifecycle.py"
-sourceHash = "sha256:543a676c7185360b86d63fe80d38a3eb6b8ddaec124a90f865401404f815bfec"
+sourceHash = "sha256:596733ba641266997892c0dc3e36e0778be2cb80e519f95e42417cec683f0b96"
 body = "Отклоняет провайдер или путь, которые не соответствуют заданной области управления."
 reviewedTranslationHash = "sha256:95f8ad6ab952f4dba49116a17dd1ef9d420da9b2d196f3833a2d6707597754d5"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.487688+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -476,67 +476,67 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.core.state.ResourceState"
 sourcePath = "src/flayer/core/state.py"
-sourceHash = "sha256:1899d1c3dfa8e46fa1bf916edbb1b4b37d508f98e355388ba469a8411bb2695e"
+sourceHash = "sha256:03c1438bf6584d51a8ec489b1ffcfab738747b7410cff5a100f58f71609f83f4"
 body = "Минимальные данные для поиска у провайдера ресурса, записанного в одном управляемом стеке."
 reviewedTranslationHash = "sha256:7142d6ba542e94d7eff1c222c4ecd6c523b0913dd092f76c146e011900cb9b82"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.487743+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.core.state.StackState"
 sourcePath = "src/flayer/core/state.py"
-sourceHash = "sha256:9ab9c636ad66209d39aed7a4d74acaf9e89a99b6165fc2a12ae8c89864ce282e"
+sourceHash = "sha256:f6dd0bd8510c38bc475ef675abd411aac54b60a259b91b9a8f4b22872dac0d47"
 body = "Неизменяемый список ресурсов, привязанный к полному набору идентификаторов владельца и стека."
 reviewedTranslationHash = "sha256:2e51c923d9b5a213b9f2058627838afc5ed6ac16610e36ca3e67aa41baad7965"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.487761+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.core.state.ParseState"
 sourcePath = "src/flayer/core/state.py"
-sourceHash = "sha256:bea40521bfe2cc3d0fbcd91459e3820b2ec75745fa0c8d6826903c43e7f0c146"
+sourceHash = "sha256:47931c824333e7387d91576675487b36fb56edc1deaae4921595de44c9e657df"
 body = "Разбирает снимок указанной версии и требует явно переданные ожидаемые сведения о принадлежности."
 reviewedTranslationHash = "sha256:b896c59dba66cbcefb6d9e8063788d5140f1b9f27bce3b8b0e974b5070727c55"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.487779+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.core.state.LoadState"
 sourcePath = "src/flayer/core/state.py"
-sourceHash = "sha256:5f95c3857111f316cd86b9244c514802e65c6483d7695d8a53772707ddfc9b29"
+sourceHash = "sha256:c5bcb8eaa5af5667fb0f0752c264206d3d7d47f8a522970349a14de3424d7ce6"
 body = "Возвращает снимок с проверенной принадлежностью; None означает только отсутствие файла."
 reviewedTranslationHash = "sha256:730d7664f12ae3e5ffdbd4ec5ac6bcc311773e80364e9a7abcb577c8bd66ee4c"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.487798+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.core.state.SaveState"
 sourcePath = "src/flayer/core/state.py"
-sourceHash = "sha256:e2bf4fa4a5eccf7f4d2b2e87325a06e8dcb8b5fa03311b61772a5764927f8a21"
+sourceHash = "sha256:4d4d46ecc0022d7d866e13cc4407d7f49dea5827095771c81dff4d0bef666e70"
 body = "Атомарно сохраняет состояние стека; чужой или повреждённый существующий снимок не заменяет."
 reviewedTranslationHash = "sha256:d25db02b0b8f8e14259ff12134d4c96615d6b58dfc9d932854b0d727135ef79c"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.487816+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.core.state.RemoveState"
 sourcePath = "src/flayer/core/state.py"
-sourceHash = "sha256:9889354df1c7a992b54598627462d44aad6ee21849deed7a26ab78886eea2718"
+sourceHash = "sha256:e57e967fc65e67d63b2a8682f0c048e75d5cc28d1a4a4e168c07c394f3514490"
 body = "Удаляет только подходящий локальный снимок; облачные ресурсы не удаляются."
 reviewedTranslationHash = "sha256:8d091edb6a5465772baa2c6b74b4db7b09d6dcc240afd54f47afc5ed42411ec3"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.487834+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -564,23 +564,23 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.diagnostics.benchmark.BenchmarkLimits"
 sourcePath = "src/flayer/diagnostics/benchmark.py"
-sourceHash = "sha256:50dfed1902e2f76fd236084a33d030280c746de1ab064598fc559748b8103e6c"
+sourceHash = "sha256:e8fb738fa59d1e4aefca32998ef48b2926fc26733b00bd341ef6c684de58770e"
 body = "Жёсткие ограничения времени запроса, количества запросов и объёма ответа."
 reviewedTranslationHash = "sha256:e7e782902e53efb60fc6f37b131398017495701cf45635577987cca6d59fe128"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.487887+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.diagnostics.benchmark.EndpointMeasurement"
 sourcePath = "src/flayer/diagnostics/benchmark.py"
-sourceHash = "sha256:f4cc95e4d8e0b2a59b36231fb23d7bb5722215c333bb78bfec39c9da13622ea9"
+sourceHash = "sha256:d1c2677a72b5e0d8a039870f74234066127284a8c0b4fb0fdf2bcc329e08fb3c"
 body = "Показатели измерения без содержимого ответа, учётных данных и идентификаторов цели."
 reviewedTranslationHash = "sha256:1cce306433e9aed2f69edab6cc5d270d3085929e587faefd9add5ed0b9a23f82"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.487906+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -597,12 +597,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.diagnostics.benchmark.EndpointTransport.__call__"
 sourcePath = "src/flayer/diagnostics/benchmark.py"
-sourceHash = "sha256:5555040024b0644a3efd19bf67b761c37a452d3b8d853217e3a6748d6d02e9b2"
+sourceHash = "sha256:f5fb59c2e6f64d766fc7e7466961e1efe041e0032eb14a07e1e523f315fb30a5"
 body = "Возвращает результат одного ограниченного HTTP-измерения без содержимого ответа."
 reviewedTranslationHash = "sha256:8e54362c7ac0aef5426d3f84fb7ca0d5e0add42c7dca512ef7fde15ba8518797"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.487943+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -619,34 +619,34 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.diagnostics.benchmark.HttpMeasurement"
 sourcePath = "src/flayer/diagnostics/benchmark.py"
-sourceHash = "sha256:24df0977c2b6e30ff321370bad64611afdcc76dc6b1f84a5433597d74498dc5c"
+sourceHash = "sha256:17923c8ae00ab5e3334f1f53ec7546f1a4fe4755fecdec5c188e6a9faf4879ea"
 body = "Читает ограниченный объём ответа с проверкой TLS, без перенаправлений и автоматического поиска прокси."
 reviewedTranslationHash = "sha256:702a78d0f3870e3a404cd6fc82190daef8bdad728b1bc5d9cc77cbbdb27dd4f1"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.487979+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.diagnostics.benchmark.EndpointWorker"
 sourcePath = "src/flayer/diagnostics/benchmark.py"
-sourceHash = "sha256:0e3802eef18ffd93cb38ebbf8a275c5db18111d6d99ec9be10ad6904133e4f17"
+sourceHash = "sha256:2505cade9846ed5f6f10c0b7283a23a99b332263f3be72ea7e6842a89bb7f758"
 body = "Выделяет сетевую работу в отдельный процесс, чтобы DNS, TLS, соединение и чтение ответа имели общий срок завершения."
 reviewedTranslationHash = "sha256:bf9c49347075e9c30c8cfaf26fb1bc99090f83a522298f3bb7b38daa7189a0b6"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.488003+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.diagnostics.benchmark.MeasureEndpoint"
 sourcePath = "src/flayer/diagnostics/benchmark.py"
-sourceHash = "sha256:f51b8dd96e8a4d4ea190740dad97b64fc0c3b1ef46a70cae4f0a6dccf3a20087"
+sourceHash = "sha256:fd4166596152b752ef357cf432469fca60c7352ef5409f59b6abe04bba2cf17c"
 body = "Прерывает изолированную сетевую операцию по истечении срока, в том числе при зависшем DNS-запросе."
 reviewedTranslationHash = "sha256:dcc6d9e5a9f2c36d535eaa4872843cf066fd9aa64fb0f71fc43543e2ff3619e6"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.488023+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -663,12 +663,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.diagnostics.benchmark.ProbeEndpoint"
 sourcePath = "src/flayer/diagnostics/benchmark.py"
-sourceHash = "sha256:993a7eaf7290d90cbaf503743d53788fd3dacf59cc806cbafe533c8818491c46"
+sourceHash = "sha256:596b72f2293298e03a6f68d31cede0197173d6ef917f25361de001923b0fbfb0"
 body = "Проверяет HTTP-доступность указанного адреса; настройку защиты гостевой системы эта проверка не подтверждает."
 reviewedTranslationHash = "sha256:4866319c0030d02242d8523dcc1c63c533fcd34fa114941f640a99997ba57912"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.488059+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -850,12 +850,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.diagnostics.health.EvaluateHealthReport"
 sourcePath = "src/flayer/diagnostics/health.py"
-sourceHash = "sha256:594f1ab4c6647c193eda7489aeb32b25699fdc7bd40caead16fee031eee340d8"
+sourceHash = "sha256:edcd9c243bac24c3dabfd69dda5b1b1528bfb030b87fed71afe795fad37eeb0e"
 body = "Проверяет версионируемый отчёт о состоянии и отличает устаревший результат от неудачной проверки."
 reviewedTranslationHash = "sha256:34d4083eb11fda18720a6a80d79b87a704ab9d86c2b0e7c36099cd1cc2f809ab"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.488384+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1070,23 +1070,23 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.extensions.contracts.ExtensionDescriptor"
 sourcePath = "src/flayer/extensions/contracts.py"
-sourceHash = "sha256:fb967e073f9d929fd81909936ebdc6592e12aa1e370eeb6346b2c25e9c300eac"
+sourceHash = "sha256:e1ef66610b51c2f0dc4d7a1937660929bf3856666042c522f71769c7cc97196d"
 body = "Статическое описание расширения; снимок внешних метаданных не подтверждает подлинность пакета."
 reviewedTranslationHash = "sha256:fa12d8e917165ba2835328ccd14ec9fbf9fa78b086bf1ae35d1b05d5a44941fb"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.488860+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.extensions.contracts.ProviderContext"
 sourcePath = "src/flayer/extensions/contracts.py"
-sourceHash = "sha256:520e8a721799c9eda09dbe1f43a6b6a63b69bbf079243a4bc7dc2de40599f705"
+sourceHash = "sha256:368259c66aa06c3e8e44605ab5eea1357c041b1d701a655ef8c228d44b160f88"
 body = "Явная область управления, ссылка на внешнюю аутентификацию CLI и ограничения выполнения."
 reviewedTranslationHash = "sha256:6ecd93adaf652f0df0c7e23f6ab8d7255e0ad0520d3739588978eab9af8fa4d0"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.488878+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1191,12 +1191,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.extensions.contracts.CompiledProfile.RenderPlan"
 sourcePath = "src/flayer/extensions/contracts.py"
-sourceHash = "sha256:4331843c9d713697c2cf5c3c0e83353a1fd1ba88907b0a286df97b88a4d12396"
+sourceHash = "sha256:3cdf00c48bbfe7919ea5284cd9db64611eb2068c7c2f78ffbf64a4689d3d8ed8"
 body = "Формирует TOML-план после проверки точного файла инициализации сервера и его принадлежности."
 reviewedTranslationHash = "sha256:5045b3a0734eb091461f1ac76a8f630e97de73adacc226ab45723f772a56ceb3"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.489061+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1268,12 +1268,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.extensions.discovery.DiscoverExtensions"
 sourcePath = "src/flayer/extensions/discovery.py"
-sourceHash = "sha256:ae517cecff6be88c7acfaffd6c4848b11cccdfea5ef553ae5a3e21b48143031c"
+sourceHash = "sha256:69a6157436cfcc9243f92f734459973dbbac9ea27e66f04dce69302dc7bd2378"
 body = "Разбирает выбранные метаданные без импорта кода, вызова механизмов поиска модулей и перебора путей."
 reviewedTranslationHash = "sha256:b0d43eeea1a42e01ad7f7f0c3ffa7d5082b9730da16362e46b43ae606795bf53"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.489183+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1312,12 +1312,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.extensions.registry.ExtensionRegistry.Get"
 sourcePath = "src/flayer/extensions/registry.py"
-sourceHash = "sha256:e76fddd0e04fa10d2657c3a7b619cc2dc5be085a8b747d56a04726982ed05f58"
+sourceHash = "sha256:5c43bd4158a0aea43c550f5b2486ddd94c939000f3bbade9c6e0caa27fc0601c"
 body = "Выбирает одно зарегистрированное расширение без импорта и проверки возможностей."
 reviewedTranslationHash = "sha256:71c38d360c9eec805d37a01696640efccd57578c1da374097bef7e7a202b8e49"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.489258+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1334,12 +1334,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.extensions.registry.ExtensionRegistry.__init__"
 sourcePath = "src/flayer/extensions/registry.py"
-sourceHash = "sha256:1cc07a467af92d5bba8cca62f121a2760df9eea879893d139de125d90de4fb19"
+sourceHash = "sha256:8405c2dcdf9aae694783fa7e33bbed2b3388f28ad6553555b08d28e3a48ed4cc"
 body = "Проверяет всю регистрацию до публикации каких-либо записей реестра."
 reviewedTranslationHash = "sha256:c42b5180515337e77a6b69bcfe1027ddfca3ba0bc13270dbd51277e35b44798e"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.489297+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1367,12 +1367,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.integrations.adapters.AdaptDiagnostics"
 sourcePath = "src/flayer/integrations/adapters.py"
-sourceHash = "sha256:d832dc5a310dda7290fd38a65539f37fff10a47937727a01faab9faa57847531"
+sourceHash = "sha256:a47002d335c258003bdc8701f515809934297ba9b9d5c26cdabdfddabf39f85b"
 body = "Связывает выбранные результаты status, health или benchmark с запросом и исключает произвольный текст источника."
 reviewedTranslationHash = "sha256:8353badcba7c7ee4cb5e80e4040ec880579d1b0da9c2f5cb40fd6fa0ac13a963"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.489354+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1389,12 +1389,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.integrations.adapters.AdaptLifecycle"
 sourcePath = "src/flayer/integrations/adapters.py"
-sourceHash = "sha256:f3a0fc31f148605badc518478f517294dac55980e301611c25bad60d1215672a"
+sourceHash = "sha256:875487607b6ff2269b8cefad71942e56fbe07345acb2899c24aa2c3a459c0fec"
 body = "Обобщает переданный результат управления ресурсами в области, заданной вызывающим кодом; удалённую систему не проверяет."
 reviewedTranslationHash = "sha256:9ee990044a9a2436fadf47bffabd6c425f96b43014c476f72552f7cbe360d09d"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.489391+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1455,12 +1455,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.integrations.contracts.IntegrationRequest"
 sourcePath = "src/flayer/integrations/contracts.py"
-sourceHash = "sha256:f1d83732f010675d86e93671251e89fbdb1d539b641c85dabfdc82cfa24d7bd3"
+sourceHash = "sha256:c52148155604791d690a3ca19c351152bf181597ab2e110b52f487927b0c6da6"
 body = "Запрос наблюдения с точными владельцем, областью и идентификатором связи; сам по себе не предоставляет полномочий."
 reviewedTranslationHash = "sha256:59c2b6996c6470942623c354845b3eb3758f5094f159bb7531a8552ed90462ff"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.489531+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1510,12 +1510,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.integrations.contracts.StateEvidence"
 sourcePath = "src/flayer/integrations/contracts.py"
-sourceHash = "sha256:36ccb992eccc4cec63a5a5512bd3b947dbd652562f10e78a1e8496e4724c3ed3"
+sourceHash = "sha256:c434012385f6b6546d04229b8cfdae8906be33455e870d8fddf019e689278d1e"
 body = "Количество ресурсов в локальном состоянии не подтверждает их наличие или исправность в облаке."
 reviewedTranslationHash = "sha256:415717b81f83ca1d2be586b7248e9dabc4f614505d1b1ab67524e0a3e4248388"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.490819+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1532,12 +1532,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.integrations.contracts.LifecycleEvidence"
 sourcePath = "src/flayer/integrations/contracts.py"
-sourceHash = "sha256:c5c4d81754d8ad12e3ac5de00e4e62e97ad0f2a0ca220240257b26c502733c64"
+sourceHash = "sha256:1d72b897c7f591ca181ce398558322279fd6e8871a8684112e9391e4c6003262"
 body = "Результат прошлой операции и признак необходимости восстановления не дают разрешения на изменение ресурсов."
 reviewedTranslationHash = "sha256:172d06f38579cfff3ef4e0b0679e722c62205e9c3e6a7686ff7e45708b16c191"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.490859+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1565,23 +1565,23 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.integrations.wire.ParseRequest"
 sourcePath = "src/flayer/integrations/wire.py"
-sourceHash = "sha256:f8a10b3f0081bff2e023da67cd82cd93e48597107003379ba8fb058227ac342e"
+sourceHash = "sha256:e571c4886191fea80a9461b5065a8e027442eb71febe34661bad5b8df06facd0"
 body = "Проверяет недоверенный запрос на чтение, не выполняя операций и проверок разрешений."
 reviewedTranslationHash = "sha256:d9ae14819fcf9b2efc4558987bf6ac440391bd9110197e3536baac909d9c4a75"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.490920+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.integrations.wire.ParseResult"
 sourcePath = "src/flayer/integrations/wire.py"
-sourceHash = "sha256:47ddf615838188f9cabb8319824c61f739aad01d5898e844f03146c4fefba7cf"
+sourceHash = "sha256:3e7d4763457ff6b27ef8aad60699a5d1441a172e31e4a78c00714844e4bc7966"
 body = "Привязывает недоверенное представление результата к запросу, не подтверждая подлинность результата."
 reviewedTranslationHash = "sha256:2dff0bef7cc08c46279fa721548fe4bea4f6e8445995bb3a9ca9b4d5246e88ce"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.490941+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1664,12 +1664,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.artifacts.BuildDeviceBundle"
 sourcePath = "src/flayer/profiles/artifacts.py"
-sourceHash = "sha256:9f3e0d948ea75857993e32a569c11142bf0fbd138a5e5b20f997b0f43b038d6a"
+sourceHash = "sha256:60a1e085c665852ab3a2f76e7cf1c2e5e083ad23841befb1d2412139db826a8a"
 body = "Упаковывает подготовленные извне файлы транспорта, не создавая и не проверяя учётные данные."
 reviewedTranslationHash = "sha256:421d295d9106490536a62c36369de34098662be7898b120ab862b99891f60007"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.491115+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1708,12 +1708,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.artifacts.RemoveArtifactBundle"
 sourcePath = "src/flayer/profiles/artifacts.py"
-sourceHash = "sha256:262cd930e3287359e57702cb507a8feb54534f5826a130158d513376f0f0ebbf"
+sourceHash = "sha256:3e2bc86210a122b5f27cee433d2861b50bda9e94fa6d54aa0bdeff38824f5dbd"
 body = "Удаляет неизменённые файлы своего стека; при необходимости сверяет их с точным содержимым, ожидаемым вызывающим кодом."
 reviewedTranslationHash = "sha256:b8cb7450243470e2fed0760f3d1ac7ad0698fce4782449b9f7a14c79a21cf66b"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.491203+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1752,12 +1752,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.gateway.GatewayDevice"
 sourcePath = "src/flayer/profiles/gateway.py"
-sourceHash = "sha256:aadfc675b449eeca1fe36ba9bf7523a78666b495560a245b7667382e84c47812"
+sourceHash = "sha256:97c2311ebfec6a377116e8b289c18a5921560fcc3e837b921f3eb21b967c6168"
 body = "Открытый ключ одного устройства и явно ограниченные сети, из которых разрешено подключение."
 reviewedTranslationHash = "sha256:0be514e9be8d381fe8d655b61c9f75a8c9c4bd08ef6ae130dedd848ce4802f32"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.491277+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1785,12 +1785,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.gateway.GatewayProfile"
 sourcePath = "src/flayer/profiles/gateway.py"
-sourceHash = "sha256:4b861030c4411ec2fca96ae9619169e3322237745c0b4f416715addafed4be4e"
+sourceHash = "sha256:46065c29372bd3cde897c04832f66d1f55c3253ee07442b4629f7ba36092da0d"
 body = "Явные настройки размещения в облаке и защиты гостевой Ubuntu 24.04 через cloud-init."
 reviewedTranslationHash = "sha256:3a200e13dc9ab5893f44eb8560069d339b86f57cbebb255f200beff615c0734e"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.491331+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1851,23 +1851,23 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.gateway.BuildSshDeviceBundle"
 sourcePath = "src/flayer/profiles/gateway.py"
-sourceHash = "sha256:50b2085c2f4b8eeff4b734ca2fe5ebe4741e90af47567b5b1f7764969cf9bee9"
+sourceHash = "sha256:f76ec1c1363713105527c104d229314805baadafaa7f8cea7acae50f12626d93"
 body = "Создаёт рабочие локальные TCP-переадресации по переданным ссылкам на ключ и доверенный ключ сервера."
 reviewedTranslationHash = "sha256:911a131ea36a1304ab81dbc6357094f9118598b5394ee0739eb7fc4844104062"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.491473+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.gateway.RenderPlan"
 sourcePath = "src/flayer/profiles/gateway.py"
-sourceHash = "sha256:2c032cabbb5f3970d9b0ef64d9449ab73e5e1c87fc7a4db663dbe7a023e154e4"
+sourceHash = "sha256:4ed440e94b5bc7517293a4012b441aa0434d168a75be1525441c175902ae6e8c"
 body = "Связывает точные созданные данные с TOML-планом жизненного цикла, не подключая будущие механизмы оркестрации."
 reviewedTranslationHash = "sha256:64f5f1cf4d6f497966bdfb480e2d73feccf5cc8966eaac2211895682cb170d13"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.491493+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1895,12 +1895,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.static_site.StaticSiteProfile"
 sourcePath = "src/flayer/profiles/static_site.py"
-sourceHash = "sha256:47a0330fb050950dfbf2ec311858ee3198b1fff9b302089a0203a91852a14895"
+sourceHash = "sha256:80207a0794a63649adef5996bb63473df63494bb0eab5fbdadbdc33ec669dd4a"
 body = "Явное размещение в Yandex Cloud и одна статическая страница с экранированием содержимого; доступ по SSH задаётся отдельно."
 reviewedTranslationHash = "sha256:8e495efd2920c9268b2585000d48571ece1710c8b9b8d462379a4611d51e7d3a"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.491550+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1961,23 +1961,23 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.static_site.RenderStaticSitePlan"
 sourcePath = "src/flayer/profiles/static_site.py"
-sourceHash = "sha256:cf80f87ef03eca8196980b0742b35a63e2d41256628002726fa63ab8cccee4a6"
+sourceHash = "sha256:c1e5fe39f97503d68595547df44f9dbeceb4a16dcba1b81f21ee7c73864305ca"
 body = "Связывает существующий план из шести типов ресурсов с проверенными данными инициализации своего стека."
 reviewedTranslationHash = "sha256:3ba760ba62bcaa405288e2e372a2f2b7117bfaceb469e84701848edab0c7b758"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.491663+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.profiles.static_site.StaticSitePreparation"
 sourcePath = "src/flayer/profiles/static_site.py"
-sourceHash = "sha256:7f72bfa6c3bc5984d57992f4e506e33a1e5a45813928ce63be25a1e47e4ef5b1"
+sourceHash = "sha256:42d0557d47a0d120c13a868563d960311ce3789804095cf58287e417351cbaa4"
 body = "Локальные ссылки на наборы файлов подготовленного плана; развёртывание и готовность ещё не проверены."
 reviewedTranslationHash = "sha256:5911a579568c66f3f7fdfee4516bd9e17949585ddcca6f0e7e7ebf3722b3767e"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.491681+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -1994,12 +1994,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.profiles.static_site.PrepareStaticSite"
 sourcePath = "src/flayer/profiles/static_site.py"
-sourceHash = "sha256:03276488a7d740e2252bbf8ea45c10af91c34e0bb0808e912fdda37e837b64a3"
+sourceHash = "sha256:20599472d0ee6ccf2784ef90ed7d9203f634c8c7300f61d2ad94c1c5f54c8889"
 body = "Публикует наборы файлов с исключительной принадлежностью стеку; при сбое публикации сохраняет уже проверенный план."
 reviewedTranslationHash = "sha256:85c6f79440389e9de6db5f51dd9e0197b27722a1ad2d3720bf59c2e1202722f4"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.491720+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -2093,34 +2093,34 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.providers.contracts.ProviderIdentity"
 sourcePath = "src/flayer/providers/contracts.py"
-sourceHash = "sha256:7626b41b96ba08074a1f443de6bf0c3c17a4eb3ca552cd25cf0a4898986af659"
+sourceHash = "sha256:3a905940d57b7a577da9d130aecf8a6de855ca9215f0bf8b1f2ab4f679ffa298"
 body = "Несекретные идентификаторы провайдера и явно заданной области управления; учётные данные хранятся отдельно."
 reviewedTranslationHash = "sha256:5d3bd0de1668c5f2d4cf63a89e5d5e5a18ad9a8fe5f13584887b4c93a2966ad9"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.491886+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.providers.contracts.ResourceReference"
 sourcePath = "src/flayer/providers/contracts.py"
-sourceHash = "sha256:e55dd0bbc7d52d647edd715aed86190030ee168166bbfe9293e5f3c14307b221"
+sourceHash = "sha256:cffcaecb978d2fcc7337d2a31c1729f0715f9870868c8a67371c22f07e128862"
 body = "Идентификатор ресурса, привязанный к одному провайдеру, одной области управления и одному типу ресурса."
 reviewedTranslationHash = "sha256:b7e1af325f5e12043a7949e2ab6f8c6c71c8193221d10ea10e84404ee57c8bb3"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.491906+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.providers.contracts.ProviderResource"
 sourcePath = "src/flayer/providers/contracts.py"
-sourceHash = "sha256:5d0cbb9bb303a1e95a7bad988cd332a9e967663c63e55d9d6ab541de0fecd43a"
+sourceHash = "sha256:ead869691556ad999ce0a5653c21eb5631c79b1117b2cc63b4cf6228cf1abe11"
 body = "Нормализованные сведения о ресурсе без исходного ответа провайдера и метаданных виртуальной машины."
 reviewedTranslationHash = "sha256:e54230f74e337057c045193e4298baa36a0759b87e442c4d065e3f97b3348728"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.491925+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -2137,12 +2137,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.providers.contracts.ProviderStatus"
 sourcePath = "src/flayer/providers/contracts.py"
-sourceHash = "sha256:902f5ce5abc30f7f6b19160e0a9716428fe9c1405f63f4bcd252726514e16a38"
+sourceHash = "sha256:e67060c4ff57d425bda77896da2d788a4d78e96b676ce01c67e871859d263205"
 body = "Очищенный результат проверки; неизвестное состояние аутентификации отличается от ошибки проверки."
 reviewedTranslationHash = "sha256:660becd0e18bebc262b2cd7ff2ac04fd5f00ad0bc1bfe7be17b7adcddf373566"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.491964+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -2258,12 +2258,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.providers.lifecycle.ResourceSpec"
 sourcePath = "src/flayer/providers/lifecycle.py"
-sourceHash = "sha256:a2f4919d625962bc817371f247979b75dc4cdfafb57bdc74e8cb5aa2ed6558e4"
+sourceHash = "sha256:0940ded5d2f4b242f8bccc92d552019275d48c60ab4c08bdeb3ca62931a49d0c"
 body = "Требуемый логический ресурс с неизменяемыми параметрами и явными зависимостями."
 reviewedTranslationHash = "sha256:45c2e4842171d4a5f47f563540bd955951f10d10ab6c8a14a23864416c2a3871"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.492169+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -2357,34 +2357,34 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.providers.lifecycle.LifecycleProvider.CreateResource"
 sourcePath = "src/flayer/providers/lifecycle.py"
-sourceHash = "sha256:bb4433a65fcf89cc24c08bc905344e9243bff7337a06005908957361c4b7bccd"
+sourceHash = "sha256:3855b855c5daa75d5e1f3735d1c8b43eda1eed6852bfdf15d8df8ba3fc6cfe8c"
 body = "Создаёт ресурс однократно на основе проверенных зависимостей своего стека; не повторяет создание при неизвестном результате."
 reviewedTranslationHash = "sha256:dced958ad34c6f6dbccf666b82b2c2dadcb54a6870d5691fc7d01c33ffcd86df"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.492333+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.providers.lifecycle.LifecycleProvider.DeleteResource"
 sourcePath = "src/flayer/providers/lifecycle.py"
-sourceHash = "sha256:ca72f77ea8a4b4e8dc7892032b9bd43469dd2ca911099f1a02abdc3b04f9eb15"
+sourceHash = "sha256:1d61a77c86db88451e2366936a5b70a1cd80d8ee114dd68ef6491d29cbe147f2"
 body = "Повторно проверяет точную область и полную принадлежность непосредственно перед удалением по ID."
 reviewedTranslationHash = "sha256:8bff7273dbdc0b91897a7ee2679d2c162b3c9031303b971bf0ca8f1efab7f17a"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.492352+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.providers.lifecycle.MutationError.__init__"
 sourcePath = "src/flayer/providers/lifecycle.py"
-sourceHash = "sha256:473a6c9258151479f1c7b0dfb998e059042e34c77901e661d458c378d670505b"
+sourceHash = "sha256:32d3d4c0bfc3e32f5ed735d03180f427eff0e4ec4dc51bdd2b2843f81eed7e2c"
 body = "Сохраняет только стабильную категорию ошибки и признак того, что запрос мог быть отправлен."
 reviewedTranslationHash = "sha256:1d9c69c3dc0838da1579cdfb94dac3da1e05d0fe92f743417f5c97ac106edfd7"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.492370+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -2401,23 +2401,23 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.providers.yandex.YandexCloudSettings"
 sourcePath = "src/flayer/providers/yandex.py"
-sourceHash = "sha256:ef5e7ba89764db011f043049fadc210a0af6451b9d2af62b531738bdc0d268ba"
+sourceHash = "sha256:951aa4130cc7684321a66609e9f0fcb14df8d40c3a18281e7698d8dbca9dfe1d"
 body = "Явные настройки каталога Yandex Cloud и профиля CLI без сохранённых токенов и секретных ключей."
 reviewedTranslationHash = "sha256:55a2f61feaa3411f0fd34339013bf0fda537366257f3fb85f26785f162db7d85"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.492854+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.providers.yandex.CommandResult"
 sourcePath = "src/flayer/providers/yandex.py"
-sourceHash = "sha256:7685a58efbc5da1f7550921c6d04b6e3ddff2caf9fa7462f36216f451f350f04"
+sourceHash = "sha256:8a942e9e8de77f8831702332d1a174a9b0ed66b8782507b32414f81cc483f176"
 body = "Краткоживущий результат команды; его строковое представление не содержит потенциально секретный вывод."
 reviewedTranslationHash = "sha256:92c4a8eecefb2379d1843df7ce63dabba45e1822295d195fa35617ebe376b2ab"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.492893+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -2632,21 +2632,21 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.providers.yandex_lifecycle.YandexLifecycleProvider.CreateResource"
 sourcePath = "src/flayer/providers/yandex_lifecycle.py"
-sourceHash = "sha256:b0599420f6569b50296e1229d067613c475d48dc356d024021068d45846b407d"
+sourceHash = "sha256:e38778dec8414ed12f3156ab2c0628e9909b8ec78d0a0f4455e46c41bc37658b"
 body = "Однократно создаёт ресурс со стабильными метками принадлежности и отдельным явно управляемым загрузочным диском."
 reviewedTranslationHash = "sha256:48cc58644c50e828fe86b2663717ec50205be33bc8d3cb2a5bdea8b5dbb9fda6"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.493290+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
 id = "symbol:flayer.providers.yandex_lifecycle.YandexLifecycleProvider.DeleteResource"
 sourcePath = "src/flayer/providers/yandex_lifecycle.py"
-sourceHash = "sha256:150b200b662d05002af9d9631bb7e571b46de855edea55ba18f5da6bd6fd8225"
+sourceHash = "sha256:c52bc5f9a47c3e1b966a6324454de2341fc6f21a10b85da5cdd19d30ee42921e"
 body = "Перед удалением по точному ID проверяет принадлежность, затем однократно подтверждает ресурс отсутствующим."
 reviewedTranslationHash = "sha256:62aa424b64e290ff64d90011cef7b295fc54bdad0371f2a390d34b677e0e5878"
-reviewer = "AIna-Dev"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:39:22.493309+00:00"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]

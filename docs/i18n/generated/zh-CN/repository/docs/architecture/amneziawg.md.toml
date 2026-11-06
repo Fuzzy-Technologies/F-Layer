@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/amneziawg.md"
-sourceHash = "sha256:b74479e7e1ef685b8615c94c8ceba826e70f5d1ad3baae67ab94ac36e3ce97e7"
-reviewedTranslationHash = "sha256:66803cb35eed49f121090de8792b61d333671df5733dd7bc63cfb180f7318a38"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:d2d295d3588b06ea069c8ee1df4a947feea290c57ce4b549089c899ebcad440f"
+reviewedTranslationHash = "sha256:a1f7d9e5495586a77503eba3c33ea9ea38c375b7e21243102912a3db503d51d4"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T15:52:52Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # AmneziaWG 部署配置
@@ -63,7 +63,7 @@ DNS 地址必须在路由范围内。服务器转发使用相同目标列表并�
 
 增删设备时，修改不含密钥的配置，并将保存的凭据传给
 `GenerateAmneziaWgSecrets(profile, previous)`。未变化的设备和服务器保留
-密钥。要替换被泄露的单个设备密钥，明确指定 `rotate_device_ids=("phone",)`。
+密钥。要替换被泄露的单个设备密钥，明确指定 `rotateDeviceIds=("phone",)`。
 仅准备配置不会撤销设备。初版安装器只接受新部署或完全相同的重试，拒绝修改已有
 部署，直到全流程支持明确的预期旧部署记录。目前改变凭据需要受控删除后重建。
 删除旧本地客户端文件前，先验证新服务器结果。

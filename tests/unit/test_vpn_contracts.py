@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import copy
 import json
-from dataclasses import asdict, replace
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from flayer.core.contracts import StackIdentity
+from flayer.core.contracts import StackIdentity, _WireDict
 from flayer.core.state import ParseState, StateError
 from flayer.profiles.artifacts import (
     Artifact,
@@ -55,7 +55,7 @@ def Profile() -> VpnProfile:
 def ProfileData() -> dict[str, Any]:
     """Convert known public dataclass intent to TOML-compatible mutable test data."""
 
-    return json.loads(json.dumps(asdict(Profile())))
+    return json.loads(json.dumps(_WireDict(Profile())))
 
 
 def Prepared(
@@ -71,7 +71,7 @@ def Prepared(
         profile, capabilities,
         BuildVpnServerBundle(profile, transport, (Artifact("server.json", payload),)),
         tuple(BuildVpnDeviceBundle(
-            profile, transport, device.device_id, (Artifact("client.conf", payload),),
+            profile, transport, device.deviceId, (Artifact("client.conf", payload),),
         ) for device in profile.devices),
     )
 
@@ -87,23 +87,23 @@ def test_ProfileRemainsTransportAndProviderNeutral() -> None:
     assert ValidateVpnTransport(profile, CAPABILITIES).protocol == "udp"
     assert ValidateVpnTransport(profile, proxy).protocol == "tcp"
     assert profile.Fingerprint() == parsed.Fingerprint()
-    assert Prepared(capabilities=proxy).capabilities.network_mode == "application-proxy"
-    assert PAYLOAD.decode() not in json.dumps(asdict(profile))
+    assert Prepared(capabilities=proxy).capabilities.networkMode == "application-proxy"
+    assert PAYLOAD.decode() not in json.dumps(_WireDict(profile))
 
 
 @pytest.mark.parametrize("changes", [
-    {"mode": "unknown"}, {"mode": []}, {"ipv4_cidrs": []}, {"ipv4_cidrs": ()},
-    {"ipv4_cidrs": ("10.0.0.0/8",)}, {"ipv4_cidrs": ("::/0",)},
-    {"ipv4_cidrs": ("10.0.0.1/24",)}, {"ipv4_cidrs": (123,)},
-    {"ipv4_cidrs": ("0.0.0.0/0", "10.0.0.0/8")},
-    {"mode": "split"}, {"mode": "split", "ipv4_cidrs": ("0.0.0.0/1", "128.0.0.0/1")},
-    {"ipv6_policy": "allow"}, {"ipv6_policy": "block"}, {"ipv6_policy": False},
-    {"dns_servers": []}, {"dns_servers": ()}, {"dns_servers": ("1.1.1.1",) * 5},
-    {"dns_servers": ("1.1.1.1", "1.1.1.1")}, {"dns_servers": ("::1",)},
-    {"dns_servers": ("localhost",)}, {"dns_servers": (False,)},
-    {"dns_servers": ("0.0.0.0",)}, {"dns_servers": ("127.0.0.1",)},
-    {"dns_servers": ("169.254.169.254",)}, {"dns_servers": ("255.255.255.255",)},
-    {"dns_servers": ("224.0.0.1",)},
+    {"mode": "unknown"}, {"mode": []}, {'ipv4Cidrs': []}, {'ipv4Cidrs': ()},
+    {'ipv4Cidrs': ("10.0.0.0/8",)}, {'ipv4Cidrs': ("::/0",)},
+    {'ipv4Cidrs': ("10.0.0.1/24",)}, {'ipv4Cidrs': (123,)},
+    {'ipv4Cidrs': ("0.0.0.0/0", "10.0.0.0/8")},
+    {"mode": "split"}, {"mode": "split", 'ipv4Cidrs': ("0.0.0.0/1", "128.0.0.0/1")},
+    {'ipv6Policy': "allow"}, {'ipv6Policy': "block"}, {'ipv6Policy': False},
+    {'dnsServers': []}, {'dnsServers': ()}, {'dnsServers': ("1.1.1.1",) * 5},
+    {'dnsServers': ("1.1.1.1", "1.1.1.1")}, {'dnsServers': ("::1",)},
+    {'dnsServers': ("localhost",)}, {'dnsServers': (False,)},
+    {'dnsServers': ("0.0.0.0",)}, {'dnsServers': ("127.0.0.1",)},
+    {'dnsServers': ("169.254.169.254",)}, {'dnsServers': ("255.255.255.255",)},
+    {'dnsServers': ("224.0.0.1",)},
 ])
 def test_RoutesRejectAmbiguousOrUnreachableIntent(changes: dict[str, Any]) -> None:
     """Never silently broaden routing, coerce types, or advertise unavailable address families."""
@@ -117,10 +117,10 @@ def test_SplitRoutesRequireDnsReachability() -> None:
 
     routes = VpnRoutes("split", ("10.0.0.0/8", "1.1.1.1/32"), ("1.1.1.1",), "disabled")
 
-    assert routes.ipv4_cidrs == ("10.0.0.0/8", "1.1.1.1/32")
+    assert routes.ipv4Cidrs == ("10.0.0.0/8", "1.1.1.1/32")
 
     with pytest.raises(VpnError, match="DNS addresses must be reachable"):
-        replace(routes, ipv4_cidrs=("10.0.0.0/8",))
+        replace(routes, ipv4Cidrs=("10.0.0.0/8",))
 
 
 @pytest.mark.parametrize("address", ["1.1.1.1", "10.0.0.2/32", "::1", 123])
@@ -174,7 +174,7 @@ def test_ListenerAndEndpointPortsRejectCoercion(port: Any) -> None:
 
 @pytest.mark.parametrize("changes", [
     {"transport": "bad/name"}, {"protocol": "all"}, {"protocol": []},
-    {"source_cidrs": ("::/0",)}, {"source_cidrs": ("0.0.0.0/0",) * 17},
+    {'sourceCidrs': ("::/0",)}, {'sourceCidrs': ("0.0.0.0/0",) * 17},
 ])
 def test_ListenersRequireBoundedPublicIngress(changes: dict[str, Any]) -> None:
     """Do not expand malformed transport intent into provider firewall rules."""
@@ -184,9 +184,9 @@ def test_ListenersRequireBoundedPublicIngress(changes: dict[str, Any]) -> None:
 
 
 @pytest.mark.parametrize("changes", [
-    {"network_mode": "vpn"}, {"network_mode": []}, {"route_modes": ()},
-    {"route_modes": ["full"]}, {"route_modes": ("full", "full")},
-    {"route_modes": ("unknown",)}, {"route_modes": ([],)},
+    {'networkMode': "vpn"}, {'networkMode': []}, {'routeModes': ()},
+    {'routeModes': ["full"]}, {'routeModes': ("full", "full")},
+    {'routeModes': ("unknown",)}, {'routeModes': ([],)},
     {"ipv4": False}, {"ipv4": 1}, {"ipv6": True}, {"ipv6": 0},
 ])
 def test_CapabilitiesDoNotAdvertiseUnsupportedBehavior(changes: dict[str, Any]) -> None:
@@ -197,7 +197,7 @@ def test_CapabilitiesDoNotAdvertiseUnsupportedBehavior(changes: dict[str, Any]) 
 
 
 @pytest.mark.parametrize("changes", [
-    {"schema_version": True}, {"schema_version": 2}, {"identity": "example"},
+    {'schemaVersion': True}, {'schemaVersion': 2}, {"identity": "example"},
     {"routes": {}}, {"devices": ()}, {"devices": []}, {"devices": ("laptop",)},
     {"devices": (VpnDevice("laptop"),) * 17},
     {"devices": (VpnDevice("laptop"), VpnDevice("laptop"))},
@@ -243,7 +243,7 @@ def test_TransportValidationFailsBeforeArtifactGeneration() -> None:
         ValidateVpnTransport(Profile(), replace(CAPABILITIES, transport="absent"))
 
     with pytest.raises(VpnError, match="routing mode"):
-        ValidateVpnTransport(Profile(), replace(CAPABILITIES, route_modes=("split",)))
+        ValidateVpnTransport(Profile(), replace(CAPABILITIES, routeModes=("split",)))
 
 
 def test_ArtifactsArePrivateAndTransportNamespaced() -> None:
@@ -252,12 +252,12 @@ def test_ArtifactsArePrivateAndTransportNamespaced() -> None:
     tunnel = Prepared()
     proxy = Prepared(capabilities=VpnCapabilities("proxy", "application-proxy", ("full",)))
 
-    assert tunnel.server_bundle.name == "vpn-tunnel"
-    assert tunnel.device_bundles[0].name == "laptop-tunnel"
-    assert proxy.server_bundle.name == "vpn-proxy"
-    assert proxy.device_bundles[0].name == "laptop-proxy"
+    assert tunnel.serverBundle.name == "vpn-tunnel"
+    assert tunnel.deviceBundles[0].name == "laptop-tunnel"
+    assert proxy.serverBundle.name == "vpn-proxy"
+    assert proxy.deviceBundles[0].name == "laptop-proxy"
     assert PAYLOAD.decode() not in repr(tunnel)
-    assert PAYLOAD.decode() not in repr(tunnel.server_bundle)
+    assert PAYLOAD.decode() not in repr(tunnel.serverBundle)
     assert tunnel.Fingerprint() == Prepared().Fingerprint()
     assert tunnel.Fingerprint() != Prepared(payload=b"different-fixture-only-payload").Fingerprint()
 
@@ -286,9 +286,9 @@ def test_PreparedTransportRejectsIncompleteOrForeignBundles(case: str) -> None:
     """Preparation requires every declared device exactly once and one sensitive owned server."""
 
     prepared = Prepared()
-    server = prepared.server_bundle
-    clients: Any = prepared.device_bundles
-    foreign = replace(IDENTITY, owner_id="another-owner")
+    server = prepared.serverBundle
+    clients: Any = prepared.deviceBundles
+    foreign = replace(IDENTITY, ownerId="another-owner")
 
     if case == "server-type":
         server = None
@@ -327,7 +327,7 @@ def test_PreparedTransportRejectsIncompleteOrForeignBundles(case: str) -> None:
         clients = (replace(clients[0], files=(Artifact("client.conf", PAYLOAD, False),)), clients[1])
 
     with pytest.raises(VpnError):
-        replace(prepared, server_bundle=server, device_bundles=clients)
+        replace(prepared, serverBundle=server, deviceBundles=clients)
 
 
 def test_ReplacementRequiresExactOldBytesAndOwnership() -> None:
@@ -335,31 +335,31 @@ def test_ReplacementRequiresExactOldBytesAndOwnership() -> None:
 
     previous = Prepared()
     replacement = Prepared(replace(Profile(), devices=Profile().devices[:1]), payload=b"new-fixture-only-payload")
-    ValidateVpnReplacement(previous, replacement, expected_fingerprint=previous.Fingerprint())
+    ValidateVpnReplacement(previous, replacement, expectedFingerprint=previous.Fingerprint())
 
     for expected in ("0" * 64, replacement.Fingerprint(), None):
         with pytest.raises(VpnError, match="expected previous fingerprint"):
-            ValidateVpnReplacement(previous, replacement, expected_fingerprint=expected)
+            ValidateVpnReplacement(previous, replacement, expectedFingerprint=expected)
 
-    foreign = Prepared(replace(Profile(), identity=replace(IDENTITY, scope_id="other-scope")))
+    foreign = Prepared(replace(Profile(), identity=replace(IDENTITY, scopeId="other-scope")))
     proxy = Prepared(capabilities=VpnCapabilities("proxy", "application-proxy", ("full",)))
 
     for different in (foreign, proxy):
         with pytest.raises(VpnError, match="preserve exact stack"):
-            ValidateVpnReplacement(previous, different, expected_fingerprint=previous.Fingerprint())
+            ValidateVpnReplacement(previous, different, expectedFingerprint=previous.Fingerprint())
 
     with pytest.raises(VpnError):
-        ValidateVpnReplacement(None, replacement, expected_fingerprint=previous.Fingerprint())
+        ValidateVpnReplacement(None, replacement, expectedFingerprint=previous.Fingerprint())
 
     with pytest.raises(VpnError):
-        ValidateVpnReplacement(previous, None, expected_fingerprint=previous.Fingerprint())
+        ValidateVpnReplacement(previous, None, expectedFingerprint=previous.Fingerprint())
 
 
 def test_ArtifactCleanupCannotOverwriteOrRemoveChangedDeviceFiles(tmp_path: Path) -> None:
     """Existing owned-store checks remain authoritative for replacement and cleanup."""
 
     prepared = Prepared()
-    bundle = prepared.device_bundles[0]
+    bundle = prepared.deviceBundles[0]
     location = WriteArtifactBundle(tmp_path, bundle)
     manifest = (location / "manifest.json").read_text()
 
@@ -369,7 +369,7 @@ def test_ArtifactCleanupCannotOverwriteOrRemoveChangedDeviceFiles(tmp_path: Path
         WriteArtifactBundle(tmp_path, bundle)
 
     with pytest.raises(ArtifactError):
-        RemoveArtifactBundle(tmp_path, replace(IDENTITY, owner_id="another-owner"), kind="device", name=bundle.name)
+        RemoveArtifactBundle(tmp_path, replace(IDENTITY, ownerId="another-owner"), kind="device", name=bundle.name)
 
     (location / "client.conf").write_bytes(b"operator-modified-fixture")
 
@@ -434,13 +434,13 @@ def test_ParserAcceptsProxyDevicesWithoutAddresses() -> None:
     data = ProfileData()
     del data["devices"][0]["ipv4_address"]
 
-    assert ParseVpnProfile(data).devices[0].ipv4_address is None
+    assert ParseVpnProfile(data).devices[0].ipv4Address is None
 
 
 def test_GenericStateRejectsVpnCredentialFields() -> None:
     """Transport preparation must not widen persisted infrastructure state to include secrets."""
 
-    data = {"schema_version": 1, "identity": asdict(IDENTITY), "resources": [], "vpn": PAYLOAD.decode()}
+    data = {"schema_version": 1, "identity": _WireDict(IDENTITY), "resources": [], "vpn": PAYLOAD.decode()}
 
     with pytest.raises(StateError) as caught:
         ParseState(data, IDENTITY)
@@ -452,29 +452,9 @@ def test_ProfileLoaderBoundsInputAndDoesNotReadCredentials(tmp_path: Path) -> No
     """Load public TOML locally and fail with value-free errors for malformed or oversized files."""
 
     path = tmp_path / "vpn.toml"
-    path.write_text('''schema_version = 1
-[identity]
-project = "example"
-stack = "vpn"
-provider = "example-cloud"
-scope_id = "example-scope"
-owner_id = "example-owner"
-[routes]
-mode = "full"
-ipv4_cidrs = ["0.0.0.0/0"]
-dns_servers = ["1.1.1.1"]
-ipv6_policy = "disabled"
-[[devices]]
-device_id = "laptop"
-ipv4_address = "10.70.0.2"
-[[listeners]]
-transport = "tunnel"
-protocol = "udp"
-port = 51820
-source_cidrs = ["0.0.0.0/0"]
-''')
+    path.write_text('schema_version = 1\n[identity]\nproject = "example"\nstack = "vpn"\nprovider = "example-cloud"\nscope_id = "example-scope"\nowner_id = "example-owner"\n[routes]\nmode = "full"\nipv4_cidrs = ["0.0.0.0/0"]\ndns_servers = ["1.1.1.1"]\nipv6_policy = "disabled"\n[[devices]]\ndevice_id = "laptop"\nipv4_address = "10.70.0.2"\n[[listeners]]\ntransport = "tunnel"\nprotocol = "udp"\nport = 51820\nsource_cidrs = ["0.0.0.0/0"]\n')
 
-    assert LoadVpnProfile(path).devices[0].device_id == "laptop"
+    assert LoadVpnProfile(path).devices[0].deviceId == "laptop"
 
     for content in (b"[invalid", b"\xff", b"x" * (MAX_VPN_PROFILE_BYTES + 1)):
         path.write_bytes(content)

@@ -34,10 +34,10 @@ def test_IdentityAndReferencesAreImmutable() -> None:
     reference = ResourceReference("example-cloud", "test-folder", ResourceKind.INSTANCE, "vm-1")
 
     with pytest.raises(FrozenInstanceError):
-        identity.scope_id = "another-folder"  # type: ignore[misc]
+        identity.scopeId = "another-folder"  # type: ignore[misc]
 
     with pytest.raises(FrozenInstanceError):
-        reference.resource_id = "vm-2"  # type: ignore[misc]
+        reference.resourceId = "vm-2"  # type: ignore[misc]
 
     assert hash(reference) == hash(reference), "Resource reference changed its identity"
 
@@ -55,12 +55,12 @@ def test_ReferencesRejectArbitraryKinds() -> None:
         {"reference": None},
         {"name": None},
         {"status": None},
-        {"zone_id": "--zone"},
+        {'zoneId': "--zone"},
         {"labels": [("project", "test")]},
         {"labels": (("project", "test"), ("project", "another"))},
         {"labels": (("project", 1),)},
-        {"public_addresses": ["203.0.113.10"]},
-        {"public_addresses": (None,)},
+        {'publicAddresses': ["203.0.113.10"]},
+        {'publicAddresses': (None,)},
     ],
 )
 def test_ResourcesRejectInvalidFields(values: dict[str, object]) -> None:

@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/architecture/extensions.md"
-sourceHash = "sha256:50eb83811347e4081383f461951f3ffbcd59a881bc10dc8aa3c0847f24ccdb0b"
-reviewedTranslationHash = "sha256:50867956c17e3556621d74f2222e4215a40f7a3ea449c4d259a856d0c7471a07"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:f71dc6aa75d490c775c967ef402443610f5aa966b56eda9e995b4e6d32334ba2"
+reviewedTranslationHash = "sha256:60e764fec5ffeac886249dfb54926d49fdb97293b95fbc4d2cbdd6031dd49e75"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T07:47:08Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]
 body = '''
 # 扩展接口与发现
@@ -24,8 +24,8 @@ body = '''
 | `CompiledProfile`            | 提供身份、服务器文件包生成和验证后的生命周期 TOML。 |
 | `ExtensionRegistry`          | 注册、选择并显式加载已验证描述。                    |
 
-`ProviderContext` 仅包含 `scope_id`、外部 CLI 的
-`authentication_reference`、有界命令超时及清单限制。不解析凭据、不读取凭据
+`ProviderContext` 仅包含 `scopeId`、外部 CLI 的
+`authenticationReference`、有界命令超时及清单限制。不解析凭据、不读取凭据
 文件、不接受凭据字节、不选择可执行文件，也不携带任意选项字典。认证引用是已
 配置外部来源的名称，不能以令牌或密钥内容冒充标识。`ProfileContext` 包含已
 验证的 `StackIdentity`。配置值由选定的严格格式验证，拒绝未知字段并避免将私有
@@ -67,7 +67,7 @@ provider = extension.CreateProvider(ProviderContext("example-folder", "external-
 网关选择 `ExtensionKind.PROFILE` 和 `secure-gateway`，再调用
 `CompileProfile(configuration, ProfileContext(identity))`。编译适配器拒绝
 配置归属不匹配。`BuildServerBundle()` 在内存中生成已有所属文件包；先通过
-`WriteArtifactBundle()` 保存，再调用 `RenderPlan(user_data_file=...)`。
+`WriteArtifactBundle()` 保存，再调用 `RenderPlan(userDataFile=...)`。
 渲染会验证准确文件内容和清单，不部署计划，也不证明客户机或传输就绪。
 
 ## 静态元数据发现

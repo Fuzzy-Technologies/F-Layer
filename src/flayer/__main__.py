@@ -5,8 +5,9 @@ from __future__ import annotations
 import argparse
 import json
 from collections.abc import Sequence
-from dataclasses import asdict
 from typing import NoReturn
+
+from flayer.core.contracts import _WireDict
 
 from .diagnostics import (
     BenchmarkLimits,
@@ -47,7 +48,7 @@ def Parser() -> argparse.ArgumentParser:
 
         if command == "benchmark":
             child.add_argument("--count", type=int, default=3)
-            child.add_argument("--bytes", type=int, default=64 * 1024, dest="byte_limit")
+            child.add_argument("--bytes", type=int, default=64 * 1024, dest='byteLimit')
 
     lifecycle = commands.add_parser("lifecycle", help="Explicit owned stack lifecycle")
     actions = lifecycle.add_subparsers(dest="action", required=True)
@@ -56,44 +57,48 @@ def Parser() -> argparse.ArgumentParser:
         child = actions.add_parser(action)
         child.add_argument("--config", required=True, help="Explicit lifecycle plan TOML path")
         child.add_argument("--state", required=True, help="Explicit owned snapshot path")
-        child.add_argument("--yc-profile", required=True, help="Explicit preauthenticated yc profile")
+        child.add_argument("--yc-profile", required=True, help="Explicit preauthenticated yc profile", dest='ycProfile')
         child.add_argument("--format", choices=("text", "json"), default="text")
 
         if action != "status":
-            child.add_argument("--allow-mutation", action="store_true")
-            child.add_argument("--scope-confirm", required=True, help="Repeat the exact folder ID")
+            child.add_argument("--allow-mutation", action="store_true", dest='allowMutation')
+            child.add_argument("--scope-confirm", required=True, help="Repeat the exact folder ID", dest='scopeConfirm')
 
         if action == "recover":
             child.add_argument("--rollback", action="store_true")
 
     project = commands.add_parser("project", help="Create a private installable VPN project")
-    project_actions = project.add_subparsers(dest="action", required=True)
-    initialize = project_actions.add_parser("init", help="Create an editable project and administration key")
+    projectActions = project.add_subparsers(dest="action", required=True)
+    initialize = projectActions.add_parser("init", help="Create an editable project and administration key")
     initialize.add_argument("directory")
 
     vpn = commands.add_parser("vpn", help="Prepare and manage a two-protocol VPN project")
-    vpn_actions = vpn.add_subparsers(dest="action", required=True)
+    vpnActions = vpn.add_subparsers(dest="action", required=True)
 
-    for action in ("prepare", "deploy", "status", "destroy", "recover"):
-        child = vpn_actions.add_parser(action)
+    for action in ("prepare", "deploy", "status", "destroy", "recover", "runtime-status", "upgrade", "rollback-upgrade", "recover-upgrade"):
+        child = vpnActions.add_parser(action)
         child.add_argument("--project", required=True, help="Private project directory")
         child.add_argument("--format", choices=("text", "json"), default="text")
 
-        if action in {"deploy", "destroy", "recover"}:
-            child.add_argument("--allow-mutation", action="store_true")
-            child.add_argument("--scope-confirm", required=True, help="Repeat the exact cloud folder ID")
+        if action in {"deploy", "destroy", "recover", "upgrade", "rollback-upgrade", "recover-upgrade"}:
+            child.add_argument("--allow-mutation", action="store_true", dest='allowMutation')
+            child.add_argument("--scope-confirm", required=True, help="Repeat the exact cloud folder ID", dest='scopeConfirm')
+
+        if action in {"upgrade", "rollback-upgrade", "recover-upgrade"}:
+            child.add_argument("--expected-version", required=True, dest="expectedVersion")
+            child.add_argument("--expected-receipt-sha256", required=True, dest="expectedReceipt")
 
         if action == "recover":
             child.add_argument("--rollback", action="store_true")
 
-    export = vpn_actions.add_parser("export", help="Export existing device files without cloud access")
+    export = vpnActions.add_parser("export", help="Export existing device files without cloud access")
     export.add_argument("--project", required=True, help="Private project directory")
     export.add_argument("--device", required=True, help="One declared device ID")
     export.add_argument("--protocol", required=True, choices=("amneziawg", "vless-reality"))
     export.add_argument("--output", required=True, help="Separate private export root")
     export.add_argument("--qr", action="store_true", help="Include numbered native AmneziaVPN QR SVGs")
-    export.add_argument("--tls-fragment", action="store_true", help="Fragment the VLESS Reality client TLS handshake")
-    export.add_argument("--allow-quic", action="store_true", help="Allow VLESS Reality client UDP 443 traffic")
+    export.add_argument("--tls-fragment", action="store_true", dest="tlsFragment", help="Fragment the VLESS Reality client TLS handshake")
+    export.add_argument("--allow-quic", action="store_true", dest="allowQuic", help="Allow VLESS Reality client UDP 443 traffic")
     export.add_argument("--format", choices=("text", "json"), default="text")
 
     return parser
@@ -115,12 +120,12 @@ def _Lifecycle(args: argparse.Namespace) -> int:
             raise LifecycleError("CLI lifecycle provider is unsupported")
 
         if args.action != "status" and (
-            not args.allow_mutation or args.scope_confirm != plan.identity.scope_id
+            not args.allowMutation or args.scopeConfirm != plan.identity.scopeId
         ):
             raise LifecycleError("Mutation requires explicit opt-in and exact scope confirmation")
 
         provider = YandexLifecycleProvider(YandexCloudSettings(
-            folder_id=plan.identity.scope_id, profile=args.yc_profile,
+            folderId=plan.identity.scopeId, profile=args.ycProfile,
         ))
         engine = LifecycleEngine(plan, provider, args.state)
 
@@ -142,9 +147,9 @@ def _Lifecycle(args: argparse.Namespace) -> int:
 
         return 2
 
-    print(json.dumps(asdict(report), sort_keys=True) if args.format == "json" else
+    print(json.dumps(_WireDict(report), sort_keys=True) if args.format == "json" else
           f"Lifecycle {report.action}: {report.status}; resources={len(report.resources)}; "
-          f"recovery_required={str(report.recovery_required).lower()}")
+          f"recovery_required={str(report.recoveryRequired).lower()}")
 
     return report.ExitCode()
 
@@ -155,7 +160,7 @@ def _VpnProject(args: argparse.Namespace) -> int:
     from .core.contracts import ContractError
     from .profiles.vpn import VpnError
     from .providers.contracts import ProviderError
-    from .vpn_project import InitializeVpnProject, LoadVpnProject, RunVpnProject
+    from .vpn_project import InitializeVpnProject, LoadVpnProject, RunVpnProject, RunVpnRuntime
 
     try:
         if args.command == "project":
@@ -170,13 +175,20 @@ def _VpnProject(args: argparse.Namespace) -> int:
             from .vpn_export import ExportVpnDevice
 
             report = ExportVpnDevice(project, args.device, args.protocol, args.output,
-                                     qr=args.qr, tls_fragment=args.tls_fragment, allow_quic=args.allow_quic)
+                                     qr=args.qr, tlsFragment=args.tlsFragment, allowQuic=args.allowQuic)
+
+        elif args.action in {"runtime-status", "upgrade", "rollback-upgrade", "recover-upgrade"}:
+            report = RunVpnRuntime(
+                project, args.action, allowMutation=getattr(args, "allowMutation", False),
+                scopeConfirm=getattr(args, "scopeConfirm", ""),
+                expectedVersion=getattr(args, "expectedVersion", ""), expectedReceipt=getattr(args, "expectedReceipt", ""),
+            )
 
         else:
             report = RunVpnProject(
                 project, args.action,
-                allow_mutation=getattr(args, "allow_mutation", False),
-                scope_confirm=getattr(args, "scope_confirm", ""),
+                allowMutation=getattr(args, "allowMutation", False),
+                scopeConfirm=getattr(args, "scopeConfirm", ""),
                 rollback=getattr(args, "rollback", False),
             )
 
@@ -187,16 +199,16 @@ def _VpnProject(args: argparse.Namespace) -> int:
             "VPN operation failed. Check private artifact ownership, cloud access, and retained state before retrying."
         )
         payload = {"action": args.action, "status": "failed", "message": message,
-                   "recovery_required": args.action in {"deploy", "destroy", "recover"}}
+                   "recovery_required": args.action in {"deploy", "destroy", "recover", "upgrade", "rollback-upgrade", "recover-upgrade"}}
         print(json.dumps(payload) if getattr(args, "format", "text") == "json" else message)
 
         return 2
 
-    print(json.dumps(asdict(report), sort_keys=True) if args.format == "json" else
-          f"VPN {report.action}: {report.status}; cloud={report.cloud_status}; guest={report.guest_status}; "
-          f"connectivity={report.connectivity_status}. {report.details}")
+    print(json.dumps(_WireDict(report), sort_keys=True) if args.format == "json" else
+          f"VPN {report.action}: {report.status}; cloud={report.cloudStatus}; guest={report.guestStatus}; "
+          f"connectivity={report.connectivityStatus}. {report.details}")
 
-    for export in report.client_exports if args.format == "text" else ():
+    for export in report.clientExports if args.format == "text" else ():
         print(f"Client files: {export}")
 
     return report.ExitCode()
@@ -229,7 +241,7 @@ def Main(arguments: Sequence[str] | None = None) -> int:
             checks = (ProbeEndpoint(args.endpoint, args.timeout),)
 
         else:
-            limits = BenchmarkLimits(args.timeout, args.count, args.byte_limit)
+            limits = BenchmarkLimits(args.timeout, args.count, args.byteLimit)
             checks = RunBenchmark(args.endpoint, limits)
 
     except ValueError:

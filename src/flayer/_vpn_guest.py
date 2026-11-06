@@ -10,6 +10,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 MAX_REQUEST_BYTES = 4 * 1024 * 1024
@@ -71,6 +73,27 @@ def DecodeRequest(content: bytes) -> tuple[tuple[str, dict[str, bytes]], ...]:
     return tuple(result)
 
 
+@contextmanager
+def _Staged(files: dict[str, bytes]) -> Iterator[Path]:
+    """Share private root-owned staging and guaranteed cleanup across installation and maintenance."""
+
+    stage = Path(tempfile.mkdtemp(prefix="flayer-install-", dir="/var/tmp"))
+
+    try:
+        os.chmod(stage, 0o700)
+
+        for name, content in files.items():
+            descriptor = os.open(stage / name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+
+            with os.fdopen(descriptor, "wb") as stream:
+                stream.write(content)
+
+        yield stage
+
+    finally:
+        shutil.rmtree(stage)
+
+
 def Install(bundles: tuple[tuple[str, dict[str, bytes]], ...]) -> None:
     """Use root-owned temporary directories and suppress potentially sensitive installer output."""
 
@@ -78,37 +101,84 @@ def Install(bundles: tuple[tuple[str, dict[str, bytes]], ...]) -> None:
         raise ValueError("Root privileges are required")
 
     for transport, files in bundles:
-        stage = Path(tempfile.mkdtemp(prefix="flayer-install-", dir="/var/tmp"))
-
         phase = "stage"
 
         try:
-            os.chmod(stage, 0o700)
-
-            for name, content in files.items():
-                descriptor = os.open(stage / name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-
-                with os.fdopen(descriptor, "wb") as stream:
-                    stream.write(content)
-
-            command = ["/bin/bash", str(stage / "install.sh")] if transport == "amneziawg" else ["/usr/bin/python3", str(stage / "install.py")]
-            phase = "install"
-            subprocess.run(command, cwd=stage, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=1800)
-            phase = "check"
-            subprocess.run(command + ["--check"], cwd=stage, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=60)
+            with _Staged(files) as stage:
+                command = ["/bin/bash", str(stage / "install.sh")] if transport == "amneziawg" else ["/usr/bin/python3", str(stage / "install.py")]
+                phase = "install"
+                subprocess.run(command, cwd=stage, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=1800)
+                phase = "check"
+                subprocess.run(command + ["--check"], cwd=stage, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=60)
 
         except (OSError, subprocess.SubprocessError):
             raise GuestInstallError(transport, phase) from None
 
-        finally:
-            shutil.rmtree(stage)
+
+
+def Runtime(content: bytes) -> bytes:
+    """Execute exactly one bounded VLESS maintenance operation without exposing installer errors."""
+
+    if os.geteuid() != 0 or not 1 <= len(content) <= MAX_REQUEST_BYTES:
+        raise ValueError("Runtime operation requires a bounded privileged request")
+
+    request = json.loads(content)
+
+    if not isinstance(request, dict) or set(request) != {"bundles", "runtime"}:
+        raise ValueError("Invalid runtime envelope")
+
+    options = request["runtime"]
+
+    if (not isinstance(options, dict) or set(options) != {"action", "expected_version", "expected_receipt_sha256"}
+            or options["action"] not in {"runtime-status", "upgrade", "rollback-upgrade", "recover-upgrade"}):
+        raise ValueError("Invalid runtime action")
+
+    if options["action"] == "runtime-status":
+        if options["expected_version"] != "" or options["expected_receipt_sha256"] != "":
+            raise ValueError("Read-only runtime status does not accept mutation preconditions")
+
+    elif (options["expected_version"] not in {"26.9.30", "26.10.31"}
+          or not isinstance(options["expected_receipt_sha256"], str)
+          or re.fullmatch(r"[0-9a-f]{64}", options["expected_receipt_sha256"]) is None):
+        raise ValueError("Runtime mutation requires exact previous version and receipt")
+
+    bundles = DecodeRequest(json.dumps({"bundles": request["bundles"]}).encode())
+
+    if len(bundles) != 1 or bundles[0][0] != "vless-reality":
+        raise ValueError("Runtime maintenance accepts only the owned VLESS bundle")
+
+    try:
+        with _Staged(bundles[0][1]) as stage:
+            command = ["/usr/bin/python3", str(stage / "install.py"), "--" + options["action"]]
+
+            if options["action"] != "runtime-status":
+                command += ["--allow-mutation", "--expected-version", options["expected_version"],
+                            "--expected-receipt-sha256", options["expected_receipt_sha256"]]
+
+            result = subprocess.run(command, cwd=stage, stdin=subprocess.DEVNULL,
+                                    capture_output=True, check=False, timeout=300)
+
+            if result.returncode != 0 or not 1 <= len(result.stdout) <= 4096:
+                raise ValueError("Runtime operation failed")
+
+            return result.stdout
+
+    except (OSError, ValueError, subprocess.SubprocessError):
+        raise GuestInstallError("vless-reality", "runtime") from None
 
 
 def Main() -> int:
     """Return only fixed status text, never request data or private installer diagnostics."""
 
     try:
-        bundles = DecodeRequest(sys.stdin.buffer.read(MAX_REQUEST_BYTES + 1))
+        content = sys.stdin.buffer.read(MAX_REQUEST_BYTES + 1)
+
+        if 1 <= len(content) <= MAX_REQUEST_BYTES and isinstance(json.loads(content), dict) and "runtime" in json.loads(content):
+            sys.stdout.buffer.write(Runtime(content))
+
+            return 0
+
+        bundles = DecodeRequest(content)
         Install(bundles)
 
     except GuestInstallError as error:

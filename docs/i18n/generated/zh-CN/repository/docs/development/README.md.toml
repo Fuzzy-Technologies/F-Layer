@@ -7,15 +7,16 @@ F-Layer 的工程规范以仓库开发协议为基础。
 
 - [仓库开发协议](../../DEVELOPMENT_PROTOCOL.md)
 - [Python 代码风格](PYTHON_CODE_STYLE.md)
+- [Python 命名审计与调用方迁移](python-naming-audit.md)
 - [分支与发布流程](../RELEASE_WORKFLOW.md)
 - [文档完整性要求](documentation-coverage.md)
 - [架构决策记录](../adr/README.md)
 
 GitHub 是共享验证结果的权威来源：任务、pull request、CI、ADR 和发布历史应足以还原实现状态，无需查阅私人聊天记录。
 '''
-sourceHash = "sha256:b2d8aaf33002ec179c5688c7dcd8038792e9e2e9fe3478c1b5504080ffae547b"
-reviewedTranslationHash = "sha256:c0e98bf3e63dd330a95f01716e6bcee3c36d7c1f4249d8d45188c3af9297793d"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:98c0e2af334edbec00f6790bb8a148896a65960410de1fbd41f2c0e30d9b0f1d"
+reviewedTranslationHash = "sha256:5f0b6534683f6d8a5fac59e4b57f7c9338b1262e8fb548165b044982d76a4bbe"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-11T00:25:19Z"
+reviewedAt = "2026-11-04T10:34:46Z"
 reviewRoles = ["editorial", "technical"]

@@ -365,10 +365,13 @@ and retains the guest history. Historical version 1 records remain readable with
 their original immutable semantics. Publication retries reconcile exact existing
 record/pointer bytes.
 An interrupted version 1 committed completion can retire its remaining journal
-without rewriting that immutable record. A submitted version 1 unapplied completion
-whose head was already published but whose journal remains is ambiguous: reject
-that upgrade state before any provider/guest operation and retain it for explicit
-inspection. Its old unfenced evidence is never silently reinterpreted as version 2.
+without rewriting that immutable record, including a record published before its
+head pointer. Inspect the exact manifest-owned pending completion before remote
+access. A submitted version 1 unapplied completion whose immutable record exists
+but whose journal remains is ambiguous: reject that upgrade state before any
+provider/guest operation and retain it for explicit inspection, whether its head
+was published or not. Its old unfenced evidence is never silently reinterpreted
+as version 2.
 Already retired version 1 cancellations are not retroactively protected against
 delayed legacy requests; only a subsequent verified commit or cancellation
 advances their guest authority.

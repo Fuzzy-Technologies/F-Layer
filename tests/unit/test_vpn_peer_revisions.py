@@ -253,9 +253,9 @@ def test_NotAppliedRecoveryRetainsOldActivePinsAndArchivesAnyPreparedCredentials
 
 @POSIX
 @pytest.mark.parametrize("outcome,prepared", [("committed", True), ("not-applied", True), ("not-applied", False)])
-@pytest.mark.parametrize("interrupted", [True, False])
+@pytest.mark.parametrize("boundary", ["record", "head", "retired"])
 def test_CompletedVersionOneEvidenceRemainsReadableWithoutRewritingItsHistory(
-    tmp_path: Path, outcome: str, prepared: bool, interrupted: bool, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path, outcome: str, prepared: bool, boundary: str, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Retained historical records keep their original immutable format; new cancellations require the new proof contract."""
 
@@ -283,25 +283,29 @@ def test_CompletedVersionOneEvidenceRemainsReadableWithoutRewritingItsHistory(
     name = project.vpn.identity.stack + "-wc-" + pending["request_name"].rsplit("-", 1)[1]
     bundle = ArtifactBundle(project.vpn.identity, "server", name, (Artifact("record.json", _Json(record), False),))
     WriteArtifactBundle(project.Artifacts, bundle)
-    revisions.AtomicRecord(project, "wireguard-head.json", {"name": name, "sha256": BundleDigest(bundle)})
+    pointer = {"name": name, "sha256": BundleDigest(bundle)}
 
-    if not interrupted:
+    if boundary != "record":
+        revisions.AtomicRecord(project, "wireguard-head.json", pointer)
+
+    if boundary == "retired":
         revisions.AtomicRecord(project, "wireguard-pending.json", None)
 
     before = Snapshot(project.root)
     active = revisions.LoadRevisions(project)
 
-    assert active.history == record["history_sha256"] and active.lastRecord == record
-    assert active.pins[-1] == (pin if outcome == "committed" else state.pins[-1])
+    assert active.history == (record["history_sha256"] if boundary != "record" else state.history)
+    assert active.lastRecord == (record if boundary != "record" else None)
+    assert active.pins[-1] == (pin if outcome == "committed" and boundary != "record" else state.pins[-1])
     assert Snapshot(project.root) == before
 
-    if interrupted and (outcome == "committed" or not prepared):
-        monkeypatch.setattr(revisions, "MAX_PEER_REVISIONS", active.recordCount)
+    if boundary != "retired" and (outcome == "committed" or not prepared):
+        monkeypatch.setattr(revisions, "MAX_PEER_REVISIONS", active.recordCount + int(boundary == "record"))
         revisions.Commit(project, active, pending, pin, facts, outcome=outcome)
-        assert revisions.Pending(project) is None and revisions.LoadRevisions(project).head == active.head
+        assert revisions.Pending(project) is None and revisions.LoadRevisions(project).head == pointer
         assert revisions.LoadRevisions(project).lastRecord == record
 
-    elif interrupted:
+    elif boundary != "retired":
         from flayer import _vpn_peer_controller as controller
 
         def Forbidden(*args: Any, **options: Any) -> Any:
@@ -315,6 +319,42 @@ def test_CompletedVersionOneEvidenceRemainsReadableWithoutRewritingItsHistory(
             controller._Recover(updated, active, pending, "recover", "enroll", "phone", revisions.Digest(_Json(pending)), None, Forbidden, server)
 
         assert Snapshot(project.root) == before and revisions.Pending(project) == pending
+
+
+@POSIX
+@pytest.mark.parametrize("fault", ["device", "owner", "extra-file"])
+def test_UnheadedCompletionCannotAdoptUnrelatedOrUnboundedEvidence(tmp_path: Path, fault: str) -> None:
+    """A matching immutable directory name alone cannot influence upgrade preflight or idempotent recovery."""
+
+    project = Project(tmp_path)
+    PrepareSelectedProject(project)
+    state = revisions.LoadRevisions(project)
+    _, pending, material, server, pin, facts = Change(project, state)
+    pending = Stage(project, pending, material, server)
+    record = {**pending, "desired_pin": _WireDict(pin), "receipt_sha256": facts["receipt_sha256"],
+              "history_sha256": facts["history_sha256"], "deployment_sha256": facts["deployment_sha256"], "outcome": "committed"}
+
+    if fault == "device":
+        record["device_id"] = "other"
+        record["history_sha256"] = revisions.CommittedHistory(project, "enroll", "other", pending["previous_receipt_sha256"],
+            str(facts["receipt_sha256"]), str(facts["deployment_sha256"]), pending["previous_history_sha256"])
+
+    elif fault == "owner":
+        record["identity"] = {**record["identity"], "owner_id": "another-owner"}
+
+    name = project.vpn.identity.stack + "-wc-" + pending["request_name"].rsplit("-", 1)[1]
+    bundle = ArtifactBundle(project.vpn.identity, "server", name, (Artifact("record.json", _Json(record), False),))
+    directory = WriteArtifactBundle(project.Artifacts, bundle)
+
+    if fault == "extra-file":
+        (directory / "unexpected").write_bytes(b"unrelated")
+
+    before = Snapshot(project.root)
+
+    with pytest.raises(VpnError):
+        revisions.ExistingCompletion(project, pending)
+
+    assert Snapshot(project.root) == before and revisions.Pending(project) == pending
 
 
 @POSIX

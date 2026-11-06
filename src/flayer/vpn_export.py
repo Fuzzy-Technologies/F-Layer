@@ -20,7 +20,7 @@ from flayer.profiles.artifacts import (
     WriteArtifactBundle,
 )
 from flayer.profiles.vpn import VpnEndpoint, VpnError
-from flayer.vpn_project import VpnProject, VpnProjectReport
+from flayer.vpn_project import SelectedVpnProject, VpnProject, VpnProjectReport
 
 
 def _VlessClient(client: bytes) -> tuple[dict[str, Any], dict[str, Any], str]:
@@ -106,10 +106,13 @@ def _FragmentVlessClient(client: bytes) -> tuple[bytes, str]:
 
 
 def ExportVpnDevice(
-    project: VpnProject, deviceId: str, protocol: str, output: str | Path, *, qr: bool = False,
+    project: VpnProject | SelectedVpnProject, deviceId: str, protocol: str, output: str | Path, *, qr: bool = False,
     tlsFragment: bool = False, allowQuic: bool = False,
 ) -> VpnProjectReport:
     """Export one verified device with optional client policies and no source writes."""
+
+    if isinstance(project, SelectedVpnProject):
+        raise VpnError("Schema-2 device export requires completed deployment and protocol export integration")
 
     ValidateName(deviceId, "device_id")
 

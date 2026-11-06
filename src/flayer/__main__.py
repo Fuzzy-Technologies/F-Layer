@@ -71,6 +71,8 @@ def Parser() -> argparse.ArgumentParser:
     projectActions = project.add_subparsers(dest="action", required=True)
     initialize = projectActions.add_parser("init", help="Create an editable project and administration key")
     initialize.add_argument("directory")
+    initialize.add_argument("--protocol", action="append", choices=("amneziawg", "vless-reality", "wireguard"),
+                            dest="protocols", help="Select schema-2 protocols explicitly; repeat for each transport")
 
     vpn = commands.add_parser("vpn", help="Prepare and manage a two-protocol VPN project")
     vpnActions = vpn.add_subparsers(dest="action", required=True)
@@ -164,7 +166,11 @@ def _VpnProject(args: argparse.Namespace) -> int:
 
     try:
         if args.command == "project":
-            InitializeVpnProject(args.directory)
+            if args.protocols is None:
+                InitializeVpnProject(args.directory)
+
+            else:
+                InitializeVpnProject(args.directory, protocols=tuple(args.protocols))
             print("Private project created. Edit project.toml, then run flayer vpn prepare --project DIRECTORY.")
 
             return 0

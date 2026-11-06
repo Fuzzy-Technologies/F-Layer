@@ -67,6 +67,7 @@ from flayer.profiles.vpn import (
     VpnError,
     VpnProfile,
 )
+from flayer.profiles.wireguard import WireGuardSettings
 from flayer.providers.contracts import (
     ProviderErrorCode,
     ProviderResource,
@@ -76,6 +77,7 @@ from flayer.providers.contracts import (
 from flayer.providers.lifecycle import JsonValue, ResourceSpec
 from flayer.providers.yandex import YandexCloudSettings
 from flayer.providers.yandex_lifecycle import ValidateComputeShape, YandexLifecycleProvider
+from flayer.vpn_selection import VpnProtocolSelection
 
 ADMIN_USERNAME = "flayer-admin"
 MAX_SERIAL_BYTES = 1024 * 1024
@@ -213,6 +215,61 @@ class VpnProject:
 
 
 @dataclass(frozen=True, slots=True)
+class SelectedVpnProject:
+    """Explicit schema-2 protocol intent with independent membership, settings and credential fingerprints."""
+
+    root: Path = field(repr=False)
+    vpn: VpnProfile
+    cloud: CloudPlacement
+    protocolSelections: tuple[VpnProtocolSelection, ...]
+    sshPublicKey: str = field(repr=False)
+    amneziawg: AmneziaWgSettings | None = None
+    vless: VlessRealitySettings | None = None
+    wireguard: WireGuardSettings | None = None
+    resources: VpnResources | None = None
+
+    def __post_init__(self) -> None:
+        """Validate all selected transport intent before generating or storing private material."""
+
+        from flayer.vpn_project_v2 import ValidateSelectedProject
+
+        ValidateSelectedProject(self)
+
+    @property
+    def Artifacts(self) -> Path:
+        """Locate only this explicit project's existing private owned-artifact store."""
+
+        return self.root / "artifacts"
+
+    def ProtocolProfile(self, protocol: str) -> VpnProfile:
+        """Project only one selected protocol's members, listener and shared route policy."""
+
+        for selection in self.protocolSelections:
+            if selection.protocol == protocol:
+                return selection.Project(self.vpn)
+
+        raise VpnError("Protocol is not selected by this project")
+
+    def TransportFingerprint(self, protocol: str) -> str:
+        """Bind retained material to its own canonical projection without unrelated device or cloud settings."""
+
+        profile = self.ProtocolProfile(protocol)
+        settings = {"amneziawg": self.amneziawg, "vless-reality": self.vless, "wireguard": self.wireguard}[protocol]
+        payload = {"schema_version": 2, "vpn": _WireDict(profile), "settings": _WireDict(settings)}
+
+        return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+    def Fingerprint(self) -> str:
+        """Identify complete selected project intent separately from each transport's retained material."""
+
+        payload = {"schema_version": 2, "vpn": _WireDict(self.vpn), "cloud": _WireDict(self.cloud),
+                   "ssh_public_key": self.sshPublicKey, "resources": _WireDict(self.resources) if self.resources is not None else None,
+                   "transports": {item.protocol: self.TransportFingerprint(item.protocol) for item in self.protocolSelections}}
+
+        return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+@dataclass(frozen=True, slots=True)
 class VpnProjectReport:
     """Sanitized lifecycle and guest observations without transport material or provider output."""
 
@@ -245,8 +302,15 @@ class VpnRuntimeReport(VpnProjectReport):
     kernelPatchStatus: str = "not-assessed"
 
 
-def InitializeVpnProject(directory: str | Path) -> Path:
+def InitializeVpnProject(directory: str | Path, *, protocols: tuple[str, ...] | None = None) -> Path:
     """Create one exclusive private project and an administration key without cloud access."""
+
+    template = PROJECT_TEMPLATE
+
+    if protocols is not None:
+        from flayer.vpn_project_v2 import SelectedProjectTemplate
+
+        template = SelectedProjectTemplate(protocols)
 
     path = Path(directory).absolute()
     ValidateSshPathSyntax(path)
@@ -260,7 +324,7 @@ def InitializeVpnProject(directory: str | Path) -> Path:
     except OSError:
         raise VpnError("Project directory must be new and its parent must already exist") from None
 
-    WritePrivate(path / "project.toml", PROJECT_TEMPLATE.encode("utf-8"))
+    WritePrivate(path / "project.toml", template.encode("utf-8"))
     WritePrivate(path / ".gitignore", b"*\n")
 
     try:
@@ -292,7 +356,7 @@ def _Table(data: Mapping[str, object], key: str, fields: frozenset[str]) -> Mapp
     return table
 
 
-def LoadVpnProject(directory: str | Path) -> VpnProject:
+def LoadVpnProject(directory: str | Path) -> VpnProject | SelectedVpnProject:
     """Read explicit editable public TOML and administration public key from private storage."""
 
     ValidateSshPathSyntax(Path(directory).absolute())
@@ -301,6 +365,12 @@ def LoadVpnProject(directory: str | Path) -> VpnProject:
 
     try:
         data = tomllib.loads(ReadPrivate(root / "project.toml").decode("utf-8"))
+
+        if type(data.get("schema_version")) is int and data["schema_version"] == 2:
+            from flayer.vpn_project_v2 import ParseSelectedProject
+
+            return ParseSelectedProject(root, data, _PublicKey(ReadPrivate(root / "admin-key.pub")))
+
         ValidateFields(data, frozenset({
             "schema_version", "identity", "cloud", "routes", "devices", "amneziawg", "vless",
         }), frozenset({"resources"}), "VPN project")
@@ -522,7 +592,7 @@ def _Bootstrap(project: VpnProject) -> ArtifactBundle:
     ))
 
 
-def _VerifyAdministrationKey(project: VpnProject) -> None:
+def _VerifyAdministrationKey(project: VpnProject | SelectedVpnProject) -> None:
     """Check the private administration key matches its public bootstrap value before cloud creation."""
 
     path = PrivatePath(project.root / "admin-key")
@@ -540,8 +610,13 @@ def _VerifyAdministrationKey(project: VpnProject) -> None:
         raise VpnError("Unable to verify the project administration key with ssh-keygen") from None
 
 
-def PrepareVpnProject(project: VpnProject) -> VpnProjectReport:
+def PrepareVpnProject(project: VpnProject | SelectedVpnProject) -> VpnProjectReport:
     """Prepare private materials and verify both renderers locally without exporting false endpoints."""
+
+    if isinstance(project, SelectedVpnProject):
+        from flayer.vpn_project_v2 import PrepareSelectedProject
+
+        return PrepareSelectedProject(project)
 
     ValidateSshPathSyntax(project.root)
     _VerifyAdministrationKey(project)
@@ -573,8 +648,11 @@ def _Freeze(value: object) -> JsonValue:
     raise VpnError("Compiled cloud parameters contain an unsupported value")
 
 
-def CompileVpnProject(project: VpnProject) -> DeploymentPlan:
+def CompileVpnProject(project: VpnProject | SelectedVpnProject) -> DeploymentPlan:
     """Compile six owned resources while binding only the verified nonsecret bootstrap file."""
+
+    if isinstance(project, SelectedVpnProject):
+        raise VpnError("Schema-2 cloud compilation requires the pending creation-baseline and ingress workflow")
 
     bundle = _Bootstrap(project)
     directory = project.Artifacts / f"server-{bundle.name}"
@@ -749,7 +827,7 @@ def _CheckCloudAccess(provider: VpnYandexProvider) -> None:
 
 
 def RunVpnProject(
-    project: VpnProject, action: str, *, allowMutation: bool = False, scopeConfirm: str = "",
+    project: VpnProject | SelectedVpnProject, action: str, *, allowMutation: bool = False, scopeConfirm: str = "",
     rollback: bool = False, provider: VpnYandexProvider | None = None,
     guestFactory: Callable[..., SshGuestProvisioner] = SshGuestProvisioner,
 ) -> VpnProjectReport:
@@ -762,6 +840,9 @@ def RunVpnProject(
 
     if action == "prepare":
         return PrepareVpnProject(project)
+
+    if isinstance(project, SelectedVpnProject):
+        raise VpnError("Schema-2 projects currently support offline preparation only; cloud/guest integration is pending")
 
     if action in {"deploy", "destroy", "recover"} and (not allowMutation or scopeConfirm != project.vpn.identity.scopeId):
         raise VpnError("Cloud mutation requires --allow-mutation and exact --scope-confirm folder ID")
@@ -834,11 +915,14 @@ def RunVpnProject(
 
 
 def RunVpnRuntime(
-    project: VpnProject, action: str, *, allowMutation: bool = False, scopeConfirm: str = "",
+    project: VpnProject | SelectedVpnProject, action: str, *, allowMutation: bool = False, scopeConfirm: str = "",
     expectedVersion: str = "", expectedReceipt: str = "", provider: VpnYandexProvider | None = None,
     guestFactory: Callable[..., SshGuestProvisioner] = SshGuestProvisioner,
 ) -> VpnRuntimeReport:
     """Maintain only an existing owned Xray runtime after explicit consent and read-only cloud checks."""
+
+    if isinstance(project, SelectedVpnProject):
+        raise VpnError("Schema-2 runtime maintenance requires the pending owned project/ingress integration")
 
     ValidateVlessRuntimeOptions(action, expectedVersion, expectedReceipt)
 

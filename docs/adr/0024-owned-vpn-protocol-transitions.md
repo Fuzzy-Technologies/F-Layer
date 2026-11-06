@@ -129,6 +129,12 @@ result/operation ID remains recovery-required: an old-looking snapshot does not
 prove that a queued mutation cannot still run. Never blindly resubmit or guess an
 operation from timestamps. External drift stops reconciliation.
 
+Rollback that re-adds a removed selected rule may receive a new provider ID and
+an explicitly planned ownership description. Verify restored listener semantics
+and preserve every unrelated ID/metadata field, then record the complete actual
+readback in the no-op epoch's cloud receipt. The historical `BeforeSha256` and old
+snapshot remain evidence of the original state, not proof of the restored IDs.
+
 ## Guest input policy and transport generations
 
 Do not replay initial bootstrap or use `flush ruleset` to change a listener.
@@ -165,7 +171,7 @@ then observe a different expected history and refuse mutation; a reservation
 understood only by new code is insufficient. Refuse a pending peer transaction
 before this fence. Record the new history in the next epoch. If the protocol change
 subsequently rolls back, publish a no-op epoch completion retaining the old active
-pins/policy and recording the consumed history. Never restore the old history during
+pins/access semantics, updating the complete cloud receipt and recording the consumed history. Never restore the old history during
 rollback. This requires an exact healthy active WireGuard receipt. If WireGuard is
 inactive/absent, verify its separate complete namespace-absence and retained-history
 proofs instead; never fabricate a running receipt merely to fence it.

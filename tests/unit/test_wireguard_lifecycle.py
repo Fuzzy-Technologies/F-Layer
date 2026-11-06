@@ -159,7 +159,8 @@ class GuestModel:
                 self.active = True
 
             elif command[1] == "stop":
-                guest._Stop(self.root, self.unit, self.request, partial=True)
+                receipt = json.loads((self.root / "receipt.json").read_bytes())
+                guest._Stop(self.root, self.unit, self.request, partial=receipt["status"] == "staged")
                 self.active = False
 
             elif command[1] == "is-active":
@@ -392,8 +393,9 @@ def test_DriftPreventsAnyServiceOrNetworkDeletion(
     assert not any(command[:2] in (["systemctl", "stop"], ["ip", "link"], ["nft", "delete"]) for command in model.commands)
 
 
+@pytest.mark.parametrize("phase", ["unit", "payload"])
 def test_InterruptedFileDeletionCanResumeFromExternalReceipt(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, phase: str,
 ) -> None:
     """Keep the exact allowed file hashes outside the tree being removed, including its final empty stage."""
 
@@ -408,7 +410,7 @@ def test_InterruptedFileDeletionCanResumeFromExternalReceipt(
 
         unlink(path, *args, **kwargs)
 
-        if path == root / "server.conf":
+        if path == (root / "server.conf" if phase == "payload" else unit):
             raise Interrupted
 
     with monkeypatch.context() as patch:
@@ -656,6 +658,91 @@ def test_StagedDurabilityFailureCannotActivateTheService(
     assert not root.exists() and not unit.exists() and not transaction.exists()
     assert model.interface is None and not model.network
     assert not any(command[0] == "systemctl" for command in model.commands)
+
+
+def test_NewEnablementDirectoryAndParentAreDurableBeforeCommit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Creating multi-user.target.wants needs both its link entries and SYSTEMD's new directory entry persisted."""
+
+    stage, request, model = Seed(tmp_path, monkeypatch)
+    events: list[tuple[str, Path | str]] = []
+    sync, run, atomic = guest._SyncDirectory, model.Run, guest._Atomic
+
+    def Sync(path: Path) -> None:
+        """Retain real fsync behavior and record the directory boundary."""
+
+        sync(path)
+        events.append(("sync", path))
+
+    def Run(command: list[str], **kwargs: Any) -> tuple[int, bytes]:
+        """Record enablement after the synthetic systemd has actually created its new directory."""
+
+        result = run(command, **kwargs)
+
+        if command[:2] == ["systemctl", "enable"]:
+            events.append(("enable", "complete"))
+
+        return result
+
+    def Atomic(path: Path, content: bytes, mode: int = 0o600) -> None:
+        """Reject a commit unless both post-enablement parent levels have already been persisted."""
+
+        if path == model.root / "receipt.json" and json.loads(content)["status"] == "installed":
+            after = events[events.index(("enable", "complete")) + 1:]
+            wants = ("sync", guest.SYSTEMD / "multi-user.target.wants")
+            parent = ("sync", guest.SYSTEMD)
+
+            assert wants in after and parent in after and after.index(wants) < after.index(parent)
+
+        atomic(path, content, mode)
+
+    monkeypatch.setattr(guest, "_SyncDirectory", Sync)
+    monkeypatch.setattr(guest, "_Run", Run)
+    monkeypatch.setattr(guest, "_Atomic", Atomic)
+    guest._Install(stage, request)
+
+
+def test_ReceiptFsyncFailureRetriesCommitDurabilityBeforeJournalRetirement(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An already published healthy receipt needs durable retry, without a false rollback report."""
+
+    stage, request, model = Seed(tmp_path, monkeypatch)
+    sync = guest._SyncDirectory
+    failed = False
+    committed = False
+    observations: list[str] = []
+
+    def Sync(path: Path) -> None:
+        """Fail once after installed receipt rename and require the root retry before removing its journal."""
+
+        nonlocal failed, committed
+
+        if path == model.root and (path / "receipt.json").exists():
+            if json.loads((path / "receipt.json").read_bytes())["status"] == "installed":
+                if not failed:
+                    failed = True
+                    observations.append("commit-fsync-failed")
+
+                    raise OSError("Synthetic committed receipt fsync failure")
+
+                committed = True
+                observations.append("commit-durable")
+
+        if path.name == "txn-" + request["owner"] and not (path / "transaction.json").exists():
+            assert committed, "Recovery evidence cannot be retired before retrying committed root durability"
+            observations.append("journal-retired")
+
+        sync(path)
+
+    monkeypatch.setattr(guest, "_SyncDirectory", Sync)
+    guest._Install(stage, request)
+
+    assert failed and model.active and model.interface is not None
+    assert observations == ["commit-fsync-failed", "commit-durable", "journal-retired"]
+    assert guest._Check(model.root, model.unit, request)["status"] == "installed"
+    assert not guest._Paths(request["owner"])[2].exists()
 
 
 @pytest.mark.parametrize("kind", ["symlink", "hardlink", "permissions"])

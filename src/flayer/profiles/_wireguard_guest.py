@@ -1090,11 +1090,11 @@ def _Start(root: Path, unit: Path, request: dict[str, Any]) -> None:
     _Run(["ip", "link", "set", "dev", interface, "mtu", str(request["mtu"]), "up"])
 
 
-def _Stop(root: Path, unit: Path, request: dict[str, Any], *, partial: bool = False) -> None:
+def _Stop(root: Path, unit: Path, request: dict[str, Any], *, partial: bool = False, recovering: bool = False) -> None:
     """Validate all selected resources before deleting any; never reset shared forwarding or input policy."""
 
     owner = request["owner"]
-    receipt = _Receipt(root, unit, owner, staged=partial)
+    receipt = _Receipt(root, unit, owner, staged=partial or recovering)
     state = _InterfaceState(owner)
     networkState = _NftState(owner, receipt["nonce"])
 
@@ -1296,6 +1296,7 @@ def _Recover(owner: str, expectedReceipt: str) -> None:
 
             request, _, _ = _Request(root)
             _Check(root, unit, request)
+            _SyncDirectory(root)
 
         elif (unit.exists() or unit.is_symlink() or _InterfaceState(owner) is not None
               or _NftState(owner, "0" * 32) is not None):
@@ -1346,6 +1347,7 @@ def _Recover(owner: str, expectedReceipt: str) -> None:
 
     if recorded["status"] == "staged" and receipt["status"] == "installed":
         _Check(root, unit, request)
+        _SyncDirectory(root)
         _ClearTransaction(owner)
 
         return
@@ -1364,13 +1366,13 @@ def _Recover(owner: str, expectedReceipt: str) -> None:
             if state.get("ifalias") != _Alias(owner, receipt["nonce"]):
                 raise GuestError("WireGuard recovery found a foreign interface")
 
-            _WireGuardState(root, request, partial=True)
-            _AddressState(owner, request, partial=True)
+            _WireGuardState(root, request, partial=receipt["status"] == "staged")
+            _AddressState(owner, request, partial=receipt["status"] == "staged")
 
         if unit.exists() or unit.is_symlink():
             _Run(["systemctl", "stop", _Service(owner) + ".service"])
 
-        _Stop(root, unit, request, partial=True)
+        _Stop(root, unit, request, partial=receipt["status"] == "staged", recovering=True)
 
     elif _InterfaceState(owner) is not None or _NftState(owner, receipt["nonce"]) is not None:
         raise GuestError("Unpublished WireGuard stage has unexpected live resources")
@@ -1454,6 +1456,7 @@ def _Install(stage: Path, request: dict[str, Any]) -> None:
         _Run(["systemctl", "enable", _Service(owner) + ".service"])
         _EnabledLink(unit)
         _SyncDirectory(SYSTEMD / "multi-user.target.wants")
+        _SyncDirectory(SYSTEMD)
         _Start(root, unit, request)
         _Run(["systemctl", "start", _Service(owner) + ".service"])
         _Check(root, unit, request, staged=True)
@@ -1468,6 +1471,10 @@ def _Install(stage: Path, request: dict[str, Any]) -> None:
 
         except Exception:
             raise GuestError("WireGuard installation interrupted; explicit receipt-bound recovery is required") from None
+
+        if root.exists():
+            # Recovery re-established and durably committed the healthy installation after publication.
+            return
 
         raise GuestError("WireGuard installation failed and its owned changes were rolled back") from None
 
@@ -1587,7 +1594,7 @@ def Main(argv: list[str] | None = None) -> int:
                 _Start(root, unit, request)
 
             else:
-                _Stop(root, unit, request, partial=transaction.exists())
+                _Stop(root, unit, request, partial=receipt["status"] == "staged")
 
             return 0
 

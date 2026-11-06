@@ -557,3 +557,23 @@ reviewerType = "ai"
 reviewedAt = "2026-11-06T18:56:06.946972Z"
 reviewRoles = ["editorial", "technical"]
 body = "Наблюдать или применить транзакцию одного указанного клиента с точными предусловиями scope, квитанции и связанной истории."
+[[units]]
+id = "symbol:flayer.vpn_project.VpnYandexProvider.BeginIngressChange"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:d049abe511d7ece3cef6e828d6e744abf6a044abd15a49b1fb2bb6179ae55b30"
+reviewedTranslationHash = "sha256:bd5689bb78d2ba75126208b7dcc15804f10487d41a9512cc8802be753507ef61"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T21:59:01.477735Z"
+reviewRoles = ["editorial", "technical"]
+body = "Отправить одно явно разрешённое точное изменение входящих правил; сохранить намерение до отправки, а возвращённую ссылку — до опроса."
+[[units]]
+id = "symbol:flayer.vpn_project.VpnYandexProvider.ReadIngressChange"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:6fb8878911fa0fb7331553b18ebb30a98a7c383d4abde7db40a7fb1293ffe156"
+reviewedTranslationHash = "sha256:e92dfc4cc0a551336230b287ae1d3fc98c6f38f4ef6742cfbb035c7625ea7e51"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T21:59:01.477735Z"
+reviewRoles = ["editorial", "technical"]
+body = "Прочитать сохранённую операцию входящих правил и проверить заново полученную полную политику без повторного изменения."

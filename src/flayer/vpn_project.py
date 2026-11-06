@@ -70,11 +70,16 @@ from flayer.profiles.vpn import (
     VpnProfile,
 )
 from flayer.profiles.wireguard import WireGuardSettings
+from flayer.providers import _yandex_ingress_operations as ingressOperations
 from flayer.providers._yandex_firewall import (
     InstanceAttachments,
     ParseInstanceAttachments,
-    ParseSecurityGroup,
     SecurityGroupSnapshot,
+)
+from flayer.providers._yandex_ingress import IngressDelta
+from flayer.providers._yandex_ingress_operations import (
+    IngressOperation,
+    IngressOperationReference,
 )
 from flayer.providers.contracts import (
     ProviderError,
@@ -754,23 +759,19 @@ class VpnYandexProvider(YandexLifecycleProvider):
     def ReadSecurityGroupRules(self, resource: ProviderResource) -> SecurityGroupSnapshot:
         """Read complete scoped IPv4 policy and network attachment without changing cloud rules."""
 
-        reference = resource.reference
+        return ingressOperations.ReadPolicy(self, resource)
 
-        if (reference.kind != ResourceKind.SECURITY_GROUP or reference.providerId != self.Identity.providerId
-                or reference.scopeId != self.Identity.scopeId):
-            raise VpnError("Security-group policy requires an exact resource in the configured scope")
+    def BeginIngressChange(
+        self, plan: IngressDelta, *, allowMutation: bool = False, scopeConfirm: str = "", expectedBefore: str = "",
+    ) -> IngressOperationReference:
+        """Submit one consented exact ingress delta; persist intent before dispatch and the returned reference before polling."""
 
-        payload = self._ReadJson(("vpc", "security-group", "get", "--id", reference.resourceId), "vpn-firewall-policy")
-        observed = self._ValidateObservation(self._NormalizeResource(payload, ResourceKind.SECURITY_GROUP, "vpn-firewall-policy"))
+        return ingressOperations.Begin(self, plan, allowMutation=allowMutation, scopeConfirm=scopeConfirm, expectedBefore=expectedBefore)
 
-        if observed.reference != reference or observed.name != resource.name or not observed.HasLabels(resource.labels):
-            raise VpnError("Security-group ownership changed before policy observation")
+    def ReadIngressChange(self, plan: IngressDelta, reference: IngressOperationReference) -> IngressOperation:
+        """Read a retained ingress operation and verify complete fresh policy without repeating its mutation."""
 
-        try:
-            return ParseSecurityGroup(payload, observed)
-
-        except (ValueError, TypeError, KeyError, AttributeError, RecursionError):
-            raise VpnError("Security-group effective policy is unavailable or unsupported; no rules were changed") from None
+        return ingressOperations.Inspect(self, plan, reference)
 
     def DeleteCreationResource(
         self, resource: ProviderResource, spec: ResourceSpec, identity: StackIdentity, *,

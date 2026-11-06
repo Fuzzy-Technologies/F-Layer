@@ -557,3 +557,23 @@ reviewerType = "ai"
 reviewedAt = "2026-11-06T18:56:06.946972Z"
 reviewRoles = ["editorial", "technical"]
 body = "使用精确作用域、回执及链式历史前置条件观测或应用一个指定对等端事务。"
+[[units]]
+id = "symbol:flayer.vpn_project.VpnYandexProvider.BeginIngressChange"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:d049abe511d7ece3cef6e828d6e744abf6a044abd15a49b1fb2bb6179ae55b30"
+reviewedTranslationHash = "sha256:2e976fbd315abc7b3812cfa0b2c7d66036d25cc6c3671e286c12af78a9c1b097"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T21:59:01.477735Z"
+reviewRoles = ["editorial", "technical"]
+body = "提交一个经显式同意的精确入口差异；发送前持久化意图，轮询前保存返回引用。"
+[[units]]
+id = "symbol:flayer.vpn_project.VpnYandexProvider.ReadIngressChange"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:6fb8878911fa0fb7331553b18ebb30a98a7c383d4abde7db40a7fb1293ffe156"
+reviewedTranslationHash = "sha256:1dbab48a5ad4402f6f5534f4f7c544f46ad9667ca940bafa33772f2daeff2903"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T21:59:01.477735Z"
+reviewRoles = ["editorial", "technical"]
+body = "读取已保留入口操作并校验完整最新策略，不重复变更。"

@@ -123,6 +123,11 @@ class IngressDelta:
 
         return _Digest(_WireDict(self.before))
 
+    def Fingerprint(self) -> str:
+        """Bind the complete request, including original protocol attestation and operation nonce, to retained operation evidence."""
+
+        return _Digest({"schema_version": 1, "plan": _WireDict(self)})
+
     @property
     def Addition(self) -> SecurityGroupRule | None:
         """Describe the sole addition with an explicitly provisional identifier, never an observed provider ID."""

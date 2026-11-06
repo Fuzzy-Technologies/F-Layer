@@ -309,6 +309,40 @@ This low-level API does not persist controller intent or issue fresh device keys
 Callers must retain the complete old/new bundles and original proofs until the
 pending controller revision workflow supplies their durable journal.
 
+## Private controller revision store
+
+The private `_vpn_revisions.py` provides persistence primitives for the next peer
+controller. It is not yet called by project lifecycle or CLI commands. Each attempt
+first writes an owner-bound metadata journal, then an immutable private bundle of
+new material/configuration and the retained installer, then the bundle's exact
+digest before remote activation. Reuse complete staging after an interrupted digest
+publication; never regenerate partially retained credentials. Before each rename,
+fsync the exact private temporary inode, including reuse after an earlier file-sync
+failure. An incomplete private
+stage fails closed for inspection before any remote operation.
+
+After a verified active guest result, persist a separate immutable nonsecret commit
+record before advancing an atomic private head pointer and retiring the journal.
+Bind each record to its exact parent, creation baseline, old/new transport pins and
+guest receipt/history. A recovered unapplied attempt retains its prepared bytes
+for audit and advances only local evidence; its active keys and guest history stay
+unchanged. Publication retries reconcile exact existing record/pointer bytes.
+Unknown, missing, linked or mismatched ownership metadata is never adopted.
+
+The loader checks the complete bounded chain (at most 4096 records), independently
+of private client key availability. Validate completion digest types/formats before
+any publication and preflight the same capacity bound before staging or advancing
+a new head; exact completed retries remain possible at capacity.
+Only reading active material/server bytes
+requires their complete pinned request manifest. This lets future whole-cloud
+cleanup retain its original nonsecret ownership proof even if client keys are lost.
+Original creation resources/bootstrap and unrelated protocol bundles stay unchanged.
+A persistent private advisory lock covers complete cooperating project workflows;
+read-only absence fallback creates no file and discards a raced observation.
+Integration with every selected-project entrypoint is still required before the
+new peer CLI can be exposed. Tests use synthetic projects and actual POSIX private
+files/locks, with no cloud, SSH or desktop network operation.
+
 ## Remaining integration
 
 `PrepareWireGuardPeerEnrollment()` and `PrepareWireGuardPeerRevocation()` now

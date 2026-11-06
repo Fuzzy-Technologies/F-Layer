@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:88d523025b1402a0c7590f1a80b2c50d33be3c6752b981d28d3ce101117e06fd"
-reviewedTranslationHash = "sha256:fe7c25b75ac13fd9663ad0873a08089c0c1d22ead24a0e62ceb6e9e4ebb5f4fb"
+sourceHash = "sha256:af21063e4e322dbb2d977b8cf6b9563c3e1ccc41597b4c7d705661b63d1bc7ef"
+reviewedTranslationHash = "sha256:efd7db7f51c0d68dd04dc6c13e7a73cb60d2dd760739f32a4eeaac5a6bc0f22f"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewedAt = "2026-11-06T13:14:53.729571Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -31,7 +31,7 @@ VLESS 不使用隧道地址。顺序规范化，但不分配地址或重命名�
 客户端渲染器只输出该设备私钥、服务器公钥、该设备预共享密钥、
 显式地址、端点、MTU、路由、DNS 和 keepalive。
 两种配置都不包含 AWG 混淆参数。生成材料前校验隧道成员及地址。
-拒绝共享 Curve25519 身份、公开或复用的预共享密钥、无效子网、
+拒绝共享 Curve25519 身份、私有标量的等价编码、公开或复用的预共享密钥、无效子网、
 TCP 监听以及不匹配的客户端端点端口。
 
 这些 API 仅在内存中工作。凭据字节在持久化或传输前，必须进入经过所有权

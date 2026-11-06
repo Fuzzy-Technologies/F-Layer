@@ -435,7 +435,7 @@ sourceHash = "sha256:3ccce389f273fdcbfc391c29f91e84038ba44d472ccc6501c3da1a741f8
 reviewedTranslationHash = "sha256:a56ba76d5112bbcf2ad41a62e048204b70dd86a2267029e41f60bb4d397f24e1"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewedAt = "2026-11-06T13:14:53.729571Z"
 reviewRoles = ["editorial", "technical"]
 body = "标准 WireGuard 意图与私有制品，不包含 AmneziaWG 参数。"
 [[units]]
@@ -445,7 +445,7 @@ sourceHash = "sha256:b429b6d3a889aef75b55b7e4bfa906a861dcb07ef4c62b5eeadfcf1e69b
 reviewedTranslationHash = "sha256:6bfcd3fa699e17e8bdce270372470094bbac3cff3018aed3565ee3071cd07213"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewedAt = "2026-11-06T13:14:53.729571Z"
 reviewRoles = ["editorial", "technical"]
 body = "单个稳定设备仅保存在控制器的私钥，以及独立预共享密钥。"
 [[units]]
@@ -455,7 +455,7 @@ sourceHash = "sha256:e141db7aedb5616736ed89807074584b833e82381c9c8286316fe1180ad
 reviewedTranslationHash = "sha256:980ce8ac94f28958c42007bccac106b1934986bfceb46aab17efea542408f764"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewedAt = "2026-11-06T13:14:53.729571Z"
 reviewRoles = ["editorial", "technical"]
 body = "仅向受管服务器配置提供派生公钥。"
 [[units]]
@@ -465,7 +465,7 @@ sourceHash = "sha256:41f929886c39b1b185bff2770ed899c15e364908cdb21c4e5b9df1cad27
 reviewedTranslationHash = "sha256:cf454742eea29198d1e9db8305d3abb426d3f1b8c672d5e24a1ab2a717694aaf"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewedAt = "2026-11-06T13:14:53.729571Z"
 reviewRoles = ["editorial", "technical"]
 body = "绑定到唯一命名设备的保留私有凭据，绝不作为云元数据。"
 [[units]]
@@ -475,7 +475,7 @@ sourceHash = "sha256:3761be7e92c42a683b2b7d09a537a8779dac2f2f2a9a421f4f614afec6d
 reviewedTranslationHash = "sha256:3a626a00b0038fb409ac52e874ec4fd4853dc50ff86845167eaf5ba1967e762f"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewedAt = "2026-11-06T13:14:53.729571Z"
 reviewRoles = ["editorial", "technical"]
 body = "独立私有 IPv4 隧道，具有显式且有界的客户端/服务器 MTU。"
 [[units]]
@@ -485,7 +485,7 @@ sourceHash = "sha256:8f5d8adcb0ca8d64a456a6fcd882ab560b7bf4227c332a005b68bbb5b2b
 reviewedTranslationHash = "sha256:045bb7bf2e71af7968412f8af9ceb0b8006fbb08835296da5211995c7c4baa10"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewedAt = "2026-11-06T13:14:53.729571Z"
 reviewRoles = ["editorial", "technical"]
 body = "仅为显式选定设备生成单个协议的独立凭据。"
 [[units]]
@@ -495,7 +495,7 @@ sourceHash = "sha256:98d506d8f519785b19b7a5e9797e260311c245b1f5ffd1e91b1e06e0549
 reviewedTranslationHash = "sha256:865e5e3da450b6e4a5d171d8031c80c1a42028b8c5636733be8cc701d668a7d1"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewedAt = "2026-11-06T13:14:53.729571Z"
 reviewRoles = ["editorial", "technical"]
 body = "使用稳定字段编码控制器私有存储，不提供诊断表示。"
 [[units]]
@@ -505,7 +505,7 @@ sourceHash = "sha256:7a8245e9304436bf4b0e855e8318debc5464acc78adee9226dec460ba4a
 reviewedTranslationHash = "sha256:167f2cfe261c448ffe68b554020d18d5eca11f58c4d8830eb5d1a240230861bb"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewedAt = "2026-11-06T13:14:53.729571Z"
 reviewRoles = ["editorial", "technical"]
 body = "有界且严格地读取控制器材料，拒绝含糊或额外字段。"
 [[units]]
@@ -515,7 +515,7 @@ sourceHash = "sha256:14477f5f8faf8a643197a05a4a95d354da2e9c33820fd1d261d27261184
 reviewedTranslationHash = "sha256:e5dc588aebf186d1c3cd107d59de4aa8fae7cbfd71d527df89761c490c506b45"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewedAt = "2026-11-06T13:14:53.729571Z"
 reviewRoles = ["editorial", "technical"]
 body = "派生稳定服务身份，不包含可变对等端或凭据。"
 [[units]]
@@ -525,7 +525,7 @@ sourceHash = "sha256:4d7adf51d9b4bee69f678017c3c1ac296ef57ad65ec0bd000127489bbe9
 reviewedTranslationHash = "sha256:5ab2b5220713cb40d2464cb82b882e598767724f31df46719deaee54a9c3c3f7"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewedAt = "2026-11-06T13:14:53.729571Z"
 reviewRoles = ["editorial", "technical"]
 body = "为 wg setconf 仅渲染服务器凭据及所选对等端公钥/预共享密钥。"
 [[units]]
@@ -535,6 +535,6 @@ sourceHash = "sha256:801c578d9c879b918172925c2d2a4e5cdef1a97dd1a34257377192c02c6
 reviewedTranslationHash = "sha256:ce112eba54f29b01766c375db30656dcbfc9a6f2b1dc4b3fc56fda039e5cb462"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewedAt = "2026-11-06T13:14:53.729571Z"
 reviewRoles = ["editorial", "technical"]
 body = "渲染单个标准客户端，不包含 AWG 字段或其他设备的私有凭据。"

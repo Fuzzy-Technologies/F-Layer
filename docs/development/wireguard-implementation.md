@@ -28,7 +28,7 @@ preshared keys. A client renderer emits only that device's private key, the
 server public key, its preshared key, explicit address, endpoint, MTU, routes,
 DNS and keepalive. Neither configuration contains AWG obfuscation parameters.
 Validate tunnel membership and addresses before generating material. Reject
-shared Curve25519 identities, public/reused preshared keys, invalid subnets,
+shared Curve25519 identities, private-scalar aliases or public/reused preshared keys, invalid subnets,
 TCP listeners and mismatched client endpoint ports.
 
 These are memory-only APIs. Credential bytes require a verified private owned

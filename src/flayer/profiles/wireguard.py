@@ -112,11 +112,13 @@ class WireGuardMaterial:
         publicKeys = (_PublicKey(self.serverPrivateKey), *(peer.PublicKey for peer in self.peers))
         presharedKeys = tuple(peer.presharedKey for peer in self.peers)
         privateKeys = (self.serverPrivateKey, *(peer.privateKey for peer in self.peers))
+        presharedIdentities = {_PublicKey(key) for key in presharedKeys}
 
         if (len({peer.deviceId for peer in self.peers}) != len(self.peers)
                 or len(set(publicKeys)) != len(publicKeys)
                 or len(set(presharedKeys)) != len(presharedKeys)
-                or set(presharedKeys) & (set(privateKeys) | set(publicKeys))):
+                or set(presharedKeys) & (set(privateKeys) | set(publicKeys))
+                or presharedIdentities & set(publicKeys)):
             raise VpnError("WireGuard peers require unique device identities and independent credentials")
 
 
@@ -159,7 +161,15 @@ def GenerateWireGuardMaterial(profile: VpnProfile, settings: WireGuardSettings) 
 def EncodeWireGuardMaterial(material: WireGuardMaterial) -> bytes:
     """Encode private controller storage with stable fields and no diagnostic representation."""
 
-    return (json.dumps({"schema_version": 1, **_WireDict(material)}, sort_keys=True) + "\n").encode("utf-8")
+    if not isinstance(material, WireGuardMaterial):
+        raise VpnError("WireGuard encoding requires a validated WireGuardMaterial")
+
+    payload = {"schema_version": 1, "server_private_key": material.serverPrivateKey, "peers": [
+        {"device_id": peer.deviceId, "private_key": peer.privateKey, "preshared_key": peer.presharedKey}
+        for peer in material.peers
+    ]}
+
+    return (json.dumps(payload, sort_keys=True) + "\n").encode("utf-8")
 
 
 def _UniqueObject(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -268,6 +278,10 @@ def RenderWireGuardClient(
 ) -> bytes:
     """Render one standard client without AWG fields or other devices' private credentials."""
 
+    if not isinstance(endpoint, VpnEndpoint):
+        raise VpnError("WireGuard client requires a validated VpnEndpoint")
+
+    _Name(deviceId, "device_id")
     port = _ValidateWireGuard(profile, settings, material)
     peers = {peer.deviceId: peer for peer in material.peers}
     devices = {device.deviceId: device for device in profile.devices}

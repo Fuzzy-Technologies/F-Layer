@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:88d523025b1402a0c7590f1a80b2c50d33be3c6752b981d28d3ce101117e06fd"
-reviewedTranslationHash = "sha256:5252b35bb585c74d4bbe9edff51aa5050fbebd83ce15ce18959fc52c8663c848"
+sourceHash = "sha256:af21063e4e322dbb2d977b8cf6b9563c3e1ccc41597b4c7d705661b63d1bc7ef"
+reviewedTranslationHash = "sha256:807d29643c33527e733bdafd68f98f3fa32d6445ef9d3fa27165092178b4b4ea"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewedAt = "2026-11-06T13:14:53.729571Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# Границы реализации стандартного WireGuard
 
@@ -38,7 +38,7 @@ WireGuard, кодеки приватного материала и рендер�
 предварительно согласованный ключ, явный адрес, endpoint, MTU, маршруты, DNS
 и keepalive. Полей обфускации AWG нет в обеих конфигурациях. Проверять состав
 туннеля и адреса до генерации материала. Отклонять общие идентичности Curve25519,
-открытые/повторно используемые предварительно согласованные ключи, некорректные
+эквивалентные кодировки закрытых скаляров и открытые/повторно используемые предварительно согласованные ключи, некорректные
 подсети, TCP-слушатели и несовпадающие порты endpoint клиента.
 
 Эти API работают только в памяти. Перед сохранением или передачей байтов учётных

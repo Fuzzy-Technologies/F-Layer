@@ -5,7 +5,8 @@ from __future__ import annotations
 import base64
 import configparser
 import json
-from dataclasses import replace
+from dataclasses import dataclass, field, replace
+from types import SimpleNamespace
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
@@ -100,6 +101,37 @@ def test_ClientRefusesUnknownDeviceAndMismatchedEndpoint(deviceId: str, port: in
         RenderWireGuardClient(profile, VpnEndpoint("vpn.example", port), settings, material, deviceId)
 
 
+@pytest.mark.parametrize("endpoint", [
+    None, "vpn.example", {"host": "vpn.example", "port": 51821},
+    SimpleNamespace(host="vpn.example\nPrivateKey = fixture-secret", port=51821),
+], ids=["missing", "string", "mapping", "injected-foreign-object"])
+def test_ClientRejectsUnvalidatedEndpointWithoutRenderingCredentials(endpoint: object) -> None:
+    """Do not let duck-typed endpoint attributes bypass the validated configuration boundary."""
+
+    profile = Profile()
+    settings = WireGuardSettings()
+    material = GenerateWireGuardMaterial(profile, settings)
+
+    with pytest.raises(VpnError, match="validated VpnEndpoint") as caught:
+        RenderWireGuardClient(profile, endpoint, settings, material, "phone")  # type: ignore[arg-type]
+
+    assert "fixture-secret" not in str(caught.value)
+
+
+@pytest.mark.parametrize("deviceId", [None, ["phone"], "phone\nfixture-secret"], ids=["missing", "list", "injected-name"])
+def test_ClientRejectsMalformedDeviceIdentityPrivately(deviceId: object) -> None:
+    """Return a fixed validation error before dictionary membership can raise or expose input."""
+
+    profile = Profile()
+    settings = WireGuardSettings()
+    material = GenerateWireGuardMaterial(profile, settings)
+
+    with pytest.raises(VpnError, match="device_id") as caught:
+        RenderWireGuardClient(profile, VpnEndpoint("vpn.example", 51821), settings, material, deviceId)  # type: ignore[arg-type]
+
+    assert "fixture-secret" not in str(caught.value)
+
+
 @pytest.mark.parametrize("network,mtu", [
     ("198.51.100.0/24", 1280), ("10.67.0.1/24", 1280), ("10.67.0.0/29", 1280),
     ("10.0.0.0/8", 1280), ("::/0", 1280), ("10.67.0.0/24", True),
@@ -140,7 +172,10 @@ def test_WireGuardRejectsTcpListenerBeforeMaterialGeneration() -> None:
         GenerateWireGuardMaterial(profile, WireGuardSettings())
 
 
-@pytest.mark.parametrize("case", ["duplicate-id", "duplicate-public-key", "duplicate-psk", "psk-is-private", "psk-is-public"])
+@pytest.mark.parametrize("case", [
+    "duplicate-id", "duplicate-public-key", "duplicate-psk", "psk-is-private", "psk-is-public",
+    "psk-is-server-private-alias", "psk-is-other-private-alias",
+])
 def test_MaterialRejectsSharedOrAmbiguousCredentials(case: str) -> None:
     """Prevent device aliasing and public or reused preshared keys."""
 
@@ -161,11 +196,56 @@ def test_MaterialRejectsSharedOrAmbiguousCredentials(case: str) -> None:
     elif case == "psk-is-private":
         second = replace(second, presharedKey=material.serverPrivateKey)
 
+    elif case in {"psk-is-server-private-alias", "psk-is-other-private-alias"}:
+        source = material.serverPrivateKey if case == "psk-is-server-private-alias" else first.privateKey
+        raw = bytearray(base64.b64decode(source))
+        raw[0] ^= 1
+        second = replace(second, presharedKey=base64.b64encode(raw).decode())
+
+        assert second.presharedKey != source and PublicKey(second.presharedKey) == PublicKey(source)
+
     else:
         second = replace(second, presharedKey=first.PublicKey)
 
     with pytest.raises(VpnError, match="independent credentials"):
         WireGuardMaterial(material.serverPrivateKey, (first, second))
+
+
+@pytest.mark.parametrize("case", ["missing", "number", "mapping", "peer", "foreign-dataclass"])
+def test_EncoderRejectsOtherCredentialModelsWithoutEcho(case: str) -> None:
+    """Never label arbitrary dataclass credentials as a valid WireGuard material document."""
+
+    @dataclass(frozen=True)
+    class ForeignCredentials:
+        """Represent an unrelated credential model with private fixture-only data."""
+
+        privateKey: str = field(default="fixture-secret", repr=False)
+
+    values: dict[str, object] = {"missing": None, "number": 1, "mapping": {"private_key": "fixture-secret"},
+                                "foreign-dataclass": ForeignCredentials()}
+    values["peer"] = GenerateWireGuardMaterial(Profile(), WireGuardSettings()).peers[0]
+
+    with pytest.raises(VpnError, match="validated WireGuardMaterial") as caught:
+        EncodeWireGuardMaterial(values[case])  # type: ignore[arg-type]
+
+    assert "fixture-secret" not in str(caught.value)
+
+
+def test_EncoderIncludesOnlySchemaOwnedFieldsFromAMaterialSubclass() -> None:
+    """Prevent extra credential fields from silently extending private schema 1."""
+
+    @dataclass(frozen=True, slots=True)
+    class ExtendedMaterial(WireGuardMaterial):
+        """Carry unrelated fixture-only private metadata that must never enter this codec."""
+
+        administrationSecret: str = field(default="fixture-secret", repr=False)
+
+    material = GenerateWireGuardMaterial(Profile(), WireGuardSettings())
+    extended = ExtendedMaterial(material.serverPrivateKey, material.peers)
+    encoded = EncodeWireGuardMaterial(extended)
+
+    assert b"fixture-secret" not in encoded and b"administration" not in encoded
+    assert DecodeWireGuardMaterial(encoded) == material
 
 
 @pytest.mark.parametrize("content", [

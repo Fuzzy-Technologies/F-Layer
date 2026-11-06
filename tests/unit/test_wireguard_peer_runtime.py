@@ -1,0 +1,155 @@
+"""Validate sole-peer deltas and safe kernel/firewall prefixes without executing guest or network commands."""
+
+from __future__ import annotations
+
+import base64
+import copy
+import json
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
+
+import pytest
+from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+from test_wireguard import Profile
+
+from flayer.profiles import _wireguard_guest as guest
+from flayer.profiles import _wireguard_peer as peers
+from flayer.profiles.vpn import VpnDevice, VpnEndpoint
+from flayer.profiles.wireguard import (
+    GenerateWireGuardMaterial,
+    PrepareWireGuard,
+    PrepareWireGuardPeerEnrollment,
+    WireGuardSettings,
+)
+
+
+def Pair(monkeypatch: pytest.MonkeyPatch) -> tuple[Any, dict[str, Any], dict[str, Any], dict[str, bytes]]:
+    """Construct real public metadata/server bytes and intercept only private-file reads and wg pubkey derivation."""
+
+    profile, settings = Profile(), WireGuardSettings()
+    material = GenerateWireGuardMaterial(profile, settings)
+    newDevice = VpnDevice("tablet", "10.67.0.4")
+    nextMaterial = GenerateWireGuardMaterial(profile, settings)
+    stagedPeer = nextMaterial.peers[0]
+    stagedPeer = type(stagedPeer)("tablet", stagedPeer.privateKey, stagedPeer.presharedKey)
+    updated, retained = PrepareWireGuardPeerEnrollment(profile, settings, material, newDevice, stagedPeer)
+    endpoint = VpnEndpoint("198.51.100.20", 51821)
+    oldBundle = PrepareWireGuard(profile, endpoint, settings, material).serverBundle
+    newBundle = PrepareWireGuard(updated, endpoint, settings, retained).serverBundle
+    oldFiles, newFiles = ({item.name: item.content for item in bundle.files} for bundle in (oldBundle, newBundle))
+    before, after = json.loads(oldFiles["deployment.json"]), json.loads(newFiles["deployment.json"])
+    contents = {"old": oldFiles["server.conf"], "new": newFiles["server.conf"]}
+
+    def Request(path: Path) -> tuple[dict[str, Any], bytes, bytes]:
+        """Model already validated private stages; no filesystem or operating-system ownership is bypassed for live code."""
+
+        request = before if path.name == "old" else after
+
+        return request, contents[path.name], guest._Encode(request)
+
+    def Run(command: list[str], *, payload: bytes, **options: Any) -> tuple[int, bytes]:
+        """Independently derive the actual Curve25519 public half instead of invoking a tool or guest."""
+
+        assert command[-1] == "pubkey"
+        key = X25519PrivateKey.from_private_bytes(base64.b64decode(payload.strip()))
+
+        return 0, base64.b64encode(key.public_key().public_bytes_raw()) + b"\n"
+
+    monkeypatch.setattr(guest, "_Run", Run)
+    boundary = SimpleNamespace(_Request=Request, _Config=guest._Config, _NAME=guest._NAME, GuestError=guest.GuestError)
+
+    return boundary, before, after, contents
+
+
+def test_SolePeerDeltaPreservesRawServerAndUnrelatedPeerCredentials(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Accept exact enrollment and its inverse, using actual server parsing and public-key derivation."""
+
+    boundary, before, after, _ = Pair(monkeypatch)
+
+    assert peers._Delta(boundary, Path("old"), Path("new"), "enroll", "tablet") == (before, after)
+    assert peers._Delta(boundary, Path("new"), Path("old"), "revoke", "tablet") == (after, before)
+
+
+@pytest.mark.parametrize("field", ["owner", "port", "tunnel_cidr", "mtu", "ipv4_routes", "program_sha256", "tools_version", "tools_sha256"])
+def test_PeerDeltaCannotBecomeAListenerPolicyOrRuntimeChange(monkeypatch: pytest.MonkeyPatch, field: str) -> None:
+    """Changing one device cannot silently authorize another transport/policy/runtime operation."""
+
+    boundary, _, after, _ = Pair(monkeypatch)
+    after[field] = "changed"
+
+    with pytest.raises(guest.GuestError, match="cannot modify"):
+        peers._Delta(boundary, Path("old"), Path("new"), "enroll", "tablet")
+
+
+@pytest.mark.parametrize("fault", ["wrong-target", "changed-old-address", "changed-old-psk", "extra-peer"])
+def test_PeerDeltaRefusesAnUnrelatedPeerChange(monkeypatch: pytest.MonkeyPatch, fault: str) -> None:
+    """Unchanged public identity alone cannot hide a preshared-key replacement for an existing device."""
+
+    boundary, _, after, contents = Pair(monkeypatch)
+
+    if fault == "changed-old-address":
+        after["peers"][0]["ipv4_address"] = "10.67.0.9"
+
+    elif fault == "changed-old-psk":
+        oldLines = contents["old"].decode().splitlines()
+        source = next(line for line in oldLines if line.startswith("PresharedKey = "))
+        contents["new"] = contents["new"].replace(source.encode(), ("PresharedKey = " + base64.b64encode(b"z" * 32).decode()).encode())
+        after["config_sha256"] = guest._Digest(contents["new"])
+
+    elif fault == "extra-peer":
+        after["peers"].append({**copy.deepcopy(after["peers"][-1]), "device_id": "other"})
+
+    with pytest.raises(guest.GuestError):
+        peers._Delta(boundary, Path("old"), Path("new"), "enroll", "unknown" if fault == "wrong-target" else "tablet")
+
+
+@pytest.mark.parametrize("adding,kernel,policy,expected", [
+    (True, "old", "old", ["wg", "nft"]), (True, "new", "old", ["nft"]), (True, "new", "new", []), (True, "old", "new", None),
+    (False, "old", "old", ["nft", "wg"]), (False, "old", "new", ["wg"]), (False, "new", "new", []), (False, "new", "old", None),
+])
+def test_OnlyRecordedTransitionPrefixesAreAcceptedAndRevocationDeniesBeforeKernelRemoval(
+    monkeypatch: pytest.MonkeyPatch, adding: bool, kernel: str, policy: str, expected: list[str] | None,
+) -> None:
+    """Exercise the actual convergence ordering with independent state transitions and no OS/network effects."""
+
+    state = {"kernel": kernel, "policy": policy}
+    calls = []
+    hashes = {"old": "a" * 64, "new": "b" * 64}
+    request = {"owner": "c" * 64}
+    receipts = {name: {"nonce": "d" * 32, "network_sha256": digest} for name, digest in hashes.items()}
+
+    def WireGuard(directory: Path, request: dict[str, Any]) -> None:
+        """Compare the model's actual stored kernel state, never the requested desired state."""
+
+        if state["kernel"] != directory.name:
+            raise guest.GuestError("Synthetic peer state differs")
+
+    def Run(command: list[str], *, payload: bytes | None = None) -> None:
+        """Apply only one modeled operation and reject accidental service or interface reconstruction."""
+
+        if command[1] == "syncconf":
+            calls.append("wg")
+            state["kernel"] = Path(command[-1]).parent.name
+
+        else:
+            assert command == ["nft", "-f", "-"] and payload is not None
+            assert payload.startswith(b"delete table ip owned\n")
+            calls.append("nft")
+            state["policy"] = payload.split(b"\n", 1)[1].decode()
+
+    boundary = SimpleNamespace(GuestError=guest.GuestError, _Paths=lambda owner: (Path("root"), Path("unit"), Path("txn")),
+                               _WireGuardState=WireGuard, _NftState=lambda owner, nonce: hashes[state["policy"]], _Run=Run,
+                               _Table=lambda owner: "owned", _Interface=lambda owner: "owned", _Read=lambda path: path.parent.name.encode())
+    monkeypatch.setattr(peers, "_Runtime", lambda *args: None)
+
+    if expected is None:
+        with pytest.raises(guest.GuestError, match="unrecorded"):
+            peers._Converge(boundary, Path("new"), Path("old"), request, request, receipts["new"], receipts["old"], adding=adding)
+
+        assert not calls
+
+    else:
+        peers._Converge(boundary, Path("new"), Path("old"), request, request, receipts["new"], receipts["old"], adding=adding)
+
+        assert calls == expected and state == {"kernel": "new", "policy": "new"}

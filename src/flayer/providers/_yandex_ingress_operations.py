@@ -116,12 +116,18 @@ def ReadPolicy(provider: VpnYandexProvider, resource: ProviderResource) -> Secur
         raise VpnError("Security-group policy requires an exact resource in the configured scope")
 
     result = provider._Run(("vpc", "security-group", "get", "--id", reference.resourceId), "vpn-firewall-policy")
+    invalid = False
 
     try:
         payload = _Decode(result.stdout)
 
     except (ValueError, TypeError, UnicodeError, RecursionError):
-        raise VpnError("Security-group policy JSON is unavailable, ambiguous or exceeds its bound") from None
+        invalid = True
+
+    del result
+
+    if invalid:
+        raise VpnError("Security-group policy JSON is unavailable, ambiguous or exceeds its bound")
 
     observed = provider._ValidateObservation(provider._NormalizeResource(payload, ResourceKind.SECURITY_GROUP, "vpn-firewall-policy"))
 

@@ -11,7 +11,7 @@ from typing import Any
 import pytest
 from test_yandex_ingress import Plan, Policy, Result
 
-from flayer.profiles.vpn import VpnListener
+from flayer.profiles.vpn import VpnError, VpnListener
 from flayer.providers._yandex_firewall import SecurityGroupSnapshot
 from flayer.providers._yandex_ingress import IngressDelta
 from flayer.providers._yandex_ingress_operations import IngressOperationReference
@@ -245,6 +245,20 @@ def test_DirectPolicyReadsUseTheSameStrictBoundedJsonProofBeforeDispatchAndAfter
 
     assert error.value.outcomeUnknown is (phase == "readback")
     assert sum(command[1:4] == ("vpc", "security-group", "update-rules") for command in runner.calls) == int(phase == "readback")
+
+
+def test_PublicPolicyReaderDiscardsTheRawDecoderExceptionAndResponseBeforeRaising() -> None:
+    """Suppressing traceback display alone must not retain JSONDecodeError.doc through implicit exception context."""
+
+    plan = Plan()
+    provider, runner = Provider(plan)
+    runner.policyContent = '{"suppressed-private-fixture":'
+
+    with pytest.raises(VpnError) as error:
+        provider.ReadSecurityGroupRules(plan.before.resource)
+
+    assert error.value.__context__ is None and error.value.__cause__ is None
+    assert "suppressed-private-fixture" not in str(error.value) and len(runner.calls) == 1
 
 
 def test_ImmediateProviderSuccessStillReturnsAReferenceBeforeAnyPostSubmissionRead() -> None:

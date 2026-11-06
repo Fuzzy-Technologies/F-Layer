@@ -58,3 +58,4 @@ index does not change their acceptance status.
 | [ADR 0020](0020-client-tls-fragment-export.md)           | Opt-in VLESS client transport export policies             |
 | [ADR 0021](0021-python-naming-wire-compatibility.md)     | Python naming with stable external wire contracts         |
 | [ADR 0022](0022-explicit-xray-runtime-upgrades.md)       | Explicit, recoverable Xray runtime upgrades               |
+| [ADR 0023](0023-selectable-vpn-transports.md)            | Selectable VPN transports and isolated coexistence        |

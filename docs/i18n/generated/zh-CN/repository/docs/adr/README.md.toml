@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/adr/README.md"
-sourceHash = "sha256:2b996cb1a3a0327bb9dd731d8f87cec0d2d62d21f73c5e23fbedc2d4dea9fe4b"
-reviewedTranslationHash = "sha256:2769add01393700d023db8359a2037b06603b8349f1f19826a4a4ac282bf4a96"
+sourceHash = "sha256:a12be43c294914acf319738df79bcff295df0b6fc443eb42de21a79a5ea66ee5"
+reviewedTranslationHash = "sha256:61cb8aecf645d324d5edfb0cd9c500813f3f0e29ad6ba739fa45b8b58d3e57ca"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T11:56:06.659037Z"
+reviewedAt = "2026-11-06T12:13:45.354785Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 架构决策记录
 
@@ -64,4 +64,5 @@ ADR 编号一经分配便保持不变。
 | [ADR 0020](0020-client-tls-fragment-export.md)           | 按需导出 VLESS 客户端传输策略         |
 | [ADR 0021](0021-python-naming-wire-compatibility.md)     | Python 命名与稳定的外部数据格式       |
 | [ADR 0022](0022-explicit-xray-runtime-upgrades.md)       | 显式、可恢复的 Xray 运行时升级        |
+| [ADR 0023](0023-selectable-vpn-transports.md)            | 显式选择 VPN 协议与隔离共存           |
 '''

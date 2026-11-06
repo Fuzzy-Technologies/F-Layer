@@ -27,6 +27,7 @@ from flayer._vpn_protocol_sources import ProtocolSource, ReadSource
 from flayer.core.contracts import _WireDict
 from flayer.guest import PrivatePath, ReadPrivate, WritePrivate
 from flayer.profiles.artifacts import (
+    MAX_ARTIFACT_BYTES,
     Artifact,
     ArtifactBundle,
     ReadOwnedArtifactFile,
@@ -164,15 +165,17 @@ def ProjectLock(project: SelectedVpnProject, *, readOnly: bool) -> Iterator[None
 def AtomicRecord(project: SelectedVpnProject, filename: str, data: dict[str, Any] | None, *, segment: PeerSegment | None = None) -> None:
     """Publish one fixed private metadata file durably while the complete project lock is held."""
 
-    if filename not in {"wireguard-head.json", "wireguard-pending.json"}:
+    if (filename not in {"wireguard-head.json", "wireguard-pending.json", "protocol-ingress-pending.json"}
+            or filename == "protocol-ingress-pending.json" and (segment is not None or data is None)):
         raise VpnError("Unsupported peer metadata path")
 
+    limit = MAX_ARTIFACT_BYTES if filename == "protocol-ingress-pending.json" else 65536
     directory = _Directory(project, segment)
     path = directory / filename
     temporary = directory / ("." + filename + ".new")
 
     if path.exists() or path.is_symlink():
-        ReadPrivate(path)
+        ReadPrivate(path, limit=limit)
 
     if data is None:
         if temporary.exists() or temporary.is_symlink():
@@ -181,8 +184,11 @@ def AtomicRecord(project: SelectedVpnProject, filename: str, data: dict[str, Any
         path.unlink()
 
     else:
+        if len(_Json(data)) > limit:
+            raise VpnError("Private metadata exceeds its bounded publication size")
+
         if temporary.exists() or temporary.is_symlink():
-            if ReadPrivate(temporary) != _Json(data):
+            if ReadPrivate(temporary, limit=limit) != _Json(data):
                 raise VpnError("Interrupted metadata bytes differ; no file was overwritten")
 
         else:
@@ -196,7 +202,7 @@ def AtomicRecord(project: SelectedVpnProject, filename: str, data: dict[str, Any
 
             if (not stat.S_ISREG(opened.st_mode) or opened.st_uid != os.getuid() or opened.st_nlink != 1
                     or stat.S_IMODE(opened.st_mode) != 0o600 or (opened.st_dev, opened.st_ino) != (linked.st_dev, linked.st_ino)
-                    or ReadPrivate(temporary) != _Json(data)):
+                    or ReadPrivate(temporary, limit=limit) != _Json(data)):
                 raise VpnError("Peer metadata changed before durable publication")
 
             os.fsync(descriptor)
@@ -375,7 +381,8 @@ def ExistingCompletion(project: SelectedVpnProject, pending: dict[str, Any], *, 
 def LoadRevisions(project: SelectedVpnProject) -> RevisionState:
     """Verify the complete nonsecret commit chain without depending on private client key availability."""
 
-    for filename in ("protocol-head.json", ".protocol-head.json.new", "protocol-pending.json", ".protocol-pending.json.new", "protocol-epochs"):
+    for filename in ("protocol-head.json", ".protocol-head.json.new", "protocol-pending.json", ".protocol-pending.json.new", "protocol-epochs",
+                     "protocol-ingress-pending.json", ".protocol-ingress-pending.json.new"):
         path = project.root / filename
 
         if path.exists() or path.is_symlink():

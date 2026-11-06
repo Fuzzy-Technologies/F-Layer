@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:d5f1b651fe8e4d1ae75b6476a045e6fce4561cd99f20c34b6eeec9b3bb3998dd"
-reviewedTranslationHash = "sha256:5ef0de6f854bb1518e4ffee535ef1b2b02d76b0b9b95aa539c282479afeb73ce"
+sourceHash = "sha256:e3d66b4cf4312f620accf5231e2ba2a6a423c1f95a2c4a4c8546ded546077ada"
+reviewedTranslationHash = "sha256:f6968e6503689168a26fceb13b720c0b2dce76871c12ee1d73b69f6f3a16a68e"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T23:01:32.867596Z"
+reviewedAt = "2026-11-06T23:26:09.514865Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -376,6 +376,16 @@ Begin 要求显式变更同意、精确 scope 及完整旧策略的预期摘要�
 Read 只接受绑定精确计划的已保存引用，要求文档化的 `UpdateSecurityGroupMetadata` 类型、目标组及分配规则 ID。待处理或最终失败只是有界事实，不能证明健康策略或回滚。成功完成必须同时验证有类型的操作响应与重新观测的完整活动策略符合全部差异，包括无关规则/资源元数据不变以及实际分配 ID。丢弃原始提供方消息。后续 Read 可以重试观测，但绝不重复变更。
 
 操作 JSON 与直接安全组策略读取共享 1 MiB 字节上限，拒绝所有深度的重复键和非标准 JSON 数字。严格组读取器也保护已选项目的普通观测/删除。上游[操作元数据契约](https://github.com/yandex-cloud/cloudapi/blob/master/yandex/cloud/vpc/v1/security_group_service.proto)及 [CLI 操作读取器](https://yandex.cloud/en/docs/cli/cli-ref/operation/cli-ref/get)定义外部边界。测试使用真实作用域适配器和内存 runner，不执行 CLI 或网络。持久纪元发布、来宾预留/授权撤销、回滚及协议 CLI 集成仍属任务 #128。
+
+## 持久入口意图与发送不确定性
+
+私有入口计划编解码器保留完整版本化 `IngressDelta`，包括原始创建规格、作用域资源、规则 ID、描述和标签、源 CIDR、监听器协议归属及操作 nonce。规范字节哈希与现有计划指纹相同。解码重新执行完整差异契约并要求精确规范字节；拒绝未知字段、重复键、非标准 JSON、不支持的模型扩展及超过 1 MiB 的元数据，不从当前期望配置重新编译计划。
+
+项目入口日志将精确计划绑定到原始创建摘要、前序状态摘要及短期有效期。在公共项目锁内，先发布 `protocol-ingress-pending.json`，再发布不可变受管意图包。一次独立授权的 SDK 提交之前，持久地将 `prepared` 推进至 `dispatching`，表示云端结果不确定。轮询前将返回的精确操作/资源/计划引用保存为 `recorded`。超时、过期或看似旧的策略都不允许重置发送状态或重发计划。发布任何意图前须为最大操作引用预留空间；已知的延迟确认仍可在过期后记录。
+
+仅识别来自已验证临时文件的精确前向中断发布。协调仅完成同一次发布，不授予新的权限。意图冲突、跳跃/回退阶段、不可变字节缺失或不同的已知操作都会停止恢复。全部原始凭据和配置包保持不变。完整有效策略可能超过 64 KiB；只有此固定日志路径使用显式 1 MiB 元数据上限，对等端元数据保持原有上限和路径契约。
+
+这些是本地存储原语，不发送云或来宾操作，尚无公共协议命令。前序状态摘要本身不能证明活动纪元。未来协调器必须验证纪元图及完整原始云连接/策略，持有来宾预留/授权撤销，并满足 SDK 同意和预期旧值检查。本地文件锁不能串行化复制的控制器。此处没有日志重置/删除 API；验证后的纪元完成和限定回滚仍待集成。现有生命周期/对等端入口在提供方操作前拒绝该待处理日志或中断发布。
 
 ## 尚待集成
 

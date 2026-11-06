@@ -548,3 +548,23 @@ reviewerType = "ai"
 reviewedAt = "2026-11-06T14:23:05.231890Z"
 reviewRoles = ["editorial", "technical"]
 body = "准备私有内核服务和标准客户端制品包，不持久化也不部署。"
+[[units]]
+id = "symbol:flayer.profiles.wireguard.PrepareWireGuardPeerEnrollment"
+sourcePath = "src/flayer/profiles/wireguard.py"
+sourceHash = "sha256:ef5e95f86e7597da2f5ad2da15d3b8055437ce2607dc86de0ddf61ed8a495a85"
+reviewedTranslationHash = "sha256:62d335e38ab6b8d78f9f0a98d50f1abfc45142ba0e44853890058941fd436891"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T17:16:09.659727Z"
+reviewRoles = ["editorial", "technical"]
+body = "从保留凭据准备注册一个对等端，不轮换任何现有设备或服务器密钥。"
+[[units]]
+id = "symbol:flayer.profiles.wireguard.PrepareWireGuardPeerRevocation"
+sourcePath = "src/flayer/profiles/wireguard.py"
+sourceHash = "sha256:be27455197b5a7fad10e232ae860ac7b6369625f8d81eba410934666f7e5733d"
+reviewedTranslationHash = "sha256:93a2772e4312bfe528d3808c0a252080d53cbacc8c394eff64ca72fbf1b4392b"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T17:16:09.659727Z"
+reviewRoles = ["editorial", "technical"]
+body = "在内存中准备吊销一个对等端，保留其他所有设备、凭据及已分配地址。"

@@ -225,6 +225,18 @@ old trust or client exports block another deployment after cleanup.
 
 ## Remaining integration
 
+`PrepareWireGuardPeerEnrollment()` and `PrepareWireGuardPeerRevocation()` now
+prepare deterministic in-memory profile/material changes for one named peer.
+Enrollment requires the caller's already retained new device credentials and
+explicit unused address; these functions never generate keys. The server key,
+all unrelated peer credentials/addresses and their rendered client bytes remain
+unchanged. Invalid identities, address/key reuse, an over-capacity enrollment or
+revocation of the final peer are refused. The original private material remains
+available for audit. Removing the final peer requires protocol deactivation.
+These preparation APIs do not contact the guest, disconnect a peer, persist a
+revision or update project state; live revocation still requires the pending
+receipt-bound configuration/kernel transaction and controller workflow.
+
 Adding/removing a protocol on an existing guest, schema-1 migration, explicit
 cloud/guest ingress overlays and scoped peer enrollment/revocation remain Task
 #128. Schema-2 Xray runtime maintenance and the separate device-export command

@@ -108,12 +108,47 @@ def test_ComparisonPreservesMultiplicityDescriptionAndPolicyDespiteDifferentProv
     assert RuleSemantics(rules) == RuleSemantics(tuple(replace(rule, ruleId="new-" + rule.ruleId) for rule in rules))
     assert RuleSemantics(rules) != RuleSemantics((*rules, replace(rules[0], ruleId="duplicate")))
     assert RuleSemantics(rules) != RuleSemantics((replace(rules[0], description="external"), *rules[1:]))
+    assert RuleSemantics(rules) != RuleSemantics((replace(rules[0], labels=(("purpose", "external"),)), *rules[1:]))
 
     with pytest.raises(ValueError):
         SecurityGroupSnapshot(Resource(), "example-network", (rules[0], rules[0]))
 
     with pytest.raises(ValueError):
         SecurityGroupRule("rule", "ingress", "udp", 100, None, ("0.0.0.0/0",))
+
+
+def test_DocumentedOptionalRuleLabelsRemainCompleteAndDeterministic() -> None:
+    """Observe exact bounded label metadata without dropping it from ownership snapshots or policy comparisons."""
+
+    payload = Payload()
+    payload["rules"][0]["labels"] = {"z-purpose": "admin", "a.path/@": ""}
+    snapshot = ParseSecurityGroup(payload, Resource())
+
+    assert snapshot.rules[0].labels == (("a.path/@", ""), ("z-purpose", "admin"))
+    assert ParseSecurityGroup(Payload(), Resource()).rules[0].labels == ()
+    payload["rules"][0]["labels"] = {"a.path/@": "", "z-purpose": "admin"}
+    assert ParseSecurityGroup(payload, Resource()) == snapshot
+
+
+@pytest.mark.parametrize("labels", [None, [], "invalid", {"UPPER": "value"}, {"a": "UPPER"}, {"a": 1}, {1: "value"},
+                                   {"a" * 64: "value"}, {"a": "v" * 64}, {"a": "line\nbreak"},
+                                   {"key" + str(index): "value" for index in range(65)}])
+def test_InvalidOrUnboundedRuleLabelsFailClosed(labels: Any) -> None:
+    """Provider metadata must not bypass its documented structural, count, name or length bounds."""
+
+    payload = Payload()
+    payload["rules"][0]["labels"] = labels
+
+    with pytest.raises(ValueError):
+        ParseSecurityGroup(payload, Resource())
+
+
+@pytest.mark.parametrize("labels", [{"purpose": "admin"}, (("purpose", "admin"), ("purpose", "other")), (("purpose",),), (("purpose", []),)])
+def test_DirectRuleConstructionRequiresImmutableUniqueLabels(labels: Any) -> None:
+    """Direct dataclass callers cannot evade the same validated immutable metadata contract."""
+
+    with pytest.raises(ValueError):
+        SecurityGroupRule("rule", "ingress", "udp", 100, 100, ("0.0.0.0/0",), labels=labels)
 
 
 def test_AdapterReadsPolicyFromTheSameScopedIdAndRefusesChangedOwnership(monkeypatch: pytest.MonkeyPatch) -> None:

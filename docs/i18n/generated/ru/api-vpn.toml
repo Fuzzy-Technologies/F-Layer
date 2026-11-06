@@ -428,3 +428,113 @@ reviewer = "AIna-Dev"
 reviewerType = "ai"
 reviewedAt = "2026-10-09T07:51:22.138018+00:00"
 reviewRoles = ["editorial", "technical"]
+[[units]]
+id = "module:flayer.profiles.wireguard"
+sourcePath = "src/flayer/profiles/wireguard.py"
+sourceHash = "sha256:3ccce389f273fdcbfc391c29f91e84038ba44d472ccc6501c3da1a741f879902"
+reviewedTranslationHash = "sha256:03e69c1469a5a4bd825363b7986020fe958d1b775872d66113a58e98395369e9"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "Модели стандартного WireGuard и приватные артефакты без параметров AmneziaWG."
+[[units]]
+id = "symbol:flayer.profiles.wireguard.WireGuardPeer"
+sourcePath = "src/flayer/profiles/wireguard.py"
+sourceHash = "sha256:b429b6d3a889aef75b55b7e4bfa906a861dcb07ef4c62b5eeadfcf1e69beea33"
+reviewedTranslationHash = "sha256:7421569d559b62a5a9b97447523d16b91c9000af2089eedd85e8f68df301b356"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "Закрытый ключ одного постоянного устройства, хранимый только контроллером, и отдельный предварительно согласованный ключ."
+[[units]]
+id = "symbol:flayer.profiles.wireguard.WireGuardPeer.PublicKey"
+sourcePath = "src/flayer/profiles/wireguard.py"
+sourceHash = "sha256:e141db7aedb5616736ed89807074584b833e82381c9c8286316fe1180adf4438"
+reviewedTranslationHash = "sha256:820bf13cee60e96c071024f7c228addc208af5d2306b7f1c41141d74b9ff08b2"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "Предоставить только вычисленную открытую часть для принадлежащей стеку серверной конфигурации."
+[[units]]
+id = "symbol:flayer.profiles.wireguard.WireGuardMaterial"
+sourcePath = "src/flayer/profiles/wireguard.py"
+sourceHash = "sha256:41f929886c39b1b185bff2770ed899c15e364908cdb21c4e5b9df1cad274f4ae"
+reviewedTranslationHash = "sha256:56c2eb8db790bdf4b08e85851dc0f1e66a4a287b0e5535cd31cecf4ffa3a0c3e"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "Сохранённые приватные учётные данные, связанные с уникальными именованными устройствами; они не являются облачными метаданными."
+[[units]]
+id = "symbol:flayer.profiles.wireguard.WireGuardSettings"
+sourcePath = "src/flayer/profiles/wireguard.py"
+sourceHash = "sha256:3761be7e92c42a683b2b7d09a537a8779dac2f2f2a9a421f4f614afec6dfe9e8"
+reviewedTranslationHash = "sha256:b04dcb078b2033c21ad8b6c50a9e0fae359339afd2dfaa60cc04d05dd15737d3"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "Отдельный приватный IPv4-туннель с явным ограниченным MTU клиента и сервера."
+[[units]]
+id = "symbol:flayer.profiles.wireguard.GenerateWireGuardMaterial"
+sourcePath = "src/flayer/profiles/wireguard.py"
+sourceHash = "sha256:8f5d8adcb0ca8d64a456a6fcd882ab560b7bf4227c332a005b68bbb5b2bd2b63"
+reviewedTranslationHash = "sha256:85e1676cd7c936d5a55abc0b64022b37ca978058c4b93af5dfefef37bf1ed7de"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "Создать независимые учётные данные одного протокола только для его явно выбранных устройств."
+[[units]]
+id = "symbol:flayer.profiles.wireguard.EncodeWireGuardMaterial"
+sourcePath = "src/flayer/profiles/wireguard.py"
+sourceHash = "sha256:98d506d8f519785b19b7a5e9797e260311c245b1f5ffd1e91b1e06e05495b442"
+reviewedTranslationHash = "sha256:0cdbc80fb3f7ec3fb5c4aea8833e17d52f1bfbfb4d800430a13bb496b6be3ce4"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "Закодировать приватное хранилище контроллера со стабильными полями без диагностического представления."
+[[units]]
+id = "symbol:flayer.profiles.wireguard.DecodeWireGuardMaterial"
+sourcePath = "src/flayer/profiles/wireguard.py"
+sourceHash = "sha256:7a8245e9304436bf4b0e855e8318debc5464acc78adee9226dec460ba4ab9844"
+reviewedTranslationHash = "sha256:a28e6980afc16805c074281c21d0ed858fe3ca6dd3a054a7ca402066ea493069"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "Прочитать ограниченный строгий материал контроллера, отклоняя неоднозначные и дополнительные поля."
+[[units]]
+id = "symbol:flayer.profiles.wireguard.WireGuardServiceName"
+sourcePath = "src/flayer/profiles/wireguard.py"
+sourceHash = "sha256:14477f5f8faf8a643197a05a4a95d354da2e9c33820fd1d261d272611841cace"
+reviewedTranslationHash = "sha256:148a8db57cee5e9aceb4e56cee66ab78fdbd872f028a0920ead4f3dafdf33e48"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "Получить стабильную идентичность службы без изменяемого состава клиентов и учётных данных."
+[[units]]
+id = "symbol:flayer.profiles.wireguard.RenderWireGuardServer"
+sourcePath = "src/flayer/profiles/wireguard.py"
+sourceHash = "sha256:4d7adf51d9b4bee69f678017c3c1ac296ef57ad65ec0bd000127489bbe9ef1f5"
+reviewedTranslationHash = "sha256:d9282059c23b3aaba75d2716357e849736f85ff71b25e99cd3b8afaef7b5a5c9"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "Сформировать для wg setconf только учётные данные сервера и открытые/предварительно согласованные ключи выбранных клиентов."
+[[units]]
+id = "symbol:flayer.profiles.wireguard.RenderWireGuardClient"
+sourcePath = "src/flayer/profiles/wireguard.py"
+sourceHash = "sha256:801c578d9c879b918172925c2d2a4e5cdef1a97dd1a34257377192c02c630c16"
+reviewedTranslationHash = "sha256:dbe20bd69875958fd70bd79edb7f3a08e492b9edb5234397f08ef322007caf49"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "Сформировать один стандартный клиент без полей AWG и приватных учётных данных других устройств."

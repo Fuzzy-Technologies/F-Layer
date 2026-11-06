@@ -367,3 +367,43 @@ reviewerType = "ai"
 reviewedAt = "2026-11-05T18:37:32.432583Z"
 reviewRoles = ["editorial", "technical"]
 body = "Выдать только данные записи версии и ядра; клиентская связность остаётся непроверенной."
+[[units]]
+id = "module:flayer.vpn_selection"
+sourcePath = "src/flayer/vpn_selection.py"
+sourceHash = "sha256:6f8bed548c94b20b71e004cb1746dff5c060f410eb8cc116c49d96a07850a71e"
+reviewedTranslationHash = "sha256:32687ee8af293eed8d9648294024ce291b9f53de14d8e93e502f399ac6c0cba9"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "Явный состав клиентов протоколов и канонические проекции настроек для схемы VPN-проекта 2."
+[[units]]
+id = "symbol:flayer.vpn_selection.VpnProtocolSelection"
+sourcePath = "src/flayer/vpn_selection.py"
+sourceHash = "sha256:072ef3f8b6f60a8780fe4241310abb5c27a3a7cbe88142d5b04e2254239efce6"
+reviewedTranslationHash = "sha256:c1cd9c9c150831f99a795f6d9a700505cc9ef42ef8e4648ea58666291730932a"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "Неизменяемый явный состав устройств одного транспорта и независимо назначенные адреса."
+[[units]]
+id = "symbol:flayer.vpn_selection.VpnProtocolSelection.Project"
+sourcePath = "src/flayer/vpn_selection.py"
+sourceHash = "sha256:c36b76d50fbda935acfc67e4647743c0b4ea1fb466c43901ca6fc5f19eefe02c"
+reviewedTranslationHash = "sha256:ebfa72d661ad0f472e9b9541990ec865503b2e4e0160195582801ef1e28e5560"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "Исключить другие протоколы и устройства из проверок, хешей и материала этого транспорта."
+[[units]]
+id = "symbol:flayer.vpn_selection.ParseProtocolSelections"
+sourcePath = "src/flayer/vpn_selection.py"
+sourceHash = "sha256:f0b19aff8b9a8fb9997630c4032ab5a051f8e0865648e9d63aff3122834e17f1"
+reviewedTranslationHash = "sha256:a3dc73e8670c54170d21bd0ed633f5c84782e348565a785258b1edadc488fa33"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "Прочитать точный явный состав клиентов и сопоставления туннельных адресов до генерации любых учётных данных."

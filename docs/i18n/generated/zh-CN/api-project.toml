@@ -367,3 +367,43 @@ reviewerType = "ai"
 reviewedAt = "2026-11-05T18:37:32.432583Z"
 reviewRoles = ["editorial", "technical"]
 body = "仅公开运行时回执与内核事实，客户端连通性仍未验证。"
+[[units]]
+id = "module:flayer.vpn_selection"
+sourcePath = "src/flayer/vpn_selection.py"
+sourceHash = "sha256:6f8bed548c94b20b71e004cb1746dff5c060f410eb8cc116c49d96a07850a71e"
+reviewedTranslationHash = "sha256:01a08707e618a72a6a1e787e0ba6fea8ea156495781df5bae2c8ad02481d11cc"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "VPN 项目模式 2 的显式协议成员关系与规范化意图投影。"
+[[units]]
+id = "symbol:flayer.vpn_selection.VpnProtocolSelection"
+sourcePath = "src/flayer/vpn_selection.py"
+sourceHash = "sha256:072ef3f8b6f60a8780fe4241310abb5c27a3a7cbe88142d5b04e2254239efce6"
+reviewedTranslationHash = "sha256:6552e26ff1137cb2d4d39c4fe153b4711f4aed0aa63a6e814434447654c5eeb9"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "单个传输不可变的显式设备成员关系及独立分配地址。"
+[[units]]
+id = "symbol:flayer.vpn_selection.VpnProtocolSelection.Project"
+sourcePath = "src/flayer/vpn_selection.py"
+sourceHash = "sha256:c36b76d50fbda935acfc67e4647743c0b4ea1fb466c43901ca6fc5f19eefe02c"
+reviewedTranslationHash = "sha256:192a1e1c9dfb0ec090528b41a63361ac33e8b4dd09c60b578807e98d46fa3cdc"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "从此传输的校验、哈希和材料中排除其他协议与设备。"
+[[units]]
+id = "symbol:flayer.vpn_selection.ParseProtocolSelections"
+sourcePath = "src/flayer/vpn_selection.py"
+sourceHash = "sha256:f0b19aff8b9a8fb9997630c4032ab5a051f8e0865648e9d63aff3122834e17f1"
+reviewedTranslationHash = "sha256:051350e810ac84f7a32b0864aed501416e7f3e11936361dd41738ee977b54c37"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:01:28.984216Z"
+reviewRoles = ["editorial", "technical"]
+body = "生成任何凭据前，读取精确显式成员关系及隧道地址映射。"

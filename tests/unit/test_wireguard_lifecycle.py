@@ -532,6 +532,67 @@ def test_EntryPointInstallAndReadOnlyStatusUsePrivateLock(
     assert model.interface is None and not guest._Paths(request["owner"])[0].exists()
 
 
+def test_BootCallbackRestoresVolatileLockForReadOnlyStatus(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A healthy service restarted after /run is cleared must remain observable without a mutating deploy retry."""
+
+    stage, request, model = Seed(tmp_path, monkeypatch)
+    guest._Install(stage, request)
+    guest._Stop(model.root, model.unit, request)
+    assert not guest.LOCK.exists()
+    monkeypatch.setattr(guest, "__file__", str(model.root / "install.py"))
+
+    assert guest.Main(["--start", "--allow-mutation"]) == 0
+    assert guest.LOCK.exists() and stat.S_IMODE(guest.LOCK.stat().st_mode) == 0o600
+    model.active = True
+
+    assert guest.Main(["--status"]) == 0
+    result = json.loads(capsys.readouterr().out)
+
+    assert result["status"] == "active"
+    assert (stage / "server.conf").read_bytes() == (model.root / "server.conf").read_bytes()
+
+
+def test_EmptyRemovedNamespaceRecoveryUsesAnActualAbsenceProof(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Do not fabricate a previous receipt when a crash left only an empty recovery directory."""
+
+    stage, request, model = Seed(tmp_path, monkeypatch)
+    guest._Install(stage, request)
+    _, _, transaction = guest._Paths(request["owner"])
+    unlink = Path.unlink
+    model.fault = ""
+    expected = guest._Digest((model.root / "receipt.json").read_bytes())
+
+    def Unlink(path: Path, *args: Any, **kwargs: Any) -> None:
+        """Interrupt final removal metadata after all owned runtime objects and payloads were erased."""
+
+        unlink(path, *args, **kwargs)
+
+        if path == transaction / "transaction.json":
+            raise Interrupted
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "unlink", Unlink)
+
+        with pytest.raises(Interrupted):
+            guest._Remove(request["owner"], expected)
+
+    status = guest._Status(stage, request)
+
+    assert status["status"] == "absent" and status["receipt_sha256"] == "" and status["cleanup_required"] is True
+
+    with pytest.raises(guest.GuestError):
+        guest._Recover(request["owner"], "", expectedAbsence="0" * 64)
+
+    guest._Recover(request["owner"], "", expectedAbsence=str(status["absence_sha256"]))
+
+    assert not transaction.exists() and model.interface is None and not model.network
+    assert guest._Status(stage, request)["cleanup_required"] is False
+
+
 def test_EmptyFinalJournalExposesNewReceiptAndPreservesCommittedService(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:

@@ -21,7 +21,6 @@ from flayer.vpn_project import (
     InitializeVpnProject,
     LoadVpnProject,
     PrepareVpnProject,
-    RunVpnProject,
     RunVpnRuntime,
     SelectedVpnProject,
     VpnProject,
@@ -82,7 +81,7 @@ def test_PublicCliPreparesOnlySelectedProtocolsAndRepeatsWithoutRotation(
     assert isinstance(project, SelectedVpnProject)
     stores = {path.name for path in project.Artifacts.iterdir() if path.is_dir()}
 
-    assert stores == {"server-gateway-" + suffix for protocol in protocols for suffix in (protocol, protocol + "-credentials")}
+    assert stores == {"server-gateway-creation", *("server-gateway-" + suffix for protocol in protocols for suffix in (protocol, protocol + "-credentials"))}
     before = Snapshot(project.Artifacts)
 
     assert all(mode == 0o600 for _, mode in before.values())
@@ -179,11 +178,11 @@ def test_RetainedMaterialOrServerDriftRefusesWithoutPublishingNewFiles(
     assert Snapshot(project.Artifacts) == before
 
 
-@pytest.mark.parametrize("action", ["deploy", "status", "destroy", "recover", "runtime-status", "compile", "export"])
-def test_PendingDeploymentRuntimeAndExportRefuseBeforeProviderOrOutputMutation(
+@pytest.mark.parametrize("action", ["runtime-status", "compile", "export"])
+def test_UnpreparedCompileAndPendingRuntimeExportRefuseBeforeExternalAccess(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, action: str,
 ) -> None:
-    """Adding offline selection cannot accidentally route a schema-2 project into schema-1 cloud behavior."""
+    """Unimplemented maintenance/export and an absent original baseline fail without provider access."""
 
     project = Project(tmp_path, ("wireguard",))
     monkeypatch.setattr(projects, "VpnYandexProvider", lambda *args: pytest.fail("Unsupported selection must not construct a provider"))
@@ -197,9 +196,6 @@ def test_PendingDeploymentRuntimeAndExportRefuseBeforeProviderOrOutputMutation(
 
         elif action == "export":
             ExportVpnDevice(project, "laptop", "wireguard", tmp_path / "exports")
-
-        else:
-            RunVpnProject(project, action, allowMutation=True, scopeConfirm="example-folder")
 
     assert not tuple(project.Artifacts.iterdir())
     assert not (project.root / "state.json").exists() and not (tmp_path / "exports").exists()

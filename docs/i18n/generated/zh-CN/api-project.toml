@@ -256,12 +256,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.CompileVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:080c0739a58c32683de6bff7cce4b6de6a7449d71469960cd3dbc2e15490e138"
-body = "编译六个旧格式受管资源；选择式项目需等待其创建基线流程实现。"
-reviewedTranslationHash = "sha256:0d538fab1b663907a700e9dc4df2b71bedde3e4180c965b8c666c841e31852a4"
+sourceHash = "sha256:119723047992e1e602f8badb493fe8ba48615d89670d4ba07658c96b375d09d7"
+body = "编译六个受管资源，并为选择式项目保留精确的原始创建计划。"
+reviewedTranslationHash = "sha256:068164fd46a1f0a8871aea05b3e16d33fa32781a63919c0a0d254f013a072f2e"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewedAt = "2026-11-06T16:42:36.488155Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -289,12 +289,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.RunVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:1ffc1666cef365561bb829ee243ac0d05cbfc6214520f91563f487e05ba1a71a"
-body = "分派所选协议的离线准备，或带显式同意的旧格式受管云/来宾生命周期。"
-reviewedTranslationHash = "sha256:1a3ecf9615591a9966b63b24bb35c68180542de3776245dc3e7b0cd669732216"
+sourceHash = "sha256:29d9712de3bdcb4a5b756d71de0f5e0fe76394eb7fd428b4edc12f36241286d5"
+body = "分派显式受管云/来宾生命周期，同时保留所选项目的原始创建计划。"
+reviewedTranslationHash = "sha256:a8368e176a332fc6a59dc251d330a56f5edeef1feb589f88846973eac1339e33"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewedAt = "2026-11-06T16:42:36.488155Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -507,3 +507,33 @@ reviewerType = "ai"
 reviewedAt = "2026-11-06T15:19:41.912780Z"
 reviewRoles = ["editorial", "technical"]
 body = "离线准备所选服务器/材料制品包，保留已有协议字节和旧状态。"
+[[units]]
+id = "symbol:flayer.guest.SshGuestProvisioner.WireGuardOperation"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:dae038aae2a0a439a1b717f11ba5283190bca2a43be286fbe0d4765f4ca03069"
+reviewedTranslationHash = "sha256:8e09a5270a4e91f57531c8414a36be631be22446085edece487531291bef8ec8"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T16:42:36.488155Z"
+reviewRoles = ["editorial", "technical"]
+body = "以显式 scope 和当前证明观测或恢复一个受管 WireGuard 服务。"
+[[units]]
+id = "symbol:flayer.vpn_project.VpnYandexProvider.ReadSecurityGroupRules"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:7e1caa8c0f9edd0711d5f67a5144feeed5e5a88e751cba5dd96a8a6c74c54a32"
+reviewedTranslationHash = "sha256:17c2756909dc09bd12bb1b81e7166b8b314bffbee7689661727fe3cf1c454625"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T16:42:36.488155Z"
+reviewRoles = ["editorial", "technical"]
+body = "读取精确 scope 内完整 IPv4 策略及网络绑定，不修改云规则。"
+[[units]]
+id = "symbol:flayer.vpn_project.VpnYandexProvider.DeleteCreationResource"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:7d1e2636439cf8b9bb78bdd5f18176765ca1dff2ca4b01e73109d719d3653161"
+reviewedTranslationHash = "sha256:b8ab09d99602f796edd826598a7236df6d063dd8891ab78a28e7bd6225f2d02f"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T16:42:36.488155Z"
+reviewRoles = ["editorial", "technical"]
+body = "在按 ID 删除前立即复核精确创建标签及任何固定的完整 firewall 策略。"

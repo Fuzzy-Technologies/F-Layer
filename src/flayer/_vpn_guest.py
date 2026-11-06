@@ -37,7 +37,7 @@ def DecodeRequest(content: bytes) -> tuple[tuple[str, dict[str, bytes]], ...]:
 
     request = json.loads(content)
 
-    if not isinstance(request, dict) or set(request) != {"bundles"} or not isinstance(request["bundles"], list) or not 1 <= len(request["bundles"]) <= 2:
+    if not isinstance(request, dict) or set(request) != {"bundles"} or not isinstance(request["bundles"], list) or not 1 <= len(request["bundles"]) <= 3:
         raise ValueError("Invalid guest request")
 
     result: list[tuple[str, dict[str, bytes]]] = []
@@ -45,7 +45,7 @@ def DecodeRequest(content: bytes) -> tuple[tuple[str, dict[str, bytes]], ...]:
     for bundle in request["bundles"]:
         if (
             not isinstance(bundle, dict) or set(bundle) != {"transport", "files"}
-            or bundle["transport"] not in {"amneziawg", "vless-reality"}
+            or bundle["transport"] not in {"amneziawg", "vless-reality", "wireguard"}
             or not isinstance(bundle["files"], dict) or not 1 <= len(bundle["files"]) <= 8
         ):
             raise ValueError("Invalid transport bundle")
@@ -106,13 +106,72 @@ def Install(bundles: tuple[tuple[str, dict[str, bytes]], ...]) -> None:
         try:
             with _Staged(files) as stage:
                 command = ["/bin/bash", str(stage / "install.sh")] if transport == "amneziawg" else ["/usr/bin/python3", str(stage / "install.py")]
+                install = command + (["--allow-mutation"] if transport == "wireguard" else [])
                 phase = "install"
-                subprocess.run(command, cwd=stage, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=1800)
+                subprocess.run(install, cwd=stage, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=1800)
                 phase = "check"
                 subprocess.run(command + ["--check"], cwd=stage, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=60)
 
         except (OSError, subprocess.SubprocessError):
             raise GuestInstallError(transport, phase) from None
+
+
+def WireGuard(content: bytes) -> bytes:
+    """Expose one receipt-bound owned operation without forwarding private diagnostics."""
+
+    if os.geteuid() != 0 or not 1 <= len(content) <= MAX_REQUEST_BYTES:
+        raise ValueError("WireGuard operation requires a bounded privileged request")
+
+    request = json.loads(content)
+
+    if not isinstance(request, dict) or set(request) != {"bundles", "wireguard"}:
+        raise ValueError("Invalid WireGuard operation envelope")
+
+    options = request["wireguard"]
+
+    if (not isinstance(options, dict) or set(options) != {"action", "expected_receipt_sha256", "expected_absence_sha256"}
+            or options["action"] not in {"status", "recover", "remove"}
+            or any(not isinstance(options[key], str) for key in options)):
+        raise ValueError("Invalid WireGuard operation")
+
+    receipt, absence = options["expected_receipt_sha256"], options["expected_absence_sha256"]
+
+    if options["action"] == "status":
+        if receipt or absence:
+            raise ValueError("Read-only status does not accept mutation preconditions")
+
+    elif (bool(receipt) == bool(absence) or re.fullmatch(r"[0-9a-f]{64}", receipt or absence) is None
+          or absence and options["action"] != "recover"):
+        raise ValueError("WireGuard mutation requires one exact current receipt or absence proof")
+
+    bundles = DecodeRequest(json.dumps({"bundles": request["bundles"]}).encode())
+
+    if len(bundles) != 1 or bundles[0][0] != "wireguard":
+        raise ValueError("WireGuard maintenance accepts only its owned server bundle")
+
+    try:
+        with _Staged(bundles[0][1]) as stage:
+            command = ["/usr/bin/python3", str(stage / "install.py"), "--" + options["action"]]
+
+            if options["action"] != "status":
+                command += ["--allow-mutation", "--expected-receipt-sha256" if receipt else "--expected-absence-sha256", receipt or absence]
+
+            result = subprocess.run(command, cwd=stage, stdin=subprocess.DEVNULL,
+                                    capture_output=True, check=False, timeout=300)
+
+            if result.returncode != 0:
+                raise ValueError
+
+            if options["action"] != "status":
+                return json.dumps({"status": "complete", "action": options["action"]}, sort_keys=True).encode()
+
+            if not 1 <= len(result.stdout) <= 4096:
+                raise ValueError
+
+            return result.stdout
+
+    except (OSError, ValueError, subprocess.SubprocessError):
+        raise GuestInstallError("wireguard", "maintenance") from None
 
 
 
@@ -172,6 +231,11 @@ def Main() -> int:
 
     try:
         content = sys.stdin.buffer.read(MAX_REQUEST_BYTES + 1)
+
+        if 1 <= len(content) <= MAX_REQUEST_BYTES and isinstance(json.loads(content), dict) and "wireguard" in json.loads(content):
+            sys.stdout.buffer.write(WireGuard(content))
+
+            return 0
 
         if 1 <= len(content) <= MAX_REQUEST_BYTES and isinstance(json.loads(content), dict) and "runtime" in json.loads(content):
             sys.stdout.buffer.write(Runtime(content))

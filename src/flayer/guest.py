@@ -219,17 +219,17 @@ class SshGuestProvisioner:
     def Install(self, bundles: tuple[tuple[str, ArtifactBundle], ...]) -> None:
         """Stage only validated sensitive server files on the trusted guest and run installers."""
 
-        if not isinstance(bundles, tuple) or not 1 <= len(bundles) <= 2 or any(
+        if not isinstance(bundles, tuple) or not 1 <= len(bundles) <= 3 or any(
             not isinstance(item, tuple) or len(item) != 2 for item in bundles
         ):
-            raise VpnError("Guest installation requires one or two explicit server bundles")
+            raise VpnError("Guest installation requires one to three explicit server bundles")
 
         transports: set[str] = set()
         documents = []
 
         for transport, bundle in bundles:
             if (
-                not isinstance(transport, str) or transport not in {"amneziawg", "vless-reality"} or transport in transports
+                not isinstance(transport, str) or transport not in {"amneziawg", "vless-reality", "wireguard"} or transport in transports
                 or not isinstance(bundle, ArtifactBundle) or bundle.kind != "server"
                 or any(not item.sensitive for item in bundle.files)
             ):
@@ -249,15 +249,17 @@ class SshGuestProvisioner:
             raise VpnError("Guest installation request exceeds its bounded size")
 
         command = "sudo -n /usr/bin/python3 -c " + shlex.quote(files("flayer").joinpath("_vpn_guest.py").read_text(encoding="utf-8"))
-        result = self.runner.Run((*self.command, command), payload, 3700)
+        result = self.runner.Run((*self.command, command), payload, 5500 if len(bundles) == 3 else 3700)
 
         if result.returnCode != 0 or result.stdout.strip() != b"FLAYER_GUEST_INSTALL_OK":
             receipt = result.stdout.strip() if len(result.stdout) <= 128 else b""
-            match = re.fullmatch(rb"FLAYER_GUEST_FAILED (amneziawg|vless-reality) (stage|install|check)", receipt)
+            match = re.fullmatch(rb"FLAYER_GUEST_FAILED (amneziawg|vless-reality|wireguard) (stage|install|check)", receipt)
 
             if match is not None:
                 transport, phase = (item.decode("ascii") for item in match.groups())
                 hint = (
+                    "Check the executing Ubuntu kernel baseline, private ownership and pinned tools build prerequisites"
+                    if transport == "wireguard" else
                     "Check the Reality target supports TLS 1.3 and HTTP/2, and guest access to the pinned Xray download"
                     if transport == "vless-reality" else
                     "Check Ubuntu 24.04 amd64 compatibility and guest access to the pinned Go and GitHub downloads"
@@ -324,10 +326,90 @@ class SshGuestProvisioner:
         except (ValueError, TypeError, UnicodeError, RecursionError):
             raise VpnError("VLESS runtime operation failed or returned an invalid receipt. Inspect runtime-status and retained recovery state; private output was suppressed") from None
 
+    def WireGuardOperation(
+        self, bundle: ArtifactBundle, action: str, *, allowMutation: bool = False, scopeConfirm: str = "",
+        expectedReceipt: str = "", expectedAbsence: str = "",
+    ) -> dict[str, object]:
+        """Observe or recover one owned WireGuard service using explicit scope and current proof."""
+
+        if (not isinstance(bundle, ArtifactBundle) or bundle.kind != "server" or not bundle.name.endswith("-wireguard")
+                or {item.name for item in bundle.files} != {"install.py", "server.conf", "deployment.json"}
+                or any(not item.sensitive for item in bundle.files)
+                or not isinstance(action, str) or action not in {"status", "recover", "remove"}
+                or any(not isinstance(value, str) for value in (scopeConfirm, expectedReceipt, expectedAbsence))):
+            raise VpnError("WireGuard maintenance requires an exact private server bundle and supported action")
+
+        if action == "status":
+            if allowMutation or scopeConfirm or expectedReceipt or expectedAbsence:
+                raise VpnError("WireGuard status is read-only and accepts no mutation preconditions")
+
+        elif (allowMutation is not True or scopeConfirm != bundle.identity.scopeId
+              or bool(expectedReceipt) == bool(expectedAbsence)
+              or re.fullmatch(r"[0-9a-f]{64}", expectedReceipt or expectedAbsence) is None
+              or expectedAbsence and action != "recover"):
+            raise VpnError("WireGuard mutation requires exact scope, consent and one current receipt or absence proof")
+
+        payload = json.dumps({"bundles": [{"transport": "wireguard", "files": {
+            item.name: base64.b64encode(item.content).decode("ascii") for item in bundle.files
+        }}], "wireguard": {"action": action, "expected_receipt_sha256": expectedReceipt,
+                           "expected_absence_sha256": expectedAbsence}}, sort_keys=True).encode()
+
+        if len(payload) > MAX_GUEST_REQUEST_BYTES:
+            raise VpnError("WireGuard request exceeds its bounded size")
+
+        command = "sudo -n /usr/bin/python3 -c " + shlex.quote(files("flayer").joinpath("_vpn_guest.py").read_text(encoding="utf-8"))
+        result = self.runner.Run((*self.command, command), payload, 420)
+
+        try:
+            if result.returnCode != 0 or not 1 <= len(result.stdout) <= 4096:
+                raise ValueError
+
+            data = json.loads(result.stdout)
+
+            if not isinstance(data, dict):
+                raise ValueError
+
+            if action != "status":
+                if data != {"status": "complete", "action": action}:
+                    raise ValueError
+
+                return data
+
+            common = {"status", "receipt_sha256", "tools_version", "kernel_policy"}
+            status = data.get("status")
+            expected = common | ({"binary_sha256", "kernel_release", "kernel_package_version", "kernel_cve", "kernel_fixed_version"}
+                                 if status == "active" else {"absence_sha256", "cleanup_required"} if status == "absent" else set())
+
+            if (status not in {"active", "absent", "recovery-required"} or set(data) != expected
+                    or any(not isinstance(value, str) for key, value in data.items() if key != "cleanup_required")
+                    or data["tools_version"] != "1.0.20260223"):
+                raise ValueError
+
+            if status == "absent":
+                if (data["receipt_sha256"] != "" or data["kernel_policy"] != "not-assessed"
+                        or type(data["cleanup_required"]) is not bool or re.fullmatch(r"[0-9a-f]{64}", data["absence_sha256"]) is None):
+                    raise ValueError
+
+            elif (data["kernel_policy"] != "cached-named-cve-baseline"
+                  or re.fullmatch(r"[0-9a-f]{64}", data["receipt_sha256"]) is None):
+                raise ValueError
+
+            if status == "active" and (
+                data["kernel_cve"] != "CVE-2026-98432" or re.fullmatch(r"[0-9a-f]{64}", data["binary_sha256"]) is None
+                or any(re.fullmatch(r"[a-zA-Z0-9.+:~_-]{1,128}", data[key]) is None
+                       for key in ("kernel_release", "kernel_package_version", "kernel_fixed_version"))
+            ):
+                raise ValueError
+
+            return data
+
+        except (ValueError, TypeError, UnicodeError, RecursionError):
+            raise VpnError("WireGuard operation failed or returned invalid bounded status; private diagnostics were suppressed") from None
+
     def ServiceStatus(self, services: tuple[str, ...]) -> tuple[tuple[str, bool], ...]:
         """Observe service activity without claiming client connectivity or performing guest writes."""
 
-        if not isinstance(services, tuple) or not 1 <= len(services) <= 2 or any(
+        if not isinstance(services, tuple) or not 1 <= len(services) <= 3 or any(
             not isinstance(item, str) or _SERVICE.fullmatch(item) is None for item in services
         ):
             raise VpnError("Guest status requires bounded explicit service names")

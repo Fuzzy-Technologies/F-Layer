@@ -47,9 +47,9 @@ It contains no client private keys. Native AmneziaVPN exports remain Task #129.
 
 The guest program implements fresh install, exact repeat verification, read-only
 check/status, systemd start/stop, receipt-bound removal and interrupted-install
-recovery. This is a low-level implementation; the public project CLI and existing
-SSH receiver do not yet select or invoke it. Do not run the program manually on
-an existing production guest to bypass the pending project/ingress workflow.
+recovery. Fresh schema-2 project deployment invokes it through the host-pinned
+SSH receiver. Existing schema-1 installations require the separate migration/
+ingress workflow; do not run the program manually on a production guest to bypass it.
 
 The initial platform is Ubuntu 24.04 amd64 with its GA 6.8 kernel. Before building
 tools or publishing managed configuration, first-install admission reads the fixed
@@ -153,24 +153,69 @@ protocols. If a later local bundle write fails, already committed credentials
 remain available for an unchanged retry. Existing filesystem ownership and 0700/
 0600 private-storage requirements still apply.
 
-Preparation emits no bootstrap, cloud state or client files with a placeholder
-endpoint. Schema-2 deploy/status/destroy/recover, runtime maintenance, cloud-plan
-compilation and device export refuse before provider construction or output
-mutation until their integration is implemented. No client-connectivity claim
-follows from offline preparation.
+Preparation also snapshots an owned nonsecret `server-<stack>-creation` bundle:
+`creation.json` stores the exact ordered six-resource specs, creation labels,
+original project/plan fingerprints and independent protocol bundle digests;
+`cloud-init.json` retains the exact original bootstrap bytes. Compilation reads
+this snapshot rather than rebuilding instance labels or bootstrap from current
+settings. Fresh WG bootstrap includes build tools, kmod, iproute2 and util-linux;
+it never upgrades or reboots the kernel. Preparation creates no cloud state or
+placeholder client exports. Existing snapshots are verified without regenerating
+their installer programs, credentials or bootstrap.
 
 Editing an old project to schema 2 is not migration. Retained generic cloud state or a pending operation journal,
 legacy combined credentials, bootstrap/trust bundles or device exports block this
 preparation. Keep the original schema-1 configuration, keys, manifests and cleanup
 references until an explicit migration/ingress workflow can prove the old baseline.
 
+## Fresh project lifecycle
+
+Fresh schema-2 `deploy`, `status`, `recover` and `destroy` use the original
+six-resource plan. Mutations require explicit consent and exact scope before
+preparation, authentication or vendor downloads. Before submitting a fresh WG VM,
+the controller additionally requires released noble/linux evidence; the guest
+still verifies the executing build. Unavailable or pending evidence blocks
+creation before billing resources. Healthy retries/status use the cached guest
+baseline; cleanup and destroy recovery never depend on that download.
+
+Every cloud observation verifies exact scope, kind, name, zone and original
+creation labels. Security-group observation additionally checks network attachment
+and the complete effective IPv4 rule multiset, including descriptions and
+multiplicity. Documented numeric JSON encodings are normalized; IPv6, indirect
+targets and unknown policy are refused. Rule IDs remain available in the bounded
+snapshot. All surviving original resources are checked before each deletion, so
+a drifted firewall stops cleanup before the first VM is deleted. Cleanup never
+adopts an unrecorded or replaced resource. No cloud rule update is implemented by
+this slice and no existing resource is relabeled.
+
+The SSH receiver accepts at most three selected transports. WG install runs first
+so an interrupted WG transaction cannot trigger another transport's installer;
+only installation carries mutation consent and its following check is read-only.
+Server programs are read from their pinned original bundles. Actual client files
+are published only after the owned reserved IP matches the instance and all
+selected services are verified active. The IAM serial-key marker uses the
+original project fingerprint, even if an unrelated device or local auth-profile
+alias changes. That does not rotate keys or recreate resources. Changing selected
+membership, listeners, routes, sizing or placement requires an explicit transition.
+
+Cloud recovery retains the generic durable journal and original operation IDs.
+With no cloud journal, explicit guest recovery accepts only the observed WG
+receipt or a separate complete-absence proof for empty leftover metadata. It
+does not remove a healthy service or enroll peers. Ordinary deploy does not repair
+an interrupted guest transaction. Status accepts no mutation options and reports
+service health separately from client connectivity. The authorized boot callback
+recreates the private volatile coordination file after reboot; status remains
+read-only. Whole-project destroy uses the frozen nonsecret cloud snapshot even
+when private client or SSH keys have been lost. Local artifacts are retained;
+old trust or client exports block another deployment after cleanup.
+
 ## Remaining integration
 
-SSH receiver integration, immutable creation baselines, cloud/guest ingress
-transitions and scoped enrollment/revocation remain Task #128.
-Connecting the guest receipts/recovery/removal to the full project lifecycle is
-also pending. Existing schema-1
-AWG/VLESS loading and fingerprint algorithms are unchanged by this foundation.
+Adding/removing a protocol on an existing guest, schema-1 migration, explicit
+cloud/guest ingress overlays and scoped peer enrollment/revocation remain Task
+#128. Schema-2 Xray runtime maintenance and the separate device-export command
+still refuse before provider/output mutation. Existing schema-1 AWG/VLESS
+loading, bootstrap bytes, resource labels and fingerprint algorithms are unchanged.
 
 Native AmneziaVPN `.vpn` and QR exports remain Task #129. Runtime pins record the
 chosen upstream tools revision and verified source archive SHA256. No new protocol is advertised

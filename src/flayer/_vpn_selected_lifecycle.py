@@ -202,7 +202,8 @@ def _RunSelectedProject(
                 raise VpnError("Previously committed WireGuard peer state is absent or interrupted; retain its history and recover explicitly")
 
         # Refuse an interrupted WG transaction before invoking an unrelated protocol's installer.
-        guest.Install(tuple(sorted(servers, key=lambda item: item[0] != "wireguard")))
+        guest.Install(tuple(sorted(servers, key=lambda item: item[0] != "wireguard")),
+                      expectedWireGuardHistory=revision.history if wireguard is not None else "")
 
     if wireguard is not None:
         status = guest.WireGuardOperation(wireguard, "status")

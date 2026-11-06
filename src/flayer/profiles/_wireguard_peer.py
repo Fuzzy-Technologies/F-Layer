@@ -708,6 +708,28 @@ def HistoryStatus(guest: Any, owner: str) -> dict[str, str]:
     return {"status": "peer-history", "owner": owner, "history_sha256": _History(guest, owner), "tools_version": guest.TOOLS_VERSION}
 
 
+def _OriginalGuest(guest: Any, stage: Path, expected: str) -> Any:
+    """Load the exact retained installer bytes already authorized by the original private server bundle."""
+
+    guest._RequireDigest(expected)
+    path = stage / "original.py"
+    content = guest._Read(path)
+
+    if guest._Digest(content) != expected:
+        raise guest.GuestError("Original installer differs from its retained program pin")
+
+    spec = importlib.util.spec_from_loader("flayer_wireguard_original", loader=None)
+
+    if spec is None:
+        raise guest.GuestError("Original installer module is unavailable")
+
+    module = importlib.util.module_from_spec(spec)
+    module.__file__ = str(path)
+    exec(compile(content, str(path), "exec"), module.__dict__)
+
+    return module
+
+
 def Main(argv: list[str] | None = None) -> int:
     """Run only an explicit owned peer action with root, fixed staging, consent and exact receipt guards."""
 
@@ -715,6 +737,8 @@ def Main(argv: list[str] | None = None) -> int:
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--status", action="store_true")
     group.add_argument("--history-status", action="store_true", dest="historyStatus")
+    group.add_argument("--install", action="store_true")
+    group.add_argument("--check-install", action="store_true", dest="checkInstall")
     group.add_argument("--apply", action="store_true")
     group.add_argument("--recover", action="store_true")
     parser.add_argument("--change", choices=("enroll", "revoke"), required=True)
@@ -735,9 +759,16 @@ def Main(argv: list[str] | None = None) -> int:
 
         _Change(guest, options.change, options.deviceId)
 
-        readOnly = options.status or options.historyStatus
+        installing = options.install or options.checkInstall
+        readOnly = options.status or options.historyStatus or options.checkInstall
 
-        if readOnly:
+        if installing:
+            if bool(options.allowMutation) != bool(options.install) or options.expectedReceipt or options.expectedPrevious:
+                raise guest.GuestError("Installation requires exact mutation consent; its check is read-only")
+
+            guest._RequireDigest(options.expectedHistory)
+
+        elif readOnly:
             if options.allowMutation or options.expectedReceipt or options.expectedPrevious or options.expectedHistory:
                 raise guest.GuestError("WireGuard peer status accepts no mutation consent or receipt options")
 
@@ -757,7 +788,7 @@ def Main(argv: list[str] | None = None) -> int:
         stage = Path(__file__).absolute().parent
         guest._Directory(stage, private=True)
 
-        if {path.name for path in stage.iterdir()} != {"install.py", "maintenance.py", "server.conf", "deployment.json"}:
+        if {path.name for path in stage.iterdir()} != {"install.py", "maintenance.py", "server.conf", "deployment.json", *({"original.py"} if installing else set())}:
             raise guest.GuestError("WireGuard peer staging has unknown or missing files")
 
         supplied = guest._Json(guest._Read(stage / "deployment.json"))
@@ -786,8 +817,35 @@ def Main(argv: list[str] | None = None) -> int:
             if descriptor is not None:
                 fcntl.flock(descriptor, (fcntl.LOCK_SH if readOnly else fcntl.LOCK_EX) | fcntl.LOCK_NB)
 
-            if options.historyStatus:
-                result: dict[str, object] = dict(HistoryStatus(guest, owner))
+            if installing:
+                if HistoryStatus(guest, owner)["history_sha256"] != options.expectedHistory:
+                    raise guest.GuestError("Peer history changed before installation; no installer was started")
+
+                program = supplied.get("program_sha256")
+
+                if not isinstance(program, str):
+                    raise ValueError
+
+                original = _OriginalGuest(guest, stage, program)
+
+                with tempfile.TemporaryDirectory(prefix=".original-", dir=stage) as temporary:
+                    desired = Path(temporary)
+                    os.chmod(desired, 0o700)
+
+                    for name in ("server.conf", "deployment.json", "install.py"):
+                        guest._Atomic(desired / name, guest._Read(stage / ("original.py" if name == "install.py" else name)))
+
+                    request = original._Request(desired)[0]
+
+                    if options.install:
+                        original._Install(desired, request)
+
+                    original._Check(root, unit, request)
+
+                result: dict[str, object] = {"status": "install-complete" if options.install else "install-checked"}
+
+            elif options.historyStatus:
+                result = dict(HistoryStatus(guest, owner))
 
             else:
                 guest._Receipt(root, unit, owner)

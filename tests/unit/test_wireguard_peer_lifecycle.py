@@ -313,6 +313,97 @@ def test_HistoryObservationBeforeFirstInstallationCreatesNoBaseOrLock(tmp_path: 
     assert not guest.BASE.exists() and not guest.LOCK.exists()
 
 
+def InstallEnvelope(tmpPath: Path, stage: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Stage the packed driver plus original program while keeping the existing synthetic guest effect model."""
+
+    envelope = tmpPath / "install-envelope"
+    envelope.mkdir(mode=0o700)
+
+    for name in ("server.conf", "deployment.json"):
+        guest._Atomic(envelope / name, (stage / name).read_bytes())
+
+    guest._Atomic(envelope / "original.py", (stage / "install.py").read_bytes())
+    guest._Atomic(envelope / "maintenance.py", (stage / "install.py").read_bytes())
+    guest._Atomic(envelope / "install.py", Path(peers.__file__).read_bytes())
+    monkeypatch.setattr(peers, "__file__", str(envelope / "install.py"))
+
+    def Original(helper: Any, supplied: Path, digest: str) -> Any:
+        """Keep all installation effects in the existing model; the real loader's hash gate is tested in memory."""
+
+        assert guest._Digest((supplied / "original.py").read_bytes()) == digest
+
+        return guest
+
+    monkeypatch.setattr(peers, "_OriginalGuest", Original)
+
+    return envelope
+
+
+def test_GuardedInstallAndReadOnlyCheckRetainTheOriginalProgramAndExactHistory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Run actual private installer files under the shared lock while every kernel/service boundary stays modeled."""
+
+    stage, request, model = Seed(tmp_path, monkeypatch)
+    envelope = InstallEnvelope(tmp_path, stage, monkeypatch)
+    history = peers.HistoryStatus(guest, request["owner"])["history_sha256"]
+    common = ["--change", "enroll", "--device-id", "flayer-installation", "--expected-history-sha256", history]
+
+    assert peers.Main(["--install", "--allow-mutation", *common]) == 0
+    assert json.loads(capsys.readouterr().out) == {"status": "install-complete"}
+    assert (model.root / "install.py").read_bytes() == (envelope / "original.py").read_bytes()
+    before = {path.name: guest._Digest(path.read_bytes()) for path in model.root.iterdir()}
+
+    assert peers.Main(["--check-install", *common]) == 0
+    assert json.loads(capsys.readouterr().out) == {"status": "install-checked"}
+    assert {path.name: guest._Digest(path.read_bytes()) for path in model.root.iterdir()} == before
+    assert peers.Main(["--install", "--allow-mutation", *common]) == 0
+    assert json.loads(capsys.readouterr().out) == {"status": "install-complete"}
+
+
+def test_InstallRechecksHistoryUnderTheMutatingLockBeforeLoadingTheOriginalProgram(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A controller changing audit after observation cannot make the guarded install revive old keys."""
+
+    stage, request, model = Seed(tmp_path, monkeypatch)
+    InstallEnvelope(tmp_path, stage, monkeypatch)
+    history = peers.HistoryStatus(guest, request["owner"])["history_sha256"]
+    openLock = guest._OpenLock
+    loaded: list[bool] = []
+
+    def Open(*, readOnly: bool = False) -> int:
+        """Model another completed actor immediately before the installing process acquires its exclusive lock."""
+
+        descriptor = openLock(readOnly=readOnly)
+
+        for directory in (guest.BASE.parent.parent, guest.BASE.parent, guest.BASE):
+            guest._Directory(directory, create=True)
+
+        guest._Atomic(guest.BASE / ("peer-" + request["owner"] + ".json"), guest._Encode({
+            "schema_version": 1, "owner": request["owner"], "action": "revoke", "device_id": "phone",
+            "previous_receipt_sha256": "a" * 64, "receipt_sha256": "b" * 64,
+            "deployment_sha256": "c" * 64, "previous_history_sha256": history}))
+
+        return descriptor
+
+    def Forbidden(*arguments: Any) -> Any:
+        """Refuse any installer load once the actual history precondition differs."""
+
+        loaded.append(True)
+
+        raise AssertionError("Changed history reached the original installer")
+
+    monkeypatch.setattr(guest, "_OpenLock", Open)
+    monkeypatch.setattr(peers, "_OriginalGuest", Forbidden)
+
+    assert peers.Main(["--install", "--allow-mutation", "--change", "enroll", "--device-id", "flayer-installation",
+                       "--expected-history-sha256", history]) == 1
+    capsys.readouterr()
+    assert not loaded and peers._History(guest, request["owner"]) != history
+    assert not model.root.exists() and not model.unit.exists() and not model.interface and not model.network
+
+
 def test_HistoryEntrypointReadsRetainedAuditAfterTheInstalledRootWasRemoved(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
 ) -> None:

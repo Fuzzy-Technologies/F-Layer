@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:13f3b8e5dc3fd991ef4eb3c58f611c932556d1c5ef9635b885968b7517d7238b"
-reviewedTranslationHash = "sha256:d31bb20e12e06ba3098419ee76d4d8391d17935c1e1cefe81bdbd5fc97d0db0f"
+sourceHash = "sha256:8210aea131ef2cdc2374553dc4640e2e985cd88875e5b29b77e6369ce10f4be1"
+reviewedTranslationHash = "sha256:f718d412a2fcda6acde6b89776822dcdfb8ea4db97f5b072af9b3e82a1ebb20a"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T20:05:04.474089Z"
+reviewedAt = "2026-11-06T20:19:47.541579Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -247,6 +247,13 @@ SSH 通道提供来宾事务。接收保留的私有服务器包、一个指定�
 审计。校验受管祖先及审计所有权，不创建目录或协调文件。普通 deploy 必须先于
 任何安装器验证该历史：删除服务不能隐藏吊销历史，也不能让旧控制器文件重新
 激活密钥。
+
+安装还通过私有 stdin 传入精确预期历史。打包驱动在与安装相同的来宾排他锁内
+再次校验，关闭观测 RPC 与变更之间的时间间隙。按原始描述符固定值校验保留的
+`original.py` 字节后，才将已批准安装器加载为模块并调用其未变更的安装/检查函数。
+这避免嵌套 CLI 锁，并保留原始已安装程序、运行时及启动回调。接收器进入其他
+传输前，只读检查再次校验相同历史；即使输入批次先列出其他协议，也始终先运行
+WG 安装保护。
 
 该低层 API 不持久化控制器意图，也不签发新设备密钥。下述项目流程提供持久日志，
 并保留完整旧/新包及原始证明。

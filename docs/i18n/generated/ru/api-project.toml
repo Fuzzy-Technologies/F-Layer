@@ -113,12 +113,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.guest.SshGuestProvisioner.Install"
 sourcePath = "src/flayer/guest.py"
-sourceHash = "sha256:dd3f975f66e9c8a207569524200c43621a6b56410f96aa2f716e77355337b806"
-body = "Передаёт на доверенную гостевую систему только проверенные закрытые серверные файлы и запускает установщики."
-reviewedTranslationHash = "sha256:828a3876a40472bc1c9110b4f690e4d428033eaae1595175cc2d00385679b62e"
-reviewer = "AIna-Dev"
+sourceHash = "sha256:3995657739d62cca116451e715e2af57bcb0f6e3a4a3d5856e288781bfa44335"
+body = "Подготовить проверенные приватные серверные файлы; установка WireGuard требует точную ожидаемую историю клиентов."
+reviewedTranslationHash = "sha256:19954e514285b20902edd7e79af3c83bb17b444cf2b3f6b77b41cb8e123fdec5"
+reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-10-09T08:01:48.487990+00:00"
+reviewedAt = "2026-11-06T20:19:47.541579Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]

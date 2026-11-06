@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import base64
 import json
 import subprocess
 from pathlib import Path
@@ -92,8 +91,11 @@ def test_ThirdTransportInstallUsesConsentWhileCheckRemainsReadOnly(tmp_path: Pat
 
     calls: list[list[str]] = []
     bundle = Prepared().serverBundle
-    request = json.dumps({"bundles": [{"transport": "wireguard", "files": {
-        item.name: base64.b64encode(item.content).decode() for item in bundle.files}}]}).encode()
+    guest, runner = Provisioner({})
+    runner.result = GuestResult(0, b"FLAYER_GUEST_INSTALL_OK")
+    guest.Install((("wireguard", bundle),), expectedWireGuardHistory="a" * 64)
+    request = json.loads(runner.calls[0][1])
+    request = json.dumps({"bundles": request["bundles"]}).encode()
     stage = tmp_path / "stage"
     stage.mkdir()
     monkeypatch.setattr(receiver.os, "geteuid", lambda: 0, raising=False)
@@ -107,7 +109,7 @@ def test_ThirdTransportInstallUsesConsentWhileCheckRemainsReadOnly(tmp_path: Pat
         return subprocess.CompletedProcess(command, 0)
 
     monkeypatch.setattr(receiver.subprocess, "run", Run)
-    receiver.Install(receiver.DecodeRequest(request))
+    receiver.Install(receiver.DecodeRequest(request), expectedWireGuardHistory="a" * 64)
 
-    assert calls[0][-1] == "--allow-mutation" and calls[1][-1] == "--check"
+    assert "--allow-mutation" in calls[0] and "--install" in calls[0] and "--check-install" in calls[1]
     assert "--allow-mutation" not in calls[1] and not stage.exists()

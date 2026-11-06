@@ -201,3 +201,22 @@ def test_OnlyRecordedTransitionPrefixesAreAcceptedAndRevocationDeniesBeforeKerne
         peers._Converge(boundary, Path("new"), Path("old"), request, request, receipts["new"], receipts["old"], adding=adding)
 
         assert calls == expected and state == {"kernel": "new", "policy": "new"}
+
+
+@pytest.mark.parametrize("approved", [True, False])
+def test_OriginalInstallerLoaderExecutesOnlyItsExactPinnedPrivateBytes(approved: bool) -> None:
+    """Mock only the private read boundary and never execute an installer, subprocess or filesystem operation."""
+
+    source = (b'"""Synthetic pinned module for an in-memory loader check."""\nAPPROVED_SOURCE = True\n' if approved
+              else b'raise AssertionError("Unapproved source must never execute")\n')
+    boundary = SimpleNamespace(_RequireDigest=guest._RequireDigest, _Read=lambda path: source,
+                               _Digest=guest._Digest, GuestError=guest.GuestError)
+
+    if approved:
+        loaded = peers._OriginalGuest(boundary, Path("fixture-private-stage"), hashlib.sha256(source).hexdigest())
+
+        assert loaded.APPROVED_SOURCE is True and loaded.__file__.endswith("original.py")
+
+    else:
+        with pytest.raises(guest.GuestError, match="program pin"):
+            peers._OriginalGuest(boundary, Path("fixture-private-stage"), "a" * 64)

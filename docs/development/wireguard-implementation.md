@@ -311,6 +311,16 @@ ownership without creating a directory or coordination file. Ordinary deployment
 requires this history proof before any installer: removing the service cannot
 hide retained revocation history or permit old controller files to reactivate keys.
 
+Installation also carries the exact expected history through private stdin.
+The packed driver rechecks it under the same exclusive guest lock as installation,
+closing the gap between the observation RPC and mutation. Verify the retained
+`original.py` bytes against the original descriptor pin before loading the approved
+installer as a module and calling its unchanged installation/check functions.
+This avoids nesting its CLI lock and preserves the original installed program,
+runtime and startup callbacks. A read-only check verifies that same history before
+the receiver continues to another transport; the WG guard always runs first even
+if the input batch listed another protocol first.
+
 This low-level API does not persist controller intent or issue fresh device keys.
 The project workflow below supplies its durable journal and retains complete
 old/new bundles and original proofs.

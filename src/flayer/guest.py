@@ -216,8 +216,8 @@ class SshGuestProvisioner:
             f"{username}@{endpoint.host}",
         )
 
-    def Install(self, bundles: tuple[tuple[str, ArtifactBundle], ...]) -> None:
-        """Stage only validated sensitive server files on the trusted guest and run installers."""
+    def Install(self, bundles: tuple[tuple[str, ArtifactBundle], ...], *, expectedWireGuardHistory: str = "") -> None:
+        """Stage validated private server files; WireGuard installation requires its exact expected peer history."""
 
         if not isinstance(bundles, tuple) or not 1 <= len(bundles) <= 3 or any(
             not isinstance(item, tuple) or len(item) != 2 for item in bundles
@@ -236,14 +236,33 @@ class SshGuestProvisioner:
                 raise VpnError("Guest installation requires unique supported private server bundles")
 
             transports.add(transport)
+            contents = {item.name: item.content for item in bundle.files}
+
+            if transport == "wireguard":
+                from flayer._vpn_peer_transport import ValidateBundle
+                from flayer.profiles._wireguard_peer import Programs
+
+                contents = ValidateBundle(bundle)
+                driver, helper = Programs()
+                contents.update({"original.py": contents["install.py"], "install.py": driver, "maintenance.py": helper})
+
             documents.append({"transport": transport, "files": {
-                item.name: base64.b64encode(item.content).decode("ascii") for item in bundle.files
+                name: base64.b64encode(content).decode("ascii") for name, content in contents.items()
             }})
 
         if len({bundle.identity for _, bundle in bundles}) != 1:
             raise VpnError("Guest installation cannot mix different stack owners")
 
-        payload = json.dumps({"bundles": documents}, sort_keys=True).encode("utf-8")
+        if (not isinstance(expectedWireGuardHistory, str)
+                or (re.fullmatch(r"[0-9a-f]{64}", expectedWireGuardHistory) is None if "wireguard" in transports else bool(expectedWireGuardHistory))):
+            raise VpnError("WireGuard installation requires an exact observed peer history; other transports accept no WireGuard precondition")
+
+        request: dict[str, object] = {"bundles": documents}
+
+        if "wireguard" in transports:
+            request["wireguard_install"] = {"expected_history_sha256": expectedWireGuardHistory}
+
+        payload = json.dumps(request, sort_keys=True).encode("utf-8")
 
         if len(payload) > MAX_GUEST_REQUEST_BYTES:
             raise VpnError("Guest installation request exceeds its bounded size")
@@ -258,7 +277,7 @@ class SshGuestProvisioner:
             if match is not None:
                 transport, phase = (item.decode("ascii") for item in match.groups())
                 hint = (
-                    "Check the executing Ubuntu kernel baseline, private ownership and pinned tools build prerequisites"
+                    "Check expected peer history, the executing Ubuntu kernel baseline, private ownership and pinned tools build prerequisites"
                     if transport == "wireguard" else
                     "Check the Reality target supports TLS 1.3 and HTTP/2, and guest access to the pinned Xray download"
                     if transport == "vless-reality" else

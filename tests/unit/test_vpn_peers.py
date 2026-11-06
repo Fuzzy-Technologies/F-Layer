@@ -52,11 +52,15 @@ class PeerGuest(SelectedGuest):
     fail = ""
     peerCalls: list[tuple[str, str, str]] = []
 
-    def Install(self, bundles: tuple[tuple[str, ArtifactBundle], ...]) -> None:
+    def Install(self, bundles: tuple[tuple[str, ArtifactBundle], ...], *, expectedWireGuardHistory: str = "") -> None:
         """Accept original or effective server bytes only, without simulating any unrelated installer mutation."""
 
-        super().Install(bundles)
         cls = type(self)
+
+        if any(protocol == "wireguard" for protocol, _ in bundles) and (cls.history or revisions.InitialHistory(cls.project)) != expectedWireGuardHistory:
+            raise VpnError("Model refused changed history under the install lock")
+
+        super().Install(bundles, expectedWireGuardHistory=expectedWireGuardHistory)
 
         for protocol, bundle in bundles:
             if protocol == "wireguard":
@@ -591,3 +595,33 @@ def test_PendingRecoveryRefusesAnInternallyValidReplacementOfTheOriginalCloudOrT
 
     assert not any(action == "recover" for action, _, _ in PeerGuest.peerCalls[before:])
     assert revisions.Pending(updated) is not None
+
+
+@POSIX
+def test_InstallGuardRejectsAuditChangedAfterTheReadOnlyPreflight(
+    deployment: tuple[SelectedVpnProject, SelectedCloud], monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The expected history must reach the mutating installer, not expire when the observation RPC unlocks."""
+
+    project, cloud = deployment
+    PeerGuest.server = None
+    PeerGuest.history = revisions.InitialHistory(project)
+    operation = PeerGuest.WireGuardPeerOperation
+
+    def ObserveThenChange(self: PeerGuest, bundle: ArtifactBundle, action: str, change: str, deviceId: str, **options: Any) -> dict[str, object]:
+        """Model another controller completing revocation/removal in the inter-RPC gap."""
+
+        facts = operation(self, bundle, action, change, deviceId, **options)
+
+        if action == "history-status":
+            PeerGuest.history = "e" * 64
+
+        return facts
+
+    monkeypatch.setattr(PeerGuest, "WireGuardPeerOperation", ObserveThenChange)
+    PeerGuest.calls.clear()
+
+    with pytest.raises(VpnError, match="install lock"):
+        RunVpnProject(project, "deploy", allowMutation=True, scopeConfirm="example-folder", provider=cloud, guestFactory=PeerGuest)
+
+    assert PeerGuest.server is None and not any(action == "install" for action, _ in PeerGuest.calls)

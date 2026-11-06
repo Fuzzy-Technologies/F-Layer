@@ -118,9 +118,10 @@ class SelectedGuest:
         PrivatePath(identityFile)
         assert ReadPrivate(knownHostsFile) == ("203.0.113.20 " + PUBLIC_KEY + "\n").encode()
 
-    def Install(self, bundles: tuple[tuple[str, ArtifactBundle], ...]) -> None:
+    def Install(self, bundles: tuple[tuple[str, ArtifactBundle], ...], *, expectedWireGuardHistory: str = "") -> None:
         """Capture retained original server programs and simulate a transaction refusal."""
 
+        assert bool(expectedWireGuardHistory) == any(protocol == "wireguard" for protocol, _ in bundles)
         self.calls.append(("install", bundles))
 
         if self.failInstall:

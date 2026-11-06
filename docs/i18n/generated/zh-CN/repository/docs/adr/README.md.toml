@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/adr/README.md"
-sourceHash = "sha256:a12be43c294914acf319738df79bcff295df0b6fc443eb42de21a79a5ea66ee5"
-reviewedTranslationHash = "sha256:61cb8aecf645d324d5edfb0cd9c500813f3f0e29ad6ba739fa45b8b58d3e57ca"
+sourceHash = "sha256:5d4df685006e510cd112bc02acffaa1ee1034ca0c0cbbffed7ccdb5d6f18e565"
+reviewedTranslationHash = "sha256:8cf688a74b050e792b40603a9aa19d3e39671a6f19557c5c68eaed6f7e01f2ec"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T12:28:56.321634Z"
+reviewedAt = "2026-11-06T21:24:36.152884Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 架构决策记录
 
@@ -65,4 +65,5 @@ ADR 编号一经分配便保持不变。
 | [ADR 0021](0021-python-naming-wire-compatibility.md)     | Python 命名与稳定的外部数据格式       |
 | [ADR 0022](0022-explicit-xray-runtime-upgrades.md)       | 显式、可恢复的 Xray 运行时升级        |
 | [ADR 0023](0023-selectable-vpn-transports.md)            | 显式选择 VPN 协议与隔离共存           |
+| [ADR 0024](0024-owned-vpn-protocol-transitions.md)       | 受管协议迁移、入口与不可变纪元 |
 '''

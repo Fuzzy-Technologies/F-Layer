@@ -24,6 +24,7 @@ class SecurityGroupRule:
     toPort: int | None
     ipv4Cidrs: tuple[str, ...]
     description: str = ""
+    labels: tuple[tuple[str, str], ...] = ()
 
     def __post_init__(self) -> None:
         """Reject ambiguous directions, port policies, targets and duplicate CIDRs before comparison."""
@@ -46,7 +47,15 @@ class SecurityGroupRule:
             if not isinstance(cidr, str) or str(ipaddress.IPv4Network(cidr, strict=True)) != cidr:
                 raise ValueError("Security-group rule CIDR must be canonical IPv4")
 
+        if (not isinstance(self.labels, tuple) or len(self.labels) > 64
+                or any(not isinstance(pair, tuple) or len(pair) != 2 or not all(isinstance(value, str) for value in pair)
+                       or re.fullmatch(r"[a-z][-_./\\@0-9a-z]{0,62}", pair[0]) is None
+                       or re.fullmatch(r"[-_./\\@0-9a-z]{0,63}", pair[1]) is None for pair in self.labels)
+                or len({pair[0] for pair in self.labels}) != len(self.labels)):
+            raise ValueError("Security-group rule labels require bounded immutable unique provider metadata")
+
         object.__setattr__(self, "ipv4Cidrs", tuple(sorted(self.ipv4Cidrs)))
+        object.__setattr__(self, "labels", tuple(sorted(self.labels)))
 
 
 @dataclass(frozen=True, slots=True)
@@ -170,7 +179,7 @@ def ParseSecurityGroup(payload: object, resource: ProviderResource) -> SecurityG
     rules = []
 
     for raw in payload["rules"]:
-        if (not isinstance(raw, dict) or set(raw) - {"id", "description", "direction", "ports", "protocol_name", "protocol_number",
+        if (not isinstance(raw, dict) or set(raw) - {"id", "description", "labels", "direction", "ports", "protocol_name", "protocol_number",
                                                    "cidr_blocks", "security_group_id", "predefined_target"}
                 or not isinstance(raw.get("id"), str) or not isinstance(raw.get("direction"), str)
                 or raw.get("security_group_id") not in {None, ""} or raw.get("predefined_target") not in {None, ""}):
@@ -210,8 +219,13 @@ def ParseSecurityGroup(payload: object, resource: ProviderResource) -> SecurityG
                 or blocks.get("v6_cidr_blocks", []) != []):
             raise ValueError("Security-group rule requires supported explicit IPv4 targets")
 
+        labels = raw.get("labels", {})
+
+        if not isinstance(labels, dict):
+            raise ValueError("Security-group rule labels require an explicit provider object")
+
         rules.append(SecurityGroupRule(raw["id"], raw["direction"].lower(), protocol, first, last,
-                                        tuple(blocks["v4_cidr_blocks"]), raw.get("description", "")))
+                                        tuple(blocks["v4_cidr_blocks"]), raw.get("description", ""), tuple(labels.items())))
 
     return SecurityGroupSnapshot(resource, payload["network_id"], tuple(rules))
 
@@ -253,8 +267,8 @@ def ExpectedRules(spec: ResourceSpec) -> tuple[SecurityGroupRule, ...]:
     return tuple(rules)
 
 
-def RuleSemantics(rules: tuple[SecurityGroupRule, ...]) -> Counter[tuple[str, str, int | None, int | None, str, str]]:
+def RuleSemantics(rules: tuple[SecurityGroupRule, ...]) -> Counter[tuple[str, str, int | None, int | None, str, str, tuple[tuple[str, str], ...]]]:
     """Compare complete effective policy with multiplicity while retaining provider IDs separately."""
 
-    return Counter((rule.direction, rule.protocol, rule.fromPort, rule.toPort, cidr, rule.description)
+    return Counter((rule.direction, rule.protocol, rule.fromPort, rule.toPort, cidr, rule.description, rule.labels)
                    for rule in rules for cidr in rule.ipv4Cidrs)

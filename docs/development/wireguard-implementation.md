@@ -283,6 +283,32 @@ or nft policy. Separate isolated Linux CI checks real pinned-tool peer updates,
 interface identity, nft echo/live equivalence, rejected-batch atomicity and
 unrelated-table preservation. No desktop network or production guest is exercised.
 
+## Peer SSH boundary
+
+`SshGuestProvisioner.WireGuardPeerOperation()` now exposes the guest transaction
+through the existing independently host-pinned SSH channel. It accepts a retained
+private server bundle, one named enrollment/revocation, and `status`, `apply` or
+`recover`. Mutation requires exact scope confirmation, explicit consent, current
+receipt and original chained history; recovery also requires the original receipt.
+Status rejects mutation options. Validate these before SSH, bind the exact server
+role/name and descriptor owner to the full stack identity, and verify its retained
+configuration/program hashes. Service maintenance uses the same strengthened
+owner check. No suffix-only bundle can authorize a different stack's guest root.
+
+Only the driver/helper and server configuration/descriptor travel through private
+SSH stdin; the descriptor keeps the original installed-program pin. The root
+receiver independently validates the exact four-file envelope, target and consent
+before private temporary staging, then invokes a bounded argument vector. It
+forwards no raw stderr. The controller rejects duplicate fields, extra output,
+wrong targets/descriptor hashes, inconsistent history facts or arbitrary results.
+Mutation acknowledgments distinguish `committed` and recovery `not-applied`;
+they do not replace a following healthy-service observation. Portable tests use
+in-memory runner/staging boundaries and execute no SSH or guest program.
+
+This low-level API does not persist controller intent or issue fresh device keys.
+Callers must retain the complete old/new bundles and original proofs until the
+pending controller revision workflow supplies their durable journal.
+
 ## Remaining integration
 
 `PrepareWireGuardPeerEnrollment()` and `PrepareWireGuardPeerRevocation()` now
@@ -294,9 +320,8 @@ unchanged. Invalid identities, address/key reuse, an over-capacity enrollment or
 revocation of the final peer are refused. The original private material remains
 available for audit. Removing the final peer requires protocol deactivation.
 These preparation APIs do not contact the guest, disconnect a peer, persist a
-revision or update project state. Public live revocation still requires the
-controller revision/recovery workflow and SSH integration with the private guest
-transaction; the peer CLI does not yet expose it.
+revision or update project state. Public project revocation still requires the
+controller revision/recovery workflow; the peer CLI does not yet expose it.
 
 Adding/removing a protocol on an existing guest, schema-1 migration, explicit
 cloud/guest ingress overlays and scoped peer enrollment/revocation remain Task

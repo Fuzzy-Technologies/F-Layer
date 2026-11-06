@@ -175,6 +175,77 @@ def WireGuard(content: bytes) -> bytes:
 
 
 
+def _UniquePeerObject(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Reject ambiguous repeated fields before privileged peer staging."""
+
+    result: dict[str, object] = {}
+
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Duplicate WireGuard peer request field")
+
+        result[key] = value
+
+    return result
+
+
+def WireGuardPeer(content: bytes) -> bytes:
+    """Run one exact peer operation through private staging without forwarding installer diagnostics."""
+
+    if os.geteuid() != 0 or not 1 <= len(content) <= MAX_REQUEST_BYTES:
+        raise ValueError("WireGuard peer operation requires a bounded privileged request")
+
+    request = json.loads(content, object_pairs_hook=_UniquePeerObject)
+
+    if not isinstance(request, dict) or set(request) != {"bundles", "wireguard_peer"}:
+        raise ValueError("Invalid WireGuard peer envelope")
+
+    options = request["wireguard_peer"]
+    fields = {"action", "change", "device_id", "allow_mutation", "expected_receipt_sha256", "expected_previous_receipt_sha256", "expected_history_sha256"}
+
+    if (not isinstance(options, dict) or set(options) != fields or type(options["allow_mutation"]) is not bool
+            or any(not isinstance(value, str) for key, value in options.items() if key != "allow_mutation")
+            or options["action"] not in {"status", "apply", "recover"} or options["change"] not in {"enroll", "revoke"}
+            or re.fullmatch(r"[a-z][a-z0-9-]{0,62}", options["device_id"]) is None):
+        raise ValueError("Invalid WireGuard peer operation")
+
+    receipt, previous, history = (options[key] for key in ("expected_receipt_sha256", "expected_previous_receipt_sha256", "expected_history_sha256"))
+
+    if options["action"] == "status":
+        if options["allow_mutation"] or receipt or previous or history:
+            raise ValueError("WireGuard peer status accepts no mutation preconditions")
+
+    elif (options["allow_mutation"] is not True or any(re.fullmatch(r"[0-9a-f]{64}", value) is None for value in (receipt, history))
+          or (re.fullmatch(r"[0-9a-f]{64}", previous) is None if options["action"] == "recover" else bool(previous))):
+        raise ValueError("WireGuard peer mutation requires complete exact preconditions")
+
+    bundles = DecodeRequest(json.dumps({"bundles": request["bundles"]}).encode())
+
+    if (len(bundles) != 1 or bundles[0][0] != "wireguard"
+            or set(bundles[0][1]) != {"install.py", "maintenance.py", "server.conf", "deployment.json"}):
+        raise ValueError("WireGuard peer maintenance accepts only its exact packed private bundle")
+
+    try:
+        with _Staged(bundles[0][1]) as stage:
+            command = ["/usr/bin/python3", str(stage / "install.py"), "--" + options["action"], "--change", options["change"], "--device-id", options["device_id"]]
+
+            if options["action"] != "status":
+                command += ["--allow-mutation", "--expected-receipt-sha256", receipt, "--expected-history-sha256", history]
+
+                if options["action"] == "recover":
+                    command += ["--expected-previous-receipt-sha256", previous]
+
+            result = subprocess.run(command, cwd=stage, stdin=subprocess.DEVNULL, capture_output=True, check=False, timeout=300)
+
+            if result.returncode != 0 or not 1 <= len(result.stdout) <= 4096:
+                raise ValueError
+
+            return result.stdout
+
+    except (OSError, ValueError, subprocess.SubprocessError):
+        raise GuestInstallError("wireguard", "peer") from None
+
+
 def Runtime(content: bytes) -> bytes:
     """Execute exactly one bounded VLESS maintenance operation without exposing installer errors."""
 
@@ -231,6 +302,11 @@ def Main() -> int:
 
     try:
         content = sys.stdin.buffer.read(MAX_REQUEST_BYTES + 1)
+
+        if 1 <= len(content) <= MAX_REQUEST_BYTES and isinstance(json.loads(content), dict) and "wireguard_peer" in json.loads(content):
+            sys.stdout.buffer.write(WireGuardPeer(content))
+
+            return 0
 
         if 1 <= len(content) <= MAX_REQUEST_BYTES and isinstance(json.loads(content), dict) and "wireguard" in json.loads(content):
             sys.stdout.buffer.write(WireGuard(content))

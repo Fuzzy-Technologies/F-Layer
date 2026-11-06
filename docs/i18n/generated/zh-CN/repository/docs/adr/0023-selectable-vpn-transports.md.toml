@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/adr/0023-selectable-vpn-transports.md"
-sourceHash = "sha256:e580a5d09c4a06705acc3779b82de5dff32398011b19bd1e4f2f879b3a0a376c"
-reviewedTranslationHash = "sha256:671213ffe78b85e58111a88405e6e7fa1a7420965aab9f1dd3ca6553e864ec29"
+sourceHash = "sha256:4ff8a3ebe2bd4a9a7b76df262014bee753e1266f7844838180844a3bef1d95bb"
+reviewedTranslationHash = "sha256:15f5802b73ed766b3ae958729dbb2f9c92b7e8cfa7d569bc9225dd513afed626"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T12:13:45.354785Z"
+reviewedAt = "2026-11-06T12:23:11.090442Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# ADR 0023：显式选择 VPN 协议与隔离共存
 
@@ -81,6 +81,20 @@ MTU 必须在限定范围内，初始默认值为 1280。DNS 和全量/分流 IP
 将其绑定到精确栈身份、原始项目指纹、各传输的期望指纹、
 材料/制品清单哈希以及观察到的来宾回执。不得包含密钥、证书或配置正文。
 显式迁移期间，模式 1 的制品与固定主机信任保持不变。
+
+另外保留不可变且受管的创建基线：精确的原始六个 `ResourceSpec` 值、
+对应 `flayer-spec` 标签、bootstrap 字节/哈希，以及最初串行控制台的信任指纹。
+迁移前从已验证准备制品及受管观察中捕获；不得根据新选择重新构造，
+也不能静默接纳无法解释的线上配置。基线制品引用必须限制在受管项目存储内。
+
+将 `flayer-spec` 视为创建规格身份，而非当前可变入口规则的证明。
+保留该身份，并用独立的预期旧状态回执/日志表示每个允许的入口增量。
+根据创建基线和已提交叠加层验证完整有效规则集，包括原始 SSH 访问；
+未知规则、缺失或不匹配的叠加层均按失败关闭处理。
+不得通过更换标签、重写 bootstrap 或重建虚拟机，让变化后的期望计划匹配旧资源。
+迁移后的状态检查、重试、运行时维护及完整项目销毁，都必须校验冻结云计划及全部叠加层。
+普通重试不能根据当前监听重新编译云规格，也不能重放初始 bootstrap 来修复叠加层；
+未解决或缺失的变更必须显式执行协议恢复。完整项目销毁保留其另行授权的整栈范围。
 
 未来 `flayer vpn protocol` 流程包含只读 `plan`、显式 `enable`、`disable`
 以及 `recover`。修改需要现有 `--allow-mutation`、精确 `--scope-confirm`

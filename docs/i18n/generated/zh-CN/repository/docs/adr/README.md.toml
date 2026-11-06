@@ -4,7 +4,7 @@ sourceHash = "sha256:a12be43c294914acf319738df79bcff295df0b6fc443eb42de21a79a5ea
 reviewedTranslationHash = "sha256:61cb8aecf645d324d5edfb0cd9c500813f3f0e29ad6ba739fa45b8b58d3e57ca"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T12:13:45.354785Z"
+reviewedAt = "2026-11-06T12:23:11.090442Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 架构决策记录
 

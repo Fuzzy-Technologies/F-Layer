@@ -83,6 +83,25 @@ fingerprint, desired per-transport fingerprint, material/artifact manifest hashe
 and observed guest receipt. They contain no keys, certificates or configuration
 bodies. Retain schema-1 artifacts and host pins unchanged during explicit migration.
 
+Preserve an immutable owned creation baseline separately: the exact original six
+`ResourceSpec` values, their `flayer-spec` labels, bootstrap bytes/hash and the
+original serial-console trust fingerprint. Capture these from verified prepared
+artifacts and owned observations before migration; never reconstruct them from
+the new selection or silently adopt an unexplained live configuration. Baseline
+artifact references remain confined to the owned project store.
+
+Treat `flayer-spec` as creation-spec identity, not proof of current mutable ingress.
+Keep that identity unchanged and represent each allowed ingress delta in a separate
+expected-old receipt/journal. Verify the complete effective rule set against the
+creation baseline plus committed overlays, including original SSH access; unknown
+rules or an absent/mismatched overlay fail closed. No relabeling, bootstrap rewrite
+or VM recreation may be used to make a changed desired plan match old resources.
+Post-transition status, retry, runtime maintenance and full-project destroy verify
+both the frozen cloud plan and every overlay. Ordinary retry cannot recompile cloud
+specs from current listeners or replay initial bootstrap to repair an overlay;
+unresolved or missing changes require explicit protocol recovery. Full-project
+destroy retains its separately authorized whole-stack scope.
+
 The future `flayer vpn protocol` workflow has read-only `plan`, explicit `enable`
 and `disable`, and `recover` operations. Mutation requires the existing
 `--allow-mutation` and exact `--scope-confirm`, plus the plan's expected baseline

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import json
 from dataclasses import replace
 from typing import Any
 
@@ -24,7 +25,7 @@ from flayer.providers.contracts import (
     ResourceReference,
 )
 from flayer.providers.lifecycle import ResourceSpec
-from flayer.providers.yandex import YandexCloudSettings
+from flayer.providers.yandex import CommandResult, YandexCloudSettings
 from flayer.vpn_project import VpnYandexProvider
 
 
@@ -159,14 +160,14 @@ def test_AdapterReadsPolicyFromTheSameScopedIdAndRefusesChangedOwnership(monkeyp
     resource = replace(Resource(), labels=(("flayer-spec", "a" * 63),))
     payload = {**Payload(), "name": resource.name, "labels": dict(resource.labels)}
 
-    def Read(command: tuple[str, ...], operation: str) -> dict[str, Any]:
+    def Read(command: tuple[str, ...], operation: str) -> CommandResult:
         """Return synthetic public metadata, never invoke the CLI or cloud."""
 
         calls.append(command)
 
-        return payload
+        return CommandResult(0, json.dumps(payload))
 
-    monkeypatch.setattr(provider, "_ReadJson", Read)
+    monkeypatch.setattr(provider, "_Run", Read)
 
     assert provider.ReadSecurityGroupRules(resource).networkId == "example-network"
     assert calls == [("vpc", "security-group", "get", "--id", "example-group")]

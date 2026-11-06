@@ -455,6 +455,44 @@ guest configuration. Other services, resources, addresses and existing client
 files remain unchanged. Client delivery remains Task #129; peer completion alone
 does not export native profiles or establish Internet/media acceptance.
 
+## Scoped asynchronous cloud ingress SDK
+
+The concrete `VpnYandexProvider` now supplies `BeginIngressChange()` and
+`ReadIngressChange()` for the exact listener delta defined in
+[ADR 0024](../adr/0024-owned-vpn-protocol-transitions.md). This is a provider
+primitive, not the protocol CLI or its durable project/guest coordinator.
+The caller must prove the original cloud graph, committed effective policy and
+original listener attribution, and persist intent before calling Begin. It must
+not call Begin again while a submitted outcome is pending or unknown.
+
+Begin requires explicit mutation consent, exact scope and the expected complete
+before-policy digest. It reads the complete group again, then submits one scoped
+ID-bound `update-rules --async --print-metadata` with CLI retries disabled. Only
+proved deletion IDs or one tagged addition are sent; reject comma, option-like
+and oversized deletion IDs before any I/O. Return only the minimal operation ID,
+resource ID and full request fingerprint. Persist that reference before polling,
+even if the provider completed immediately. No post-submission read is hidden in
+Begin, and a lost/malformed response never becomes `not-applied` or an automatic
+resubmission.
+
+Read accepts only the retained reference bound to that exact plan. Require the
+documented `UpdateSecurityGroupMetadata` type, target group and allocated rule IDs.
+Pending and terminal failure are bounded facts, not healthy policy or proof of
+rollback. Successful completion requires both the typed operation response and a
+fresh complete active-policy observation to match the full delta, including
+unchanged unrelated rules/resource metadata and the actual allocated IDs. Raw
+provider messages are discarded. A later read may retry observation; it never
+repeats the mutation.
+
+Operation JSON and direct security-group policy reads share a 1 MiB byte bound,
+reject duplicate keys at every depth and reject nonstandard JSON numbers. The
+strict group reader also protects ordinary selected-project observation/deletion.
+The upstream [operation metadata contract](https://github.com/yandex-cloud/cloudapi/blob/master/yandex/cloud/vpc/v1/security_group_service.proto)
+and [CLI operation reader](https://yandex.cloud/en/docs/cli/cli-ref/operation/cli-ref/get)
+define the wire boundary. Tests use the real scoped adapter with an in-memory
+runner; they invoke no CLI executable or network. Durable epoch publication,
+guest reservation/fencing, rollback and protocol CLI integration remain Task #128.
+
 ## Remaining integration
 
 Adding/removing a protocol on an existing guest, schema-1 migration, explicit

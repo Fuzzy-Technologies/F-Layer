@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:f891e1be0f09df9814d2ebf9b2898adad215c0e85c6d8b6e923d994a5369fd94"
-reviewedTranslationHash = "sha256:5c1aef6cc4f57684dcce66a9fe073b72310a9b476f4aa856e907134240908e1e"
+sourceHash = "sha256:91eb5eb9ac8987896af5bac2043808e32e51ae6acd15bf4a287ead1f8e00ad6a"
+reviewedTranslationHash = "sha256:7e0b36feb670db626a5416acd03245be936d0aca9844e4cd4d499f477784c57b"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T21:07:04.953723Z"
+reviewedAt = "2026-11-06T21:59:01.477735Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -352,6 +352,16 @@ SSH 结果未知时保留日志。需要恢复期间，对等端 status 报告�
 先于无关安装器检查对等端历史，因此恢复旧控制器文件不能自动接管重复的来宾
 配置。其他服务、资源、地址及已有客户端文件保持不变。客户端交付仍属任务 #129；
 对等端完成本身不导出原生配置，也不证明互联网/媒体验收。
+
+## 限定作用域的异步云入口 SDK
+
+具体 `VpnYandexProvider` 现在提供 `BeginIngressChange()` 与 `ReadIngressChange()`，用于 [ADR 0024](../adr/0024-owned-vpn-protocol-transitions.md) 定义的精确监听器差异。这是提供方原语，不是协议 CLI，也不包含持久项目/来宾协调器。调用方须证明原云图、已提交有效策略及原监听器协议归属，并在 Begin 前持久化意图。提交结果仍待处理或未知时，绝不能再次调用 Begin。
+
+Begin 要求显式变更同意、精确 scope 及完整旧策略的预期摘要。重新读取完整组后，只发送一次按 ID 限定的 `update-rules --async --print-metadata`，并禁用 CLI 重试。仅传入已证明的删除 ID 或一条带标签的新增规则；在任何 I/O 前拒绝含逗号、类似选项或过长的删除 ID。仅返回最小操作 ID、资源 ID 与完整请求指纹。即使提供方立即完成，也必须先保存该引用再轮询。Begin 不隐藏提交后的额外读取；丢失或无效响应绝不变成 `not-applied` 或自动重发。
+
+Read 只接受绑定精确计划的已保存引用，要求文档化的 `UpdateSecurityGroupMetadata` 类型、目标组及分配规则 ID。待处理或最终失败只是有界事实，不能证明健康策略或回滚。成功完成必须同时验证有类型的操作响应与重新观测的完整活动策略符合全部差异，包括无关规则/资源元数据不变以及实际分配 ID。丢弃原始提供方消息。后续 Read 可以重试观测，但绝不重复变更。
+
+操作 JSON 与直接安全组策略读取共享 1 MiB 字节上限，拒绝所有深度的重复键和非标准 JSON 数字。严格组读取器也保护已选项目的普通观测/删除。上游[操作元数据契约](https://github.com/yandex-cloud/cloudapi/blob/master/yandex/cloud/vpc/v1/security_group_service.proto)及 [CLI 操作读取器](https://yandex.cloud/en/docs/cli/cli-ref/operation/cli-ref/get)定义外部边界。测试使用真实作用域适配器和内存 runner，不执行 CLI 或网络。持久纪元发布、来宾预留/授权撤销、回滚及协议 CLI 集成仍属任务 #128。
 
 ## 尚待集成
 

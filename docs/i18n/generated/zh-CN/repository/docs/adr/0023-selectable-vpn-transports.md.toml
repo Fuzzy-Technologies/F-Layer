@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/adr/0023-selectable-vpn-transports.md"
-sourceHash = "sha256:4ff8a3ebe2bd4a9a7b76df262014bee753e1266f7844838180844a3bef1d95bb"
-reviewedTranslationHash = "sha256:15f5802b73ed766b3ae958729dbb2f9c92b7e8cfa7d569bc9225dd513afed626"
+sourceHash = "sha256:66671c60ed4e62b00409b1f9c98dd0beb82e88c50f1f116f6c1d0278da68009b"
+reviewedTranslationHash = "sha256:56d6de694701786a96675e0f6b60383dc261f7754174ea7acd408b4848fbd05d"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T12:23:11.090442Z"
+reviewedAt = "2026-11-06T12:28:56.321634Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# ADR 0023：显式选择 VPN 协议与隔离共存
 
@@ -35,10 +35,19 @@ OpenVPN，需要显式选择、独立凭据和网络，以及对已准备项目�
 旧软件包必须在修改前拒绝模式 2；这是明确的前向兼容边界，不代表可以重建虚拟机。
 
 身份、云位置、路由策略和命名设备保持原有含义。
-`devices.ipv4_address` 仍只属于 AWG。每个新增 IP 隧道拥有
-`device_addresses` 表，将精确声明的设备 ID 映射到显式私有 IPv4 地址。
-不得重命名设备或按枚举顺序分配地址。VLESS 不分配隧道地址。
+每个所选模式 2 协议表都必须有显式、有界且无重复的 `device_ids`，
+其成员只能是已声明设备的子集。`devices.ipv4_address` 仍只属于 AWG，
+且仅对 AWG 成员必填。每个新增 IP 隧道拥有 `device_addresses` 表，
+键集合精确等于该协议自己的成员，映射到显式私有 IPv4 地址。
+VLESS 无需隧道地址。不得重命名设备或按枚举顺序分配地址。
 新协议不得复用 AWG 密钥、VLESS UUID 或其他协议的证书。
+
+模式 2 的各传输校验、指纹、材料、渲染和导出，只使用该协议成员、
+自身监听/设置、栈身份及相关共享路由策略的规范化投影。
+排除无关设备、监听及其他协议设置。成员变化必须显式注册或吊销对应协议的设备。
+模式 1 迁移时，AWG/VLESS 的成员精确继承原设备，保留旧字节、凭据、
+回执和原指纹算法。仅属于 WireGuard 的设备变更，不得注册或轮换其他协议，
+也不得改变其他协议的期望指纹。
 
 以下片段展示未来模式 2 的字段；它不是完整项目，也不是当前软件包可接受的配置：
 
@@ -47,6 +56,7 @@ schema_version = 2
 protocols = ["amneziawg", "vless-reality", "wireguard", "openvpn"]
 
 [wireguard]
+device_ids = ["laptop", "phone"]
 port = 51821
 tunnel_cidr = "10.67.0.0/24"
 mtu = 1280
@@ -56,6 +66,7 @@ laptop = "10.67.0.2"
 phone = "10.67.0.3"
 
 [openvpn]
+device_ids = ["laptop", "phone"]
 port = 1194
 protocol = "udp"
 tunnel_cidr = "10.68.0.0/24"

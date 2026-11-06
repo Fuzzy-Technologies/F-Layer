@@ -31,11 +31,22 @@ Schema 2 is rejected by older packages before mutation; it is an intentional
 forward-compatibility boundary, not permission to recreate the VM.
 
 Identity, cloud placement, route policy and named devices retain their existing
-meaning. `devices.ipv4_address` remains AWG-only. Each additional IP tunnel has a
-`device_addresses` table mapping the exact declared device IDs to explicit private
-IPv4 addresses. No device is renamed and no address is allocated by enumeration.
-VLESS has no tunnel-address allocation. New protocol material never reuses an
-AWG key, VLESS UUID or another protocol's certificate.
+meaning. Every selected schema-2 protocol table has an explicit, bounded,
+duplicate-free `device_ids` subset of declared devices. `devices.ipv4_address`
+remains AWG-only and is required only for AWG members. Each additional IP tunnel
+has a `device_addresses` table whose keys exactly match its own members, mapped
+to explicit private IPv4 addresses. VLESS needs no tunnel addresses. No device
+is renamed and no address is allocated by enumeration. New protocol material
+never reuses an AWG key, VLESS UUID or another protocol's certificate.
+
+Schema-2 per-transport validation, fingerprints, material, rendering and exports
+use a canonical projection of only that protocol's members, listener/settings,
+stack identity and relevant shared route policy. Exclude unrelated devices,
+listeners and protocol settings. Membership changes require explicit enrollment
+or revocation for the affected protocol. Schema-1 migration seeds AWG/VLESS
+membership with exactly their prior devices and retains their old bytes,
+credentials, receipts and legacy fingerprint algorithms. A WireGuard-only device
+change cannot enroll, rotate or change the desired fingerprint of another protocol.
 
 The following fragment illustrates future schema-2 fields; it is not a complete
 project or a configuration accepted by the current package:
@@ -45,6 +56,7 @@ schema_version = 2
 protocols = ["amneziawg", "vless-reality", "wireguard", "openvpn"]
 
 [wireguard]
+device_ids = ["laptop", "phone"]
 port = 51821
 tunnel_cidr = "10.67.0.0/24"
 mtu = 1280
@@ -54,6 +66,7 @@ laptop = "10.67.0.2"
 phone = "10.67.0.3"
 
 [openvpn]
+device_ids = ["laptop", "phone"]
 port = 1194
 protocol = "udp"
 tunnel_cidr = "10.68.0.0/24"

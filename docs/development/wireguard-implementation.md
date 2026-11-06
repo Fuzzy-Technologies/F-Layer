@@ -320,6 +320,8 @@ This avoids nesting its CLI lock and preserves the original installed program,
 runtime and startup callbacks. A read-only check verifies that same history before
 the receiver continues to another transport; the WG guard always runs first even
 if the input batch listed another protocol first.
+Transient input copies use exclusive private files in the request stage itself;
+they require no existing managed root and make no cross-filesystem rename assumption.
 
 This low-level API does not persist controller intent or issue fresh device keys.
 The project workflow below supplies its durable journal and retains complete

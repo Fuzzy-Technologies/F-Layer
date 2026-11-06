@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:8210aea131ef2cdc2374553dc4640e2e985cd88875e5b29b77e6369ce10f4be1"
-reviewedTranslationHash = "sha256:f718d412a2fcda6acde6b89776822dcdfb8ea4db97f5b072af9b3e82a1ebb20a"
+sourceHash = "sha256:a4ba2757205fa59548c242629c318444afe25e71329277fcc44e7fdb460a9f14"
+reviewedTranslationHash = "sha256:eb9d822fff841780e2a5a3875a57565850989f7cca5afcef72783693e7c2d8be"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T20:19:47.541579Z"
+reviewedAt = "2026-11-06T20:23:53.095642Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -254,6 +254,8 @@ SSH 通道提供来宾事务。接收保留的私有服务器包、一个指定�
 这避免嵌套 CLI 锁，并保留原始已安装程序、运行时及启动回调。接收器进入其他
 传输前，只读检查再次校验相同历史；即使输入批次先列出其他协议，也始终先运行
 WG 安装保护。
+临时输入副本在请求暂存目录内以排他私有文件写入，不依赖已存在的受管根目录，
+也不假定能够跨文件系统重命名。
 
 该低层 API 不持久化控制器意图，也不签发新设备密钥。下述项目流程提供持久日志，
 并保留完整旧/新包及原始证明。

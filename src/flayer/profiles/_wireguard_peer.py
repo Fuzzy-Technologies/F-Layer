@@ -730,6 +730,20 @@ def _OriginalGuest(guest: Any, stage: Path, expected: str) -> Any:
     return module
 
 
+def _StageFile(guest: Any, path: Path, content: bytes) -> None:
+    """Write one private transient input without requiring a managed installation or crossing filesystems."""
+
+    guest._Directory(path.parent, private=True)
+
+    if not isinstance(content, bytes) or not 1 <= len(content) <= 1048576:
+        raise guest.GuestError("Transient peer input exceeds its bound")
+
+    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+
+    with os.fdopen(descriptor, "wb") as stream:
+        stream.write(content)
+
+
 def Main(argv: list[str] | None = None) -> int:
     """Run only an explicit owned peer action with root, fixed staging, consent and exact receipt guards."""
 
@@ -833,7 +847,7 @@ def Main(argv: list[str] | None = None) -> int:
                     os.chmod(desired, 0o700)
 
                     for name in ("server.conf", "deployment.json", "install.py"):
-                        guest._Atomic(desired / name, guest._Read(stage / ("original.py" if name == "install.py" else name)))
+                        _StageFile(guest, desired / name, guest._Read(stage / ("original.py" if name == "install.py" else name)))
 
                     request = original._Request(desired)[0]
 
@@ -855,7 +869,7 @@ def Main(argv: list[str] | None = None) -> int:
                     os.chmod(desired, 0o700)
 
                     for name in ("server.conf", "deployment.json", "install.py"):
-                        guest._Atomic(desired / name, guest._Read((root if name == "install.py" else stage) / name))
+                        _StageFile(guest, desired / name, guest._Read((root if name == "install.py" else stage) / name))
 
                     if options.status:
                         result = Status(guest, desired, options.change, options.deviceId)

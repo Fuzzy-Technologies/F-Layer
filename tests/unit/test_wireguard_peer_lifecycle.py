@@ -8,6 +8,7 @@ import os
 import shutil
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -318,21 +319,33 @@ def InstallEnvelope(tmpPath: Path, stage: Path, monkeypatch: pytest.MonkeyPatch)
 
     envelope = tmpPath / "install-envelope"
     envelope.mkdir(mode=0o700)
+    fresh = not guest.BASE.exists()
+    requests: list[Path] = []
 
     for name in ("server.conf", "deployment.json"):
-        guest._Atomic(envelope / name, (stage / name).read_bytes())
+        peers._StageFile(guest, envelope / name, (stage / name).read_bytes())
 
-    guest._Atomic(envelope / "original.py", (stage / "install.py").read_bytes())
-    guest._Atomic(envelope / "maintenance.py", (stage / "install.py").read_bytes())
-    guest._Atomic(envelope / "install.py", Path(peers.__file__).read_bytes())
+    peers._StageFile(guest, envelope / "original.py", (stage / "install.py").read_bytes())
+    peers._StageFile(guest, envelope / "maintenance.py", (stage / "install.py").read_bytes())
+    peers._StageFile(guest, envelope / "install.py", Path(peers.__file__).read_bytes())
     monkeypatch.setattr(peers, "__file__", str(envelope / "install.py"))
+
+    def Request(path: Path) -> Any:
+        """Prove no managed directory was needed through staging validation on a first installation."""
+
+        if fresh and not requests:
+            assert not guest.BASE.exists()
+
+        requests.append(path)
+
+        return guest._Request(path)
 
     def Original(helper: Any, supplied: Path, digest: str) -> Any:
         """Keep all installation effects in the existing model; the real loader's hash gate is tested in memory."""
 
         assert guest._Digest((supplied / "original.py").read_bytes()) == digest
 
-        return guest
+        return SimpleNamespace(_Request=Request, _Install=guest._Install, _Check=guest._Check)
 
     monkeypatch.setattr(peers, "_OriginalGuest", Original)
 

@@ -130,7 +130,13 @@ class PeerGuest(SelectedGuest):
         assert options["expectedReceipt"] == cls.receipt
 
         if action == "recover":
-            if cls.receipt == options["expectedPrevious"] and cls.history == options["expectedHistory"]:
+            cancelled = revisions.CommittedHistory(cls.project, change, deviceId, options["expectedPrevious"], cls.receipt,
+                                                   self.Descriptor(cls.server), options["expectedHistory"])
+
+            if cls.receipt == options["expectedPrevious"] and cls.history in {options["expectedHistory"], cancelled}:
+                cls.audit = {"receipt": cls.receipt, "history": options["expectedHistory"], "change": change,
+                             "device_id": deviceId, "desired": self.Descriptor(cls.server)}
+                cls.history = cancelled
                 cls.journal = None
 
                 return {"status": "complete", "outcome": "not-applied"}
@@ -323,6 +329,9 @@ def test_LostPeerResponseRequiresExplicitRecoveryAndNeverRegeneratesPreparedKeys
 
     if failure in {"before", "prefix"}:
         assert "not-applied" in result.details
+        state = revisions.LoadRevisions(updated)
+        assert state.lastRecord is not None and state.lastRecord["schema_version"] == 2
+        assert state.history != state.lastRecord["previous_history_sha256"] == revisions.InitialHistory(updated)
         assert Apply(updated, cloud).status == "complete" and generated == ["peer"], "Reuse a complete identical rolled-back candidate"
 
     else:

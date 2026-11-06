@@ -271,6 +271,17 @@ replay a stale request, including longer repeated cycles. Status reports both
 current and transaction-original heads. These hashes are operation preconditions,
 not client connection keys. Canonical metadata bytes, unknown files, wrong old
 proofs or changed commit history fail closed. Status exposes bounded facts only.
+
+An unapplied recovery also consumes its original history authority. Before
+acknowledging cancellation or erasing recovery backups, durably publish a version 1
+audit record with equal previous/current receipt hashes, the actual unchanged
+deployment digest and the original history parent. Its hash fences an apply RPC
+that was delayed before acquiring the exclusive guest lock: that old request can
+no longer activate after recovery returned `not-applied`. Exact recovery retries
+retain the same fence; a later attempt requires a newly observed history head.
+A published fence is a valid rollback-cleanup prefix after a crash, including an
+empty final journal. It never proves a committed enrollment or revocation.
+
 The entrypoint requires explicit mutation consent and the shared exclusive lock;
 read-only status creates no coordination file and discards an observation if a
 lock appears while reading after reboot. Temporary private request staging does
@@ -310,6 +321,9 @@ the installed root/unit are absent. It validates managed ancestry and audit
 ownership without creating a directory or coordination file. Ordinary deployment
 requires this history proof before any installer: removing the service cannot
 hide retained revocation history or permit old controller files to reactivate keys.
+An absent installed root with retained audit is refused by the guest install guard
+even when the caller supplies that audit's current digest. Recreating such a root
+requires an explicit protocol recovery contract, not ordinary installation.
 
 Installation also carries the exact expected history through private stdin.
 The packed driver rechecks it under the same exclusive guest lock as installation,
@@ -343,8 +357,24 @@ After a verified active guest result, persist a separate immutable nonsecret com
 record before advancing an atomic private head pointer and retiring the journal.
 Bind each record to its exact parent, creation baseline, old/new transport pins and
 guest receipt/history. A recovered unapplied attempt retains its prepared bytes
-for audit and advances only local evidence; its active keys and guest history stay
-unchanged. Publication retries reconcile exact existing record/pointer bytes.
+for audit and advances the guest cancellation history while keeping its active
+receipt, keys and configuration unchanged. New completion records use schema
+version 2: a submitted unapplied attempt must prove that exact guest fence. An
+unstaged attempt that could never submit an apply RPC advances only local evidence
+and retains the guest history. Historical version 1 records remain readable with
+their original immutable semantics. Publication retries reconcile exact existing
+record/pointer bytes.
+An interrupted version 1 committed completion can retire its remaining journal
+without rewriting that immutable record, including a record published before its
+head pointer. Inspect the exact manifest-owned pending completion before remote
+access. A submitted version 1 unapplied completion whose immutable record exists
+but whose journal remains is ambiguous: reject that upgrade state before any
+provider/guest operation and retain it for explicit inspection, whether its head
+was published or not. Its old unfenced evidence is never silently reinterpreted
+as version 2.
+Already retired version 1 cancellations are not retroactively protected against
+delayed legacy requests; only a subsequent verified commit or cancellation
+advances their guest authority.
 Unknown, missing, linked or mismatched ownership metadata is never adopted.
 
 The loader checks the complete bounded chain (at most 4096 records), independently

@@ -136,14 +136,22 @@ def DecodeResult(
                        for key in ("previous_receipt_sha256", "previous_history_sha256"))
                 or bool(data["previous_receipt_sha256"]) != bool(data["previous_history_sha256"])
                 or data["status"] == "peer-recovery-required" and not data["previous_receipt_sha256"]
-                or data["status"] == "peer-recovery-required" and (
-                    data["is_desired"] and data["receipt_sha256"] == data["previous_receipt_sha256"]
-                    or not data["is_desired"] and (data["receipt_sha256"] != data["previous_receipt_sha256"]
-                                                  or data["history_sha256"] != data["previous_history_sha256"]))
                 or data["is_desired"] != (data["deployment_sha256"] == data["desired_deployment_sha256"])
                 or data["desired_deployment_sha256"] != hashlib.sha256(
                     next(item.content for item in bundle.files if item.name == "deployment.json")).hexdigest()):
             raise ValueError
+
+        if data["status"] == "peer-recovery-required":
+            descriptor = json.loads(next(item.content for item in bundle.files if item.name == "deployment.json"))
+            cancellation = {"schema_version": 1, "owner": descriptor["owner"], "action": change, "device_id": deviceId,
+                            "previous_receipt_sha256": data["previous_receipt_sha256"], "receipt_sha256": data["receipt_sha256"],
+                            "deployment_sha256": data["deployment_sha256"], "previous_history_sha256": data["previous_history_sha256"]}
+            cancelledHistory = hashlib.sha256((json.dumps(cancellation, sort_keys=True, separators=(",", ":")) + "\n").encode()).hexdigest()
+
+            if (data["is_desired"] and data["receipt_sha256"] == data["previous_receipt_sha256"]
+                    or not data["is_desired"] and (data["receipt_sha256"] != data["previous_receipt_sha256"]
+                                                  or data["history_sha256"] not in {data["previous_history_sha256"], cancelledHistory})):
+                raise ValueError
 
         return data
 

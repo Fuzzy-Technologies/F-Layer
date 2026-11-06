@@ -153,6 +153,85 @@ def Envelope(tmpPath: Path, monkeypatch: pytest.MonkeyPatch, model: Any, desired
 
 
 @pytest.mark.parametrize("action", ["enroll", "revoke"])
+@pytest.mark.parametrize("failure", ["none", "after-wg", "after-nft"])
+def test_UnappliedRecoveryFencesAnApplyThatHasNotYetAcquiredItsLock(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, action: str, failure: str,
+) -> None:
+    """A delayed old request cannot activate after recovery has durably reported that it was not applied."""
+
+    model, desired, previous, _ = Environment(tmp_path, monkeypatch, action)
+    owner = model.originalRequest["owner"]
+    original = {path.name: path.read_bytes() for path in model.root.iterdir()}
+
+    if failure != "none":
+        model.failure = failure
+
+        with pytest.raises(Interrupted):
+            peers.Apply(guest, desired, action, model.deviceId, previous, model.history)
+
+    assert peers.Recover(guest, desired, action, model.deviceId, previous, previous, model.history) == "not-applied"
+    audit = {"schema_version": 1, "owner": owner, "action": action, "device_id": model.deviceId,
+             "previous_receipt_sha256": previous, "receipt_sha256": previous,
+             "deployment_sha256": model.oldReceipt["deployment_sha256"], "previous_history_sha256": model.history}
+    cancelled = guest._Digest(guest._Encode(audit))
+
+    assert peers._Audit(guest, owner) == audit
+    assert peers._History(guest, owner) == cancelled != model.history
+    assert {path.name: path.read_bytes() for path in model.root.iterdir()} == original
+    events = list(model.events)
+
+    # The delayed operation carries the exact pre-recovery receipt and history, not a fabricated stale value.
+    with pytest.raises(guest.GuestError, match="history"):
+        peers.Apply(guest, desired, action, model.deviceId, previous, model.history)
+
+    assert peers.Recover(guest, desired, action, model.deviceId, previous, previous, model.history) == "not-applied"
+    assert peers._History(guest, owner) == cancelled and model.events == events
+    assert peers.Apply(guest, desired, action, model.deviceId, previous, cancelled) == "committed"
+    assert peers._History(guest, owner) not in {model.history, cancelled}
+
+
+@pytest.mark.parametrize("published", [True, False])
+def test_CancellationProofMustBeDurableBeforeAnyRecoveryBackupIsErased(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, published: bool,
+) -> None:
+    """Both pre-write and post-publication failures preserve the exact journal and support a fenced retry."""
+
+    model, desired, previous, _ = Environment(tmp_path, monkeypatch, "enroll")
+    owner = model.originalRequest["owner"]
+    _, _, transaction = guest._Paths(owner)
+    model.failure = "after-wg"
+
+    with pytest.raises(Interrupted):
+        peers.Apply(guest, desired, "enroll", model.deviceId, previous, model.history)
+
+    atomic = guest._Atomic
+
+    def Atomic(path: Path, content: bytes, mode: int = 0o600) -> None:
+        """Inject a cancellation acknowledgment failure without skipping any other real private-file operation."""
+
+        if path.name == "peer-" + owner + ".json":
+            if published:
+                atomic(path, content, mode)
+
+            raise OSError("Synthetic cancellation durability failure")
+
+        atomic(path, content, mode)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(guest, "_Atomic", Atomic)
+
+        with pytest.raises(OSError, match="cancellation durability"):
+            peers.Recover(guest, desired, "enroll", model.deviceId, previous, previous, model.history)
+
+    assert (transaction / "transaction.json").exists() and (transaction / "new" / "receipt.json").exists()
+    facts = peers.Status(guest, desired, "enroll", model.deviceId)
+    assert facts["status"] == "peer-recovery-required" and facts["previous_history_sha256"] == model.history
+    assert (facts["history_sha256"] != model.history) is published
+    assert peers.Recover(guest, desired, "enroll", model.deviceId, previous, previous, model.history) == "not-applied"
+    assert not transaction.exists() and model.kernelConfig == model.originalConfig
+
+
+@pytest.mark.parametrize("action", ["enroll", "revoke"])
 def test_PeerApplyRepeatsWithoutRestartOrRotationAndKeepsOriginalProgram(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, action: str,
 ) -> None:
@@ -436,6 +515,40 @@ def test_HistoryEntrypointReadsRetainedAuditAfterTheInstalledRootWasRemoved(
     assert peers.Main(["--history-status", "--change", "enroll", "--device-id", model.deviceId]) == 0
     assert json.loads(capsys.readouterr().out)["history_sha256"] == expected != model.history
     assert not model.root.exists() and not guest.LOCK.exists() and model.events == events
+
+
+def test_GuardedInstallCannotRecreateAnAbsentRootWithRetainedAuditEvenWithItsCurrentHistory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Knowledge of a retained history digest alone cannot authorize restoring obsolete peer credentials."""
+
+    stage, request, model = Seed(tmp_path, monkeypatch)
+    InstallEnvelope(tmp_path, stage, monkeypatch)
+
+    for directory in (guest.BASE.parent.parent, guest.BASE.parent, guest.BASE):
+        guest._Directory(directory, create=True)
+
+    guest._Atomic(guest.BASE / ("peer-" + request["owner"] + ".json"), guest._Encode({
+        "schema_version": 1, "owner": request["owner"], "action": "revoke", "device_id": "phone",
+        "previous_receipt_sha256": "a" * 64, "receipt_sha256": "b" * 64,
+        "deployment_sha256": "c" * 64, "previous_history_sha256": "d" * 64}))
+    history = peers._History(guest, request["owner"])
+    loaded = []
+
+    def Forbidden(*arguments: Any) -> Any:
+        """An obsolete installer must never be loaded even if the caller supplies the exact current audit hash."""
+
+        loaded.append(True)
+
+        raise AssertionError("Retained audit reached an ordinary installer")
+
+    monkeypatch.setattr(peers, "_OriginalGuest", Forbidden)
+
+    assert peers.Main(["--install", "--allow-mutation", "--change", "enroll", "--device-id", "flayer-installation",
+                       "--expected-history-sha256", history]) == 1
+    capsys.readouterr()
+    assert not loaded and peers._History(guest, request["owner"]) == history
+    assert not model.root.exists() and not model.unit.exists() and not model.interface and not model.network
 
 
 @pytest.mark.parametrize("fault", ["symlink", "writable", "foreign-audit"])

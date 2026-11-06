@@ -536,6 +536,71 @@ def ReadOwnedArtifactFile(
         raise ArtifactError("Unable to read an unchanged owned artifact bundle") from None
 
 
+def _SyncArtifactBundle(root: str | Path, bundle: ArtifactBundle) -> None:
+    """Reestablish complete existing publication durability through verified handles without rewriting any payload."""
+
+    if type(bundle) is not ArtifactBundle:
+        raise ArtifactError("Artifact synchronization requires one exact expected bundle")
+
+    rootPath = Path(root)
+    bundleName = f"{bundle.kind}-{bundle.name}"
+    directory: int | None = None
+
+    try:
+        with _Directory(rootPath) as parent:
+            try:
+                with _BundleLock(parent, bundleName):
+                    directory = os.open(bundleName, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
+                    _AssertDirectory(parent, bundleName, directory)
+                    snapshot = _ValidateManifest(directory, bundle.identity, bundle.kind, bundle.name)
+
+                    if (snapshot.manifest.sha256 != hashlib.sha256(_Manifest(bundle)).hexdigest()
+                            or {item.name: item.content for item in snapshot.files} != {item.name: item.content for item in bundle.files}):
+                        raise ArtifactError("Existing artifact bundle differs from its exact expected publication")
+
+                    receipts = [(item.name, item.receipt) for item in snapshot.files] + [(_MANIFEST_NAME, snapshot.manifest)]
+
+                    for name, receipt in receipts:
+                        descriptor = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+
+                        try:
+                            info = os.fstat(descriptor)
+                            _RequireOwned(info, directory=False)
+
+                            if _StatKey(info) != (receipt.device, receipt.inode, receipt.size, receipt.modifiedNs, receipt.changedNs):
+                                raise ArtifactError("Artifact changed before durable synchronization")
+
+                            os.fsync(descriptor)
+                            _AssertFile(directory, name, receipt)
+
+                        finally:
+                            os.close(descriptor)
+
+                    _AssertDirectory(parent, bundleName, directory)
+                    os.fsync(directory)
+                    _AssertDirectory(parent, bundleName, directory)
+                    os.fsync(parent)
+
+                    if _ValidateManifest(directory, bundle.identity, bundle.kind, bundle.name) != snapshot:
+                        raise ArtifactError("Artifact bundle changed during durable synchronization")
+
+                    _AssertDirectory(parent, bundleName, directory)
+
+                os.fsync(parent)
+
+                if _ValidateManifest(directory, bundle.identity, bundle.kind, bundle.name) != snapshot:
+                    raise ArtifactError("Artifact bundle changed at its final publication barrier")
+
+                _AssertDirectory(parent, bundleName, directory)
+
+            finally:
+                if directory is not None:
+                    os.close(directory)
+
+    except (OSError, ValueError, RecursionError):
+        raise ArtifactError("Unable to durably synchronize the exact existing artifact bundle; all payloads were retained") from None
+
+
 def RemoveArtifactBundle(
     root: str | Path, identity: StackIdentity, *, kind: str, name: str,
     expectedBundle: ArtifactBundle | None = None,

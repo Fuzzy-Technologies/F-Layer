@@ -541,6 +541,48 @@ define the wire boundary. Tests use the real scoped adapter with an in-memory
 runner; they invoke no CLI executable or network. Durable epoch publication,
 guest reservation/fencing, rollback and protocol CLI integration remain Task #128.
 
+## Durable ingress intent and dispatch uncertainty
+
+The private ingress-plan codec retains the complete versioned `IngressDelta`,
+including the original creation spec, scoped resource, rule IDs, descriptions and
+labels, source CIDRs, listener attribution and operation nonce. Its canonical byte
+hash equals the existing plan fingerprint. Decoding reruns the full delta contract
+and requires exact canonical bytes; unknown fields, duplicates, nonstandard JSON,
+unsupported model extensions and metadata above 1 MiB are refused. This does not
+recompile a plan from current desired settings.
+
+The project ingress journal binds that exact plan to the original creation digest,
+preceding-state digest and short-lived expiry. Under the common project lock,
+publish `protocol-ingress-pending.json` before the immutable owned intent bundle.
+Before one separately authorized SDK submission, durably advance `prepared` to
+`dispatching`. This phase means the cloud outcome is uncertain. Retain the exact
+returned operation/resource/plan reference as `recorded` before polling. Neither a
+timeout, expiry nor an old-looking policy permits resetting dispatch or resubmitting
+the plan. Reserve space for the maximum operation reference before publishing any
+intent. A late known acknowledgment may still be recorded after expiry.
+
+Recognize only an exact interrupted forward publication from a verified temporary
+file. Reconciliation finishes that same publication and consumes no new authority.
+Conflicting intent, skipped/backward phases, missing immutable bytes or a different
+known operation stop recovery. All original credentials and configuration bundles
+remain unchanged. Retained intent without its journal, or an additional unrecorded
+intent, cannot be adopted. Reusing a complete visible bundle and granting dispatch
+both re-sync its verified files, manifest, bundle directory and artifact parent
+through pinned handles. A failed barrier leaves dispatch ungranted; an existing
+unknown publication lock is preserved. Read-only journal observation does not
+perform these writes. Supported complete policy can exceed 64 KiB; only this fixed
+journal path uses the explicit 1 MiB metadata bound. Peer metadata keeps its existing
+bound and path contract.
+
+These are local storage primitives, with no cloud or guest dispatch and no public
+protocol command yet. The preceding-state digest does not attest a live epoch by
+itself. The future coordinator must verify the epoch graph and full original cloud
+attachments/policy, hold the guest reservation/fences, and satisfy the SDK consent
+and expected-old checks. Copied controllers are not serialized by a local file
+lock. There is no journal reset/removal API here: verified epoch completion and
+scoped rollback remain integration work. Existing lifecycle/peer entrypoints refuse
+this pending journal or its interrupted publication before provider operations.
+
 ## Remaining integration
 
 Adding/removing a protocol on an existing guest, schema-1 migration, explicit

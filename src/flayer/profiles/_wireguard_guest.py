@@ -1202,6 +1202,12 @@ def _ClearTransaction(owner: str) -> None:
     if {item.name for item in path.iterdir()} != {"transaction.json"}:
         raise GuestError("WireGuard staged files remain in the transaction")
 
+    # A resumed cleanup may observe an already-unlinked unit/root whose parent fsync was interrupted.
+    # Persist the complete current namespace before irreversibly retiring its only recovery record.
+    for parent in (SYSTEMD, BASE, path):
+        _Directory(parent)
+        _SyncDirectory(parent)
+
     (path / "transaction.json").unlink()
     _SyncDirectory(path)
     path.rmdir()

@@ -393,7 +393,7 @@ def test_DriftPreventsAnyServiceOrNetworkDeletion(
     assert not any(command[:2] in (["systemctl", "stop"], ["ip", "link"], ["nft", "delete"]) for command in model.commands)
 
 
-@pytest.mark.parametrize("phase", ["unit", "payload"])
+@pytest.mark.parametrize("phase", ["unit", "payload", "root"])
 def test_InterruptedFileDeletionCanResumeFromExternalReceipt(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, phase: str,
 ) -> None:
@@ -404,6 +404,7 @@ def test_InterruptedFileDeletionCanResumeFromExternalReceipt(
     root, unit, transaction = guest._Paths(request["owner"])
     expected = guest._Digest((root / "receipt.json").read_bytes())
     unlink = Path.unlink
+    rmdir = Path.rmdir
 
     def Unlink(path: Path, *args: Any, **kwargs: Any) -> None:
         """Die after one real file deletion, leaving a partial private directory."""
@@ -411,18 +412,53 @@ def test_InterruptedFileDeletionCanResumeFromExternalReceipt(
         unlink(path, *args, **kwargs)
 
         if path == (root / "server.conf" if phase == "payload" else unit):
+            if phase != "root":
+                raise Interrupted
+
+    def Rmdir(path: Path) -> None:
+        """Interrupt after the root entry disappears but before its parent durability step."""
+
+        rmdir(path)
+
+        if phase == "root" and path == root:
             raise Interrupted
 
     with monkeypatch.context() as patch:
         patch.setattr(Path, "unlink", Unlink)
+        patch.setattr(Path, "rmdir", Rmdir)
 
         with pytest.raises(Interrupted):
             guest._Remove(request["owner"], expected)
 
-    assert transaction.exists() and root.exists() and not unit.exists()
+    assert transaction.exists() and root.exists() == (phase != "root") and not unit.exists()
     assert model.interface is None and not model.network
     assert guest._Status(stage, request)["status"] == "recovery-required"
-    guest._Recover(request["owner"], expected)
+    sync = guest._SyncDirectory
+    durable = set()
+
+    def Sync(path: Path) -> None:
+        """Persist and record observed absence after recovery skips an earlier completed unlink/rmdir."""
+
+        sync(path)
+
+        if path == guest.SYSTEMD and not unit.exists():
+            durable.add("unit")
+
+        if path == guest.BASE and not root.exists():
+            durable.add("root")
+
+    def Retire(path: Path, *args: Any, **kwargs: Any) -> None:
+        """The journal must survive until both current parent-directory states are durable."""
+
+        if path == transaction / "transaction.json":
+            assert durable == {"unit", "root"}
+
+        unlink(path, *args, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(guest, "_SyncDirectory", Sync)
+        patch.setattr(Path, "unlink", Retire)
+        guest._Recover(request["owner"], expected)
 
     assert not transaction.exists() and not root.exists() and not unit.exists()
 

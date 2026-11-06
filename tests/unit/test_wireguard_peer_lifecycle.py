@@ -126,6 +126,7 @@ def Environment(tmpPath: Path, monkeypatch: pytest.MonkeyPatch, action: str) -> 
     model.originalRequest = request
     model.originalConfig = model.kernelConfig
     model.oldReceipt = receipt
+    model.history = peers._History(guest, request["owner"])
     model.point = Point
     model.unit = unit
     model.root = root
@@ -162,7 +163,7 @@ def test_PeerApplyRepeatsWithoutRestartOrRotationAndKeepsOriginalProgram(
     unitBytes = unit.read_bytes()
 
     assert peers.Status(guest, desired, action, model.deviceId)["is_desired"] is False
-    assert peers.Apply(guest, desired, action, model.deviceId, previous) == "committed"
+    assert peers.Apply(guest, desired, action, model.deviceId, previous, model.history) == "committed"
     assert not transaction.exists() and model.unrelated == b"unrelated AWG/VLESS policy and credentials"
     assert model.events == (["wg", "nft"] if action == "enroll" else ["nft", "wg"])
     assert unit.read_bytes() == unitBytes
@@ -174,7 +175,7 @@ def test_PeerApplyRepeatsWithoutRestartOrRotationAndKeepsOriginalProgram(
     before = {path.name: path.read_bytes() for path in root.iterdir()}
     model.events.clear()
 
-    assert peers.Apply(guest, desired, action, model.deviceId, previous) == "committed"
+    assert peers.Apply(guest, desired, action, model.deviceId, previous, model.history) == "committed"
     assert not model.events and {path.name: path.read_bytes() for path in root.iterdir()} == before
 
 
@@ -203,13 +204,13 @@ def test_InterruptedPeerChangeReconcilesOnlyItsRecordedPrefixAndPreservesPublish
     monkeypatch.setattr(peers, "_Exchange", Exchange)
 
     with pytest.raises(Interrupted):
-        peers.Apply(guest, desired, action, model.deviceId, previous)
+        peers.Apply(guest, desired, action, model.deviceId, previous, model.history)
 
     root, unit, transaction = guest._Paths(model.originalRequest["owner"])
     status = peers.Status(guest, desired, action, model.deviceId)
 
     assert status["status"] == "peer-recovery-required" and transaction.exists()
-    outcome = peers.Recover(guest, desired, action, model.deviceId, str(status["receipt_sha256"]), previous)
+    outcome = peers.Recover(guest, desired, action, model.deviceId, str(status["receipt_sha256"]), previous, model.history)
 
     assert outcome == ("committed" if failure == "after-exchange" else "not-applied")
     assert not transaction.exists() and model.unrelated == b"unrelated AWG/VLESS policy and credentials"
@@ -220,7 +221,7 @@ def test_InterruptedPeerChangeReconcilesOnlyItsRecordedPrefixAndPreservesPublish
     guest._Check(root, unit, guest._Request(root)[0])
 
 
-@pytest.mark.parametrize("fault", ["receipt", "noncanonical-receipt", "config", "unit", "kernel", "firewall", "listener"])
+@pytest.mark.parametrize("fault", ["receipt", "history", "noncanonical-receipt", "config", "unit", "kernel", "firewall", "listener"])
 def test_ForeignOrChangedStateStopsBeforeAnyPeerOrTableMutation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fault: str,
 ) -> None:
@@ -231,6 +232,9 @@ def test_ForeignOrChangedStateStopsBeforeAnyPeerOrTableMutation(
 
     if fault == "receipt":
         previous = "0" * 64
+
+    elif fault == "history":
+        model.history = "0" * 64
 
     elif fault == "noncanonical-receipt":
         path = root / "receipt.json"
@@ -254,7 +258,7 @@ def test_ForeignOrChangedStateStopsBeforeAnyPeerOrTableMutation(
         guest._Atomic(desired / "deployment.json", guest._Encode(data))
 
     with pytest.raises(guest.GuestError):
-        peers.Apply(guest, desired, "enroll", model.deviceId, previous)
+        peers.Apply(guest, desired, "enroll", model.deviceId, previous, model.history)
 
     assert not model.events and not transaction.exists() and model.unrelated == b"unrelated AWG/VLESS policy and credentials"
 
@@ -281,12 +285,12 @@ def test_PartialBackupDeletionCanResumeWithoutRollingBackTheCommittedPeer(
         patch.setattr(Path, "unlink", Unlink)
 
         with pytest.raises(Interrupted):
-            peers.Apply(guest, desired, "enroll", model.deviceId, previous)
+            peers.Apply(guest, desired, "enroll", model.deviceId, previous, model.history)
 
     status = peers.Status(guest, desired, "enroll", model.deviceId)
     events = list(model.events)
 
-    assert peers.Recover(guest, desired, "enroll", model.deviceId, str(status["receipt_sha256"]), previous) == "committed"
+    assert peers.Recover(guest, desired, "enroll", model.deviceId, str(status["receipt_sha256"]), previous, model.history) == "committed"
     assert model.events == events and not transaction.exists()
 
 
@@ -346,13 +350,13 @@ def test_FailedPostPublicationDurabilityDoesNotAuthorizeRollbackOfAHealthyCommit
     monkeypatch.setattr(guest, "_Atomic", Atomic)
 
     with pytest.raises((guest.GuestError, OSError)):
-        peers.Apply(guest, desired, "enroll", model.deviceId, previous)
+        peers.Apply(guest, desired, "enroll", model.deviceId, previous, model.history)
 
     status = peers.Status(guest, desired, "enroll", model.deviceId)
     events = list(model.events)
 
     assert status["is_desired"] is True
-    assert peers.Recover(guest, desired, "enroll", model.deviceId, str(status["receipt_sha256"]), previous) == "committed"
+    assert peers.Recover(guest, desired, "enroll", model.deviceId, str(status["receipt_sha256"]), previous, model.history) == "committed"
     assert model.events == events
 
 
@@ -360,14 +364,14 @@ def test_UnknownTransitionPrefixCannotBeRepairedByGuessingItsOrigin(tmp_path: Pa
     """An enrollment cannot produce a permissive new firewall while the old kernel configuration remains active."""
 
     model, desired, previous, _ = Environment(tmp_path, monkeypatch, "enroll")
-    _, transaction = peers._Publish(guest, desired, "enroll", model.deviceId, previous)
+    _, transaction = peers._Publish(guest, desired, "enroll", model.deviceId, previous, model.history)
     model.policy = (transaction / "new" / "firewall.nft").read_bytes()
 
     with pytest.raises(guest.GuestError, match="unrecorded"):
         peers.Status(guest, desired, "enroll", model.deviceId)
 
     with pytest.raises(guest.GuestError, match="unrecorded"):
-        peers.Recover(guest, desired, "enroll", model.deviceId, previous, previous)
+        peers.Recover(guest, desired, "enroll", model.deviceId, previous, previous, model.history)
 
     assert not model.events and transaction.exists()
 
@@ -388,13 +392,16 @@ def test_EmptyFinalJournalAfterLockLossCanRecoverThroughMainWithTheCorrectPrevio
             "schema_version": 1, "owner": owner, "action": "revoke", "device_id": "retired",
             "previous_receipt_sha256": "e" * 64, "receipt_sha256": previous,
             "deployment_sha256": model.oldReceipt["deployment_sha256"],
+            "previous_history_sha256": model.history,
         }))
+
+    model.history = peers._History(guest, owner)
 
     if not committed:
         model.failure = "after-wg"
 
         with pytest.raises(Interrupted):
-            peers.Apply(guest, desired, "enroll", model.deviceId, previous)
+            peers.Apply(guest, desired, "enroll", model.deviceId, previous, model.history)
 
     unlink = Path.unlink
 
@@ -411,10 +418,10 @@ def test_EmptyFinalJournalAfterLockLossCanRecoverThroughMainWithTheCorrectPrevio
 
         with pytest.raises(Interrupted):
             if committed:
-                peers.Apply(guest, desired, "enroll", model.deviceId, previous)
+                peers.Apply(guest, desired, "enroll", model.deviceId, previous, model.history)
 
             else:
-                peers.Recover(guest, desired, "enroll", model.deviceId, previous, previous)
+                peers.Recover(guest, desired, "enroll", model.deviceId, previous, previous, model.history)
 
     assert transaction.exists() and not tuple(transaction.iterdir()) and not guest.LOCK.exists()
     Envelope(tmp_path, monkeypatch, model, desired)
@@ -423,12 +430,99 @@ def test_EmptyFinalJournalAfterLockLossCanRecoverThroughMainWithTheCorrectPrevio
     assert peers.Main(["--status", *common]) == 0
     status = json.loads(capsys.readouterr().out)
     assert status["is_desired"] is committed and status["previous_receipt_sha256"] == previous
+    assert status["previous_history_sha256"] == model.history
     assert not guest.LOCK.exists()
     events = list(model.events)
 
     assert peers.Main(["--recover", *common, "--allow-mutation", "--expected-receipt-sha256", status["receipt_sha256"],
-                       "--expected-previous-receipt-sha256", status["previous_receipt_sha256"]]) == 0
+                       "--expected-previous-receipt-sha256", status["previous_receipt_sha256"],
+                       "--expected-history-sha256", status["previous_history_sha256"]]) == 0
     result = json.loads(capsys.readouterr().out)
 
     assert result == {"status": "complete", "outcome": "committed" if committed else "not-applied"}
     assert guest.LOCK.exists() and not transaction.exists() and model.events == events
+
+
+def test_ConfigurationAbaCannotReplayAnOldEnrollmentOrRevocationPlan(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Returning to identical installed bytes must not restore a stale plan's authority over later revocation."""
+
+    model, expanded, firstReceipt, _ = Environment(tmp_path, monkeypatch, "enroll")
+    owner = model.originalRequest["owner"]
+    original = tmp_path / "original"
+    original.mkdir(mode=0o700)
+
+    for name in ("server.conf", "deployment.json", "install.py"):
+        guest._Atomic(original / name, (model.root / name).read_bytes())
+
+    firstHistory = model.history
+    assert peers.Apply(guest, expanded, "enroll", model.deviceId, firstReceipt, firstHistory) == "committed"
+    secondReceipt = guest._Digest((model.root / "receipt.json").read_bytes())
+    secondHistory = peers._History(guest, owner)
+    assert peers.Apply(guest, original, "revoke", model.deviceId, secondReceipt, secondHistory) == "committed"
+    thirdHistory = peers._History(guest, owner)
+
+    assert guest._Digest((model.root / "receipt.json").read_bytes()) == firstReceipt, "The regression must exercise a real byte-identical A -> B -> A cycle"
+    events = list(model.events)
+
+    with pytest.raises(guest.GuestError, match="history"):
+        peers.Apply(guest, expanded, "enroll", model.deviceId, firstReceipt, firstHistory)
+
+    with pytest.raises(guest.GuestError):
+        peers.Recover(guest, expanded, "enroll", model.deviceId, firstReceipt, firstReceipt, firstHistory)
+
+    assert model.events == events
+    assert peers.Apply(guest, expanded, "enroll", model.deviceId, firstReceipt, thirdHistory) == "committed"
+    fourthHistory = peers._History(guest, owner)
+
+    assert guest._Digest((model.root / "receipt.json").read_bytes()) == secondReceipt
+    assert len({firstHistory, secondHistory, thirdHistory, fourthHistory}) == 4, "A last-action digest without its parent would repeat on A -> B -> A -> B"
+    events = list(model.events)
+
+    with pytest.raises(guest.GuestError, match="history"):
+        peers.Apply(guest, original, "revoke", model.deviceId, secondReceipt, secondHistory)
+
+    assert model.events == events and model.unrelated == b"unrelated AWG/VLESS policy and credentials"
+
+
+def test_ResumedCommitSyncsBothExchangeParentsBeforeErasingAnyBackup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A retry of post-exchange durability must leave every backup byte intact if transaction-parent fsync still fails."""
+
+    model, desired, previous, _ = Environment(tmp_path, monkeypatch, "enroll")
+    exchange = peers._Exchange
+
+    def Exchange(guest: Any, left: Path, right: Path) -> None:
+        """Model a lost acknowledgement after publishing the complete desired root."""
+
+        exchange(guest, left, right)
+
+        if left == model.root:
+            raise Interrupted
+
+    with monkeypatch.context() as patch:
+        patch.setattr(peers, "_Exchange", Exchange)
+
+        with pytest.raises(Interrupted):
+            peers.Apply(guest, desired, "enroll", model.deviceId, previous, model.history)
+
+    _, _, transaction = guest._Paths(model.originalRequest["owner"])
+    backup = transaction / "new"
+    before = {path.name: path.read_bytes() for path in backup.iterdir()}
+    status = peers.Status(guest, desired, "enroll", model.deviceId)
+    sync = guest._SyncDirectory
+
+    def Sync(path: Path) -> None:
+        """Refuse the missing durable parent boundary before any exchanged old file can be erased."""
+
+        if path == transaction:
+            raise OSError("Synthetic transaction-parent durability failure")
+
+        sync(path)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(guest, "_SyncDirectory", Sync)
+
+        with pytest.raises(OSError):
+            peers.Recover(guest, desired, "enroll", model.deviceId, str(status["receipt_sha256"]), previous, model.history)
+
+    assert {path.name: path.read_bytes() for path in backup.iterdir()} == before
+    assert peers.Recover(guest, desired, "enroll", model.deviceId, str(status["receipt_sha256"]), previous, model.history) == "committed"

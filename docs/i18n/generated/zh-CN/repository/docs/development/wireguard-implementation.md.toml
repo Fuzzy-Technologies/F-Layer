@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:63d528d4e66d30416a03b1ac983721b4bc635b6beb6043b85f6d18c07b662bbc"
-reviewedTranslationHash = "sha256:dc8228a770a8f23d92cd98745f4a37e3b95dd03833b3ef15d0faea9c56b6ec8c"
+sourceHash = "sha256:77199daedb680e716a89c464abeb30aa850b25bcc018e7cdeef3bc553edc7703"
+reviewedTranslationHash = "sha256:ccd7c66183d265de052b9ebd1f60234cc63e04b60b56211ccec908569fd2bf1e"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T18:12:37.367850Z"
+reviewedAt = "2026-11-06T18:38:31.246811Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -208,10 +208,15 @@ Endpoint 漫游、握手时间及流量计数器不属于受管配置。
 回执决定是否已提交：发布前恢复只还原指定对等端/策略前缀；发布后保留健康的
 目标根目录，即使发布后的 fsync 失败也不会回滚已提交对等端。移除备份或日志前，
 先持久化提交证明及目录边界。支持部分备份删除及最终空日志的恢复。
-恢复必须同时提供当前回执及原始先前回执哈希。
+恢复必须同时提供当前回执、原始先前回执哈希及原始观测历史头。
+移除任何备份前显式持久化交换的两个父目录，包括 fsync 失败后的提交重试。
 
-独立非秘密 `peer-<owner>.json` 记录最近一次精确操作/设备及旧/新回执、deployment
-摘要。相同已完成操作的重试不再变更内核/表。非规范元数据字节、未知文件、错误
+独立非秘密 `peer-<owner>.json` 记录最近一次精确操作/设备、旧/新回执及 deployment
+摘要，并记录前一历史哈希。记录的规范摘要形成链式历史头。应用及恢复必须提供
+原始观测头；相同已完成重试必须匹配最新提交的父头。因此注册/吊销后即使配置
+字节恢复原样，也无法重放陈旧请求，较长重复循环同样受保护。Status 报告当前及
+事务原始历史头。这些哈希是操作前置条件，不是客户端连接密钥。
+非规范元数据字节、未知文件、错误
 原始证明或改变的提交历史均拒绝操作。Status 仅返回有界事实。入口要求显式
 变更同意及共享的排他操作锁；只读 status 不创建协调文件，并在重启后观测期间
 出现锁时丢弃结果。临时私有请求准备不改变受管安装。

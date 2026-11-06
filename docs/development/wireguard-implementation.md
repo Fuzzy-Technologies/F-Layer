@@ -258,11 +258,18 @@ policy prefix before publication, and preserves a healthy desired root afterward
 including a failed post-publication fsync. Persist the commit proof and directory
 boundaries before retiring backups or the journal. Partial backup deletion and an
 empty final journal are recoverable without rolling back an already committed peer.
-Recovery requires both the current receipt and the original previous receipt hash.
+Recovery requires the current receipt, original previous receipt hash and original
+observed history head. Explicitly persist both exchange-parent directories before
+erasing any backup, including a resumed commit after fsync failure.
 
-A separate nonsecret `peer-<owner>.json` records the last exact action/device and
-old/new receipt/deployment digests. It permits an identical completed retry without
-another kernel/table change. Canonical metadata bytes, unknown files, wrong old
+A separate nonsecret `peer-<owner>.json` records the last exact action/device,
+old/new receipt/deployment digests and its previous history hash. Its canonical
+digest forms a chained history head. Apply and recovery require the original
+observed head; an identical completed retry must match that latest commit's parent.
+Returning to identical configuration bytes after enrollment/revocation cannot
+replay a stale request, including longer repeated cycles. Status reports both
+current and transaction-original heads. These hashes are operation preconditions,
+not client connection keys. Canonical metadata bytes, unknown files, wrong old
 proofs or changed commit history fail closed. Status exposes bounded facts only.
 The entrypoint requires explicit mutation consent and the shared exclusive lock;
 read-only status creates no coordination file and discards an observation if a

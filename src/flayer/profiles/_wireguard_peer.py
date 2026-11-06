@@ -173,7 +173,7 @@ def _Journal(guest: Any, owner: str) -> tuple[dict[str, Any], Path]:
     content = guest._Read(transaction / "transaction.json")
     record = guest._Json(content)
 
-    if (not isinstance(record, dict) or set(record) != {"schema_version", "owner", "phase", "action", "device_id", "previous", "desired"}
+    if (not isinstance(record, dict) or set(record) != {"schema_version", "owner", "phase", "action", "device_id", "previous", "desired", "previous_history_sha256"}
             or type(record["schema_version"]) is not int or record["schema_version"] != 2 or record["owner"] != owner
             or record["phase"] != "peer-prepared" or record["action"] not in {"enroll", "revoke"}
             or not isinstance(record["device_id"], str) or guest._NAME.fullmatch(record["device_id"]) is None):
@@ -182,6 +182,7 @@ def _Journal(guest: Any, owner: str) -> tuple[dict[str, Any], Path]:
     if content != guest._Encode(record):
         raise guest.GuestError("WireGuard peer journal has noncanonical changed bytes")
 
+    guest._RequireDigest(record["previous_history_sha256"])
     before = guest._ReceiptData(record["previous"], owner)
     after = guest._ReceiptData(record["desired"], owner)
 
@@ -196,7 +197,7 @@ def _Journal(guest: Any, owner: str) -> tuple[dict[str, Any], Path]:
     return record, transaction
 
 
-def _Publish(guest: Any, desired: Path, action: str, deviceId: str, expected: str) -> tuple[dict[str, Any], Path]:
+def _Publish(guest: Any, desired: Path, action: str, deviceId: str, expected: str, expectedHistory: str) -> tuple[dict[str, Any], Path]:
     """Durably stage complete candidate files and nonsecret receipt-bound recovery intent before live mutation."""
 
     request, _, _ = guest._Request(desired)
@@ -213,6 +214,9 @@ def _Publish(guest: Any, desired: Path, action: str, deviceId: str, expected: st
 
     if guest._Digest(guest._Read(root / "receipt.json")) != expected:
         raise guest.GuestError("WireGuard peer change requires the exact current receipt")
+
+    if _History(guest, owner) != expectedHistory:
+        raise guest.GuestError("WireGuard peer history changed after the plan was observed")
 
     _, request = _Delta(guest, root, desired, action, deviceId)
 
@@ -249,13 +253,16 @@ def _Publish(guest: Any, desired: Path, action: str, deviceId: str, expected: st
         guest._Atomic(candidate / "receipt.json", guest._Encode(receipt))
         guest._Receipt(candidate, unit, owner)
         record = {"schema_version": 2, "owner": owner, "phase": "peer-prepared", "action": action,
-                  "device_id": deviceId, "previous": previous, "desired": receipt}
+                  "device_id": deviceId, "previous": previous, "desired": receipt, "previous_history_sha256": expectedHistory}
         guest._Atomic(container / "transaction.json", guest._Encode(record))
         # The exact current root/runtime must still match before the recovery journal becomes authoritative.
         guest._Check(root, unit, guest._Request(root)[0])
 
         if guest._Digest(guest._Read(root / "receipt.json")) != expected:
             raise guest.GuestError("WireGuard receipt changed during peer staging")
+
+        if _History(guest, owner) != expectedHistory:
+            raise guest.GuestError("WireGuard peer history changed during staging")
 
         guest._Publish(container, transaction)
 
@@ -344,7 +351,7 @@ def _Audit(guest: Any, owner: str) -> dict[str, Any] | None:
     value = guest._Json(content)
 
     if (not isinstance(value, dict) or set(value) != {"schema_version", "owner", "action", "device_id", "previous_receipt_sha256",
-                                                    "receipt_sha256", "deployment_sha256"}
+                                                    "receipt_sha256", "deployment_sha256", "previous_history_sha256"}
             or type(value["schema_version"]) is not int or value["schema_version"] != 1 or value["owner"] != owner
             or value["action"] not in {"enroll", "revoke"} or not isinstance(value["device_id"], str)
             or guest._NAME.fullmatch(value["device_id"]) is None):
@@ -353,10 +360,18 @@ def _Audit(guest: Any, owner: str) -> dict[str, Any] | None:
     if content != guest._Encode(value):
         raise guest.GuestError("WireGuard peer commit proof has changed noncanonical bytes")
 
-    for key in ("previous_receipt_sha256", "receipt_sha256", "deployment_sha256"):
+    for key in ("previous_receipt_sha256", "receipt_sha256", "deployment_sha256", "previous_history_sha256"):
         guest._RequireDigest(value[key])
 
     return value
+
+
+def _History(guest: Any, owner: str) -> str:
+    """Chain each commit to its exact parent so returning to old configuration bytes cannot authorize stale replay."""
+
+    audit = _Audit(guest, owner)
+
+    return hashlib.sha256(guest._Encode(audit if audit is not None else {"domain": "f-layer/wireguard/peer-history/v1", "owner": owner})).hexdigest()
 
 
 def _CommitRecord(guest: Any, record: dict[str, Any]) -> dict[str, Any]:
@@ -365,15 +380,19 @@ def _CommitRecord(guest: Any, record: dict[str, Any]) -> dict[str, Any]:
     return {"schema_version": 1, "owner": record["owner"], "action": record["action"], "device_id": record["device_id"],
             "previous_receipt_sha256": guest._Digest(guest._Encode(record["previous"])),
             "receipt_sha256": guest._Digest(guest._Encode(record["desired"])),
-            "deployment_sha256": record["desired"]["deployment_sha256"]}
+            "deployment_sha256": record["desired"]["deployment_sha256"], "previous_history_sha256": record["previous_history_sha256"]}
 
 
-def _AuditMatches(guest: Any, record: dict[str, Any]) -> None:
+def _AuditMatches(guest: Any, record: dict[str, Any], *, committed: bool) -> None:
     """Allow only the preceding commit or this transaction's exact already-published commit proof."""
 
     audit = _Audit(guest, record["owner"])
 
-    if audit is not None and audit != _CommitRecord(guest, record) and audit["receipt_sha256"] != guest._Digest(guest._Encode(record["previous"])):
+    if committed and audit == _CommitRecord(guest, record):
+        return
+
+    if (_History(guest, record["owner"]) != record["previous_history_sha256"]
+            or audit is not None and audit["receipt_sha256"] != guest._Digest(guest._Encode(record["previous"]))):
         raise guest.GuestError("WireGuard peer commit history does not match the current transaction")
 
 
@@ -389,7 +408,7 @@ def _Clear(guest: Any, record: dict[str, Any], *, committed: bool) -> None:
     if current != selected:
         raise guest.GuestError("WireGuard peer cleanup found a different committed root")
 
-    _AuditMatches(guest, record)
+    _AuditMatches(guest, record, committed=committed)
     candidate = transaction / "new"
 
     if candidate.exists() or candidate.is_symlink():
@@ -405,6 +424,10 @@ def _Clear(guest: Any, record: dict[str, Any], *, committed: bool) -> None:
 
             if (content != guest._Encode(discarded) if name == "receipt.json" else guest._Digest(content) != discarded["files"][name]):
                 raise guest.GuestError("WireGuard peer backup changed before cleanup")
+
+    # Re-establish both exchange-parent boundaries before erasing any exchanged backup.
+    guest._SyncDirectory(guest.BASE)
+    guest._SyncDirectory(transaction)
 
     if committed:
         expected = _CommitRecord(guest, record)
@@ -429,11 +452,12 @@ def _Clear(guest: Any, record: dict[str, Any], *, committed: bool) -> None:
     guest._SyncDirectory(guest.BASE)
 
 
-def Apply(guest: Any, desired: Path, action: str, deviceId: str, expected: str) -> str:
+def Apply(guest: Any, desired: Path, action: str, deviceId: str, expected: str, expectedHistory: str) -> str:
     """Apply one explicitly consented, receipt-bound change; preserve a published commit on cleanup failure."""
 
     _Change(guest, action, deviceId)
     guest._RequireDigest(expected)
+    guest._RequireDigest(expectedHistory)
     request, _, raw = guest._Request(desired)
     root, unit, transaction = guest._Paths(request["owner"])
     audit = _Audit(guest, request["owner"])
@@ -444,8 +468,8 @@ def Apply(guest: Any, desired: Path, action: str, deviceId: str, expected: str) 
         if guest._Read(root / "receipt.json") != guest._Encode(actual):
             raise guest.GuestError("WireGuard peer operation found changed root receipt bytes")
 
-        if audit is not None and (audit["action"], audit["device_id"], audit["previous_receipt_sha256"], audit["deployment_sha256"]) == (
-            action, deviceId, expected, guest._Digest(raw),
+        if audit is not None and (audit["action"], audit["device_id"], audit["previous_receipt_sha256"], audit["deployment_sha256"], audit["previous_history_sha256"]) == (
+            action, deviceId, expected, guest._Digest(raw), expectedHistory,
         ):
             if audit["receipt_sha256"] != guest._Digest(guest._Encode(actual)):
                 raise guest.GuestError("WireGuard peer committed root has changed")
@@ -455,7 +479,7 @@ def Apply(guest: Any, desired: Path, action: str, deviceId: str, expected: str) 
         if audit is not None and audit["receipt_sha256"] != guest._Digest(guest._Encode(actual)):
             raise guest.GuestError("WireGuard peer root differs from its previous commit proof")
 
-    record, transaction = _Publish(guest, desired, action, deviceId, expected)
+    record, transaction = _Publish(guest, desired, action, deviceId, expected, expectedHistory)
     candidate = transaction / "new"
     previous, desiredRequest = _Delta(guest, root, candidate, action, deviceId)
 
@@ -475,13 +499,14 @@ def Apply(guest: Any, desired: Path, action: str, deviceId: str, expected: str) 
 
 
 def Recover(
-    guest: Any, desired: Path, action: str, deviceId: str, expected: str, expectedPrevious: str,
+    guest: Any, desired: Path, action: str, deviceId: str, expected: str, expectedPrevious: str, expectedHistory: str,
 ) -> str:
     """Restore only the recorded peer prefix or finalize its complete published root, never roll back a healthy commit."""
 
     _Change(guest, action, deviceId)
     guest._RequireDigest(expected)
     guest._RequireDigest(expectedPrevious)
+    guest._RequireDigest(expectedHistory)
     requested, _, raw = guest._Request(desired)
     owner = requested["owner"]
     root, unit, transaction = guest._Paths(owner)
@@ -500,10 +525,10 @@ def Recover(
 
         if audit is not None and audit == {"schema_version": 1, "owner": owner, "action": action, "device_id": deviceId,
                                           "previous_receipt_sha256": expectedPrevious, "receipt_sha256": expected,
-                                          "deployment_sha256": guest._Digest(raw)}:
+                                          "deployment_sha256": guest._Digest(raw), "previous_history_sha256": expectedHistory}:
             return "committed"
 
-        if expected == expectedPrevious:
+        if expected == expectedPrevious and _History(guest, owner) == expectedHistory:
             return "not-applied"
 
         raise guest.GuestError("No matching WireGuard peer recovery or committed operation is recorded")
@@ -520,8 +545,12 @@ def Recover(
         if expected != expectedPrevious and (audit is None or audit["receipt_sha256"] != expected
                                              or audit["previous_receipt_sha256"] != expectedPrevious
                                              or audit["deployment_sha256"] != guest._Digest(raw)
+                                             or audit["previous_history_sha256"] != expectedHistory
                                              or (audit["action"], audit["device_id"]) != (action, deviceId)):
             raise guest.GuestError("Empty peer journal has no matching completed commit proof")
+
+        if expected == expectedPrevious and _History(guest, owner) != expectedHistory:
+            raise guest.GuestError("Empty peer journal has a different original history head")
 
         guest._SyncDirectory(guest.BASE)
         guest._SyncDirectory(transaction)
@@ -534,12 +563,13 @@ def Recover(
 
     if ((record["action"], record["device_id"]) != (action, deviceId)
             or guest._Digest(guest._Encode(record["previous"])) != expectedPrevious
+            or record["previous_history_sha256"] != expectedHistory
             or record["desired"]["deployment_sha256"] != guest._Digest(raw)
             or record["desired"]["files"]["server.conf"] != requested["config_sha256"]
             or record["desired"]["files"]["install.py"] != requested["program_sha256"]):
         raise guest.GuestError("WireGuard peer recovery differs from the requested original transaction")
 
-    _AuditMatches(guest, record)
+    _AuditMatches(guest, record, committed=actual == record["desired"])
 
     if actual == record["desired"]:
         guest._Check(root, unit, actualRequest)
@@ -581,8 +611,10 @@ def Status(guest: Any, desired: Path, action: str, deviceId: str) -> dict[str, o
         raise guest.GuestError("WireGuard peer status found changed receipt bytes")
 
     digest = guest._Digest(guest._Encode(actual))
+    history = _History(guest, owner)
     pending = transaction.exists() or transaction.is_symlink()
     previous = ""
+    previousHistory = ""
 
     if pending:
         guest._Directory(transaction, private=True)
@@ -597,6 +629,9 @@ def Status(guest: Any, desired: Path, action: str, deviceId: str) -> dict[str, o
             previous = (audit["previous_receipt_sha256"]
                         if audit is not None and (audit["action"], audit["device_id"], audit["deployment_sha256"]) == (action, deviceId, guest._Digest(raw))
                         else digest)
+            previousHistory = (audit["previous_history_sha256"]
+                               if audit is not None and (audit["action"], audit["device_id"], audit["deployment_sha256"]) == (action, deviceId, guest._Digest(raw))
+                               else history)
 
         else:
             record, _ = _Journal(guest, owner)
@@ -608,8 +643,9 @@ def Status(guest: Any, desired: Path, action: str, deviceId: str) -> dict[str, o
                     or actual not in (record["previous"], record["desired"])):
                 raise guest.GuestError("WireGuard peer status differs from the supplied transaction intent")
 
-            _AuditMatches(guest, record)
+            _AuditMatches(guest, record, committed=actual == record["desired"])
             previous = guest._Digest(guest._Encode(record["previous"]))
+            previousHistory = record["previous_history_sha256"]
 
             if actual == record["desired"]:
                 guest._Check(root, unit, actualRequest)
@@ -645,12 +681,14 @@ def Status(guest: Any, desired: Path, action: str, deviceId: str) -> dict[str, o
                 raise guest.GuestError("WireGuard peer root differs from its completed operation proof")
 
             previous = audit["previous_receipt_sha256"]
+            previousHistory = audit["previous_history_sha256"]
 
         if actual["deployment_sha256"] != guest._Digest(raw):
             _Delta(guest, root, desired, action, deviceId)
 
     return {"status": "peer-recovery-required" if pending else "active", "receipt_sha256": digest,
             "previous_receipt_sha256": previous, "deployment_sha256": actual["deployment_sha256"],
+            "history_sha256": history, "previous_history_sha256": previousHistory,
             "desired_deployment_sha256": guest._Digest(raw), "is_desired": actual["deployment_sha256"] == guest._Digest(raw),
             "action": action, "device_id": deviceId, "tools_version": guest.TOOLS_VERSION,
             "kernel_policy": "cached-named-cve-baseline"}
@@ -669,6 +707,7 @@ def Main(argv: list[str] | None = None) -> int:
     parser.add_argument("--allow-mutation", action="store_true", dest="allowMutation")
     parser.add_argument("--expected-receipt-sha256", default="", dest="expectedReceipt")
     parser.add_argument("--expected-previous-receipt-sha256", default="", dest="expectedPrevious")
+    parser.add_argument("--expected-history-sha256", default="", dest="expectedHistory")
     options = parser.parse_args(argv)
 
     try:
@@ -682,7 +721,7 @@ def Main(argv: list[str] | None = None) -> int:
         _Change(guest, options.change, options.deviceId)
 
         if options.status:
-            if options.allowMutation or options.expectedReceipt or options.expectedPrevious:
+            if options.allowMutation or options.expectedReceipt or options.expectedPrevious or options.expectedHistory:
                 raise guest.GuestError("WireGuard peer status accepts no mutation consent or receipt options")
 
         else:
@@ -690,6 +729,7 @@ def Main(argv: list[str] | None = None) -> int:
                 raise guest.GuestError("WireGuard peer mutation requires explicit consent")
 
             guest._RequireDigest(options.expectedReceipt)
+            guest._RequireDigest(options.expectedHistory)
 
             if options.recover:
                 guest._RequireDigest(options.expectedPrevious)
@@ -738,8 +778,8 @@ def Main(argv: list[str] | None = None) -> int:
                     result: dict[str, object] = Status(guest, desired, options.change, options.deviceId)
 
                 else:
-                    outcome = (Recover(guest, desired, options.change, options.deviceId, options.expectedReceipt, options.expectedPrevious)
-                               if options.recover else Apply(guest, desired, options.change, options.deviceId, options.expectedReceipt))
+                    outcome = (Recover(guest, desired, options.change, options.deviceId, options.expectedReceipt, options.expectedPrevious, options.expectedHistory)
+                               if options.recover else Apply(guest, desired, options.change, options.deviceId, options.expectedReceipt, options.expectedHistory))
                     result = {"status": "complete", "outcome": outcome}
 
             if descriptor is None and (guest.LOCK.exists() or guest.LOCK.is_symlink()):

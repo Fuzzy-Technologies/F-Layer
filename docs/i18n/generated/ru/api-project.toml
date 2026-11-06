@@ -256,12 +256,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.CompileVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:080c0739a58c32683de6bff7cce4b6de6a7449d71469960cd3dbc2e15490e138"
-body = "Скомпилировать шесть принадлежащих прежнему проекту ресурсов; для проектов с выбором протоколов требуется ещё не реализованный процесс базовой конфигурации."
-reviewedTranslationHash = "sha256:e4553c7edb3cdd774714b73eb2f30eb87f368cf56da4dce5bff4af36858caa05"
+sourceHash = "sha256:119723047992e1e602f8badb493fe8ba48615d89670d4ba07658c96b375d09d7"
+body = "Компилировать шесть принадлежащих проекту ресурсов, сохраняя точный исходный план создания проектов с выбором протоколов."
+reviewedTranslationHash = "sha256:46dc47845e5f929fca91daa607651289c8017e895a2c867a6850bd0d7416d800"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewedAt = "2026-11-06T16:42:36.488155Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -289,12 +289,12 @@ reviewRoles = ["editorial", "technical"]
 [[units]]
 id = "symbol:flayer.vpn_project.RunVpnProject"
 sourcePath = "src/flayer/vpn_project.py"
-sourceHash = "sha256:1ffc1666cef365561bb829ee243ac0d05cbfc6214520f91563f487e05ba1a71a"
-body = "Выполнить автономную подготовку выбранных протоколов либо прежний жизненный цикл принадлежащего проекту облака и сервера с явным разрешением."
-reviewedTranslationHash = "sha256:05da45c8c815d9498d31c4a4279c2e1ca6eb1cd8786a9e53d32f437bb6ff4761"
+sourceHash = "sha256:29d9712de3bdcb4a5b756d71de0f5e0fe76394eb7fd428b4edc12f36241286d5"
+body = "Выполнять явный жизненный цикл принадлежащих проекту облачных ресурсов/сервера, сохраняя исходный план создания выбранного проекта."
+reviewedTranslationHash = "sha256:dd56048fb724f16e8e47c25885ba045a534591ec1312c2661ddc4bc98763dd4e"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewedAt = "2026-11-06T16:42:36.488155Z"
 reviewRoles = ["editorial", "technical"]
 
 [[units]]
@@ -507,3 +507,43 @@ reviewerType = "ai"
 reviewedAt = "2026-11-06T15:19:41.912780Z"
 reviewRoles = ["editorial", "technical"]
 body = "Подготовить выбранные серверные комплекты и ключевой материал без сети, сохраняя байты существующих протоколов и прежнее состояние."
+[[units]]
+id = "symbol:flayer.guest.SshGuestProvisioner.WireGuardOperation"
+sourcePath = "src/flayer/guest.py"
+sourceHash = "sha256:dae038aae2a0a439a1b717f11ba5283190bca2a43be286fbe0d4765f4ca03069"
+reviewedTranslationHash = "sha256:565b567a30635630afa26caab213dd0987470f399229f976c5d284756b1ffc84"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T16:42:36.488155Z"
+reviewRoles = ["editorial", "technical"]
+body = "Наблюдать или восстанавливать одну принадлежащую проекту службу WireGuard с явным scope и текущим доказательством."
+[[units]]
+id = "symbol:flayer.vpn_project.VpnYandexProvider.ReadSecurityGroupRules"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:7e1caa8c0f9edd0711d5f67a5144feeed5e5a88e751cba5dd96a8a6c74c54a32"
+reviewedTranslationHash = "sha256:617ebfb4575127e4d6899fbdb924a4d3d1f7727dc645450dbbd3846c561ad3bc"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T16:42:36.488155Z"
+reviewRoles = ["editorial", "technical"]
+body = "Читать полную IPv4-политику и привязку к сети в точном scope без изменения облачных правил."
+[[units]]
+id = "symbol:flayer.vpn_project.VpnYandexProvider.DeleteCreationResource"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:e141673032953468eca78a24cc26fee589027af7033eb53b47daafbd6f616f26"
+reviewedTranslationHash = "sha256:674c3a2640ecc6dbe4d0c82b703c837b2c87c1319ddc125852c2b90ff93f0d0c"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T16:56:43.901995Z"
+reviewRoles = ["editorial", "technical"]
+body = "Повторно проверить точные метки создания, действующую политику firewall и привязки ВМ перед удалением по ID."
+[[units]]
+id = "symbol:flayer.vpn_project.VpnYandexProvider.ReadInstanceAttachments"
+sourcePath = "src/flayer/vpn_project.py"
+sourceHash = "sha256:8a5801e8bf37d21337f562c593ed26ea9fb349b31f2b576346231736765a6485"
+reviewedTranslationHash = "sha256:6d37e3294e78a42d745705010c62e59d1bd13a0441c77f2468bd8d7e7f41fede"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T16:56:43.901995Z"
+reviewRoles = ["editorial", "technical"]
+body = "Наблюдать точные сетевые привязки и подключения хранилищ ВМ в заданном scope без чтения серверных секретов."

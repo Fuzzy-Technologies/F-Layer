@@ -282,11 +282,11 @@ def _Material(project: SelectedVpnProject, protocol: str) -> ArtifactBundle:
     return ArtifactBundle(profile.identity, "server", name, (Artifact("material.json", material), Artifact("intent.sha256", proof, False)))
 
 
-def _Transport(project: SelectedVpnProject, protocol: str, material: ArtifactBundle) -> PreparedVpnTransport:
+def _Transport(project: SelectedVpnProject, protocol: str, material: ArtifactBundle, host: str = "192.0.2.1") -> PreparedVpnTransport:
     """Render only that protocol's server from retained material, using no claimed client endpoint."""
 
     profile = project.ProtocolProfile(protocol)
-    endpoint = VpnEndpoint("192.0.2.1", profile.listeners[0].port)
+    endpoint = VpnEndpoint(host, profile.listeners[0].port)
     content = next(item.content for item in material.files if item.name == "material.json")
 
     if protocol == "amneziawg":
@@ -339,18 +339,37 @@ def PrepareSelectedProject(project: SelectedVpnProject) -> VpnProjectReport:
             or any(path.name.startswith("device-") for path in project.Artifacts.iterdir())):
         raise VpnError("Schema-2 offline preparation cannot adopt an existing deployment or legacy material; explicit migration is pending")
 
+    from flayer._vpn_creation import LoadCreationBaseline, PrepareCreationBundle, ReadPinnedBundle
+
+    creation = project.Artifacts / ("server-" + project.vpn.identity.stack + "-creation")
+
+    if creation.exists() or creation.is_symlink():
+        baseline = LoadCreationBaseline(project)
+        baseline.ValidateCurrent(project)
+
+        for pin in baseline.protocols:
+            ReadPinnedBundle(project, pin, material=True)
+            ReadPinnedBundle(project, pin)
+
+        _VerifyAdministrationKey(project)
+
+        return VpnProjectReport("prepare", "complete", details="Original selected protocol and creation bundles verified offline without regeneration")
+
     _VerifyAdministrationKey(project)
     bundles: list[ArtifactBundle] = []
+    transports = []
 
     for selection in project.protocolSelections:
         material = _Material(project, selection.protocol)
         transport = _Transport(project, selection.protocol, material)
         bundles.extend((material, transport.serverBundle))
+        transports.append((material, transport.serverBundle))
 
+    bundles.append(PrepareCreationBundle(project, tuple(transports)))
     existing = [_CheckExisting(project, bundle) for bundle in bundles]
 
     for bundle, retained in zip(bundles, existing, strict=True):
         if not retained:
             WriteArtifactBundle(project.Artifacts, bundle)
 
-    return VpnProjectReport("prepare", "complete", details="Selected protocol material/server bundles prepared offline; cloud integration and actual-endpoint client exports are pending")
+    return VpnProjectReport("prepare", "complete", details="Selected material/server bundles and original creation baseline prepared offline; client exports require an observed address")

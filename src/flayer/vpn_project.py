@@ -7,6 +7,7 @@ import hashlib
 import ipaddress
 import json
 import os
+import re
 import struct
 import subprocess
 import time
@@ -20,6 +21,7 @@ from typing import cast
 from flayer.core.contracts import (
     ParseIdentity,
     RequireTable,
+    StackIdentity,
     ValidateFields,
     ValidateIdentifier,
     ValidateName,
@@ -68,13 +70,20 @@ from flayer.profiles.vpn import (
     VpnProfile,
 )
 from flayer.profiles.wireguard import WireGuardSettings
+from flayer.providers._yandex_firewall import (
+    InstanceAttachments,
+    ParseInstanceAttachments,
+    ParseSecurityGroup,
+    SecurityGroupSnapshot,
+)
 from flayer.providers.contracts import (
+    ProviderError,
     ProviderErrorCode,
     ProviderResource,
     ResourceKind,
     ResourceReference,
 )
-from flayer.providers.lifecycle import JsonValue, ResourceSpec
+from flayer.providers.lifecycle import JsonValue, LifecycleProvider, MutationError, ResourceSpec
 from flayer.providers.yandex import YandexCloudSettings
 from flayer.providers.yandex_lifecycle import ValidateComputeShape, YandexLifecycleProvider
 from flayer.vpn_selection import VpnProtocolSelection
@@ -441,7 +450,7 @@ def LoadVpnProject(directory: str | Path) -> VpnProject | SelectedVpnProject:
         raise VpnError("Project configuration is invalid; check its documented fields and types") from None
 
 
-def _Publish(project: VpnProject, bundle: ArtifactBundle) -> Path:
+def _Publish(project: VpnProject | SelectedVpnProject, bundle: ArtifactBundle) -> Path:
     """Preserve owned artifacts while recognizing exact historical VLESS installer programs."""
 
     directory = project.Artifacts / f"{bundle.kind}-{bundle.name}"
@@ -451,7 +460,7 @@ def _Publish(project: VpnProject, bundle: ArtifactBundle) -> Path:
             actual = ReadOwnedArtifactFile(directory / artifact.name, bundle.identity, kind=bundle.kind, name=bundle.name)
 
             if (
-                bundle.kind == "server"
+                not isinstance(project, SelectedVpnProject) and bundle.kind == "server"
                 and bundle.name == project.vpn.identity.stack + "-vless-reality"
                 and artifact.name == "install.py"
             ):
@@ -534,7 +543,7 @@ def _Transports(project: VpnProject, material: ArtifactBundle, endpoint: str) ->
     )
 
 
-def _Bootstrap(project: VpnProject) -> ArtifactBundle:
+def _Bootstrap(project: VpnProject | SelectedVpnProject) -> ArtifactBundle:
     """Create a nonsecret fresh Ubuntu bootstrap with separate VPN forwarding ownership."""
 
     firewall = [
@@ -649,10 +658,12 @@ def _Freeze(value: object) -> JsonValue:
 
 
 def CompileVpnProject(project: VpnProject | SelectedVpnProject) -> DeploymentPlan:
-    """Compile six legacy owned resources; selected projects require their pending baseline workflow."""
+    """Compile six owned resources, retaining the exact original creation plan for selected projects."""
 
     if isinstance(project, SelectedVpnProject):
-        raise VpnError("Schema-2 cloud compilation requires the pending creation-baseline and ingress workflow")
+        from flayer._vpn_creation import LoadCreationBaseline
+
+        return LoadCreationBaseline(project).plan
 
     bundle = _Bootstrap(project)
     directory = project.Artifacts / f"server-{bundle.name}"
@@ -661,6 +672,12 @@ def CompileVpnProject(project: VpnProject | SelectedVpnProject) -> DeploymentPla
 
     if actual != bundle.files[0].content:
         raise VpnError("Prepared bootstrap does not match the current public project settings")
+
+    return _CompileOwnedResources(project, path, actual)
+
+
+def _CompileOwnedResources(project: VpnProject | SelectedVpnProject, path: Path, actual: bytes) -> DeploymentPlan:
+    """Compile the unchanged six-resource graph for a caller-verified original bootstrap snapshot."""
 
     resources: list[ResourceSpec] = []
 
@@ -734,8 +751,116 @@ class VpnYandexProvider(YandexLifecycleProvider):
 
         return next(iter(keys)) if keys else None
 
+    def ReadSecurityGroupRules(self, resource: ProviderResource) -> SecurityGroupSnapshot:
+        """Read complete scoped IPv4 policy and network attachment without changing cloud rules."""
 
-def _OwnedEndpoints(project: VpnProject, provider: VpnYandexProvider) -> tuple[ProviderResource, str]:
+        reference = resource.reference
+
+        if (reference.kind != ResourceKind.SECURITY_GROUP or reference.providerId != self.Identity.providerId
+                or reference.scopeId != self.Identity.scopeId):
+            raise VpnError("Security-group policy requires an exact resource in the configured scope")
+
+        payload = self._ReadJson(("vpc", "security-group", "get", "--id", reference.resourceId), "vpn-firewall-policy")
+        observed = self._ValidateObservation(self._NormalizeResource(payload, ResourceKind.SECURITY_GROUP, "vpn-firewall-policy"))
+
+        if observed.reference != reference or observed.name != resource.name or not observed.HasLabels(resource.labels):
+            raise VpnError("Security-group ownership changed before policy observation")
+
+        try:
+            return ParseSecurityGroup(payload, observed)
+
+        except (ValueError, TypeError, KeyError, AttributeError, RecursionError):
+            raise VpnError("Security-group effective policy is unavailable or unsupported; no rules were changed") from None
+
+    def DeleteCreationResource(
+        self, resource: ProviderResource, spec: ResourceSpec, identity: StackIdentity, *,
+        policy: SecurityGroupSnapshot | None = None, attachments: InstanceAttachments | None = None,
+        operationId: str | None = None,
+    ) -> None:
+        """Recheck exact creation labels, effective firewall policy and VM attachments before an ID-bound deletion."""
+
+        self._ValidateIdentity(identity)
+        self.ValidateSpec(spec)
+        reference = resource.reference
+
+        if operationId is not None and re.fullmatch(r"[0-9a-f]{32}", operationId) is None:
+            raise VpnError("Creation deletion requires an exact original operation identity")
+
+        try:
+            current = self.GetResource(reference)
+
+        except ProviderError as error:
+            if error.code == ProviderErrorCode.NOT_FOUND:
+                return
+
+            raise
+
+        if (reference.kind != spec.kind or current.reference != reference or current.name != spec.name
+                or not current.HasLabels(spec.OwnershipLabels(identity))
+                or operationId is not None and dict(current.labels).get("flayer-operation") != operationId
+                or dict(spec.parameters).get("zone_id", current.zoneId) != current.zoneId):
+            raise MutationError(ProviderErrorCode.SCOPE_MISMATCH, "creation-delete", False)
+
+        if spec.kind == ResourceKind.SECURITY_GROUP:
+            if policy is None or policy.resource.reference != reference:
+                raise VpnError("Creation firewall deletion requires its exact observed policy")
+
+            observed = self.ReadSecurityGroupRules(current)
+
+            if observed.networkId != policy.networkId or observed.rules != policy.rules:
+                raise MutationError(ProviderErrorCode.CONFLICT, "creation-delete-policy", False)
+
+        elif policy is not None:
+            raise VpnError("Firewall policy cannot authorize a different resource kind")
+
+        if spec.kind == ResourceKind.INSTANCE:
+            if attachments is None or attachments.resource.reference != reference:
+                raise VpnError("Creation instance deletion requires its exact attachment proof")
+
+            if self.ReadInstanceAttachments(current) != attachments:
+                raise MutationError(ProviderErrorCode.CONFLICT, "creation-delete-attachments", False)
+
+        elif attachments is not None:
+            raise VpnError("Instance attachments cannot authorize a different resource kind")
+
+        command = self._CommandForKind(reference.kind)
+        self._MutationRun((*command, "delete", "--id", reference.resourceId), "creation-delete")
+
+        try:
+            self.GetResource(reference)
+
+        except ProviderError as error:
+            if error.code == ProviderErrorCode.NOT_FOUND:
+                return
+
+            raise
+
+        raise ProviderError(ProviderErrorCode.CONFLICT, "creation-delete-confirmation")
+
+    def ReadInstanceAttachments(self, resource: ProviderResource) -> InstanceAttachments:
+        """Observe exact scoped VM network and storage attachments without reading guest secrets."""
+
+        reference = resource.reference
+
+        if (reference.kind != ResourceKind.INSTANCE or reference.providerId != self.Identity.providerId
+                or reference.scopeId != self.Identity.scopeId):
+            raise VpnError("Instance attachments require an exact resource in the configured scope")
+
+        payload = self._ReadJson(("compute", "instance", "get", "--id", reference.resourceId), "vpn-instance-attachments")
+        observed = self._ValidateObservation(self._NormalizeResource(payload, ResourceKind.INSTANCE, "vpn-instance-attachments"))
+
+        if (observed.reference != reference or observed.name != resource.name or observed.zoneId != resource.zoneId
+                or not observed.HasLabels(resource.labels)):
+            raise VpnError("Instance ownership changed before attachment observation")
+
+        try:
+            return ParseInstanceAttachments(payload, observed)
+
+        except (ValueError, TypeError, KeyError, AttributeError, RecursionError):
+            raise VpnError("Instance attachment policy is unavailable or unsupported; no resources were changed") from None
+
+
+def _OwnedEndpoints(project: VpnProject | SelectedVpnProject, provider: LifecycleProvider) -> tuple[ProviderResource, str]:
     """Resolve the exact persisted instance and address, then independently verify every owner field."""
 
     state = LoadState(project.root / "state.json", project.vpn.identity)
@@ -771,15 +896,15 @@ def _OwnedEndpoints(project: VpnProject, provider: VpnYandexProvider) -> tuple[P
 
 
 def _HostTrust(
-    project: VpnProject, provider: VpnYandexProvider, instance: ProviderResource, endpoint: str,
-    *, wait: bool, sleep: Callable[[float], None] = time.sleep,
+    project: VpnProject | SelectedVpnProject, provider: VpnYandexProvider, instance: ProviderResource, endpoint: str,
+    *, wait: bool, sleep: Callable[[float], None] = time.sleep, originalFingerprint: str | None = None,
 ) -> Path:
     """Pin an IAM-authenticated public guest key and refuse changes to any existing trusted pin."""
 
     key = None
 
     for attempt in range(25 if wait else 1):
-        key = provider.ReadHostKey(instance, project.Fingerprint())
+        key = provider.ReadHostKey(instance, project.Fingerprint() if originalFingerprint is None else originalFingerprint)
 
         if key is not None:
             break
@@ -831,7 +956,7 @@ def RunVpnProject(
     rollback: bool = False, provider: VpnYandexProvider | None = None,
     guestFactory: Callable[..., SshGuestProvisioner] = SshGuestProvisioner,
 ) -> VpnProjectReport:
-    """Dispatch selected offline preparation or legacy owned cloud/guest lifecycle with explicit consent."""
+    """Dispatch explicit owned cloud/guest lifecycle while retaining the selected project's original creation plan."""
 
     ValidateSshPathSyntax(project.root)
 
@@ -842,7 +967,10 @@ def RunVpnProject(
         return PrepareVpnProject(project)
 
     if isinstance(project, SelectedVpnProject):
-        raise VpnError("Schema-2 projects currently support offline preparation only; cloud/guest integration is pending")
+        from flayer._vpn_selected_lifecycle import RunSelectedProject
+
+        return RunSelectedProject(project, action, allowMutation=allowMutation, scopeConfirm=scopeConfirm,
+                                  rollback=rollback, provider=provider, guestFactory=guestFactory)
 
     if action in {"deploy", "destroy", "recover"} and (not allowMutation or scopeConfirm != project.vpn.identity.scopeId):
         raise VpnError("Cloud mutation requires --allow-mutation and exact --scope-confirm folder ID")

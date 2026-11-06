@@ -310,8 +310,8 @@ def _LoadedSource(sourceVersion: str, *, required: bool = False) -> None:
         raise GuestError("Executing WireGuard module source identity is unavailable")
 
 
-def _VendorEvidence(content: bytes, packageVersion: str) -> dict[str, object]:
-    """Require Ubuntu's released fix for noble/linux; a pending target is never a patched baseline."""
+def _ReleasedKernelEvidence(content: bytes) -> dict[str, object]:
+    """Require authoritative released noble/linux evidence without claiming any host meets it yet."""
 
     data = _Json(content)
 
@@ -331,8 +331,7 @@ def _VendorEvidence(content: bytes, packageVersion: str) -> dict[str, object]:
 
         fixedVersion = rows[0]["description"]
 
-        if _KernelVersion(packageVersion) < _KernelVersion(fixedVersion):
-            raise GuestError("The running kernel package predates Ubuntu's confirmed fix")
+        _KernelVersion(fixedVersion)
 
         return {"cve_id": KERNEL_CVE, "source_sha256": _Digest(content), "fixed_version": fixedVersion,
                 "checked_at": int(time.time())}
@@ -342,6 +341,17 @@ def _VendorEvidence(content: bytes, packageVersion: str) -> dict[str, object]:
             raise
 
         raise GuestError("Ubuntu kernel evidence is unavailable or ambiguous") from None
+
+
+def _VendorEvidence(content: bytes, packageVersion: str) -> dict[str, object]:
+    """Bind Ubuntu's released fix to an observed running package, never a pending target or disk-only revision."""
+
+    evidence = _ReleasedKernelEvidence(content)
+
+    if _KernelVersion(packageVersion) < _KernelVersion(evidence["fixed_version"]):
+        raise GuestError("The running kernel package predates Ubuntu's confirmed fix")
+
+    return evidence
 
 
 def _KernelFacts() -> dict[str, str]:
@@ -1282,11 +1292,60 @@ def _RequireDigest(value: str) -> None:
         raise GuestError("WireGuard mutation requires an exact previous receipt digest")
 
 
-def _Recover(owner: str, expectedReceipt: str) -> None:
+def _AbsenceDigest(owner: str) -> str:
+    """Bind explicit empty-namespace recovery to its full owner without inventing a previous receipt."""
+
+    _Paths(owner)
+
+    return _Digest(_Encode({"domain": "f-layer/wireguard/absent/v1", "owner": owner}))
+
+
+def _RequireAbsent(owner: str) -> None:
+    """Prove the complete selected live namespace absent before touching only empty recovery metadata."""
+
+    root, unit, _ = _Paths(owner)
+
+    if any(path.is_symlink() for path in (BASE, *BASE.parents)):
+        raise GuestError("WireGuard managed namespace has symbolic ancestry")
+
+    if BASE.exists():
+        _Directory(BASE)
+
+    if (root.exists() or root.is_symlink() or unit.exists() or unit.is_symlink()
+            or _InterfaceState(owner) is not None or _NftState(owner, "0" * 32) is not None):
+        raise GuestError("WireGuard namespace is not completely absent")
+
+    _EnabledLink(unit)
+
+    if (SYSTEMD / "multi-user.target.wants" / unit.name).is_symlink():
+        raise GuestError("WireGuard absent namespace retains an enablement link")
+
+
+def _Recover(owner: str, expectedReceipt: str, *, expectedAbsence: str = "") -> None:
     """Roll an interrupted fresh installation back to absence using only proved owned state."""
 
-    _RequireDigest(expectedReceipt)
     root, unit, transaction = _Paths(owner)
+
+    if expectedAbsence:
+        if expectedReceipt or expectedAbsence != _AbsenceDigest(owner):
+            raise GuestError("WireGuard absence recovery requires the exact observed namespace proof")
+
+        _RequireAbsent(owner)
+
+        if transaction.exists() or transaction.is_symlink():
+            _Directory(transaction, private=True)
+
+            if tuple(transaction.iterdir()):
+                raise GuestError("WireGuard absence recovery cannot erase a nonempty journal")
+
+            _SyncDirectory(SYSTEMD)
+            _SyncDirectory(BASE)
+            transaction.rmdir()
+            _SyncDirectory(BASE)
+
+        return
+
+    _RequireDigest(expectedReceipt)
 
     if not transaction.exists() and not transaction.is_symlink():
         raise GuestError("No WireGuard recovery journal exists")
@@ -1508,7 +1567,9 @@ def _Status(stage: Path, request: dict[str, Any]) -> dict[str, object]:
                     or _NftState(owner, "0" * 32) is not None):
                 raise GuestError("Empty WireGuard journal has unexpected remaining resources")
 
-            return {"status": "absent", "receipt_sha256": "", "tools_version": TOOLS_VERSION,
+            _RequireAbsent(owner)
+
+            return {"status": "absent", "receipt_sha256": "", "absence_sha256": _AbsenceDigest(owner), "tools_version": TOOLS_VERSION,
                     "kernel_policy": "not-assessed", "cleanup_required": True}
 
         journal, _ = _Transaction(owner)
@@ -1529,6 +1590,12 @@ def _Status(stage: Path, request: dict[str, Any]) -> dict[str, object]:
         return {"status": "recovery-required", "receipt_sha256": digest,
                 "tools_version": TOOLS_VERSION, "kernel_policy": "cached-named-cve-baseline"}
 
+    if not root.exists() and not root.is_symlink():
+        _RequireAbsent(owner)
+
+        return {"status": "absent", "receipt_sha256": "", "absence_sha256": _AbsenceDigest(owner),
+                "tools_version": TOOLS_VERSION, "kernel_policy": "not-assessed", "cleanup_required": False}
+
     receipt = _Check(root, unit, request)
 
     if _Read(stage / "deployment.json") != _Read(root / "deployment.json"):
@@ -1540,6 +1607,27 @@ def _Status(stage: Path, request: dict[str, Any]) -> dict[str, object]:
             "kernel_package_version": receipt["kernel"]["package_version"],
             "kernel_policy": "cached-named-cve-baseline", "kernel_cve": KERNEL_CVE,
             "kernel_fixed_version": receipt["kernel"]["fixed_version"]}
+
+
+def _OpenLock(*, readOnly: bool) -> int:
+    """Validate the runtime coordination file, including recreation by an authorized service boot callback."""
+
+    _Directory(LOCK.parent)
+    descriptor = os.open(LOCK, (os.O_RDONLY if readOnly else os.O_RDWR | os.O_CREAT) | os.O_NOFOLLOW, 0o600)
+
+    try:
+        info = os.fstat(descriptor)
+
+        if (not stat.S_ISREG(info.st_mode) or info.st_uid != _ROOT_UID or info.st_nlink != 1
+                or stat.S_IMODE(info.st_mode) != 0o600):
+            raise GuestError("WireGuard operation lock is not a private owned regular file")
+
+    except BaseException:
+        os.close(descriptor)
+
+        raise
+
+    return descriptor
 
 
 def Main(argv: list[str] | None = None) -> int:
@@ -1555,6 +1643,7 @@ def Main(argv: list[str] | None = None) -> int:
     action.add_argument("--stop", action="store_true")
     parser.add_argument("--allow-mutation", action="store_true", dest="allowMutation")
     parser.add_argument("--expected-receipt-sha256", default="", dest="expectedReceipt")
+    parser.add_argument("--expected-absence-sha256", default="", dest="expectedAbsence")
     arguments = parser.parse_args(argv)
     result: dict[str, object] | None = None
 
@@ -1570,13 +1659,17 @@ def Main(argv: list[str] | None = None) -> int:
         root, unit, transaction = _Paths(owner)
         readOnly = arguments.check or arguments.status
 
-        if readOnly and (arguments.allowMutation or arguments.expectedReceipt):
+        if readOnly and (arguments.allowMutation or arguments.expectedReceipt or arguments.expectedAbsence):
             raise GuestError("WireGuard read-only actions do not accept mutation options")
 
         if not readOnly and not arguments.allowMutation:
             raise GuestError("WireGuard mutation requires explicit --allow-mutation")
 
-        if arguments.remove or arguments.recover:
+        if arguments.expectedAbsence:
+            if not arguments.recover or arguments.expectedReceipt or arguments.expectedAbsence != _AbsenceDigest(owner):
+                raise GuestError("WireGuard absence consent requires explicit recovery and the exact namespace proof")
+
+        elif arguments.remove or arguments.recover:
             _RequireDigest(arguments.expectedReceipt)
 
         elif arguments.expectedReceipt:
@@ -1596,6 +1689,9 @@ def Main(argv: list[str] | None = None) -> int:
                 if journal["phase"] != "prepared" or journal["receipt"] != receipt:
                     raise GuestError("WireGuard provisional service has no matching installation journal")
 
+            # Service callbacks may follow a reboot that cleared /run; every mutator establishes coordination first.
+            os.close(_OpenLock(readOnly=False))
+
             if arguments.start:
                 _Start(root, unit, request)
 
@@ -1604,23 +1700,28 @@ def Main(argv: list[str] | None = None) -> int:
 
             return 0
 
-        _Directory(LOCK.parent)
-        descriptor = os.open(LOCK, (os.O_RDONLY if readOnly else os.O_RDWR | os.O_CREAT) | os.O_NOFOLLOW, 0o600)
+        descriptor: int | None
 
         try:
-            info = os.fstat(descriptor)
+            descriptor = _OpenLock(readOnly=readOnly)
 
-            if (not stat.S_ISREG(info.st_mode) or info.st_uid != _ROOT_UID or info.st_nlink != 1
-                    or stat.S_IMODE(info.st_mode) != 0o600):
-                raise GuestError("WireGuard operation lock is not a private owned regular file")
+        except FileNotFoundError:
+            if not readOnly or LOCK.exists() or LOCK.is_symlink():
+                raise
 
-            fcntl.flock(descriptor, (fcntl.LOCK_SH if readOnly else fcntl.LOCK_EX) | fcntl.LOCK_NB)
+            # A crash/reboot can clear /run before the first unit is installed.
+            # Read-only status must still obtain recovery consent without creating metadata.
+            descriptor = None
+
+        try:
+            if descriptor is not None:
+                fcntl.flock(descriptor, (fcntl.LOCK_SH if readOnly else fcntl.LOCK_EX) | fcntl.LOCK_NB)
 
             if arguments.remove:
                 _Remove(owner, arguments.expectedReceipt)
 
             elif arguments.recover:
-                _Recover(owner, arguments.expectedReceipt)
+                _Recover(owner, arguments.expectedReceipt, expectedAbsence=arguments.expectedAbsence)
 
             elif arguments.check:
                 if transaction.exists() or transaction.is_symlink():
@@ -1634,8 +1735,13 @@ def Main(argv: list[str] | None = None) -> int:
             else:
                 _Install(stage, request)
 
+            if descriptor is None and (LOCK.exists() or LOCK.is_symlink()):
+                # Every mutator creates this file before its first write and never removes it.
+                raise GuestError("WireGuard operation started during observation; retry read-only status")
+
         finally:
-            os.close(descriptor)
+            if descriptor is not None:
+                os.close(descriptor)
 
     except GuestError as error:
         print("WireGuard guest operation failed: " + str(error), file=sys.stderr)

@@ -1,0 +1,57 @@
+schemaVersion = 1
+sourcePath = "docs/development/wireguard-implementation.md"
+sourceHash = "sha256:af21063e4e322dbb2d977b8cf6b9563c3e1ccc41597b4c7d705661b63d1bc7ef"
+reviewedTranslationHash = "sha256:efd7db7f51c0d68dd04dc6c13e7a73cb60d2dd760739f32a4eeaac5a6bc0f22f"
+reviewer = "Codex"
+reviewerType = "ai"
+reviewedAt = "2026-11-06T13:14:53.729571Z"
+reviewRoles = ["editorial", "technical"]
+body = '''# 标准 WireGuard 实现边界
+
+面向 2.1 发布的开发候选版本增加了标准 WireGuard 的底层意图模型、
+私有材料编解码器及配置渲染器。这些 API 不属于已发布的 2.0.0 软件包。
+架构遵循 [ADR 0023](../adr/0023-selectable-vpn-transports.md)。
+
+## 已实现的基础
+
+`flayer.vpn_selection.VpnProtocolSelection` 将协议绑定到已声明设备 ID 的显式子集。
+新增 IP 隧道使用精确的设备/私有地址映射；AWG 保留原有设备地址字段，
+VLESS 不使用隧道地址。顺序规范化，但不分配地址或重命名设备。
+`Project()` 生成仅含所选协议设备与监听、共享身份和路由策略的配置模型。
+无关设备、地址或监听的变化不会影响该投影。
+`ParseProtocolSelections()` 只校验成员关系，不校验完整项目文件。
+
+`flayer.profiles.wireguard` 提供经过校验的 `WireGuardSettings`、
+`WireGuardPeer` 和 `WireGuardMaterial`、显式材料生成以及有界且严格的 JSON 编解码器。
+标准 WireGuard 使用独立 X25519 密钥及每设备预共享密钥。
+重复准备必须解码已保留材料；再次调用生成器会有意创建不同凭据。
+私有字段不进入对象表示，无效输入不会在错误消息中回显。
+
+服务器渲染器只输出自己的私钥及所选对等端的公钥/预共享密钥。
+客户端渲染器只输出该设备私钥、服务器公钥、该设备预共享密钥、
+显式地址、端点、MTU、路由、DNS 和 keepalive。
+两种配置都不包含 AWG 混淆参数。生成材料前校验隧道成员及地址。
+拒绝共享 Curve25519 身份、私有标量的等价编码、公开或复用的预共享密钥、无效子网、
+TCP 监听以及不匹配的客户端端点端口。
+
+这些 API 仅在内存中工作。凭据字节在持久化或传输前，必须进入经过所有权
+验证的私有存储；不得写入日志或云元数据。
+稳定服务名称由完整栈身份生成，不随对等端成员变化。
+
+## 尚待集成
+
+项目模式 2、公共项目 CLI 的选择、受管内核服务部署、云/来宾入口规则迁移、
+回执、注册/吊销、恢复和清理仍属于任务 #128 的集成工作。
+此基础不改变现有模式 1 的 AWG/VLESS 加载或指纹算法。
+
+AmneziaVPN 原生 `.vpn` 与 QR 导出仍属于任务 #129。
+模块中的运行时固定值记录所选上游工具修订及已校验源码归档的 SHA256；
+不会安装或执行该运行时。仅这些 API 不代表新协议已部署，
+也不代表现有导出 CLI 已支持该协议。
+
+确定性测试覆盖真实 Curve25519 公钥派生、私有材料编解码往返、
+各设备的秘密边界、精确全量/分流客户端设置、拒绝无效私有输入，
+以及与无关设备/监听的独立性。内核/运行时一致性及已安装手机/桌面客户端
+流量验收仍是独立门禁。渲染出的配置不能证明连通性或媒体播放结果，
+也不会执行云、来宾或本地网络操作。
+'''

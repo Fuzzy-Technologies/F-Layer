@@ -126,6 +126,10 @@ def DecodeResult(
                        for key in ("previous_receipt_sha256", "previous_history_sha256"))
                 or bool(data["previous_receipt_sha256"]) != bool(data["previous_history_sha256"])
                 or data["status"] == "peer-recovery-required" and not data["previous_receipt_sha256"]
+                or data["status"] == "peer-recovery-required" and (
+                    data["is_desired"] and data["receipt_sha256"] == data["previous_receipt_sha256"]
+                    or not data["is_desired"] and (data["receipt_sha256"] != data["previous_receipt_sha256"]
+                                                  or data["history_sha256"] != data["previous_history_sha256"]))
                 or data["is_desired"] != (data["deployment_sha256"] == data["desired_deployment_sha256"])
                 or data["desired_deployment_sha256"] != hashlib.sha256(
                     next(item.content for item in bundle.files if item.name == "deployment.json")).hexdigest()):

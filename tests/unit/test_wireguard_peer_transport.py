@@ -30,8 +30,8 @@ def Facts(bundle: ArtifactBundle, *, desired: bool = False, pending: bool = Fals
     digest = hashlib.sha256(next(item.content for item in bundle.files if item.name == "deployment.json")).hexdigest()
 
     return {"status": "peer-recovery-required" if pending else "active", "receipt_sha256": "a" * 64,
-            "previous_receipt_sha256": "b" * 64 if pending else "", "deployment_sha256": digest if desired else "c" * 64,
-            "history_sha256": "d" * 64, "previous_history_sha256": "e" * 64 if pending else "",
+            "previous_receipt_sha256": ("b" if desired else "a") * 64 if pending else "", "deployment_sha256": digest if desired else "c" * 64,
+            "history_sha256": "d" * 64, "previous_history_sha256": "d" * 64 if pending else "",
             "desired_deployment_sha256": digest, "is_desired": desired, "action": "enroll", "device_id": "new-phone",
             "tools_version": "1.0.20260223", "kernel_policy": "cached-named-cve-baseline"}
 
@@ -179,6 +179,21 @@ def test_ArbitraryOrDuplicateRemoteOutputIsSuppressed(response: GuestResult) -> 
         guest.WireGuardPeerOperation(Prepared().serverBundle, "apply", "enroll", "new-phone", **Options())
 
     assert "suppressed-private-fixture" not in str(error.value)
+
+
+@pytest.mark.parametrize("desired,field,value", [(False, "previous_receipt_sha256", "b" * 64),
+                                                  (False, "previous_history_sha256", "e" * 64),
+                                                  (True, "previous_receipt_sha256", "a" * 64)])
+def test_PendingStatusRejectsImpossiblePublicationAndHistoryPhases(desired: bool, field: str, value: str) -> None:
+    """An old root retains its original proofs; a published sole-peer delta necessarily changes the receipt."""
+
+    bundle = Prepared().serverBundle
+    facts = Facts(bundle, desired=desired, pending=True)
+    facts[field] = value
+    guest, _ = Provisioner(facts)
+
+    with pytest.raises(VpnError):
+        guest.WireGuardPeerOperation(bundle, "status", "enroll", "new-phone")
 
 
 def Request(action: str) -> bytes:

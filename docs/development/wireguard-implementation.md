@@ -565,7 +565,12 @@ Recognize only an exact interrupted forward publication from a verified temporar
 file. Reconciliation finishes that same publication and consumes no new authority.
 Conflicting intent, skipped/backward phases, missing immutable bytes or a different
 known operation stop recovery. All original credentials and configuration bundles
-remain unchanged. Supported complete policy can exceed 64 KiB; only this fixed
+remain unchanged. Retained intent without its journal, or an additional unrecorded
+intent, cannot be adopted. Reusing a complete visible bundle and granting dispatch
+both re-sync its verified files, manifest, bundle directory and artifact parent
+through pinned handles. A failed barrier leaves dispatch ungranted; an existing
+unknown publication lock is preserved. Read-only journal observation does not
+perform these writes. Supported complete policy can exceed 64 KiB; only this fixed
 journal path uses the explicit 1 MiB metadata bound. Peer metadata keeps its existing
 bound and path contract.
 

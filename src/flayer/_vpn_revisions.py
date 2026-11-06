@@ -389,6 +389,10 @@ def LoadRevisions(project: SelectedVpnProject) -> RevisionState:
             raise VpnError("Protocol epoch metadata requires the integrated protocol workflow; no legacy peer head was adopted")
 
     baseline = LoadCreationBaseline(project)
+
+    if any(path.name.startswith("server-" + project.vpn.identity.stack + "-ip-") for path in project.Artifacts.iterdir()):
+        raise VpnError("Retained ingress intent requires the integrated protocol workflow; a missing journal is never adopted")
+
     state = LoadPeerSegment(project, baseline)
     actualNames = {path.name.removeprefix("server-") for path in project.Artifacts.iterdir()
                    if path.name.startswith(("server-" + project.vpn.identity.stack + "-wp-", "server-" + project.vpn.identity.stack + "-wc-"))}

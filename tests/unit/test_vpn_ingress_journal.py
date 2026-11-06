@@ -18,7 +18,7 @@ from flayer import _vpn_ingress_journal as journal
 from flayer import _vpn_revisions as revisions
 from flayer._vpn_creation import BundleDigest, LoadCreationBaseline, _Json
 from flayer.guest import ReadPrivate, WritePrivate
-from flayer.profiles.artifacts import ArtifactError
+from flayer.profiles.artifacts import ArtifactError, WriteArtifactBundle
 from flayer.profiles.vpn import VpnError
 from flayer.providers._yandex_firewall import ExpectedRules, SecurityGroupSnapshot
 from flayer.providers._yandex_ingress import IngressDelta
@@ -245,6 +245,31 @@ def test_IntentBundleFailureRetainsJournalAndCannotAuthorizeDispatchBeforeExactP
         journal.RecordOperation(project, dispatched, replace(Operation(prepared), operationId="different-operation"))
 
     assert journal.LoadJournal(project) == recorded and Snapshot(project.root) == before
+
+
+@POSIX
+@pytest.mark.parametrize("fault", ["missing-journal", "unrelated-intent"])
+def test_UnrecordedImmutableIntentCannotBeAdoptedOrHiddenByASecondJournal(tmp_path: Path, fault: str) -> None:
+    """Losing mutable journal metadata does not prove that a queued cloud command can no longer execute."""
+
+    project, prepared = Setup(tmp_path)
+    journal.PublishIntent(project, prepared)
+    journal.BeginDispatch(project, prepared)
+
+    if fault == "missing-journal":
+        (project.root / "protocol-ingress-pending.json").unlink()
+
+    else:
+        WriteArtifactBundle(project.Artifacts, replace(prepared, previousStateSha256="c" * 64).Bundle())
+
+    before = Snapshot(project.root)
+
+    for read in (lambda: journal.LoadJournal(project), lambda: revisions.LoadRevisions(project),
+                 lambda: journal.PublishIntent(project, replace(prepared, previousStateSha256="d" * 64))):
+        with pytest.raises(VpnError):
+            read()
+
+    assert Snapshot(project.root) == before
 
 
 @POSIX

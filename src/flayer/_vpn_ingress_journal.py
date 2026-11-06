@@ -17,6 +17,7 @@ from flayer.profiles.artifacts import (
     ArtifactBundle,
     ReadOwnedArtifactFile,
     WriteArtifactBundle,
+    _SyncArtifactBundle,
 )
 from flayer.profiles.vpn import VpnError
 from flayer.providers._yandex_ingress import IngressDelta
@@ -166,7 +167,14 @@ def LoadJournal(project: SelectedVpnProject) -> IngressJournal | None:
         if path.exists() or path.is_symlink():
             values.append(DecodeJournal(ReadPrivate(path, limit=MAX_PLAN_BYTES)))
 
+    PrivatePath(project.Artifacts, directory=True)
+    names = {path.name.removeprefix("server-") for path in project.Artifacts.iterdir()
+             if path.name.startswith("server-" + project.vpn.identity.stack + "-ip-")}
+
     if not values:
+        if names:
+            raise VpnError("Unrecorded ingress intent requires inspection; a missing journal is never adopted")
+
         return None
 
     if len(values) == 2 and values[0] != values[1] and (
@@ -176,6 +184,9 @@ def LoadJournal(project: SelectedVpnProject) -> IngressJournal | None:
 
     journal = values[-1]
     _CheckProject(project, journal)
+
+    if names - {journal.Bundle().name}:
+        raise VpnError("Unrecorded ingress intent differs from the pending operation; retain recovery state")
 
     if journal.phase != "prepared":
         _ReadIntent(project, journal)
@@ -205,6 +216,8 @@ def PublishIntent(project: SelectedVpnProject, journal: IngressJournal) -> None:
     else:
         WriteArtifactBundle(project.Artifacts, bundle)
 
+    _SyncArtifactBundle(project.Artifacts, bundle)
+
 
 def BeginDispatch(project: SelectedVpnProject, expected: IngressJournal) -> IngressJournal:
     """Persist uncertain dispatch before the one separately consented cloud write; a repeated call cannot authorize another write."""
@@ -218,6 +231,7 @@ def BeginDispatch(project: SelectedVpnProject, expected: IngressJournal) -> Ingr
         raise VpnError("Ingress plan expired or has an invalid expiry; no dispatch was authorized")
 
     _ReadIntent(project, expected)
+    _SyncArtifactBundle(project.Artifacts, expected.Bundle())
     temporary = project.root / ("." + _FILENAME + ".new")
 
     if temporary.exists() or temporary.is_symlink():

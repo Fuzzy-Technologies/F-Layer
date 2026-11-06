@@ -187,6 +187,44 @@ def test_ExtendedModelsCannotCopyPrivateFieldsIntoNonsecretSourceMetadata(tmp_pa
     assert not project.root.exists()
 
 
+def test_CredentialBearingStringSubclassesCannotHideInsideOtherwiseClosedModels(tmp_path: Path) -> None:
+    """Dataclass-aware wire serialization also needs plain scalar fields, not only exact outer model classes."""
+
+    @dataclass(frozen=True, eq=False)
+    class CredentialString(str):
+        """Model an accepted string value whose extra fields must never enter a nonsecret JSON record."""
+
+        value: str
+        privateKey: str = "suppressed-private-fixture"
+
+        def __new__(cls, value: str, privateKey: str = "suppressed-private-fixture") -> CredentialString:
+            """Retain ordinary string equality while exposing the unsafe recursive-dataclass shape to the regression."""
+
+            return str.__new__(cls, value)
+
+    project, pin, material, server = Projection(tmp_path / "never-created")
+
+    for field in ("protocol", "intentFingerprint", "materialDigest", "serverDigest"):
+        extended = replace(pin, **{field: CredentialString(str(getattr(pin, field)))})
+
+        with pytest.raises(VpnError):
+            sources.ProtocolSource(project.vpn.identity, extended)
+
+        with pytest.raises(VpnError):
+            sources.PrepareProtocolRequest(project, extended, material, server, operationId="a" * 32, previousState="b" * 64)
+
+    identity = replace(project.vpn.identity, scopeId=CredentialString(project.vpn.identity.scopeId))
+
+    with pytest.raises(VpnError):
+        sources.ProtocolSource(identity, pin)
+
+    for operation, previous in ((CredentialString("a" * 32), "b" * 64), ("a" * 32, CredentialString("b" * 64))):
+        with pytest.raises(VpnError):
+            sources.PrepareProtocolRequest(project, pin, material, server, operationId=operation, previousState=previous)
+
+    assert not project.root.exists()
+
+
 @pytest.mark.parametrize("fault", ["owner", "material-role", "server-role", "material-proof", "server-proof", "material-public",
                                   "server-public", "missing-file", "operation", "previous-state"])
 def test_ProtocolSnapshotRequiresCompleteUnchangedRoleAndOperationProofs(tmp_path: Path, fault: str) -> None:

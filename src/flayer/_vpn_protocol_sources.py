@@ -25,6 +25,14 @@ _HASH = re.compile(r"[0-9a-f]{64}\Z")
 _MATERIAL_FILES = ("material.json", "intent.sha256")
 
 
+def _ClosedProjection(identity: StackIdentity, pin: ProtocolPin) -> bool:
+    """Exclude credential-bearing model and scalar subclasses before recursive nonsecret serialization."""
+
+    return (type(identity) is StackIdentity and type(pin) is ProtocolPin
+            and all(type(value) is str for value in (identity.project, identity.stack, identity.provider, identity.scopeId, identity.ownerId,
+                                                     pin.protocol, pin.intentFingerprint, pin.materialDigest, pin.serverDigest)))
+
+
 def _ProtocolRequestName(identity: StackIdentity, protocol: str, operationId: str) -> str:
     """Separate protocol snapshots from peer revisions while binding one operation's independent protocol roles."""
 
@@ -46,9 +54,9 @@ class ProtocolSource:
     def __post_init__(self) -> None:
         """Keep historical role and request locators explicit, confined and separate from their virtual protocol bundle names."""
 
-        if (type(self) is not ProtocolSource or type(self.identity) is not StackIdentity or type(self.pin) is not ProtocolPin
-                or not isinstance(self.kind, str) or self.kind not in {"initial", "peer", "protocol"}
-                or not isinstance(self.requestName, str) or not isinstance(self.requestSha256, str)):
+        if (type(self) is not ProtocolSource or not _ClosedProjection(self.identity, self.pin)
+                or type(self.kind) is not str or self.kind not in {"initial", "peer", "protocol"}
+                or type(self.requestName) is not str or type(self.requestSha256) is not str):
             raise VpnError("Protocol source requires exact ownership, projection and supported source kind")
 
         if self.kind == "initial":
@@ -67,7 +75,8 @@ class ProtocolSource:
     def Record(self) -> dict[str, object]:
         """Serialize only hashes and bounded public ownership references for a future epoch record."""
 
-        if type(self) is not ProtocolSource or type(self.identity) is not StackIdentity or type(self.pin) is not ProtocolPin:
+        if (type(self) is not ProtocolSource or not _ClosedProjection(self.identity, self.pin)
+                or any(type(value) is not str for value in (self.kind, self.requestName, self.requestSha256))):
             raise VpnError("Protocol source metadata does not accept extended data models")
 
         return {"schema_version": 1, **_WireDict(self)}
@@ -81,7 +90,7 @@ def DecodeSource(value: object, identity: StackIdentity) -> ProtocolSource:
             or type(value["schema_version"]) is not int or value["schema_version"] != 1
             or value["identity"] != _WireDict(identity) or not isinstance(value["pin"], dict)
             or set(value["pin"]) != {"protocol", "intent_fingerprint", "material_digest", "server_digest"}
-            or any(not isinstance(item, str) for item in value["pin"].values())):
+            or any(type(item) is not str for item in value["pin"].values())):
         raise VpnError("Protocol source metadata is malformed or belongs to another owner")
 
     pin = value["pin"]
@@ -152,9 +161,9 @@ def PrepareProtocolRequest(
 ) -> tuple[ProtocolSource, ArtifactBundle]:
     """Prepare a retained protocol source in memory; publication, journaling and remote mutation remain separate operations."""
 
-    if (type(project.vpn.identity) is not StackIdentity or type(pin) is not ProtocolPin
-            or not isinstance(operationId, str) or re.fullmatch(r"[0-9a-f]{32}", operationId) is None
-            or not isinstance(previousState, str) or _HASH.fullmatch(previousState) is None
+    if (not _ClosedProjection(project.vpn.identity, pin)
+            or type(operationId) is not str or re.fullmatch(r"[0-9a-f]{32}", operationId) is None
+            or type(previousState) is not str or _HASH.fullmatch(previousState) is None
             or any(not isinstance(bundle, ArtifactBundle) or bundle.identity != project.vpn.identity or bundle.kind != "server" for bundle in (material, server))
             or (material.name, server.name) != (project.vpn.identity.stack + "-" + pin.protocol + "-credentials", project.vpn.identity.stack + "-" + pin.protocol)
             or {item.name for item in material.files} != set(_MATERIAL_FILES) or {item.name for item in server.files} != set(_SERVER_FILES[pin.protocol])

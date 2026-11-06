@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:dd13dfde1232d09aabf251ac39462856c67af4ba5d095b2fe4b0e736ea56aa43"
-reviewedTranslationHash = "sha256:963ef3e64cd5cd048e2ec1c0a10a79bccfd2a31099249be71c0c2a41a2a0932d"
+sourceHash = "sha256:a7cdec027e52c65913bf110aeccc8494c010d8a9f8fbabdc7c8d48d512ce24c1"
+reviewedTranslationHash = "sha256:87d59ccd6c86054b004a45d7f211e3006ad36fd715e4fa91c181198e27d6de17"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewedAt = "2026-11-06T15:23:38.094494Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# Границы реализации стандартного WireGuard
 
@@ -176,7 +176,7 @@ endpoint. Для схемы 2 deploy/status/destroy/recover, обслужива�
 не подтверждает клиентскую связность.
 
 Редактирование старого проекта до схемы 2 не является миграцией. Сохранённое
-облачное состояние, прежние общие ключи, bootstrap/trust-комплекты или экспорты
+облачное состояние или журнал незавершённой операции, прежние общие ключи, bootstrap/trust-комплекты или экспорты
 устройств блокируют подготовку. Сохраняйте исходную конфигурацию схемы 1, ключи,
 манифесты и ссылки для очистки, пока явный процесс миграции/входящих правил не
 сможет доказать прежнюю базовую конфигурацию.

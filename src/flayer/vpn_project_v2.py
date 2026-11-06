@@ -333,7 +333,9 @@ def PrepareSelectedProject(project: SelectedVpnProject) -> VpnProjectReport:
     legacy = tuple(project.Artifacts / ("server-" + project.vpn.identity.stack + "-" + suffix)
                    for suffix in ("credentials", "bootstrap", "trust"))
 
-    if (any(path.exists() or path.is_symlink() for path in (project.root / "state.json", *legacy))
+    state = (project.root / "state.json", project.root / ".state.json.operation.json")
+
+    if (any(path.exists() or path.is_symlink() for path in (*state, *legacy))
             or any(path.name.startswith("device-") for path in project.Artifacts.iterdir())):
         raise VpnError("Schema-2 offline preparation cannot adopt an existing deployment or legacy material; explicit migration is pending")
 

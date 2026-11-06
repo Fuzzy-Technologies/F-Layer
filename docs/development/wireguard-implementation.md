@@ -159,7 +159,7 @@ compilation and device export refuse before provider construction or output
 mutation until their integration is implemented. No client-connectivity claim
 follows from offline preparation.
 
-Editing an old project to schema 2 is not migration. Retained generic cloud state,
+Editing an old project to schema 2 is not migration. Retained generic cloud state or a pending operation journal,
 legacy combined credentials, bootstrap/trust bundles or device exports block this
 preparation. Keep the original schema-1 configuration, keys, manifests and cleanup
 references until an explicit migration/ingress workflow can prove the old baseline.

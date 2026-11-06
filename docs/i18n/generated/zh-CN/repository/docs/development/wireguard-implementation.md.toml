@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:dd13dfde1232d09aabf251ac39462856c67af4ba5d095b2fe4b0e736ea56aa43"
-reviewedTranslationHash = "sha256:f72575a1b081596cc792ad88ae9be40aef013bf618df8282557aca772d13790c"
+sourceHash = "sha256:a7cdec027e52c65913bf110aeccc8494c010d8a9f8fbabdc7c8d48d512ce24c1"
+reviewedTranslationHash = "sha256:0a503abb47aed3bf59dc7ae306996c545cc0252cdf7842dbd1c174952f6c474e"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T15:19:41.912780Z"
+reviewedAt = "2026-11-06T15:23:38.094494Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -132,7 +132,7 @@ VLESS 没有隧道地址。保留设备 ID 与分配地址，只规范化声明�
 模式 2 的 deploy/status/destroy/recover、运行时维护、云计划编译及设备导出，
 在集成完成前均于构造提供商或修改输出前拒绝。离线准备不能证明客户端连通性。
 
-将旧项目编辑为模式 2 不构成迁移。保留的通用云状态、旧组合凭据、bootstrap/trust
+将旧项目编辑为模式 2 不构成迁移。保留的通用云状态或待完成操作日志、旧组合凭据、bootstrap/trust
 制品包或设备导出会阻止此次准备。保留原模式 1 配置、密钥、清单及清理引用，
 直至显式迁移/入口规则流程能够证明原有创建基线。
 

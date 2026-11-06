@@ -224,7 +224,7 @@ def test_EditingLegacyProjectToSchema2CannotAdoptItsKeysOrArtifacts(tmp_path: Pa
     assert Snapshot(legacy.Artifacts) == before
 
 
-@pytest.mark.parametrize("marker", ["state", "bootstrap", "trust", "device"])
+@pytest.mark.parametrize("marker", ["state", "journal", "journal-symlink", "bootstrap", "trust", "device"])
 def test_UnknownDeploymentFootprintsRefuseBeforeGeneratingAnyMaterial(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, marker: str,
 ) -> None:
@@ -235,6 +235,15 @@ def test_UnknownDeploymentFootprintsRefuseBeforeGeneratingAnyMaterial(
     if marker == "state":
         (project.root / "state.json").write_bytes(b"retain-unknown-state")
 
+    elif marker in {"journal", "journal-symlink"}:
+        path = project.root / ".state.json.operation.json"
+
+        if marker == "journal-symlink":
+            path.symlink_to(project.root / "missing-operation")
+
+        else:
+            path.write_bytes(b"retain-pending-operation")
+
     else:
         folder = project.Artifacts / ("device-laptop-amneziawg" if marker == "device" else "server-gateway-" + marker)
         folder.mkdir(mode=0o700)
@@ -242,11 +251,15 @@ def test_UnknownDeploymentFootprintsRefuseBeforeGeneratingAnyMaterial(
 
     before = Snapshot(project.root)
     monkeypatch.setattr(selected, "GenerateWireGuardMaterial", lambda *args: pytest.fail("Existing deployment requires explicit migration"))
+    monkeypatch.setattr(selected, "WriteArtifactBundle", lambda *args: pytest.fail("Pending deployment state must not publish material"))
 
     with pytest.raises(VpnError, match="explicit migration"):
         PrepareVpnProject(project)
 
     assert Snapshot(project.root) == before
+
+    if marker == "journal-symlink":
+        assert (project.root / ".state.json.operation.json").is_symlink()
 
 
 def test_PartialLocalPublicationRetainsCredentialsForSafeRetry(

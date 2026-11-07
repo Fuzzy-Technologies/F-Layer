@@ -192,6 +192,17 @@ Cached runtime reuse verifies complete receipt/file hashes and the same executin
 kernel facts, without fetching, building or regenerating credentials. First-ever
 runtime preparation still requires the original vendor/build gate.
 
+The private fresh preparer runs that same executing-kernel, vendor-CVE, pinned
+tool-build and configuration verification into separate empty transient directories.
+Require explicit consent, exact three-file source pins and the approved current
+receiver callback pin. Retain a staged schema-1 baseline and derive a staged
+schema-2 candidate with identical credentials/runtime/kernel facts. Neither snapshot
+claims installation. Reject occupied, aliased, nested or managed-state destinations;
+recheck source/kernel facts before acknowledging. Write receipts last. Interrupted
+transient files grant no authority and are never adopted or replaced by a retry.
+Do not publish a legacy WG transaction, root, unit, reservation, history fence or
+network change. Existing direct installation retains its vendor gate and wire format.
+
 The private generation-cache backend binds a schema-2 composite request containing
 the cloud-plan hash, exact WG input delta, retained source/file pins and complete
 cached/candidate receipts. Under the exposed common reservation and WG fence,

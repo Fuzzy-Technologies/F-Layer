@@ -797,6 +797,21 @@ POSIX tests exercise real private files and locks with simulated networking only
 
 ## Reserved generation cache journal
 
+`PrepareFresh` first builds a complete private staged schema-1 baseline, then uses
+the same cached-generation path to derive a staged schema-2 candidate. Explicit
+consent, the three retained source-file pins, the approved current receiver/helper
+pin, canonical distinct empty private directories and actual namespace/collision
+checks precede the original vendor-CVE/executing-kernel/build gate. Both snapshots
+stay outside managed runtime, authority and unit directories. The binary/configuration
+build is shared with direct installation, which preserves its original wire format.
+
+Source bytes and executing-kernel facts are rechecked before acknowledgment. Each
+snapshot receipt is written last after exclusive complete file writes; interrupted
+prefixes remain unpublished and are refused on retry. Neither preparation creates
+keys, a legacy install transaction, a root/unit, reservation, history fence or live
+network state. A private snapshot is not attestation or protocol mutation authority;
+the coordinator must still bind it into the exact reserved generation/cache request.
+
 The private cache backend now binds complete cached/candidate WG receipts and
 source-role pins beside the cloud-plan hash and exact input delta in a schema-2
 composite request. It requires the exact exposed common reservation and retained
@@ -875,8 +890,8 @@ only an exact installed candidate with complete kernel absence and a drained uni
 Read-only status reports recovery required without repairing the journal or claiming
 activation. Installed partial peer/address drift is not a reboot-recovery prefix.
 
-Cloud ordering, common completion, generation-bearing epoch publication, first-ever
-private runtime staging and public protocol CLI admission remain integration work.
+Cloud ordering, common completion, generation-bearing epoch publication, fresh-build
+orchestration and public protocol CLI admission remain integration work.
 No live server/client or traffic acceptance is implied by these private primitives.
 
 ## Remaining integration

@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:5ebef483496e3c7c584a07a44c22e5bd8a417c995843db9035bd603a1bfd7869"
-reviewedTranslationHash = "sha256:2e5fc7f091a86c737756af2a2880aee31f021f0c68ed393e7e6be1e487455f0c"
+sourceHash = "sha256:4a885df56bb8316b201cbe1257cf5a8c1de54df5e477a1e4d1a8db34247132e6"
+reviewedTranslationHash = "sha256:cbe24458fcec9cc30c78469809678bd1f7c04d38c13ea8b898efc19260179a5d"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T07:06:44.938072Z"
+reviewedAt = "2026-11-07T07:29:34.895772Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -499,6 +499,17 @@ material/server 角色摘要。必需的公共意图和请求文件仍须通过�
 
 ## 预留保护下的代际缓存日志
 
+`PrepareFresh` 先构建完整私有 staged 模式 1 基线，再通过相同缓存代际路径派生 staged
+模式 2 候选。显式同意、三个保留来源文件及已批准当前 receiver/helper 固定值、规范且
+独立的空私有目录，以及实际命名空间缺失和冲突检查，均在原厂商 CVE/执行内核/构建
+门禁之前完成。两个快照位于受管运行时、权限和 unit 目录之外。二进制及配置构建与
+直接安装共用，直接安装保留原线格式。
+
+确认前复查来源字节及执行内核事实。每个快照都先独占写入并同步完整文件，最后写入
+回执；中断前缀保持未发布，重试拒绝接管。准备不创建密钥、旧式安装事务、根/unit、
+预留、历史屏障或实时网络状态。私有快照既非证明，也非协议变更权限；协调器仍须将其
+绑定到精确预留的代际/缓存请求。
+
 私有缓存后端在模式 2 复合请求中，将完整的缓存/候选 WG 回执与来源角色固定值绑定到云计划
 摘要和精确入站差异。它要求精确已暴露公共预留及保留的 WG 历史撤销，并按公共锁、WG 锁
 顺序协调。任何私有缓存写入前先记录准备日志，不能从缓存或其回执推断协议权限。
@@ -553,7 +564,7 @@ starting 重试均协调 PID1 的加载定义。重载前可识别静止的缓�
 协调，但仅限精确 installed 候选、完整内核缺失及已排空 unit。只读状态报告需要恢复，不
 修复日志或声称激活。installed 对等端/地址部分漂移不属于重启恢复前缀。
 
-云顺序、公共完成、带代际纪元发布、首次私有运行时暂存及公共协议 CLI 准入仍需集成。
+云顺序、公共完成、带代际纪元发布、首次构建编排及公共协议 CLI 准入仍需集成。
 这些私有机制不代表已完成生产服务器、客户端或流量验收。
 
 ## 尚待集成

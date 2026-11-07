@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/adr/0024-owned-vpn-protocol-transitions.md"
-sourceHash = "sha256:6c9e7d96384237b5a585b0864b0cac338cfba3a47fdecb8f2775dba5ab2dac4d"
-reviewedTranslationHash = "sha256:f3ce13e92dbed4161dce29ce6bcb7558aca462b73271ec28db96e1f5c3e91e80"
+sourceHash = "sha256:60275955e85e2de7237e564d39f1eacc6f9e3381d870a7fa3e35bbb72dd72692"
+reviewedTranslationHash = "sha256:2fb3dd7e9a1a089e94eba17668e901d54ac0e2033924006d9f44d29986aabe0c"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T07:06:45.787823Z"
+reviewedAt = "2026-11-07T07:29:35.747845Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# ADR 0024：受管 VPN 协议迁移与不可变纪元
 
@@ -139,6 +139,13 @@ systemctl show --all 将无任务表示为空 Job 值，而不是数字零。
 上下文。普通移除/恢复仍拒绝模式 2 代际。目前缓存准备器仅写入未发布私有候选，不撤销
 历史、不发布根、不授权转换，也不证明活动健康。缓存重用验证完整回执和文件摘要，以及
 相同执行内核事实，不下载、构建或重生成凭据。首次运行时准备仍需原有厂商/构建门禁。
+
+私有首次准备器在独立空临时目录中执行相同的执行内核、厂商 CVE、固定工具构建及配置
+验证。要求显式同意、精确三个来源文件固定值，以及已批准当前 receiver 回调固定值。
+保留 staged 模式 1 基线，再派生 staged 模式 2 候选，凭据、运行时及内核事实完全相同；
+两个快照都不声明已安装。拒绝已占用、别名、嵌套或受管状态目标路径；确认前复查来源及
+内核事实。回执最后写入。中断临时文件不授予权限，重试不得接管或替换。不得发布旧式
+WG 事务、根、unit、预留、历史屏障或网络变更。原直接安装保留厂商门禁及线格式。
 
 ## 显式旧项目迁移
 

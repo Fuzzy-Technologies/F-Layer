@@ -920,8 +920,8 @@ First publication holds common then WG locks and verifies the prepared generatio
 actual kernel/service state and consumed history, exact installed file identities,
 terminal input journal/policy and unrelated services through a trusted observer
 dependency. Request JSON cannot choose that dependency. Cloud proof and local graph
-attestation still belong to the controller. There is no concrete AWG/VLESS observer,
-RPC or public CLI integration in this primitive. Local publication is separate below.
+attestation still belong to the controller. The concrete AWG/VLESS observer is
+described below; RPC and public CLI integration remain separate. Local publication is separate below.
 
 An exact immutable schema-2 completion commits the measured historical result.
 Its common head is published before retiring verified input/generation/runtime
@@ -939,6 +939,41 @@ namespace before any write. A failed barrier refuses admission. Read-only status
 does not perform this synchronization or repair. Deterministic fault tests cover
 publication/cleanup interruptions, incomplete records, reappearing sidecars and
 failed directory barriers; every service/network boundary remains synthetic.
+
+## Leased AWG/VLESS service observation
+
+The private concrete observer binds every retained unrelated server bundle to its
+complete public source digest before guest access. It never executes a supplied
+installer. Completion enters its lease under common/WG coordination, acquires
+existing AWG then VLESS shared locks and retains files, directories, enable links,
+PID/start tokens, arguments and cgroups through two observations and immutable
+completion publication. Missing coordination is refused rather than created.
+Historical completed-record recovery skips live observation.
+
+AWG keeps its original compact-identity owner and payload marker. It compares the
+actual private/header keys, exact peer policy and configured parameters, ignoring
+only learned endpoints. Unsupported timing/security overrides refuse; the pinned
+cookie default is normalized. It also compares IPv4 address/MTU/forwarding and
+the complete native nft table with the exact retained firewall compiled in a
+fresh transient network namespace. No host rule or interface is modified.
+
+VLESS keeps its original pretty-identity owner algorithm, current owned receipt
+and any verified committed runtime backup. Its exact daemon must use the declared
+executable/arguments and systemd credential in its actual PID mount namespace.
+Loaded credential bytes must equal the retained source, with owner-only read
+permissions or the exact systemd dynamic-user read ACL; extra readers/writers
+refuse. The declared TCP listener must belong to that daemon. Matching disk files
+and another process's listener cannot substitute for these facts.
+
+Both active and absent probes bound owner-unit enumeration and reject unexpected
+entries, including unloaded drop-ins. Absence requires all owned files/links,
+interfaces/tables and the declared listener absent, a drained unit/cgroup and an
+already existing coordination lock. Existing service identifiers, keys, files and
+legacy installers are preserved. Probes expose only source/receipt/absence hashes,
+repair no metadata and establish no client traffic or YouTube result. Deterministic
+fixtures intercept every service/process/network operation; Linux CI additionally
+checks real retained AWG nft echo/list normalization in an ephemeral namespace.
+Protocol RPC and full controller/public admission remain #128 work.
 
 ## Journaled local epoch publication
 

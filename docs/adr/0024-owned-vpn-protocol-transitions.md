@@ -384,6 +384,41 @@ proceeding, closing a failed final-unlink directory barrier. Read-only admission
 does not synchronize or repair metadata. This backend covers native terminal
 operations; schema-1 unexposed cancellation remains the separate no-op path.
 
+## Concrete unrelated-service observation
+
+Native completion now owns an explicit trusted observation lease: after common/WG
+coordination, acquire the existing AWG then VLESS shared locks without creating
+missing locks. Bind full retained private server bundles to their public source
+digests before I/O, and never execute their supplied installers. Keep file,
+directory, enable-link and process identities pinned through two live observations
+and immutable completion publication. Historical completion replay skips this lease.
+
+AWG retains its existing compact-JSON owner and payload marker; VLESS retains its
+distinct pretty-JSON-plus-newline owner. No identifier, service or key migration is
+performed. AWG compares actual private/header keys, peers and declared parameters,
+ignoring only learned endpoints. Unsupported timing/security overrides refuse;
+the pinned default `DisableCookies=off` is normalized. Compare actual IPv4 address,
+MTU, forwarding and complete nft policy with the retained firewall compiled in a
+fresh isolated network namespace, never the host ruleset.
+
+VLESS verifies the existing installed/committed-upgrade receipt and actual process
+executable, arguments, start token and cgroup. Read its loaded systemd credential
+through the fixed PID mount namespace and compare exact source bytes. Accept only
+systemd's owner-only read layout or its exact root-owned ACL granting read to that
+dynamic UID; an unrelated reader/writer refuses. Attribute the declared listener
+to that exact PID. Disk configuration or an arbitrary same-port listener alone is
+insufficient. Both active and absent observations reject unexpected owner-unit
+entries, including not-yet-loaded drop-ins. Absence requires complete native
+namespace/listener absence and an existing coordination lock; status repairs nothing.
+
+The pinned [AWG showconf](https://github.com/amnezia-vpn/amneziawg-tools/blob/ee0f0a9aa34ff0a0da4b3433b9512781cfe02843/src/showconf.c)
+and [Go UAPI](https://github.com/amnezia-vpn/amneziawg-go/blob/b5928efb6ca19f0153958460c3d141f04abc5c2e/device/uapi.go)
+define emitted configuration fields. Systemd 255
+[credential handling](https://github.com/systemd/systemd/blob/v255/src/core/exec-credential.c)
+defines the read-only copy and dynamic-UID access layout. These probes establish
+owned configuration/service preservation, not end-to-end tunnel or media playback.
+RPC and full controller/public CLI integration remain separate work.
+
 ## Private controller publication
 
 Under the existing project lock, prepare a bounded journal containing all four

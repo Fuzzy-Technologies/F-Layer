@@ -143,7 +143,7 @@ class GuestModel:
             return 0, b""
 
         if name == "systemctl":
-            assert command[1] == "daemon-reload" or command[-1] == guest._Service(self.owner) + ".service"
+            assert command[1] == "daemon-reload" or command[-1] == self.unit.name
             link = self.unit.parent / "multi-user.target.wants" / self.unit.name
 
             if command[1] == "enable":

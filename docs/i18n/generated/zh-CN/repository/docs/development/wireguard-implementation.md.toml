@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:b674dd27116124de3adf0bdc3283f7fae8495825edc4bec11f0d28c9404971e0"
-reviewedTranslationHash = "sha256:34f3a28d087e48b37ab30af30ca28869c4f3392e8aedd1310bba8ede30d52a2d"
+sourceHash = "sha256:424231163c2e1c928eddb2e326eee8467033de8c3bc69c4dd1b875af593d088f"
+reviewedTranslationHash = "sha256:6bdb42b6d034ee53c49634536da9394579e65cadd784a3b9fb2682677e021e39"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T03:14:38.476437Z"
+reviewedAt = "2026-11-07T03:36:15.328157Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -476,6 +476,12 @@ material/server 角色摘要。必需的公共意图和请求文件仍须通过�
 回调在现有 WG 锁下重新读取根元数据，在运行时变更前拒绝陈旧或缺失 nonce、错误执行文件、
 漂移和锁竞争。原生命令子进程继承该锁描述符。对等端事务保留模式 2 的全部八个文件固定值，
 包括辅助程序，不授权替换辅助程序或 unit。未知文件和模式别名仍拒绝。
+
+模式 2 的 unit 文件名包含 nonce 及所有者前缀。根和对等端事务路径不变，旧模式 1 文件名也
+保持不变，防止旧 unit 的延迟命令选中已加载的新代际回调。仅通过有界回执元数据选择路径
+不代表健康；完整检查要求精确 unit 路径，并拒绝其他代际或未知所有者名称及断裂启用链接。
+完整缺失证明与首次安装同样拒绝这些保留项，不删除也不接管。状态、对等端操作及预留观测
+均使用已验证 unit。
 
 缓存准备器只在受管运行时/unit 路径外写入完整、未发布的私有候选，既不激活，也不授予权限。
 模式 2 回调目前拒绝待处理公共预留；普通 remove/recover 在发布旧式清理意图前拒绝这些代际。

@@ -170,6 +170,15 @@ re-read complete root metadata and reject a stale nonce before any native write.
 Native children inherit that descriptor, retaining protection after parent loss.
 Leaf callbacks never acquire the common ingress lock after the WG lock.
 
+Schema-2 systemd unit names also include the generation nonce; legacy schema 1
+keeps its original stable name. A delayed high-level start/stop command naming an
+old unit must not resolve to the currently loaded new unit and inherit its new
+callback arguments. The root and peer transaction paths remain stable. Select an
+active unit from bounded owned receipt metadata, then verify its complete files,
+canonical generation-specific path and runtime before granting authority. Health
+and complete-absence checks refuse retained other-generation/unknown owner units
+and broken enablement links. Never adopt or delete those entries implicitly.
+
 Synchronous systemd callbacks beneath a controller-held WG lock would deadlock;
 callbacks refuse contention. The future coordinator must dispatch jobs after
 releasing its locks and re-observe their terminal outcome. Until its sealed

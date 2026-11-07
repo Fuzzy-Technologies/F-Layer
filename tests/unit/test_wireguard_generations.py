@@ -93,3 +93,24 @@ def test_NativeCallbackChildrenRetainTheProtectingLockDescriptor(monkeypatch: py
     assert guest._Run(["synthetic-command"], passFds=(41, 23)) == (0, b"fixture")
     assert captured[0]["pass_fds"] == (41, 23)
     assert captured[0]["env"]["PATH"] == "/usr/sbin:/usr/bin:/sbin:/bin"
+
+
+def test_ServiceNamesAreGenerationSpecificWhileLegacyRootAndTransactionStayStable() -> None:
+    """A delayed high-level service command names its old unit, never the current generation's unit."""
+
+    owner = "a" * 64
+    legacy = guest._Paths(owner)
+    first = guest._Paths(owner, nonce="1" * 32)
+    second = guest._Paths(owner, nonce="2" * 32)
+    assert first[0] == second[0] == legacy[0] and first[2] == second[2] == legacy[2]
+    assert len({legacy[1], first[1], second[1]}) == 3
+    assert legacy[1].name == "flayer-wg-" + owner[:12] + ".service"
+    assert first[1].name == "flayer-wg-" + owner[:12] + "-" + "1" * 32 + ".service"
+
+
+@pytest.mark.parametrize("nonce", [None, False, "../foreign", "A" * 32, "1" * 31])
+def test_ServiceGenerationCannotSupplyAnArbitraryUnitName(nonce: Any) -> None:
+    """Unit paths are derived exclusively from validated owner and nonce values."""
+
+    with pytest.raises(guest.GuestError):
+        guest._Paths("a" * 64, nonce=nonce)

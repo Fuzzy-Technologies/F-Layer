@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/adr/0024-owned-vpn-protocol-transitions.md"
-sourceHash = "sha256:d0e29006575f1f7f1629ae0eb26544b45280932bc74d37e3820897770350686e"
-reviewedTranslationHash = "sha256:b2db858a50b082af1985c9c7eb591e3e02151d0d61e257a93be9b2a66f07c603"
+sourceHash = "sha256:603868aa2ac5bf0c3971d6f568416a56a8b674fd4dc957be5b60bfb958b9054e"
+reviewedTranslationHash = "sha256:82ad5c2f94dddeb41b3e865c9106ea1737f4f3b2e012ab4b379b12bdb0ee2131"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T03:14:39.370913Z"
+reviewedAt = "2026-11-07T03:36:16.181710Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# ADR 0024：受管 VPN 协议迁移与不可变纪元
 
@@ -71,6 +71,12 @@ body = '''# ADR 0024：受管 VPN 协议迁移与不可变纪元
 增加单独固定的 `lifecycle.py`。两个 unit 回调均绑定精确代际 nonce，在现有 WG 锁内重新
 读取完整根元数据，任何原生写入前拒绝陈旧 nonce。原生命令子进程继承该描述符，父进程
 丢失后仍保留保护。叶回调不会在取得 WG 锁后再获取公共入口锁。
+
+模式 2 的 systemd unit 名称也包含代际 nonce，旧模式 1 保留原固定名称。指定旧 unit 的延迟
+高层启动/停止命令不能解析为当前加载的新 unit 并取得其新回调参数。根及对等端事务路径不变。
+根据有界受管回执元数据选择活动 unit 后，仍须验证全部文件、规范代际路径及运行时才能授予
+权限。健康及完整缺失检查拒绝保留的其他代际或未知所有者 unit，以及断裂启用链接，绝不
+隐式接管或删除这些项。
 
 控制器持有 WG 锁时执行同步 systemd 回调会死锁，因此回调拒绝锁竞争。未来协调器必须在
 释放锁后派发任务，并重新观测其终态。密封代际日志/上下文实现前，模式 2 回调拒绝待处理

@@ -145,8 +145,8 @@ def _Runtime(guest: Any, root: Path, unit: Path, request: dict[str, Any], receip
 
     owner = request["owner"]
     guest._KernelMatches(receipt)
-    guest._Run(["systemctl", "is-active", "--quiet", guest._Service(owner) + ".service"])
-    guest._Run(["systemctl", "is-enabled", "--quiet", guest._Service(owner) + ".service"])
+    guest._Run(["systemctl", "is-active", "--quiet", unit.name])
+    guest._Run(["systemctl", "is-enabled", "--quiet", unit.name])
     state = guest._InterfaceState(owner)
 
     if (state is None or state.get("ifalias") != guest._Alias(owner, receipt["nonce"])
@@ -202,7 +202,7 @@ def _Publish(guest: Any, desired: Path, action: str, deviceId: str, expected: st
 
     request, _, _ = guest._Request(desired)
     owner = request["owner"]
-    root, unit, transaction = guest._Paths(owner)
+    root, unit, transaction = guest._ActivePaths(owner)
 
     if transaction.exists() or transaction.is_symlink():
         raise guest.GuestError("An unresolved WireGuard operation requires explicit recovery")
@@ -310,7 +310,7 @@ def _Converge(
 ) -> None:
     """Change a sole peer without service restart; revoked sources are denied before kernel removal."""
 
-    root, unit, _ = guest._Paths(request["owner"])
+    root, unit, _ = guest._ActivePaths(request["owner"])
     _Runtime(guest, root, unit, request, receipt)
     current = _KernelChoice(guest, ((target, request), (other, otherRequest)))
     accepted = {receipt["network_sha256"], otherReceipt["network_sha256"]}
@@ -429,7 +429,7 @@ def _Clear(guest: Any, record: dict[str, Any], *, committed: bool) -> None:
     """Retire only hash-proved backups after the complete selected root/runtime and commit boundary are durable."""
 
     owner = record["owner"]
-    root, unit, transaction = guest._Paths(owner)
+    root, unit, transaction = guest._ActivePaths(owner)
     selected = record["desired" if committed else "previous"]
     discarded = record["previous" if committed else "desired"]
     current = guest._Check(root, unit, guest._Request(root)[0])
@@ -491,7 +491,7 @@ def Apply(guest: Any, desired: Path, action: str, deviceId: str, expected: str, 
     guest._RequireDigest(expected)
     guest._RequireDigest(expectedHistory)
     request, _, raw = guest._Request(desired)
-    root, unit, transaction = guest._Paths(request["owner"])
+    root, unit, transaction = guest._ActivePaths(request["owner"])
     audit = _Audit(guest, request["owner"])
 
     if not transaction.exists() and not transaction.is_symlink():
@@ -543,7 +543,7 @@ def Recover(
     guest._RequireDigest(expectedHistory)
     requested, _, raw = guest._Request(desired)
     owner = requested["owner"]
-    root, unit, transaction = guest._Paths(owner)
+    root, unit, transaction = guest._ActivePaths(owner)
     actualRequest = guest._Request(root)[0]
     actual = guest._Receipt(root, unit, owner)
 
@@ -639,7 +639,7 @@ def Status(guest: Any, desired: Path, action: str, deviceId: str) -> dict[str, o
     _Change(guest, action, deviceId)
     requested, _, raw = guest._Request(desired)
     owner = requested["owner"]
-    root, unit, transaction = guest._Paths(owner)
+    root, unit, transaction = guest._ActivePaths(owner)
     actualRequest = guest._Request(root)[0]
     actual = guest._Receipt(root, unit, owner)
 
@@ -855,7 +855,7 @@ def Main(argv: list[str] | None = None) -> int:
         if not isinstance(owner, str):
             raise ValueError
 
-        root, unit, _ = guest._Paths(owner)
+        root, unit, _ = guest._ActivePaths(owner)
         descriptor: int | None
 
         try:

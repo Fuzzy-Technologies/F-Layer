@@ -764,6 +764,15 @@ mutation. Its native children inherit that descriptor. Peer transactions preserv
 all eight schema-2 file pins, including the helper, without admitting helper/unit
 replacement. Unknown files and schema aliases remain errors.
 
+Schema-2 unit filenames include the nonce as well as the owner prefix. Root and
+peer transaction paths stay stable; legacy schema-1 filenames stay unchanged.
+This keeps a delayed command for an old unit from selecting a new generation's
+loaded callback. Bounded receipt-based path selection alone does not establish
+health. Full checks require the exact unit path and reject other-generation or
+unknown owner names and broken enablement links. Complete absence and fresh
+installation also refuse those retained entries without deleting/adopting them.
+Status, peer operations and reservation observations target the verified unit.
+
 The cache preparer writes only a complete unpublished private candidate outside
 managed runtime/unit paths; it neither activates it nor grants authority. Schema-2
 callbacks currently reject pending common reservations; ordinary remove/recover

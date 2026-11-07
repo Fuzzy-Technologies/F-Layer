@@ -38,12 +38,15 @@ def PublishFixture(model: Any, candidate: Path, receipt: dict[str, Any], monkeyp
 
     request = guest._Request(model.root)[0]
     guest._Stop(model.root, model.unit, request)
+    model.Run(["systemctl", "disable", model.unit.name])
     model.active = False
     model.root.rename(model.root.parent.parent.parent.parent / "cached-root")
     model.unit.unlink()
+    model.unit = guest._Paths(model.owner, nonce=receipt["nonce"])[1]
     guest._Publish(candidate, model.root)
     guest._Atomic(model.unit, (model.root / "service.service").read_bytes(), 0o644)
     guest._Atomic(model.root / "receipt.json", guest._Encode(receipt if staged else {**receipt, "status": "installed"}))
+    model.Run(["systemctl", "enable", model.unit.name])
     monkeypatch.setattr(guest, "__file__", str(model.root / "lifecycle.py"))
 
 
@@ -283,10 +286,14 @@ def test_PeerChangesPreserveTheGenerationHelperAndNonce(
     # This fixture upgrades only private root metadata and the already synthetic policy/interface marker.
     old = model.root.parent / "old-fixture"
     model.root.rename(old)
+    model.Run(["systemctl", "disable", model.unit.name])
+    model.unit.unlink()
+    model.unit = guest._Paths(model.owner, nonce=receipt["nonce"])[1]
     guest._Publish(candidate, model.root)
     receipt = {**receipt, "status": "installed"}
     guest._Atomic(model.root / "receipt.json", guest._Encode(receipt))
     guest._Atomic(model.unit, (model.root / "service.service").read_bytes(), 0o644)
+    model.Run(["systemctl", "enable", model.unit.name])
     model.policy = (model.root / "firewall.nft").read_bytes()
     model.interface["ifalias"] = guest._Alias(model.owner, receipt["nonce"])
     expected = guest._Digest(guest._Encode(receipt))

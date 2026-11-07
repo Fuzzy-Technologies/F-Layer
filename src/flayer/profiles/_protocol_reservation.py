@@ -386,7 +386,7 @@ def _Observe(guest: Any, peer: Any, intent: dict[str, Any]) -> tuple[dict[str, A
     """Prove the complete actual active or absent WG namespace, refusing every unresolved peer/install transaction."""
 
     owner = intent["owner"]
-    root, unit, transaction = guest._Paths(owner)
+    root, unit, transaction = guest._ActivePaths(owner)
 
     if transaction.exists() or transaction.is_symlink():
         raise ReservationError("Pending WireGuard transaction requires recovery before protocol reservation")

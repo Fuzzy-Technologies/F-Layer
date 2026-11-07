@@ -782,13 +782,59 @@ def _Config(config: bytes, request: dict[str, Any], binary: Path) -> tuple[str, 
     return privateKey, serverPublic, observed
 
 
-def _Paths(owner: str) -> tuple[Path, Path, Path]:
-    """Resolve only one exact full-owner root, stable unit and transaction directory."""
+def _Paths(owner: str, *, nonce: str = "") -> tuple[Path, Path, Path]:
+    """Keep root/transaction identity stable and give each explicit generation a distinct systemd name."""
 
     if not isinstance(owner, str) or _HASH.fullmatch(owner) is None:
         raise GuestError("WireGuard owner identity is invalid")
 
-    return BASE / owner, SYSTEMD / (_Service(owner) + ".service"), BASE / ("txn-" + owner)
+    if type(nonce) is not str:
+        raise GuestError("WireGuard service generation is invalid")
+
+    name = _Service(owner) + ("-" + _Nonce(nonce) if nonce else "") + ".service"
+
+    return BASE / owner, SYSTEMD / name, BASE / ("txn-" + owner)
+
+
+def _ActivePaths(owner: str) -> tuple[Path, Path, Path]:
+    """Select a unit from bounded owned root metadata; complete receipt/runtime checks still establish authority."""
+
+    root, unit, transaction = _Paths(owner)
+
+    if root.exists() or root.is_symlink():
+        _Directory(root, private=True)
+        path = root / "receipt.json"
+
+        if path.exists() or path.is_symlink():
+            receipt = _ReceiptData(_Json(_Read(path)), owner, staged=True)
+
+            if receipt["schema_version"] == 2:
+                return _Paths(owner, nonce=receipt["nonce"])
+
+    return root, unit, transaction
+
+
+def _OwnedUnits(owner: str) -> frozenset[Path]:
+    """Observe bounded legacy/generation unit and enablement names, including broken links and unknown suffixes."""
+
+    _Paths(owner)
+    prefix = _Service(owner)
+    found = set()
+
+    for parent in (SYSTEMD, SYSTEMD / "multi-user.target.wants"):
+        if not parent.exists() and not parent.is_symlink():
+            continue
+
+        _Directory(parent)
+
+        for index, path in enumerate(parent.iterdir()):
+            if index >= 4096:
+                raise GuestError("WireGuard service namespace observation exceeds its bound")
+
+            if path.name.startswith(prefix):
+                found.add(path)
+
+    return frozenset(found)
 
 
 def _Nonce(value: object) -> str:
@@ -923,6 +969,9 @@ def _Receipt(root: Path, unit: Path, owner: str, *, staged: bool = False) -> dic
         raise GuestError("Owned WireGuard unit template differs")
 
     if unit.exists() or unit.is_symlink():
+        if unit != _Paths(owner, nonce=receipt["nonce"] if receipt["schema_version"] == 2 else "")[1]:
+            raise GuestError("WireGuard unit path differs from its exact installation generation")
+
         if _Read(unit, mode=0o644) != _Read(root / "service.service"):
             raise GuestError("WireGuard systemd unit is foreign or changed")
 
@@ -1040,13 +1089,22 @@ def _Check(root: Path, unit: Path, request: dict[str, Any], *, staged: bool = Fa
     owner = request["owner"]
     receipt = _Receipt(root, unit, owner, staged=staged)
 
+    if (unit != _Paths(owner, nonce=receipt["nonce"] if receipt["schema_version"] == 2 else "")[1]
+            or _OwnedUnits(owner) - {unit, SYSTEMD / "multi-user.target.wants" / unit.name}):
+        raise GuestError("WireGuard service namespace contains another generation or unknown unit")
+
+    _EnabledLink(unit)
+
+    if not (SYSTEMD / "multi-user.target.wants" / unit.name).is_symlink():
+        raise GuestError("WireGuard service has no exact owned enablement link")
+
     if (receipt["files"]["server.conf"] != request["config_sha256"]
             or _Json(_Read(root / "deployment.json")) != request):
         raise GuestError("Prepared WireGuard configuration differs from the active receipt")
 
     _KernelMatches(receipt)
-    _Run(["systemctl", "is-active", "--quiet", _Service(owner) + ".service"])
-    _Run(["systemctl", "is-enabled", "--quiet", _Service(owner) + ".service"])
+    _Run(["systemctl", "is-active", "--quiet", unit.name])
+    _Run(["systemctl", "is-enabled", "--quiet", unit.name])
     state = _InterfaceState(owner)
 
     if (state is None or state.get("ifalias") != _Alias(owner, receipt["nonce"]) or state.get("mtu") != request["mtu"]
@@ -1192,8 +1250,15 @@ def _EnabledLink(unit: Path) -> None:
 
     if link.exists() or link.is_symlink():
         info = link.lstat()
+        valid = False
 
-        if not stat.S_ISLNK(info.st_mode) or info.st_uid != _ROOT_UID or link.resolve(strict=True) != unit.resolve(strict=True):
+        try:
+            valid = stat.S_ISLNK(info.st_mode) and info.st_uid == _ROOT_UID and link.resolve(strict=True) == unit.resolve(strict=True)
+
+        except (OSError, RuntimeError):
+            pass
+
+        if not valid:
             raise GuestError("WireGuard enablement link has foreign ownership")
 
 
@@ -1326,7 +1391,7 @@ def _RequireAbsent(owner: str) -> None:
     if BASE.exists():
         _Directory(BASE)
 
-    if (root.exists() or root.is_symlink() or unit.exists() or unit.is_symlink()
+    if (root.exists() or root.is_symlink() or _OwnedUnits(owner)
             or _InterfaceState(owner) is not None or _NftState(owner, "0" * 32) is not None):
         raise GuestError("WireGuard namespace is not completely absent")
 
@@ -1339,7 +1404,7 @@ def _RequireAbsent(owner: str) -> None:
 def _Recover(owner: str, expectedReceipt: str, *, expectedAbsence: str = "") -> None:
     """Roll an interrupted fresh installation back to absence using only proved owned state."""
 
-    root, unit, transaction = _Paths(owner)
+    root, unit, transaction = _ActivePaths(owner)
 
     if expectedAbsence:
         if expectedReceipt or expectedAbsence != _AbsenceDigest(owner):
@@ -1381,7 +1446,7 @@ def _Recover(owner: str, expectedReceipt: str, *, expectedAbsence: str = "") -> 
             _Check(root, unit, request)
             _SyncDirectory(root)
 
-        elif (unit.exists() or unit.is_symlink() or _InterfaceState(owner) is not None
+        elif (_OwnedUnits(owner) or _InterfaceState(owner) is not None
               or _NftState(owner, "0" * 32) is not None):
             raise GuestError("Empty WireGuard journal has unexpected remaining resources")
 
@@ -1457,7 +1522,7 @@ def _Recover(owner: str, expectedReceipt: str, *, expectedAbsence: str = "") -> 
             _AddressState(owner, request, partial=receipt["status"] == "staged")
 
         if unit.exists() or unit.is_symlink():
-            _Run(["systemctl", "stop", _Service(owner) + ".service"])
+            _Run(["systemctl", "stop", unit.name])
 
         _Stop(root, unit, request, partial=receipt["status"] == "staged", recovering=True)
 
@@ -1465,7 +1530,7 @@ def _Recover(owner: str, expectedReceipt: str, *, expectedAbsence: str = "") -> 
         raise GuestError("Unpublished WireGuard stage has unexpected live resources")
 
     if unit.exists() or unit.is_symlink():
-        _Run(["systemctl", "disable", _Service(owner) + ".service"])
+        _Run(["systemctl", "disable", unit.name])
         wants = SYSTEMD / "multi-user.target.wants"
 
         if wants.exists():
@@ -1488,7 +1553,7 @@ def _Remove(owner: str, expectedReceipt: str) -> None:
     """Journal one explicitly consented removal without touching another transport's resources."""
 
     _RequireDigest(expectedReceipt)
-    root, unit, transaction = _Paths(owner)
+    root, unit, transaction = _ActivePaths(owner)
 
     if transaction.exists() or transaction.is_symlink():
         raise GuestError("WireGuard recovery is required before removal")
@@ -1516,7 +1581,7 @@ def _Install(stage: Path, request: dict[str, Any]) -> None:
     """Install only an absent namespace or verify an identical healthy deployment without restart."""
 
     owner = request["owner"]
-    root, unit, transaction = _Paths(owner)
+    root, unit, transaction = _ActivePaths(owner)
 
     if transaction.exists() or transaction.is_symlink():
         raise GuestError("WireGuard recovery is required before another installation")
@@ -1532,7 +1597,7 @@ def _Install(stage: Path, request: dict[str, Any]) -> None:
 
         return
 
-    if unit.exists() or unit.is_symlink():
+    if _OwnedUnits(owner):
         raise GuestError("WireGuard unit name is already occupied")
 
     receipt, transaction = _PrepareRoot(stage, request, root, unit)
@@ -1543,12 +1608,12 @@ def _Install(stage: Path, request: dict[str, Any]) -> None:
         _Atomic(unit, _Read(root / "service.service"), 0o644)
         _EnabledLink(unit)
         _Run(["systemctl", "daemon-reload"])
-        _Run(["systemctl", "enable", _Service(owner) + ".service"])
+        _Run(["systemctl", "enable", unit.name])
         _EnabledLink(unit)
         _SyncDirectory(SYSTEMD / "multi-user.target.wants")
         _SyncDirectory(SYSTEMD)
         _Start(root, unit, request)
-        _Run(["systemctl", "start", _Service(owner) + ".service"])
+        _Run(["systemctl", "start", unit.name])
         _Check(root, unit, request, staged=True)
         installed = {**receipt, "status": "installed"}
         _Atomic(root / "receipt.json", _Encode(installed))
@@ -1576,7 +1641,7 @@ def _Status(stage: Path, request: dict[str, Any]) -> dict[str, object]:
     """Return bounded nonsecret runtime facts while retaining exact recovery consent hashes."""
 
     owner = request["owner"]
-    root, unit, transaction = _Paths(owner)
+    root, unit, transaction = _ActivePaths(owner)
 
     if transaction.exists() or transaction.is_symlink():
         _Directory(transaction, private=True)
@@ -1588,7 +1653,7 @@ def _Status(stage: Path, request: dict[str, Any]) -> dict[str, object]:
                 return {"status": "recovery-required", "receipt_sha256": _Digest(_Read(root / "receipt.json")),
                         "tools_version": TOOLS_VERSION, "kernel_policy": "cached-named-cve-baseline"}
 
-            if (unit.exists() or unit.is_symlink() or _InterfaceState(owner) is not None
+            if (_OwnedUnits(owner) or _InterfaceState(owner) is not None
                     or _NftState(owner, "0" * 32) is not None):
                 raise GuestError("Empty WireGuard journal has unexpected remaining resources")
 
@@ -1684,7 +1749,7 @@ def _GenerationCallback(root: Path, unit: Path, nonce: str, *, start: bool) -> N
         _ProtocolGate()
         request = _Request(root)[0]
         owner = request["owner"]
-        installed, expectedUnit, transaction = _Paths(owner)
+        installed, expectedUnit, transaction = _ActivePaths(owner)
 
         if root != installed or unit != expectedUnit or Path(__file__).absolute() != root / "lifecycle.py":
             raise GuestError("Generation callback requires the exact installed lifecycle executable")
@@ -1740,7 +1805,7 @@ def Main(argv: list[str] | None = None) -> int:
         stage = Path(__file__).absolute().parent
         request, _, _ = _Request(stage)
         owner = request["owner"]
-        root, unit, transaction = _Paths(owner)
+        root, unit, transaction = _ActivePaths(owner)
         readOnly = arguments.check or arguments.status
 
         if arguments.expectedGeneration and not (arguments.start or arguments.stop):

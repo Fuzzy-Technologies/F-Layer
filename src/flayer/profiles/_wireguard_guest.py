@@ -1963,7 +1963,7 @@ def _OpenLock(*, readOnly: bool) -> int:
     return descriptor
 
 
-def _ProtocolGate() -> None:
+def _ProtocolGate(*, mutate: bool = False) -> None:
     """Under WG coordination, refuse a common protocol reservation before ordinary maintenance; service callbacks stay separate."""
 
     root = BASE.parent / "ingress"
@@ -1973,6 +1973,31 @@ def _ProtocolGate() -> None:
 
         if any((root / name).exists() or (root / name).is_symlink() for name in ("pending.json", ".pending.json.new", ".head.json.new")):
             raise GuestError("Pending protocol reservation requires explicit protocol recovery before WireGuard maintenance")
+
+        if mutate:
+            descriptor = os.open(root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+
+            try:
+                info = os.fstat(descriptor)
+                linked = root.lstat()
+
+                if (not stat.S_ISDIR(info.st_mode) or info.st_uid != _ROOT_UID or stat.S_IMODE(info.st_mode) != 0o700
+                        or (info.st_dev, info.st_ino) != (linked.st_dev, linked.st_ino)):
+                    raise GuestError("Common protocol namespace changed before mutation admission")
+
+                # A failed final completion fsync may leave pending visibly absent
+                # without durable removal. Reestablish absence before any new write.
+                os.fsync(descriptor)
+                _SyncDirectory(root.parent)
+                linked = root.lstat()
+
+                if ((info.st_dev, info.st_ino) != (linked.st_dev, linked.st_ino)
+                        or linked.st_uid != _ROOT_UID or stat.S_IMODE(linked.st_mode) != 0o700
+                        or any((root / name).exists() or (root / name).is_symlink() for name in ("pending.json", ".pending.json.new", ".head.json.new"))):
+                    raise GuestError("Common protocol protection changed during mutation admission")
+
+            finally:
+                os.close(descriptor)
 
 
 def _GenerationCallback(root: Path, unit: Path, nonce: str, *, start: bool) -> None:
@@ -1992,7 +2017,7 @@ def _GenerationCallback(root: Path, unit: Path, nonce: str, *, start: bool) -> N
         protocol = _RuntimeContext(root, unit, nonce, start=start)
 
         if protocol is None:
-            _ProtocolGate()
+            _ProtocolGate(mutate=True)
         request = _Request(root)[0]
         owner = request["owner"]
         installed, expectedUnit, transaction = _ActivePaths(owner)
@@ -2123,7 +2148,7 @@ def Main(argv: list[str] | None = None) -> int:
             if descriptor is not None:
                 fcntl.flock(descriptor, (fcntl.LOCK_SH if readOnly else fcntl.LOCK_EX) | fcntl.LOCK_NB)
 
-            _ProtocolGate()
+            _ProtocolGate(mutate=not readOnly)
 
             if arguments.remove:
                 _Remove(owner, arguments.expectedReceipt)

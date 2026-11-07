@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -324,7 +325,61 @@ def _Pending(guest: Any, intent: dict[str, Any]) -> dict[str, Any] | None:
     return values[-1]
 
 
-def _Authority(guest: Any, intent: dict[str, Any], pending: dict[str, Any] | None) -> tuple[dict[str, str] | None, str, dict[str, Any] | None, int]:
+def Completion(value: object, intent: dict[str, Any]) -> dict[str, Any]:
+    """Validate closed historical cancellation/native completion records without claiming current runtime or cloud health."""
+
+    intent = Intent(intent)
+    fields = {"schema_version", "owner", "creation_sha256", "operation_id", "intent_sha256", "parent", "previous_authority_sha256", "history_sha256", "outcome"}
+
+    if (type(value) is not dict or set(value) != fields or type(value["schema_version"]) is not int or value["schema_version"] not in {1, 2}
+            or not _Hash(value["owner"]) or not _Hash(value["creation_sha256"])
+            or value["owner"] != intent["owner"] or value["creation_sha256"] != intent["creation_sha256"]
+            or type(value["operation_id"]) is not str or _NONCE.fullmatch(value["operation_id"]) is None
+            or any(not _Hash(value[key]) for key in ("intent_sha256", "previous_authority_sha256", "history_sha256"))
+            or type(value["outcome"]) is not str or value["outcome"] not in ({"cancelled"} if value["schema_version"] == 1 else {"committed", "not-applied"})):
+        raise ReservationError("Protocol completion record has invalid ownership or history proof")
+
+    parent = _Pointer(value["parent"])
+
+    initial = hashlib.sha256(_Json({"domain": "f-layer/ingress/authority/v1", "owner": intent["owner"], "creation_sha256": intent["creation_sha256"]})).hexdigest()
+
+    if value["previous_authority_sha256"] != (parent["sha256"] if parent is not None else initial):
+        raise ReservationError("Protocol completion does not bind its exact previous authority")
+
+    return dict(value)
+
+
+def _CompletionPrefix(guest: Any, record: dict[str, Any]) -> bytes:
+    """Observe only this operation's owned exact completion prefix; incomplete bytes grant no completion or mutation authority."""
+
+    expected = _Json(record)
+    path = _Root(guest) / ("done-" + record["operation_id"] + ".json")
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+
+    try:
+        info = os.fstat(descriptor)
+
+        if (not stat.S_ISREG(info.st_mode) or info.st_uid != guest._ROOT_UID or info.st_nlink != 1 or stat.S_IMODE(info.st_mode) != 0o600
+                or not 0 <= info.st_size <= len(expected) or len(expected) > 8192):
+            raise ReservationError("Protocol completion prefix has unsafe ownership or size")
+
+        content = os.read(descriptor, len(expected) + 1)
+        current, linked = os.fstat(descriptor), path.lstat()
+
+        if (len(content) != info.st_size or content != expected[:len(content)]
+                or (info.st_dev, info.st_ino) != (linked.st_dev, linked.st_ino)
+                or (info.st_size, info.st_mtime_ns, info.st_ctime_ns) != (current.st_size, current.st_mtime_ns, current.st_ctime_ns)):
+            raise ReservationError("Protocol completion prefix differs from its exact candidate or changed during observation")
+
+        return content
+
+    finally:
+        os.close(descriptor)
+
+
+def _Authority(
+    guest: Any, intent: dict[str, Any], pending: dict[str, Any] | None, *, expectedCompletion: dict[str, Any] | None = None,
+) -> tuple[dict[str, str] | None, str, dict[str, Any] | None, int]:
     """Verify every immutable completed parent and reject orphan records rather than reconstructing a lost mutable head."""
 
     root = _Root(guest)
@@ -343,20 +398,30 @@ def _Authority(guest: Any, intent: dict[str, Any], pending: dict[str, Any] | Non
     visited: set[str] = set()
     latest = None
     initial = _Initial(guest, intent)
+    expectedName = "done-" + intent["operation_id"] + ".json"
+
+    if expectedCompletion is not None:
+        expectedCompletion = Completion(expectedCompletion, intent)
+
+        if (expectedCompletion["schema_version"] != 2 or expectedCompletion["operation_id"] != intent["operation_id"]
+                or expectedCompletion["previous_authority_sha256"] != intent["previous_authority_sha256"]):
+            raise ReservationError("Native completion candidate does not consume its exact reservation")
 
     while current is not None:
         if current["name"] in visited or len(visited) >= MAX_COMPLETIONS:
             raise ReservationError("Protocol completion history is cyclic or exceeds its bound")
 
         visited.add(current["name"])
-        record = _Decode(guest, root / current["name"])
+        if current["name"] == expectedName and expectedCompletion is not None:
+            if _CompletionPrefix(guest, expectedCompletion) != _Json(expectedCompletion):
+                raise ReservationError("Published common head cannot refer to an incomplete completion")
 
-        if (set(record) != {"schema_version", "owner", "creation_sha256", "operation_id", "intent_sha256", "parent", "previous_authority_sha256", "history_sha256", "outcome"}
-                or type(record["schema_version"]) is not int or record["schema_version"] != 1 or record["owner"] != intent["owner"]
-                or record["creation_sha256"] != intent["creation_sha256"] or record["outcome"] != "cancelled"
-                or type(record["operation_id"]) is not str or _NONCE.fullmatch(record["operation_id"]) is None
-                or current["name"] != "done-" + record["operation_id"] + ".json" or guest._Digest(_Json(record)) != current["sha256"]
-                or any(not _Hash(record[key]) for key in ("intent_sha256", "previous_authority_sha256", "history_sha256"))):
+            record = expectedCompletion
+
+        else:
+            record = Completion(_Decode(guest, root / current["name"]), intent)
+
+        if current["name"] != "done-" + record["operation_id"] + ".json" or guest._Digest(_Json(record)) != current["sha256"]:
             raise ReservationError("Protocol completion record has invalid ownership or history proof")
 
         parent = _Pointer(record["parent"])
@@ -376,8 +441,26 @@ def _Authority(guest: Any, intent: dict[str, Any], pending: dict[str, Any] | Non
 
     unheaded = {name for name in names if name.startswith("done-")} - visited
 
+    native = pending is not None and pending["phase"] == "exposed" and expectedName in names
+
+    if native and pending is not None:
+        candidate = (expectedCompletion if expectedCompletion is not None else Completion(_Decode(guest, root / expectedName), intent))
+
+        if (candidate["schema_version"] != 2 or candidate["operation_id"] != intent["operation_id"]
+                or candidate["parent"] != pending["parent"] or candidate["previous_authority_sha256"] != intent["previous_authority_sha256"]):
+            raise ReservationError("Native completion does not consume its exact exposed common authority")
+
+        if expectedCompletion is not None:
+            _CompletionPrefix(guest, expectedCompletion)
+
+        pointer = {"name": expectedName, "sha256": guest._Digest(_Json(candidate))}
+
+        if (head not in (pending["parent"], pointer)
+                or ".head.json.new" in names and _Pointer(_Decode(guest, root / ".head.json.new")) != pointer):
+            raise ReservationError("Native completion has an unexplained common head publication")
+
     if ({name for name in names if name.startswith("done-")} - expected
-            or (unheaded or ".head.json.new" in names) and (pending is None or pending["phase"] != "cancelling")):
+            or (unheaded or ".head.json.new" in names) and not native and (pending is None or pending["phase"] != "cancelling")):
         raise ReservationError("Unrecorded protocol completion or interrupted head requires recovery; missing authority is never adopted")
 
     return head, head["sha256"] if head is not None else initial, latest, len(visited)
@@ -580,5 +663,6 @@ def Status(guest: Any, peer: Any, value: object) -> dict[str, Any]:
         _, authority, latest, count = _Authority(guest, intent, pending)
 
         return {"status": "protocol-authority", "authority_sha256": authority, "history_sha256": peer.HistoryStatus(guest, intent["owner"])["history_sha256"],
-                "phase": pending["phase"] if pending is not None else "cancelled" if latest is not None else "initial",
+                "phase": pending["phase"] if pending is not None else "completed" if latest is not None and latest["schema_version"] == 2
+                else "cancelled" if latest is not None else "initial",
                 "reservation_sha256": guest._Digest(_Json(pending)) if pending is not None else "", "completion_count": count}

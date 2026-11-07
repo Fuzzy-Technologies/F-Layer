@@ -60,6 +60,10 @@ def _Reservation(
         raise InputError("Host input mutation requires the exact current exposed reservation")
 
     root = authority._Root(guest)
+    completion = root / ("done-" + intent["operation_id"] + ".json")
+
+    if completion.exists() or completion.is_symlink():
+        raise InputError("Native completion publication requires finalization before host-input mutation")
 
     if any((root / name).exists() or (root / name).is_symlink() for name in ("runtime.json", ".runtime.json.new")):
         if request["schema_version"] != 2 or generationCache is None or runtimeBackend is None:

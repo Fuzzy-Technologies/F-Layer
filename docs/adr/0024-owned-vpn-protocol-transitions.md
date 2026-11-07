@@ -287,8 +287,8 @@ With systemctl show --all, no job renders an empty Job value rather than a numer
 
 Cache preparation itself does not mutate an active root, unit, input policy or cloud
 resource. Native transitions remain private and keep the common reservation exposed.
-Cloud ordering, common completion, generation-bearing epoch publication and public
-CLI admission still require controller integration. Neither cache nor input preparation
+Cloud ordering, invocation of common completion, generation-bearing epoch publication
+and public CLI admission still require controller integration. Neither cache nor input preparation
 alone authorizes a service command or retires an exposed reservation.
 
 A change to another protocol preserves active WireGuard keys/configuration/root
@@ -357,8 +357,32 @@ validity window and records actual restored provider IDs/tags. Reserve enough
 bounded recovery/epoch capacity before dispatch. A snapshot equal to the old rules
 does not turn an unknown submission into an undispatched cancellation. Local graph
 validation checks declared evidence and ancestry; authenticated live attestation,
-guest completion, publication recovery and public entrypoint admission remain the
+invoking guest completion, publication recovery and public entrypoint admission remain the
 coordinator's separate obligations.
+
+### Private native completion
+
+The private common finalizer accepts a closed candidate binding the schema-2 epoch
+intent, full composite request, terminal native/input journals and source-bound
+service proofs. It reconstructs all native terminal records before I/O. Under the
+common then WG locks, first publication rechecks pinned generation files, actual
+native state/history, installed file identities and terminal input policy. A trusted
+observer dependency must measure every unrelated service; caller-supplied hashes
+alone cannot satisfy this requirement. Cloud and local graph attestation remain
+controller responsibilities, and no RPC or public CLI invokes this backend yet.
+
+The exact immutable schema-2 completion is the commit point. Publish its common
+head, retire only verified canonical input/generation/runtime sidecars and remove
+the reservation last. Reappearing sidecars or unexplained temporary entries preserve
+the reservation. A complete exact record can recover metadata publication/cleanup
+after reboot without claiming current service health. An incomplete exact record
+prefix requires fresh terminal attestation before append; different bytes cannot
+be adopted or replaced. No recovery restores consumed peer history.
+
+Ordinary mutating WG admission synchronizes the completed common namespace before
+proceeding, closing a failed final-unlink directory barrier. Read-only admission
+does not synchronize or repair metadata. This backend covers native terminal
+operations; schema-1 unexposed cancellation remains the separate no-op path.
 
 ## Consequences and validation
 

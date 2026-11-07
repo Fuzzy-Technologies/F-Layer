@@ -590,7 +590,9 @@ to the frozen creation bundle and exact original `/etc/nftables.conf` bytes. It
 checks protocol order against the original pins, preserving transport attribution
 independently from a coincident UDP port. It neither recompiles the cloud creation
 plan nor generates credentials. Closed public models reject hidden extensions,
-source/port collisions, TCP 22 listeners and ambiguous declarations.
+source/port collisions, TCP 22/UDP 68 listeners and ambiguous declarations. UDP 68
+is reserved for the unconditional DHCP-client exception. Every target scalar is
+validated before equality/filtering, including the listener removed by disable.
 
 `InputTransition` changes exactly one listener. Its live program replaces only the
 proved existing `inet flayer_bootstrap` table in a single `nft -f` batch. SSH, DHCP,

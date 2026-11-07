@@ -153,6 +153,61 @@ def test_DisablingTheFinalListenerRetainsSshAndExplicitReenableKeepsTheRetainedP
     assert enabled.originalBootSha256 == before.originalBootSha256
 
 
+def test_DhcpClientPortCannotBeEnabledWithARestrictedSourceOrAcceptedAsADisabledProtocol(tmp_path: Path) -> None:
+    """The unconditional UDP67→68 DHCP exception must never bypass a protocol ACL or remain after a claimed protocol disable."""
+
+    project, baseline, before = Policy(tmp_path / "absent", ("wireguard",))
+    listener = before.listeners[0]
+    closed = host.InputTransition(before, listener, "disable", "a" * 32).After()
+    reserved = replace(listener, port=68, sourceCidrs=("198.51.100.0/24",))
+
+    with pytest.raises(host.VpnError, match="reserved"):
+        host.InputTransition(closed, reserved, "enable", "b" * 32)
+
+    modified = replace(project, vpn=replace(project.vpn, listeners=(reserved,)))
+    raw = _Bootstrap(modified).files[0].content
+    unsafe = replace(baseline, bundle=replace(baseline.bundle, files=(baseline.bundle.files[0], Artifact("cloud-init.json", raw, False))))
+
+    with pytest.raises(host.VpnError, match="reserved"):
+        host.BindBootstrap(unsafe, project.cloud.managementCidrs, (reserved,))
+
+    with pytest.raises(host.VpnError, match="reserved"):
+        host.InputTransition(before, reserved, "disable", "c" * 32)
+
+
+@pytest.mark.parametrize("field", ["transport", "protocol", "source"])
+def test_DisableRejectsScalarSubclassesBeforeEqualityOrFilteringCanRemoveMultipleListeners(tmp_path: Path, field: str) -> None:
+    """An input removed by After() still needs full validation; custom equality must not broaden the sole target."""
+
+    class AnyString(str):
+        """Model a string subtype that can compare equal to unrelated transport and L4 protocol names."""
+
+        __hash__ = str.__hash__
+
+        def __eq__(self, other: object) -> bool:
+            """Demonstrate the danger of using an unvalidated subtype in dataclass tuple equality."""
+
+            return isinstance(other, str)
+
+    _, _, initial = Policy(tmp_path / "absent")
+    vless = next(item for item in initial.listeners if item.transport == "vless-reality")
+    wireguard = replace(next(item for item in initial.listeners if item.transport == "wireguard"), port=vless.port)
+    before = replace(initial, operationId="a" * 32, listeners=(vless, wireguard))
+    changes: dict[str, Any] = {field: AnyString(getattr(wireguard, field))} if field != "source" else {"sourceCidrs": (AnyString("0.0.0.0/0"),)}
+    unsafe = replace(wireguard, **changes)
+
+    with pytest.raises(host.VpnError):
+        host.InputTransition(before, unsafe, "disable", "b" * 32)
+
+    both = replace(wireguard, transport=AnyString(wireguard.transport), protocol=AnyString(wireguard.protocol))
+    assert all(item == both for item in before.listeners)
+
+    with pytest.raises(host.VpnError):
+        host.InputTransition(before, both, "disable", "c" * 32)
+
+    assert before.listeners == (vless, wireguard)
+
+
 @pytest.mark.parametrize("fault", ["wrong-disable", "already-active", "port-collision", "ssh", "same-generation", "invalid-generation"])
 def test_TransitionRefusesCollateralOrStaleChangesBeforeAnyCommandCouldBePrepared(tmp_path: Path, fault: str) -> None:
     """Transport identity, full source policy and a fresh operation marker cannot be substituted by a matching L4 port alone."""

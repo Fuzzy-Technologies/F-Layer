@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:058fb357d40a98003b782f01587632d1a7f58ca25a1a503cbf9cec53e01b2034"
-reviewedTranslationHash = "sha256:ff57d918304f4165b6c70caa4d2c5fced4f86ce7aae810dff474b1c16965cd5e"
+sourceHash = "sha256:b02f7cdb3b0c43ff8b07d269e876ec89c27b500f8f44ee4bfcb818d95fa6a14a"
+reviewedTranslationHash = "sha256:a7cf40b84ed2a7379053501934f34ac57cd67ab01d2957b434c7522fd314e657"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T00:01:32.840051Z"
+reviewedAt = "2026-11-07T00:10:20.593721Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -389,7 +389,7 @@ Read 只接受绑定精确计划的已保存引用，要求文档化的 `UpdateS
 
 ## 受管来宾输入策略规划
 
-私有 `InputPolicy` 将原始 SSH 源网络和协议监听器绑定到冻结创建包及精确原始 `/etc/nftables.conf` 字节，按原始固定值验证协议顺序，独立于相同 UDP 端口保留协议归属。它不重新编译云创建计划，也不生成凭据。封闭公共模型拒绝隐藏扩展、源/端口冲突、TCP 22 监听器及歧义声明。
+私有 `InputPolicy` 将原始 SSH 源网络和协议监听器绑定到冻结创建包及精确原始 `/etc/nftables.conf` 字节，按原始固定值验证协议顺序，独立于相同 UDP 端口保留协议归属。它不重新编译云创建计划，也不生成凭据。封闭公共模型拒绝隐藏扩展、源/端口冲突、TCP 22/UDP 68 监听器及歧义声明。UDP 68 保留给无条件 DHCP 客户端例外。比较/过滤前验证目标的全部标量，包括 disable 移除的监听器。
 
 `InputTransition` 仅变更一个监听器。实时程序通过单个 `nft -f` 批次仅替换已证明存在的 `inet flayer_bootstrap` 表，保留 SSH、DHCP、loopback、ICMP 限速、已建立流量及其他全部监听器声明。活动集为空仍保留管理访问。启动覆盖使用限定的 `destroy table` 加完整表，使首次启动及重载幂等且不使用 `flush ruleset`。Ubuntu 24.04 文档中的 [`destroy` 语义](https://manpages.ubuntu.com/manpages/noble/man8/nftables.8.html#tables)支持此契约；能力预检仍由来宾协调器负责。回滚使用本次操作的新标记恢复原监听器访问语义，不恢复旧代令牌。
 

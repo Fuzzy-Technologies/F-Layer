@@ -43,6 +43,20 @@ def _Cidrs(value: tuple[str, ...]) -> None:
         raise VpnError("Host input sources require canonical nonoverlapping IPv4 networks") from None
 
 
+def _CheckListener(listener: VpnListener) -> None:
+    """Validate closed scalars before comparison; SSH and the unconditional DHCP-client exception are reserved."""
+
+    if (type(listener) is not VpnListener or any(type(value) is not str for value in (listener.transport, listener.protocol))
+            or type(listener.port) is not int or listener.transport not in {"amneziawg", "vless-reality", "wireguard", "openvpn"}
+            or listener.protocol not in {"tcp", "udp"} or not 1 <= listener.port <= 65535
+            or listener.transport in {"amneziawg", "wireguard"} and listener.protocol != "udp"
+            or listener.transport == "vless-reality" and listener.protocol != "tcp"
+            or (listener.protocol, listener.port) in {("tcp", 22), ("udp", 68)}):
+        raise VpnError("Host input listener has unsupported, reserved or ambiguous transport semantics")
+
+    _Cidrs(listener.sourceCidrs)
+
+
 @dataclass(frozen=True, slots=True)
 class InputPolicy:
     """Closed public policy projection, retaining the original creation/boot hashes independently from active listeners."""
@@ -68,15 +82,7 @@ class InputPolicy:
         _Cidrs(self.managementCidrs)
 
         for listener in self.listeners:
-            if (type(listener) is not VpnListener or any(type(value) is not str for value in (listener.transport, listener.protocol))
-                    or type(listener.port) is not int or listener.transport not in {"amneziawg", "vless-reality", "wireguard", "openvpn"}
-                    or listener.protocol not in {"tcp", "udp"} or not 1 <= listener.port <= 65535
-                    or listener.transport in {"amneziawg", "wireguard"} and listener.protocol != "udp"
-                    or listener.transport == "vless-reality" and listener.protocol != "tcp"
-                    or listener.protocol == "tcp" and listener.port == 22):
-                raise VpnError("Host input listener has unsupported or ambiguous transport semantics")
-
-            _Cidrs(listener.sourceCidrs)
+            _CheckListener(listener)
 
         if (len({listener.transport for listener in self.listeners}) != len(self.listeners)
                 or len({(listener.protocol, listener.port) for listener in self.listeners}) != len(self.listeners)):
@@ -296,10 +302,14 @@ class InputTransition:
 
         if (type(self) is not InputTransition or type(self.before) is not InputPolicy or type(self.listener) is not VpnListener
                 or type(self.change) is not str or self.change not in {"enable", "disable"}
-                or type(self.operationId) is not str or _NONCE.fullmatch(self.operationId) is None or self.operationId == self.before.operationId
-                or self.change == "enable" and any(item.transport == self.listener.transport for item in self.before.listeners)
-                or self.change == "disable" and self.listener not in self.before.listeners):
+                or type(self.operationId) is not str or _NONCE.fullmatch(self.operationId) is None or self.operationId == self.before.operationId):
             raise VpnError("Host input transition requires one exact owned listener change and a new operation")
+
+        _CheckListener(self.listener)
+
+        if (self.change == "enable" and any(item.transport == self.listener.transport for item in self.before.listeners)
+                or self.change == "disable" and self.listener not in self.before.listeners):
+            raise VpnError("Host input transition requires one exact owned listener change")
 
         self.After()
 

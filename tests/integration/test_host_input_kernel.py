@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
 from pathlib import Path
 
 import pytest
-from test_vpn_host_input import Policy
 
 from flayer import _vpn_host_input as host
-from flayer._vpn_creation import _Json
+from flayer._vpn_creation import LoadCreationBaseline, _Json
+from flayer.vpn_project import InitializeVpnProject, LoadVpnProject, SelectedVpnProject
+from flayer.vpn_project_v2 import PrepareSelectedProject
 
 pytestmark = pytest.mark.skipif(
     os.name != "posix" or os.environ.get("FLAYER_WG_CONFORMANCE") != "isolated-ci",
@@ -23,7 +25,16 @@ pytestmark = pytest.mark.skipif(
 def test_AtomicInputDeltaBootReplayAndRollbackPreserveUnrelatedKernelPolicy(tmp_path: Path, protocols: tuple[str, ...]) -> None:
     """Use the real parser/kernel for original, final-disabled and coexisting transports without touching runner host networking."""
 
-    _, _, before = Policy(tmp_path / "never-created", protocols)
+    root = InitializeVpnProject(tmp_path / "fixture-project", protocols=protocols)
+    path = root / "project.toml"
+    path.write_text(path.read_text(encoding="utf-8").replace("replace-with-folder-id", "example-folder").replace(
+        "replace-with-ubuntu-2404-amd64-image-id", "example-image"), encoding="utf-8")
+    project = LoadVpnProject(root)
+    assert isinstance(project, SelectedVpnProject)
+    PrepareSelectedProject(project)
+    baseline = LoadCreationBaseline(project)
+    before = host.BindBootstrap(baseline, project.cloud.managementCidrs, project.vpn.listeners)
+    originalFiles = {str(item.relative_to(root)): hashlib.sha256(item.read_bytes()).hexdigest() for item in root.rglob("*") if item.is_file()}
     listener = next(item for item in before.listeners if item.transport == "wireguard")
     transition = host.InputTransition(before, listener, "disable", "a" * 32)
     after, restored = transition.After(), transition.Restored()
@@ -94,4 +105,4 @@ print(json.dumps({"initial": original, "expected_initial": Compile(initial), "re
     assert all(after.NativeFingerprint(_Json(data[name])) == expected for name in ("updated", "reloaded", "repeated", "fresh"))
     assert restored.NativeFingerprint(_Json(data["restored"])) == restored.NativeFingerprint(_Json(data["expected_restored"]))
     assert data["unrelated_before"] == data["unrelated_after"]
-    assert not (tmp_path / "never-created").exists()
+    assert {str(item.relative_to(root)): hashlib.sha256(item.read_bytes()).hexdigest() for item in root.rglob("*") if item.is_file()} == originalFiles

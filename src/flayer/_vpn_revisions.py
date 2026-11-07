@@ -152,6 +152,28 @@ def ProjectLock(project: SelectedVpnProject, *, readOnly: bool) -> Iterator[None
         except OSError:
             raise VpnError("Selected project is busy or its coordination file is unavailable") from None
 
+        if not readOnly and ((project.root / "protocol-head.json").exists() or (project.root / "protocol-head.json").is_symlink()):
+            directory = os.open(project.root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+
+            try:
+                opened = os.fstat(directory)
+                linked = project.root.lstat()
+
+                if (not stat.S_ISDIR(opened.st_mode) or opened.st_uid != os.getuid() or stat.S_IMODE(opened.st_mode) != 0o700
+                        or (opened.st_dev, opened.st_ino) != (linked.st_dev, linked.st_ino)):
+                    raise VpnError("Protocol publication namespace changed before mutating project admission")
+
+                # Persist final journal absence before a later peer/guest write.
+                os.fsync(directory)
+                linked = project.root.lstat()
+
+                if ((opened.st_dev, opened.st_ino) != (linked.st_dev, linked.st_ino)
+                        or linked.st_uid != os.getuid() or stat.S_IMODE(linked.st_mode) != 0o700):
+                    raise VpnError("Protocol publication namespace changed during mutating project admission")
+
+            finally:
+                os.close(directory)
+
         yield
 
         if descriptor is None and (path.exists() or path.is_symlink()):

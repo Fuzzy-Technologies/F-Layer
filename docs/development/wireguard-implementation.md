@@ -583,6 +583,43 @@ lock. There is no journal reset/removal API here: verified epoch completion and
 scoped rollback remain integration work. Existing lifecycle/peer entrypoints refuse
 this pending journal or its interrupted publication before provider operations.
 
+## Owned host input policy planning
+
+The private `InputPolicy` binds original SSH source networks and protocol listeners
+to the frozen creation bundle and exact original `/etc/nftables.conf` bytes. It
+checks protocol order against the original pins, preserving transport attribution
+independently from a coincident UDP port. It neither recompiles the cloud creation
+plan nor generates credentials. Closed public models reject hidden extensions,
+source/port collisions, TCP 22 listeners and ambiguous declarations.
+
+`InputTransition` changes exactly one listener. Its live program replaces only the
+proved existing `inet flayer_bootstrap` table in a single `nft -f` batch. SSH, DHCP,
+loopback, ICMP limits, established traffic and all unrelated listener declarations
+remain intact. An empty active subset keeps administration access. Its boot overlay
+uses scoped `destroy table` plus the complete table, making fresh boot/reload
+idempotent without `flush ruleset`. Ubuntu 24.04's documented
+[`destroy` semantics](https://manpages.ubuntu.com/manpages/noble/man8/nftables.8.html#tables)
+support this boundary; capability preflight remains the guest coordinator's job.
+Rollback restores old listener semantics with the operation's new marker, rather
+than reinstating an earlier generation token.
+
+The native fingerprint accepts only one owned input table and dropping input
+chain, strips kernel handles/metainfo, and retains every ordered rule expression.
+It must be compared with the expected program compiled in an ephemeral namespace,
+following the existing WireGuard guest pattern. A hash by itself does not establish
+correct rules or connectivity. The
+[atomic replacement contract](https://wiki.nftables.org/wiki-nftables/index.php/Atomic_rule_replacement)
+applies to the complete batch; adding another accepting base chain would still
+encounter the [existing dropping chain](https://wiki.netfilter.org/wiki-nftables/index.php/Configuring_chains).
+
+Pure tests preserve the original bootstrap and reject drift without creating files.
+Real parser/kernel conformance runs only in explicitly isolated Linux CI namespaces:
+rejected batches retain the old table, live replacement and repeated/fresh boot
+agree with isolated compilation, rollback keeps a new marker, and an unrelated
+table/counter remains byte-equivalent. This component executes no command. Guest
+locks/reservations, receipt/history checks, durable boot-file publication and recovery
+must be integrated before exposing a public protocol mutation command.
+
 ## Remaining integration
 
 Adding/removing a protocol on an existing guest, schema-1 migration, explicit

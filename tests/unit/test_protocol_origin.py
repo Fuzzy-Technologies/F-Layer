@@ -41,8 +41,26 @@ def Environment(tmpPath: Path, monkeypatch: pytest.MonkeyPatch, schema: int = 1)
         helper = Path(guest.__file__).read_bytes()
         receipt = generations.PrepareCached(guest, model.root, source, guest._Digest((model.root / "receipt.json").read_bytes()),
                                            "1" * 32, helper, guest._Digest(helper))
+        original = guest._Run
+
+        def Run(command: list[str], *, payload: bytes | None = None, **options: Any) -> tuple[int, bytes]:
+            """Keep the fixture's separate forwarding model synchronized during the one-time original-generation setup."""
+
+            if command[:3] == ["nft", "delete", "table"]:
+                model.network = False
+
+                return 0, b""
+
+            if command[:2] == ["nft", "-f"] and command[-1] != "-":
+                model.policy = Path(command[-1]).read_bytes()
+                model.network = True
+
+                return 0, b""
+
+            return original(command, payload=payload, **options)
 
         with patch.context() as callback:
+            callback.setattr(guest, "_Run", Run)
             PublishFixture(model, source, receipt, callback)
             guest._GenerationCallback(model.root, model.unit, receipt["nonce"], start=True)
 
@@ -61,7 +79,19 @@ def Environment(tmpPath: Path, monkeypatch: pytest.MonkeyPatch, schema: int = 1)
     groups.mkdir(mode=0o755)
     (groups / "cgroup.controllers").write_bytes(b"cpu memory\n")
     monkeypatch.setattr(runtime, "CGROUPS", groups)
-    monkeypatch.setattr(guest, "_Run", controller.Run)
+
+    def Run(command: list[str], *, payload: bytes | None = None, **options: Any) -> tuple[int, bytes]:
+        """Model the real runner's inactive service error instead of an assertion reserved for healthy-only fixture callers."""
+
+        if command[:2] == ["systemctl", "is-active"] and not controller.active.get(command[-1]):
+            if options.get("required", True):
+                raise guest.GuestError("Synthetic selected service is inactive")
+
+            return 3, b""
+
+        return controller.Run(command, payload=payload, **options)
+
+    monkeypatch.setattr(guest, "_Run", Run)
 
     return model, network, controller, request, intent, cached, candidate
 
@@ -333,6 +363,17 @@ def test_QuiescenceCannotAcquireAnInitialReservation(tmp_path: Path, monkeypatch
     model, _, intent = cacheFixtures.Active(tmp_path, monkeypatch)
     model.interface, model.addresses, model.configured = None, [], False
     model.network, model.active = False, False
+    original = guest._Run
+
+    def Run(command: list[str], *, payload: bytes | None = None, **options: Any) -> tuple[int, bytes]:
+        """Expose the original pre-reservation service failure through the same sanitized runner contract."""
+
+        if command[:2] == ["systemctl", "is-active"]:
+            raise guest.GuestError("Synthetic selected service is inactive")
+
+        return original(command, payload=payload, **options)
+
+    monkeypatch.setattr(guest, "_Run", Run)
 
     with authority._Locks(guest, readOnly=False):
         pass

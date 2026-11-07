@@ -9,10 +9,11 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
+import test_vpn_protocol_epochs as epochFixtures
 from test_vpn_peer_revisions import Change
 from test_vpn_project_selection import Configuration
 from test_vpn_project_v2 import Project, Snapshot
-from test_vpn_protocol_epochs import Operation
+from test_vpn_protocol_epochs import LargePlan, Operation
 
 from flayer import _vpn_protocol_epochs as epochs
 from flayer import _vpn_revisions as revisions
@@ -301,3 +302,92 @@ def test_MetadataGraphDoesNotRecompileCreationFromEditedDesiredCloudSettings(tmp
 
     assert original.Fingerprint() == after.Fingerprint() and original.baseline == after.baseline
     assert after.baseline.plan.resources == original.baseline.plan.resources
+
+
+def CancelBeforeFence(project: SelectedVpnProject, graph: epochs.ProtocolGraph, nonce: str) -> epochs.EpochCommit:
+    """Represent a valid schema-1 reservation cancellation after preparation publication but before its WG history fence."""
+
+    planned = Commit(project, graph, "wireguard", "disable", nonce)
+    cloud = epochs.CloudEvidence(planned.cloud.plan, planned.cloud.plan.before, "not-applied")
+    inputProof = epochs.InputEvidence(planned.input.transition, "unchanged", "a" * 64)
+    metadata = epochs._Decode(planned.metadata)
+    metadata["active_protocols"] = list(graph.activeProtocols)
+    metadata["wireguard_receipt_sha256"] = graph.revision.receipt
+    metadata["wireguard_history_sha256"] = graph.revision.history
+    services = tuple(epochs.ServiceProof(source.pin.protocol, source.pin.serverDigest, "active", graph.revision.receipt if source.pin.protocol == "wireguard" else "c" * 64)
+                     for source in graph.sources)
+    metadata["cloud_sha256"] = hashlib.sha256(_Json(cloud.Record())).hexdigest()
+    metadata["input_sha256"] = hashlib.sha256(_Json(inputProof.Record())).hexdigest()
+    metadata["services_sha256"] = hashlib.sha256(_Json({"schema_version": 1, "services": [proof.Record() for proof in services]})).hexdigest()
+    completion = epochs._Decode(planned.completion)
+    completion.update(schema_version=1, outcome="cancelled", history_sha256=graph.revision.history,
+                      intent_sha256=hashlib.sha256(_Json(metadata["reservation"])).hexdigest())
+
+    return epochs.EpochCommit(project.vpn.identity, _Json(metadata), cloud, inputProof, services, _Json(completion))
+
+
+def test_BeforeFenceCancellationCanAdvanceCommonAuthorityWithoutInventingConsumedWgHistory(tmp_path: Path) -> None:
+    """A valid cancelled preparation remains in ancestry; the next actual transition still consumes its own exact fence."""
+
+    project = Initial(tmp_path)
+    first = Commit(project, epochs.LoadCommittedGraph(project), "wireguard", "enable", "0" * 32)
+    Publish(project, first)
+    before = epochs.LoadCommittedGraph(project)
+    cancelled = CancelBeforeFence(project, before, "1" * 32)
+    Publish(project, cancelled)
+    after = epochs.LoadCommittedGraph(project)
+    assert after.revision.history == before.revision.history and after.activeProtocols == before.activeProtocols
+    assert len(after.epochs) == 2 and after.head != before.head
+    final = Commit(project, after, "wireguard", "disable", "2" * 32)
+    Publish(project, final)
+    assert epochs.LoadCommittedGraph(project).revision.history != before.revision.history
+    completion = epochs._Decode(cancelled.completion)
+    completion.update(schema_version=2, outcome="not-applied", intent_sha256=hashlib.sha256(cancelled.metadata).hexdigest())
+
+    with pytest.raises(ValueError, match="consumed fence"):
+        replace(cancelled, completion=_Json(completion))
+
+
+def test_UnrelatedInactiveConfiguredListenerCannotChangeWithAnUnchangedSourcePin(tmp_path: Path) -> None:
+    """Active input omits disabled WG, so closure must independently retain that protocol's configured port and sources."""
+
+    project = Initial(tmp_path)
+    for index, change in enumerate(("enable", "disable")):
+        commit = Commit(project, epochs.LoadCommittedGraph(project), "wireguard", change, format(index, "032x"))
+        Publish(project, commit)
+
+    candidate = Commit(project, epochs.LoadCommittedGraph(project), "amneziawg", "disable", "2" * 32)
+    metadata = epochs._Decode(candidate.metadata)
+    listener = next(item for item in metadata["configured_listeners"] if item["transport"] == "wireguard")
+    listener["port"] += 1
+    completion = epochs._Decode(candidate.completion)
+    completion["intent_sha256"] = hashlib.sha256(_Json(metadata)).hexdigest()
+    altered = replace(candidate, metadata=_Json(metadata), completion=_Json(completion))
+    Publish(project, altered)
+
+    with pytest.raises(ValueError, match="configured listener"):
+        epochs.LoadCommittedGraph(project)
+
+
+def test_LargeRetainedIngressIntentUsesTheSameProviderSizedBoundAsItsAcceptedPlan(tmp_path: Path) -> None:
+    """An epoch's immutable intent payload above 64 KiB remains readable without any private-source or provider operation."""
+
+    base = epochFixtures.Commit()
+    plan = LargePlan()
+    result = replace(plan.before, rules=(*plan.before.rules, replace(plan.Addition, ruleId="large-result-rule")))
+    cloud = epochs.CloudEvidence(plan, result, "committed", Operation(plan, result))
+    metadata = epochs._Decode(base.metadata)
+    journal = IngressJournal(plan, metadata["creation_sha256"], metadata["previous_state_sha256"], metadata["reservation"]["plan_expires_at"])
+    bundle = journal.Bundle()
+    assert len(bundle.files[0].content) > 65536
+    project = Initial(tmp_path)
+    project = replace(project, vpn=replace(project.vpn, identity=base.identity))
+    WriteArtifactBundle(project.Artifacts, bundle)
+    metadata["ingress_intents"] = [{"role": "change", "name": bundle.name, "sha256": BundleDigest(bundle)}]
+    metadata["cloud_sha256"] = hashlib.sha256(_Json(cloud.Record())).hexdigest()
+    metadata["reservation"]["plan_sha256"] = hashlib.sha256(_Json({"schema_version": 1, "cloud_plan_sha256": plan.Fingerprint(), "input": base.input.transition.Record()})).hexdigest()
+    encoded = _Json(metadata)
+    completion = epochs._Decode(base.completion)
+    completion["intent_sha256"] = hashlib.sha256(encoded).hexdigest()
+    commit = replace(base, metadata=encoded, cloud=cloud, completion=_Json(completion))
+    assert epochs._IngressIntents(project, commit) == {bundle.name}

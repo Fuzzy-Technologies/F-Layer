@@ -32,6 +32,7 @@ from flayer.profiles.artifacts import (
     ReadOwnedArtifactFile,
 )
 from flayer.profiles.vpn import VpnError
+from flayer.providers import _yandex_ingress_operations as ingressCodec
 from flayer.providers._yandex_firewall import ExpectedRules, RuleSemantics, SecurityGroupSnapshot
 from flayer.providers._yandex_ingress import IngressDelta
 from flayer.providers._yandex_ingress_operations import IngressOperation, IngressOperationReference
@@ -48,6 +49,26 @@ _NONCE = re.compile(r"[0-9a-f]{32}\Z")
 _HASH = re.compile(r"[0-9a-f]{64}\Z")
 MAX_PROTOCOL_EPOCHS = 4096
 MAX_GRAPH_BYTES = 16 * 1024 * 1024
+
+
+def _EvidenceJson(content: bytes) -> dict[str, Any]:
+    """Use the same bounded strict provider JSON capacity as full cloud plans and immutable ingress artifacts."""
+
+    value = None
+
+    try:
+        if type(content) is not bytes or not 1 <= len(content) <= MAX_ARTIFACT_BYTES:
+            raise ValueError
+
+        value = ingressCodec._Decode(content.decode("utf-8"))
+
+    except (ValueError, TypeError, RecursionError):
+        pass
+
+    if value is None:
+        raise VpnError("Protocol evidence JSON is invalid or exceeds its complete byte bound")
+
+    return value
 
 
 def _SnapshotRecord(snapshot: SecurityGroupSnapshot) -> dict[str, Any]:
@@ -209,7 +230,7 @@ def DecodeCloudEvidence(content: bytes) -> CloudEvidence:
         if type(content) is not bytes or not 1 <= len(content) <= MAX_ARTIFACT_BYTES:
             raise ValueError
 
-        value = _Decode(content)
+        value = _EvidenceJson(content)
 
         if (set(value) != {"schema_version", "plan", "result", "outcome", "operation", "applied", "restoration", "restoration_operation"}
                 or type(value["schema_version"]) is not int or value["schema_version"] != 1):
@@ -444,6 +465,18 @@ def _Metadata(content: bytes, identity: StackIdentity) -> dict[str, Any]:
     return value
 
 
+def _UnfencedCancellation(epoch: EpochCommit, metadata: dict[str, Any], completion: dict[str, Any]) -> bool:
+    """Only a genuine unexposed schema-1 cancellation may retain history when preparation never reached the fence."""
+
+    reservation = metadata["reservation"]
+
+    return (type(completion.get("schema_version")) is int and completion["schema_version"] == 1 and completion.get("outcome") == "cancelled"
+            and epoch.cloud.outcome == "not-applied" and epoch.cloud.operation is None and epoch.cloud.applied is None
+            and epoch.input.outcome == "unchanged" and metadata["generation_receipt_sha256"] == ""
+            and metadata["wireguard_receipt_sha256"] == reservation["wireguard_receipt_sha256"]
+            and metadata["wireguard_history_sha256"] == reservation["wireguard_history_sha256"])
+
+
 @dataclass(frozen=True, slots=True)
 class EpochCommit:
     """Immutable authorizing intent and verified guest completion, with no cyclic dependence on its final bundle digest."""
@@ -509,9 +542,11 @@ class EpochCommit:
 
         previousActive = any(listener.transport == "wireguard" for listener in transition.before.listeners)
         generation = metadata["generation_receipt_sha256"]
+        completion = _Decode(self.completion)
+        unfenced = _UnfencedCancellation(self, metadata, completion)
 
         if (previousActive != (reservation["wireguard_state"] == "active")
-                or previousActive and metadata["wireguard_history_sha256"] == reservation["wireguard_history_sha256"]
+                or previousActive and metadata["wireguard_history_sha256"] == reservation["wireguard_history_sha256"] and not unfenced
                 or plan.listener.transport != "wireguard" and generation
                 or plan.listener.transport == "wireguard" and plan.change == "disable" and generation
                 or plan.listener.transport == "wireguard" and plan.change == "enable" and self.cloud.outcome == "committed"
@@ -521,7 +556,6 @@ class EpochCommit:
                 or previousActive and plan.listener.transport != "wireguard" and metadata["wireguard_receipt_sha256"] != reservation["wireguard_receipt_sha256"]):
             raise VpnError("Protocol epoch loses its actual preceding WG state, consumed fence or new installation generation")
 
-        completion = _Decode(self.completion)
         fields = {"schema_version", "owner", "creation_sha256", "operation_id", "intent_sha256", "parent", "previous_authority_sha256", "history_sha256", "outcome"}
 
         if (set(completion) != fields or type(completion["schema_version"]) is not int or completion["schema_version"] not in {1, 2}
@@ -733,7 +767,7 @@ def _History(project: SelectedVpnProject, epoch: EpochCommit, before: ProtocolGr
     receipt = value["generation_receipt_sha256"] if value["generation_receipt_sha256"] else reservation["wireguard_receipt_sha256"]
     expected = before.revision.history
 
-    if receipt:
+    if receipt and not _UnfencedCancellation(epoch, value, _Decode(epoch.completion)):
         source = summaries["wireguard"][1]
         deployment = next(item.sha256 for item in source.files if item.name == "deployment.json")
         expected = revisions.CommittedHistory(project, "revoke", "protocol-" + reservation["operation_id"], receipt, receipt, deployment, before.revision.history)
@@ -779,6 +813,14 @@ def _Continue(project: SelectedVpnProject, before: ProtocolGraph, epoch: EpochCo
 
     if _Json(epoch.input.transition.before.Record()) != _Json(initial.Record()):
         raise VpnError("Protocol epoch input policy does not continue its exact preceding owned generation")
+
+    previousListeners = ({_Listener(item).transport: _Listener(item) for item in _Metadata(before.epochs[-1].metadata, project.vpn.identity)["configured_listeners"]}
+                         if before.epochs else {listener.transport: listener for listener in initial.listeners})
+    desiredListeners = {_Listener(item).transport: _Listener(item) for item in value["configured_listeners"]}
+
+    if (any(desiredListeners[name] != listener for name, listener in previousListeners.items() if name != target)
+            or target in previousListeners and (plan.change == "disable" or new[target] == old[target]) and desiredListeners[target] != previousListeners[target]):
+        raise VpnError("Protocol epoch changes an unrelated or retained configured listener without its explicit new source")
 
     original = before.epochs[0].input.transition.before if before.epochs else initial
     originalRole = next((listener for listener in original.listeners if listener.transport == target), None)
@@ -831,7 +873,7 @@ def _IngressIntents(project: SelectedVpnProject, epoch: EpochCommit) -> set[str]
         if len(summary.files) != 1 or summary.files[0].sensitive or content is None:
             raise VpnError("Protocol ingress intent cannot redirect traversal to an unsupported artifact role")
 
-        value = _Decode(content)
+        value = _EvidenceJson(content)
         fields = {"schema_version", "identity", "creation_sha256", "previous_state_sha256", "plan_expires_at", "plan_sha256", "plan_record"}
 
         if set(value) != fields or type(value["schema_version"]) is not int or value["schema_version"] != 1:
@@ -852,7 +894,7 @@ def _IngressIntents(project: SelectedVpnProject, epoch: EpochCommit) -> set[str]
 
 
 def LoadCommittedGraph(project: SelectedVpnProject) -> ProtocolGraph:
-    """Verify the complete committed local graph; public lifecycle admission remains blocked until coordinator integration."""
+    """Verify committed local metadata under caller-held project coordination; public lifecycle admission remains blocked."""
 
     for filename in ("protocol-pending.json", ".protocol-pending.json.new", ".protocol-head.json.new", "protocol-ingress-pending.json", ".protocol-ingress-pending.json.new"):
         path = project.root / filename

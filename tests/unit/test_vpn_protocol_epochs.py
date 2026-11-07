@@ -239,6 +239,30 @@ def test_KnownTerminalFailureRetainsItsCodeAndSeparatelyVerifiedCompletePolicy(k
     assert record["status"] == "failed" and record["error_code"] == 7
 
 
+def LargePlan() -> IngressDelta:
+    """Use valid bounded public metadata above 64KiB but within complete provider and epoch capacities."""
+
+    plan = Plan()
+    labels = tuple(("note-" + str(index), "x" * 63) for index in range(20))
+    extra = tuple(SecurityGroupRule("large-fixture-rule-" + str(index), "egress", "any", None, None, ("0.0.0.0/0",), labels=labels)
+                  for index in range(45))
+
+    return replace(plan, before=replace(plan.before, rules=(*plan.before.rules, *extra)))
+
+
+def test_CloudEvidenceCapacityAndReaderBothSupportValidPlansAboveSixtyFourKiB() -> None:
+    """A plan accepted before exposure must remain readable with its complete result, rather than hit a baseline codec limit."""
+
+    plan = LargePlan()
+    assert len(epochs.EncodePlan(plan)) > 65536
+    epochs.RequireCloudEvidenceCapacity(plan)
+    final = Result(plan)
+    value = epochs.CloudEvidence(plan, final, "committed", Operation(plan, final))
+    content = _Json(value.Record())
+    assert len(content) > 65536
+    assert epochs.DecodeCloudEvidence(content) == value
+
+
 def Commit(kind: str = "committed") -> epochs.EpochCommit:
     """Build only public synthetic commit bytes; actual segment/source traversal is a separate POSIX graph test."""
 

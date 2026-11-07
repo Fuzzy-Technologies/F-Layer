@@ -199,12 +199,12 @@ def _Atomic(path: Path, content: bytes, mode: int = 0o600) -> None:
             os.unlink(temporary)
 
 
-def _Run(command: list[str], *, payload: bytes | None = None, timeout: int = 30, required: bool = True) -> tuple[int, bytes]:
+def _Run(command: list[str], *, payload: bytes | None = None, timeout: int = 30, required: bool = True, passFds: tuple[int, ...] = ()) -> tuple[int, bytes]:
     """Capture bounded private command output without a shell or inherited standard input."""
 
     try:
         result = subprocess.run(command, input=payload, stdin=subprocess.DEVNULL if payload is None else None,
-                                capture_output=True, check=False, timeout=timeout,
+                                capture_output=True, check=False, timeout=timeout, pass_fds=passFds,
                                 env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LANG": "C", "LC_ALL": "C"})
 
     except (OSError, subprocess.SubprocessError):

@@ -9,13 +9,13 @@ import re
 from dataclasses import dataclass, replace
 from typing import Any
 
-from flayer._vpn_creation import BundleDigest, CreationBaseline, _Decode, _Json
+from flayer._vpn_creation import BundleDigest, CreationBaseline, _Decode
 from flayer.core.contracts import StackIdentity, _WireDict
+from flayer.profiles import _host_input_policy as policyCodec
 from flayer.profiles.vpn import VpnError, VpnListener
 
 _HASH = re.compile(r"[0-9a-f]{64}\Z")
 _NONCE = re.compile(r"[0-9a-f]{32}\Z")
-_TABLE = "flayer_bootstrap"
 
 
 def _Digest(content: bytes) -> str:
@@ -108,25 +108,9 @@ class InputPolicy:
         return {"schema_version": 1, **_WireDict(self)}
 
     def Table(self) -> bytes:
-        """Render one exact input table for isolated compilation or an already authorized atomic replacement."""
+        """Use the same validated stdlib renderer that the guest compiles before atomic replacement."""
 
-        lines = ["table inet " + _TABLE + " {"]
-
-        if self.Marker:
-            lines.append('  comment "' + self.Marker + '"')
-
-        lines.extend(["  chain input {", "    type filter hook input priority 0; policy drop;", "    ct state invalid drop",
-                      "    ct state established,related accept", '    iifname "lo" accept',
-                      "    udp sport 67 udp dport 68 accept", "    ip protocol icmp limit rate 10/second accept"])
-
-        for cidr in self.managementCidrs:
-            lines.append(f"    ip saddr {cidr} tcp dport 22 accept")
-
-        for listener in self.listeners:
-            for cidr in listener.sourceCidrs:
-                lines.append(f"    ip saddr {cidr} {listener.protocol} dport {listener.port} accept")
-
-        return ("\n".join([*lines, "  }", "}", ""])).encode()
+        return policyCodec.Table(_Public(self))
 
     def _OriginalFile(self) -> bytes:
         """Reproduce only the historical bootstrap input file for comparison, never a live operation payload."""
@@ -145,115 +129,31 @@ class InputPolicy:
         return b"#!/usr/sbin/nft -f\ndestroy table inet flayer_bootstrap\n" + self.Table()
 
     def NativeFingerprint(self, content: bytes) -> str:
-        """Normalize kernel handles/metainfo only, retaining all ordered rule expressions for compile/live comparison."""
+        """Share exact expected/live normalization with the guest without retaining raw parser exceptions."""
 
-        data = _DecodeNft(content)
-        table = None
-        chain = None
-        rules = []
-        metadata = 0
+        error = None
 
-        if set(data) != {"nftables"} or not isinstance(data["nftables"], list) or len(data["nftables"]) > 128:
-            raise VpnError("Host input observation has an unsupported bounded schema")
+        try:
+            return policyCodec.NativeFingerprint(_Public(self), content)
 
-        for entry in data["nftables"]:
-            if not isinstance(entry, dict) or len(entry) != 1:
-                raise VpnError("Host input observation is ambiguous")
+        except policyCodec.PolicyError as failure:
+            error = str(failure)
 
-            if "metainfo" in entry:
-                metadata += 1
-
-                if metadata > 1 or not isinstance(entry["metainfo"], dict):
-                    raise VpnError("Host input observation has ambiguous kernel metadata")
-
-                continue
-
-            if "add" in entry:
-                entry = entry["add"]
-
-            if not isinstance(entry, dict) or len(entry) != 1:
-                raise VpnError("Host input notification is ambiguous")
-
-            kind, raw = next(iter(entry.items()))
-
-            if kind not in {"table", "chain", "rule"} or not isinstance(raw, dict):
-                raise VpnError("Host input table contains unsupported objects")
-
-            value = {key: item for key, item in raw.items() if key != "handle"}
-
-            if value.get("family") != "inet" or value.get("name" if kind == "table" else "table") != _TABLE:
-                raise VpnError("Host input observation crosses its exact owned table")
-
-            if kind == "table":
-                tableExpected = {"family": "inet", "name": _TABLE, **({"comment": self.Marker} if self.Marker else {})}
-
-                if table is not None or value != tableExpected:
-                    raise VpnError("Host input table ownership or generation marker differs")
-
-                table = value
-
-            elif kind == "chain":
-                chainExpected = {"family": "inet", "table": _TABLE, "name": "input", "type": "filter", "hook": "input", "prio": 0, "policy": "drop"}
-
-                if chain is not None or value != chainExpected or type(value.get("prio")) is not int:
-                    raise VpnError("Host input base chain differs from its exact protected hook and policy")
-
-                chain = value
-
-            else:
-                if (set(value) != {"family", "table", "chain", "expr"} or value["chain"] != "input"
-                        or not isinstance(value["expr"], list) or not 1 <= len(value["expr"]) <= 16):
-                    raise VpnError("Host input rule shape or chain is unsupported")
-
-                rules.append(value)
-
-        if table is None or chain is None or not rules:
-            raise VpnError("Host input observation is missing its complete table, chain or rules")
-
-        return _Digest(_Json({"table": table, "chain": chain, "rules": rules}))
+        raise VpnError(error)
 
 
-def _DecodeNft(content: bytes) -> dict[str, Any]:
-    """Reject duplicate/nonstandard native JSON without retaining parser input in an exception context."""
+def _Public(policy: InputPolicy) -> dict[str, Any]:
+    """Convert only the closed typed record to the shared plain JSON wire contract."""
 
-    def Unique(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-        """Require one unambiguous interpretation at each depth."""
-
-        result: dict[str, Any] = {}
-
-        for key, value in pairs:
-            if key in result:
-                raise ValueError
-
-            result[key] = value
-
-        return result
-
-    def Nonfinite(value: str) -> None:
-        """Refuse Python JSON extensions that cannot be emitted by the verified compiler."""
-
-        raise ValueError
-
-    data = None
+    error = None
 
     try:
-        if type(content) is not bytes or not 1 <= len(content) <= 1024 * 1024:
-            raise ValueError
+        return policyCodec.Policy(json.loads(policyCodec.Json(policy.Record())))
 
-        value = json.loads(content, object_pairs_hook=Unique, parse_constant=Nonfinite)
+    except policyCodec.PolicyError as failure:
+        error = str(failure)
 
-        if not isinstance(value, dict):
-            raise ValueError
-
-        data = value
-
-    except (ValueError, TypeError, RecursionError, UnicodeError):
-        pass
-
-    if data is None:
-        raise VpnError("Host input native JSON is invalid or ambiguous")
-
-    return data
+    raise VpnError(error)
 
 
 def BindBootstrap(baseline: CreationBaseline, managementCidrs: tuple[str, ...], listeners: tuple[VpnListener, ...]) -> InputPolicy:
@@ -312,6 +212,16 @@ class InputTransition:
             raise VpnError("Host input transition requires one exact owned listener change")
 
         self.After()
+
+    def Record(self) -> dict[str, Any]:
+        """Bind the exact public delta for a guest request without copying scripts or private server material."""
+
+        _CheckListener(self.listener)
+        value = {"schema_version": 1, "before": _Public(self.before), "listener": json.loads(policyCodec.Json(_WireDict(self.listener))),
+                 "change": self.change, "operation_id": self.operationId}
+        policyCodec.Transition(value)
+
+        return value
 
     def After(self) -> InputPolicy:
         """Preserve all unrelated listeners, source policies, SSH and frozen creation identity in their original order."""

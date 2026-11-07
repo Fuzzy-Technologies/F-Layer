@@ -87,7 +87,7 @@ def _Root(guest: Any) -> Path:
 
 
 @contextmanager
-def _Locks(guest: Any, *, readOnly: bool) -> Iterator[None]:
+def _Locks(guest: Any, *, readOnly: bool) -> Iterator[tuple[int, ...]]:
     """Acquire common ingress then existing WireGuard coordination; never reinterpret a body I/O failure as lock contention."""
 
     import fcntl
@@ -129,7 +129,7 @@ def _Locks(guest: Any, *, readOnly: bool) -> Iterator[None]:
         except OSError:
             raise ReservationError("Protocol coordination is busy or unavailable") from None
 
-        yield
+        yield tuple(descriptor for descriptor in (common, wireguard) if descriptor is not None)
 
         if (common is None and (path.exists() or path.is_symlink())
                 or wireguard is None and (guest.LOCK.exists() or guest.LOCK.is_symlink())):
@@ -218,7 +218,7 @@ def _DurableRoot(guest: Any) -> Path:
 def _Publish(guest: Any, filename: str, record: dict[str, Any], *, immutable: bool = False) -> None:
     """Publish only fixed canonical authority paths, retaining interrupted bytes and never replacing an immutable completion."""
 
-    if filename not in {"pending.json", "head.json"} and re.fullmatch(r"done-[0-9a-f]{32}\.json", filename) is None:
+    if filename not in {"pending.json", "head.json", "input.json"} and re.fullmatch(r"done-[0-9a-f]{32}\.json", filename) is None:
         raise ReservationError("Unsupported protocol authority path")
 
     root = _DurableRoot(guest)
@@ -329,10 +329,13 @@ def _Authority(guest: Any, intent: dict[str, Any], pending: dict[str, Any] | Non
 
     root = _Root(guest)
     names = {path.name for path in root.iterdir()} if root.exists() else set()
-    allowed = {"head.json", ".head.json.new", "pending.json", ".pending.json.new"}
+    allowed = {"head.json", ".head.json.new", "pending.json", ".pending.json.new", "input.json", ".input.json.new"}
 
     if len(names) > MAX_COMPLETIONS + len(allowed) or any(name not in allowed and re.fullmatch(r"done-[0-9a-f]{32}\.json", name) is None for name in names):
         raise ReservationError("Common protocol namespace contains unknown or unbounded metadata")
+
+    if names & {"input.json", ".input.json.new"} and (pending is None or pending["phase"] != "exposed"):
+        raise ReservationError("Host input transaction requires its exact exposed protocol reservation")
 
     head = _Pointer(_Decode(guest, root / "head.json")) if "head.json" in names else None
     current = head

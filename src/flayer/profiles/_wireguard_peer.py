@@ -855,7 +855,7 @@ def Main(argv: list[str] | None = None) -> int:
         if not isinstance(owner, str):
             raise ValueError
 
-        root, unit, _ = guest._ActivePaths(owner)
+        root, unit, _ = guest._Paths(owner) if options.historyStatus else guest._ActivePaths(owner)
         descriptor: int | None
 
         try:

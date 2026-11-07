@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 from typing import Any
@@ -9,8 +10,10 @@ from typing import Any
 import pytest
 from test_wireguard_generation_lifecycle import Candidate, PublishFixture
 from test_wireguard_lifecycle import Seed
+from test_wireguard_peer_lifecycle import Envelope, Environment
 
 from flayer.profiles import _wireguard_guest as guest
+from flayer.profiles import _wireguard_peer as peers
 
 pytestmark = pytest.mark.skipif(os.name != "posix", reason="Owned unit/lock fixtures require POSIX; no desktop network is used")
 
@@ -117,6 +120,21 @@ def test_UnitSelectionDoesNotAdoptChangedReceiptBytesAsHealthyState(
     with pytest.raises(guest.GuestError):
         guest._Check(model.root, model.unit, model.request)
 
+    assert len(model.commands) == before
+
+
+def test_HistoryOnlyEntrypointDoesNotRequireReadableActiveRootMetadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Retained peer authority stays observable after root receipt loss, without selecting or trusting a service."""
+
+    model, desired, _, _ = Environment(tmp_path, monkeypatch, "enroll")
+    Envelope(tmp_path, monkeypatch, model, desired)
+    (model.root / "receipt.json").write_bytes(b"damaged private root metadata")
+    before = len(model.commands)
+    assert peers.Main(["--history-status", "--change", "enroll", "--device-id", model.deviceId]) == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["status"] == "peer-history" and value["history_sha256"] == model.history
     assert len(model.commands) == before
 
 

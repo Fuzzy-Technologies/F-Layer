@@ -18,7 +18,7 @@ _NAME = re.compile(r"[a-z][a-z0-9-]{0,62}\Z")
 _NATIVE_PHASES = {
     "enable": frozenset({"ready", "publishing", "starting", "active", "removing-candidate", "stopping-candidate", "rolled-back", "restarting-active", "recovery-required"}),
     "disable": frozenset({"ready", "removing-original", "stopping-original", "inactive", "unchanged", "restored", "publishing", "starting",
-                          "removing-candidate", "stopping-candidate", "restarting-restored", "recovery-required"}),
+                          "restarting-restored", "recovery-required"}),
 }
 
 

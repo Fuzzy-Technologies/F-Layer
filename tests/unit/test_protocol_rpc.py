@@ -162,7 +162,8 @@ def test_NativeTerminalRepliesRequireTheExactRequestHistoryAndJournal(action: st
             transport.Decode(operation, Frame(operation, changed), 0)
 
 
-@pytest.mark.parametrize("change,phase", [("enable", "inactive"), ("enable", "restored"), ("enable", "unchanged"), ("disable", "active"), ("disable", "rolled-back")])
+@pytest.mark.parametrize("change,phase", [("enable", "inactive"), ("enable", "restored"), ("enable", "unchanged"), ("disable", "active"),
+                                        ("disable", "rolled-back"), ("disable", "removing-candidate"), ("disable", "stopping-candidate")])
 def test_NativeStatusRejectsPhasesFromTheOtherChangeStateMachine(change: str, phase: str) -> None:
     """A state known by another workflow remains an impossible result for this reserved operation."""
 

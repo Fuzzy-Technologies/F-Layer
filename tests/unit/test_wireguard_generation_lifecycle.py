@@ -114,6 +114,28 @@ def test_CachedCandidateRefusesDriftWithoutTouchingTheSource(
     assert len(model.commands) == before
 
 
+@pytest.mark.parametrize("boundary", ["base", "units"])
+@pytest.mark.parametrize("alias", [False, True])
+def test_CachedPreparationCannotWriteManagedPathsThroughDotDotAliases(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, boundary: str, alias: bool,
+) -> None:
+    """Physical managed destinations remain forbidden even when lexical ancestry hides their scope."""
+
+    model, _, _, original = Candidate(tmp_path, monkeypatch)
+    managed = guest.BASE if boundary == "base" else guest.SYSTEMD
+    target = managed / "empty-test-stage"
+    target.mkdir(mode=0o700)
+    destination = managed / ".." / managed.name / target.name if alias else target
+    before = len(model.commands)
+
+    with pytest.raises(guest.GuestError):
+        generations.PrepareCached(guest, model.root, destination, guest._Digest(original["receipt.json"]),
+                                  "3" * 32, original["install.py"], guest._Digest(original["install.py"]))
+
+    assert not tuple(target.iterdir()) and len(model.commands) == before
+    assert {path.name: path.read_bytes() for path in model.root.iterdir()} == original
+
+
 def test_NonceBoundCallbacksStartStopAndRefuseStaleOrUnboundActions(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -264,7 +286,7 @@ def test_PeerChangesPreserveTheGenerationHelperAndNonce(
     expected = guest._Digest(guest._Encode(receipt))
     peers._Cancel(guest, receipt, "revoke", "protocol-" + "2" * 32, peers._History(guest, model.owner))
     history = peers._History(guest, model.owner)
-    assert peers.Apply(guest, desired, action, model.deviceId, expected, history) == "applied"
+    assert peers.Apply(guest, desired, action, model.deviceId, expected, history) == "committed"
     observed = guest._Check(model.root, model.unit, guest._Request(model.root)[0])
     assert observed["nonce"] == receipt["nonce"] and observed["files"]["lifecycle.py"] == receipt["files"]["lifecycle.py"]
     assert (model.root / "lifecycle.py").read_bytes() == helper

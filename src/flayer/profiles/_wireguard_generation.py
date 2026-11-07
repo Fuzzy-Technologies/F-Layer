@@ -20,7 +20,8 @@ def PrepareCached(
     guest._Directory(destination, private=True)
 
     if (not source.is_absolute() or not destination.is_absolute() or source == destination
-            or destination.is_relative_to(guest.BASE) or destination.is_relative_to(guest.SYSTEMD)
+            or source != source.resolve(strict=True) or destination != destination.resolve(strict=True)
+            or destination.is_relative_to(guest.BASE.resolve()) or destination.is_relative_to(guest.SYSTEMD.resolve())
             or tuple(destination.iterdir()) or not isinstance(maintenance, bytes) or not 1 <= len(maintenance) <= 1048576
             or guest._Digest(maintenance) != maintenanceSha256):
         raise guest.GuestError("Cached generation requires a new private transient candidate and exact maintenance pin")

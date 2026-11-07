@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:a1c39fd0e242aae9f8b5f17d715d2ffdb2530ea97e41ca9215850936a4997e38"
-reviewedTranslationHash = "sha256:da05f0fc7548b0e3ea56605cdc912aa891f93e4d7543ee5f2872802bcbe5cb8e"
+sourceHash = "sha256:b02f7cdb3b0c43ff8b07d269e876ec89c27b500f8f44ee4bfcb818d95fa6a14a"
+reviewedTranslationHash = "sha256:a7cf40b84ed2a7379053501934f34ac57cd67ab01d2957b434c7522fd314e657"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-06T23:34:01.192245Z"
+reviewedAt = "2026-11-07T00:10:20.593721Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -386,6 +386,16 @@ Read 只接受绑定精确计划的已保存引用，要求文档化的 `UpdateS
 仅识别来自已验证临时文件的精确前向中断发布。协调仅完成同一次发布，不授予新的权限。意图冲突、跳跃/回退阶段、不可变字节缺失或不同的已知操作都会停止恢复。全部原始凭据和配置包保持不变。拒绝采用日志缺失的保留意图或额外未记录意图。复用完整可见包及授予发送权限之前，均通过固定句柄重新同步已验证载荷、清单、包目录和工件父目录。任何屏障失败都不授予发送权限；已有未知发布锁予以保留。只读日志观测不执行这些写入。完整有效策略可能超过 64 KiB；只有此固定日志路径使用显式 1 MiB 元数据上限，对等端元数据保持原有上限和路径契约。
 
 这些是本地存储原语，不发送云或来宾操作，尚无公共协议命令。前序状态摘要本身不能证明活动纪元。未来协调器必须验证纪元图及完整原始云连接/策略，持有来宾预留/授权撤销，并满足 SDK 同意和预期旧值检查。本地文件锁不能串行化复制的控制器。此处没有日志重置/删除 API；验证后的纪元完成和限定回滚仍待集成。现有生命周期/对等端入口在提供方操作前拒绝该待处理日志或中断发布。
+
+## 受管来宾输入策略规划
+
+私有 `InputPolicy` 将原始 SSH 源网络和协议监听器绑定到冻结创建包及精确原始 `/etc/nftables.conf` 字节，按原始固定值验证协议顺序，独立于相同 UDP 端口保留协议归属。它不重新编译云创建计划，也不生成凭据。封闭公共模型拒绝隐藏扩展、源/端口冲突、TCP 22/UDP 68 监听器及歧义声明。UDP 68 保留给无条件 DHCP 客户端例外。比较/过滤前验证目标的全部标量，包括 disable 移除的监听器。
+
+`InputTransition` 仅变更一个监听器。实时程序通过单个 `nft -f` 批次仅替换已证明存在的 `inet flayer_bootstrap` 表，保留 SSH、DHCP、loopback、ICMP 限速、已建立流量及其他全部监听器声明。活动集为空仍保留管理访问。启动覆盖使用限定的 `destroy table` 加完整表，使首次启动及重载幂等且不使用 `flush ruleset`。Ubuntu 24.04 文档中的 [`destroy` 语义](https://manpages.ubuntu.com/manpages/noble/man8/nftables.8.html#tables)支持此契约；能力预检仍由来宾协调器负责。回滚使用本次操作的新标记恢复原监听器访问语义，不恢复旧代令牌。
+
+原生指纹仅接受一个受管输入表及 drop 策略输入链，移除内核 handle/metainfo，保留全部有序规则表达式。必须遵循现有 WireGuard 来宾方式，将其与临时网络命名空间编译的预期程序比较。哈希本身不证明规则正确或连通。[原子替换契约](https://wiki.nftables.org/wiki-nftables/index.php/Atomic_rule_replacement)适用于完整批次；新增接受型基础链仍会遇到[现有丢弃链](https://wiki.netfilter.org/wiki-nftables/index.php/Configuring_chains)。
+
+纯测试不创建文件，保留原始 bootstrap 并拒绝漂移。真实解析器/内核符合性仅在明确隔离的 Linux CI 网络命名空间执行：被拒批次保留旧表，实时替换及重复/首次启动与隔离编译一致，回滚保持新标记，无关表/计数器保持字节等价。本组件不执行命令。公开协议变更命令前，仍须集成来宾锁/预留、回执/历史校验、启动文件持久发布及恢复。
 
 ## 尚待集成
 

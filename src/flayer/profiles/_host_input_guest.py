@@ -77,7 +77,7 @@ def _Load(guest: Any, authority: Any, expected: dict[str, Any]) -> dict[str, Any
         if path.exists() or path.is_symlink():
             value = authority._Decode(guest, path)
 
-            if (set(value) != {*expected, "phase"} or type(value["schema_version"]) is not int or any(value[key] != item for key, item in expected.items())
+            if (set(value) != {*expected, "phase"} or guest._Encode({key: item for key, item in value.items() if key != "phase"}) != guest._Encode(expected)
                     or type(value["phase"]) is not str or value["phase"] not in {"prepared", "applying", "applied", "rolling-back", "rolled-back"}):
                 raise InputError("Host input journal is foreign, incomplete or differs from its exact reserved request")
 

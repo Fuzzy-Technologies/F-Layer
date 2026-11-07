@@ -324,3 +324,45 @@ def test_BootDirectoryIsResyncedBeforeLiveMutationAfterARecoveredVisibleRename(t
         assert network.mutations == 0
 
     assert Apply(request, intent)["phase"] == "applied" and network.mutations == 1
+
+
+@POSIX
+@pytest.mark.parametrize("filename", ["input.json", ".input.json.new"])
+@pytest.mark.parametrize("action", ["status", "apply"])
+@pytest.mark.parametrize("field", ["request-version", "delta-version", "policy-version", "listener-port"])
+def test_JournalScalarAliasesCannotSubstituteDifferentReservationBoundRequestBytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, filename: str, action: str, field: str,
+) -> None:
+    """Python boolean/integer/float equality is not proof that an on-disk public plan has its exact reserved hash."""
+
+    _, network, request, intent = Environment(tmp_path, monkeypatch)
+    Prepare(request, intent)
+    root = authority._Root(guest)
+    record = authority._Decode(guest, root / "input.json")
+
+    if field == "request-version":
+        record["request"]["schema_version"] = True
+
+    elif field == "delta-version":
+        record["request"]["input"]["schema_version"] = True
+
+    elif field == "policy-version":
+        record["request"]["input"]["before"]["schema_version"] = True
+
+    else:
+        listener = record["request"]["input"]["listener"]
+        listener["port"] = float(listener["port"])
+
+    path = root / filename
+    path.write_bytes(policy.Json(record))
+    path.chmod(0o600)
+    before = Snapshot(tmp_path)
+
+    with pytest.raises(inputs.InputError):
+        if action == "status":
+            inputs.Status(guest, peers, authority, policy, request, intent)
+
+        else:
+            Apply(request, intent)
+
+    assert Snapshot(tmp_path) == before and network.mutations == 0

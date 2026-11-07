@@ -698,6 +698,27 @@ service and input receipts in an epoch; no input result alone retires it. Tests
 use simulated networking plus real nftables/stdlib backends exclusively inside
 the isolated Linux CI namespace. No desktop or deployed server is changed.
 
+## Nonsecret retained source traversal
+
+Source metadata traversal now verifies the complete manifest owner, file roles,
+sizes, sensitivity and full externally pinned bundle digest without opening any
+private payload. Original, peer and protocol sources retain the same canonical
+material/server role digests even after private files are lost. Required public
+intent/request files still need their exact payload hashes and closed decoders;
+an owned manifest alone cannot override contradictory request metadata.
+
+The reader pins directory/manifest/public-file identity and rejects unknown
+members, unsafe links/permissions, changed membership and detectable snapshot
+drift. Missing declared private files are distinct from foreign entries. A declared
+private hash is a retained reference, never proof that an unopened payload is
+present or healthy. Full private use/export and artifact deletion retain their
+existing complete-content checks; this traversal grants neither authority.
+
+This supplies nonsecret references for the upcoming epoch graph and whole-cloud
+cleanup after client-key loss. It does not activate protocol transitions or bypass
+complete cloud ownership/pending-operation checks. No epoch head is inferred from
+orphan artifacts, and ordinary entrypoints still refuse unintegrated epoch metadata.
+
 ## Remaining integration
 
 Adding/removing a protocol on an existing guest, schema-1 migration, explicit

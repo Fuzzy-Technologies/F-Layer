@@ -505,7 +505,12 @@ def Pending(project: SelectedVpnProject, *, segment: PeerSegment | None = None) 
 
         path = temporary
 
-    raw = ReadPrivate(path)
+    return _DecodePending(project, ReadPrivate(path))
+
+
+def _DecodePending(project: SelectedVpnProject, raw: bytes) -> dict[str, Any]:
+    """Validate the same closed public request whether reached from a mutable journal or retained source metadata."""
+
     data = _Decode(raw)
     fields = {"schema_version", "identity", "creation_sha256", "parent", "previous_head_sha256", "previous_pin", "desired_fingerprint",
               "request_name", "request_sha256", "change", "device_id", "previous_receipt_sha256", "previous_history_sha256", "baseline_sha256", "plan_expires_at"}

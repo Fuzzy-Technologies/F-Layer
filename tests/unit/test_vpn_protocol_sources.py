@@ -326,3 +326,63 @@ def test_RehashedProtocolRequestCannotHideContradictorySnapshotMetadata(tmp_path
         sources.ReadSource(project, source, material=fault == "server-bytes")
 
     assert Snapshot(project.Artifacts) == before
+
+
+@POSIX
+@pytest.mark.parametrize("protocol,kind", [(protocol, kind) for protocol in ("amneziawg", "vless-reality", "wireguard")
+                                         for kind in ("initial", "protocol")] + [("wireguard", "peer")])
+def test_SourceMetadataTraversalRetainsRolePinsAfterAllPrivatePayloadsAreLost(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, protocol: str, kind: str,
+) -> None:
+    """Full nonsecret source ancestry survives private-file loss while ordinary use remains refused."""
+
+    from test_vpn_peer_revisions import Change, Stage
+
+    from flayer import _vpn_artifact_metadata as metadataReader
+
+    project = Project(tmp_path)
+    selected.PrepareSelectedProject(project)
+    state = revisions.LoadRevisions(project)
+    pin = next(item for item in state.pins if item.protocol == protocol)
+    source = sources.ProtocolSource(project.vpn.identity, pin)
+    metadata = None
+
+    if kind == "protocol":
+        material, server = (sources.ReadSource(project, source, material=flag) for flag in (True, False))
+        source, request = sources.PrepareProtocolRequest(project, pin, material, server, operationId="a" * 32, previousState=state.headDigest)
+        WriteArtifactBundle(project.Artifacts, request)
+
+    elif kind == "peer":
+        project, pending, material, server, pin, facts = Change(project, state)
+        pending = Stage(project, pending, material, server)
+        revisions.Commit(project, state, pending, pin, facts, outcome="committed")
+        source = sources.ProtocolSource(project.vpn.identity, pin, "peer", pending["request_name"], pending["request_sha256"])
+
+    directories = ([project.Artifacts / ("server-" + project.vpn.identity.stack + "-" + protocol + suffix) for suffix in ("-credentials", "")]
+                   if kind == "initial" else [project.Artifacts / ("server-" + source.requestName)])
+
+    for directory in directories:
+        manifest = json.loads((directory / "manifest.json").read_bytes())
+
+        for entry in manifest["files"]:
+            if entry["sensitive"]:
+                (directory / entry["name"]).unlink()
+
+    before = Snapshot(project.Artifacts)
+    original = metadataReader._ReadSnapshot
+
+    def Read(descriptor: int, filename: str, limit: int) -> Any:
+        """No credential, configuration or executable body may be opened during source traversal."""
+
+        assert filename in {"manifest.json", "intent.sha256", "request.json"}
+
+        return original(descriptor, filename, limit)
+
+    monkeypatch.setattr(metadataReader, "_ReadSnapshot", Read)
+    credentials, serverMetadata, metadata = sources.ReadSourceMetadata(project, source)
+    assert credentials.Digest() == pin.materialDigest and serverMetadata.Digest() == pin.serverDigest
+    assert (metadata is None) == (kind == "initial")
+    assert Snapshot(project.Artifacts) == before
+
+    with pytest.raises(ValueError):
+        sources.ReadSource(project, source)

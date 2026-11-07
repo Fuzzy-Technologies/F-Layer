@@ -7,6 +7,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from flayer._vpn_artifact_metadata import BundleSummary, ReadSummary
 from flayer._vpn_creation import (
     _SERVER_FILES,
     BundleDigest,
@@ -132,17 +133,7 @@ def ReadSource(project: SelectedVpnProject, source: ProtocolSource, *, material:
     contents = {item.name: item.content for item in request.files}
 
     if source.kind == "protocol":
-        metadata = _Decode(contents["request.json"])
-        fields = {"schema_version", "identity", "protocol", "operation_id", "previous_state_sha256", "pin"}
-
-        if (set(metadata) != fields or contents["request.json"] != _Json(metadata)
-                or type(metadata["schema_version"]) is not int or metadata["schema_version"] != 1
-                or metadata["identity"] != _WireDict(project.vpn.identity) or metadata["protocol"] != source.pin.protocol
-                or not isinstance(metadata["operation_id"], str) or re.fullmatch(r"[0-9a-f]{32}", metadata["operation_id"]) is None
-                or not isinstance(metadata["previous_state_sha256"], str) or _HASH.fullmatch(metadata["previous_state_sha256"]) is None
-                or metadata["pin"] != _WireDict(source.pin)
-                or source.requestName != _ProtocolRequestName(project.vpn.identity, source.pin.protocol, metadata["operation_id"])):
-            raise VpnError("Protocol source request metadata differs from its exact projection")
+        _ProtocolMetadata(source, contents["request.json"])
 
     base = project.vpn.identity.stack + "-" + source.pin.protocol
     credentials = ArtifactBundle(project.vpn.identity, "server", base + "-credentials", tuple(
@@ -154,6 +145,73 @@ def ReadSource(project: SelectedVpnProject, source: ProtocolSource, *, material:
         raise VpnError("Protocol source bytes differ from their canonical material/server projection")
 
     return credentials if material else server
+
+
+def _ProtocolMetadata(source: ProtocolSource, content: bytes) -> dict[str, Any]:
+    """Keep one canonical closed protocol-request decoder for private use and nonsecret ancestry traversal."""
+
+    metadata = _Decode(content)
+    fields = {"schema_version", "identity", "protocol", "operation_id", "previous_state_sha256", "pin"}
+
+    if (set(metadata) != fields or content != _Json(metadata)
+            or type(metadata["schema_version"]) is not int or metadata["schema_version"] != 1
+            or metadata["identity"] != _WireDict(source.identity) or metadata["protocol"] != source.pin.protocol
+            or type(metadata["operation_id"]) is not str or re.fullmatch(r"[0-9a-f]{32}", metadata["operation_id"]) is None
+            or type(metadata["previous_state_sha256"]) is not str or _HASH.fullmatch(metadata["previous_state_sha256"]) is None
+            or metadata["pin"] != _WireDict(source.pin)
+            or source.requestName != _ProtocolRequestName(source.identity, source.pin.protocol, metadata["operation_id"])):
+        raise VpnError("Protocol source request metadata differs from its exact projection")
+
+    return metadata
+
+
+def ReadSourceMetadata(project: SelectedVpnProject, source: ProtocolSource) -> tuple[BundleSummary, BundleSummary, dict[str, Any] | None]:
+    """Prove retained source references after private-file loss without claiming payload health or granting export/deletion authority."""
+
+    if type(source) is not ProtocolSource or source.identity != project.vpn.identity:
+        raise VpnError("Protocol source metadata cannot select another owner")
+
+    source.Record()
+    base = project.vpn.identity.stack + "-" + source.pin.protocol
+    metadata = None
+
+    if source.kind == "initial":
+        credentials, intent = ReadSummary(project.Artifacts / ("server-" + base + "-credentials"), source.identity,
+            base + "-credentials", source.pin.materialDigest, publicFile="intent.sha256")
+        server, _ = ReadSummary(project.Artifacts / ("server-" + base), source.identity, base, source.pin.serverDigest)
+
+    else:
+        directory = project.Artifacts / ("server-" + source.requestName)
+        request, raw = ReadSummary(directory, source.identity, source.requestName, source.requestSha256, publicFile="request.json")
+        _, intent = ReadSummary(directory, source.identity, source.requestName, source.requestSha256, publicFile="intent.sha256")
+        expected = {*_MATERIAL_FILES, *_SERVER_FILES[source.pin.protocol], "request.json"}
+
+        if ({item.name for item in request.files} != expected
+                or any(item.sensitive != (item.name not in {"intent.sha256", "request.json"}) for item in request.files) or raw is None):
+            raise VpnError("Retained source metadata has missing, unknown or incorrectly private file roles")
+
+        credentials = BundleSummary(source.identity, base + "-credentials", tuple(item for item in request.files if item.name in _MATERIAL_FILES))
+        server = BundleSummary(source.identity, base, tuple(item for item in request.files if item.name in _SERVER_FILES[source.pin.protocol]))
+
+        if source.kind == "protocol":
+            metadata = _ProtocolMetadata(source, raw)
+
+        else:
+            from flayer._vpn_revisions import _DecodePending
+
+            metadata = _DecodePending(project, raw)
+
+            if metadata["request_name"] != source.requestName or metadata["request_sha256"] != "" or metadata["desired_fingerprint"] != source.pin.intentFingerprint:
+                raise VpnError("Peer source metadata differs from its exact retained request")
+
+    if ({item.name for item in credentials.files} != set(_MATERIAL_FILES)
+            or any(item.sensitive != (item.name != "intent.sha256") for item in credentials.files)
+            or {item.name for item in server.files} != set(_SERVER_FILES[source.pin.protocol]) or any(not item.sensitive for item in server.files)
+            or credentials.Digest() != source.pin.materialDigest or server.Digest() != source.pin.serverDigest
+            or intent != (source.pin.intentFingerprint + "\n").encode()):
+        raise VpnError("Protocol source metadata differs from its complete canonical role pins")
+
+    return credentials, server, metadata
 
 
 def PrepareProtocolRequest(

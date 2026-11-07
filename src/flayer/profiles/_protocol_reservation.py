@@ -170,13 +170,58 @@ def _SyncFile(guest: Any, path: Path, expected: bytes) -> None:
         os.close(descriptor)
 
 
+def _DurableRoot(guest: Any) -> Path:
+    """Reestablish existing or newly created namespace publication through every owned ancestor before granting authority."""
+
+    root = _Root(guest)
+    directories = (guest.BASE.parent.parent, guest.BASE.parent, root)
+
+    for path in directories:
+        guest._Directory(path, create=True, private=path == root)
+
+    paths = (directories[0].parent, *directories)
+    descriptors: list[tuple[Path, int, os.stat_result]] = []
+
+    try:
+        for path in paths:
+            guest._Directory(path, private=path == root)
+            descriptor = (os.open(path.name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=descriptors[-1][1])
+                          if descriptors else os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW))
+            info = os.fstat(descriptor)
+            descriptors.append((path, descriptor, info))
+
+            if (not stat.S_ISDIR(info.st_mode) or info.st_uid != guest._ROOT_UID or info.st_mode & 0o022
+                    or path == root and stat.S_IMODE(info.st_mode) != 0o700):
+                raise ReservationError("Protocol namespace directory ownership changed before durable publication")
+
+        for _, descriptor, _ in reversed(descriptors):
+            os.fsync(descriptor)
+
+        for path, descriptor, expected in descriptors:
+            current = os.fstat(descriptor)
+            linked = path.lstat()
+
+            if (not stat.S_ISDIR(linked.st_mode) or current.st_uid != guest._ROOT_UID or linked.st_uid != guest._ROOT_UID
+                    or (expected.st_dev, expected.st_ino) != (current.st_dev, current.st_ino)
+                    or (expected.st_dev, expected.st_ino) != (linked.st_dev, linked.st_ino)
+                    or current.st_mode & 0o022 or linked.st_mode & 0o022
+                    or path == root and (stat.S_IMODE(current.st_mode) != 0o700 or stat.S_IMODE(linked.st_mode) != 0o700)):
+                raise ReservationError("Protocol namespace changed during durable publication")
+
+    finally:
+        for _, descriptor, _ in reversed(descriptors):
+            os.close(descriptor)
+
+    return root
+
+
 def _Publish(guest: Any, filename: str, record: dict[str, Any], *, immutable: bool = False) -> None:
     """Publish only fixed canonical authority paths, retaining interrupted bytes and never replacing an immutable completion."""
 
     if filename not in {"pending.json", "head.json"} and re.fullmatch(r"done-[0-9a-f]{32}\.json", filename) is None:
         raise ReservationError("Unsupported protocol authority path")
 
-    root = _Root(guest)
+    root = _DurableRoot(guest)
     path = root / filename
     content = _Json(record)
 
@@ -393,6 +438,11 @@ def Reserve(guest: Any, peer: Any, value: object, *, allowMutation: bool = False
             raise ReservationError("Protocol intent has stale or changed common authority")
 
         if pending is None:
+            completed = _Root(guest) / ("done-" + intent["operation_id"] + ".json")
+
+            if completed.exists() or completed.is_symlink():
+                raise ReservationError("A completed protocol operation nonce cannot be reused")
+
             if count >= MAX_COMPLETIONS or not int(time.time()) < intent["plan_expires_at"] <= int(time.time()) + 600:
                 raise ReservationError("Protocol history is at capacity or the new reservation plan expired")
 
@@ -401,9 +451,6 @@ def Reserve(guest: Any, peer: Any, value: object, *, allowMutation: bool = False
             if history != intent["wireguard_history_sha256"]:
                 raise ReservationError("WireGuard history differs from the exact reservation plan")
 
-            guest._Directory(guest.BASE.parent.parent, create=True)
-            guest._Directory(guest.BASE.parent, create=True)
-            guest._Directory(_Root(guest), create=True, private=True)
             pending = {"schema_version": 1, "intent": intent, "parent": head, "deployment_sha256": receipt["deployment_sha256"] if receipt is not None else "",
                        "phase": "preparing", "fenced": False}
             _Publish(guest, "pending.json", pending)

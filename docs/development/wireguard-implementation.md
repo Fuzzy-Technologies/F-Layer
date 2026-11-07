@@ -630,6 +630,10 @@ plan nonce/expiry and actual active-WG receipt or complete namespace-absence pro
 It acquires common ingress coordination before the existing WG lock. A persistent
 private preparation journal precedes the history fence, and a copied controller
 cannot substitute another intent through its own local project lock.
+Recovered writes re-sync the owned namespace and every publication ancestor through
+pinned directory handles before fencing or dispatch authority, even when all
+directories were already visible after a crash. Completed operation nonces cannot
+be reused with a new parent/history.
 
 For active WG, use the existing valid v1 equal-receipt cancellation audit under the
 WG lock. The running root receipt, credentials, configuration, binary, interfaces

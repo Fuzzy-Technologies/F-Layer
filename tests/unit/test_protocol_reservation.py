@@ -197,9 +197,19 @@ def test_NormalPeerAndMaintenanceEntrypointsRefusePendingAuthorityButAllowHistor
     Envelope(tmp_path, monkeypatch, model, desired)
     before = Snapshot(tmp_path)
     arguments = ["--change", "enroll", "--device-id", model.deviceId]
+    originalGate = peers._ProtocolGate
+    checked = []
+
+    def Check(current: Any) -> None:
+        """Prove that failure comes from the intended gate, retaining the entrypoint's fixed sanitized diagnostic."""
+
+        checked.append(True)
+        originalGate(current)
+
+    monkeypatch.setattr(peers, "_ProtocolGate", Check)
 
     assert peers.Main(["--status", *arguments]) == 1
-    assert "protocol reservation" in capsys.readouterr().err
+    assert checked == [True] and "WireGuard peer operation failed" in capsys.readouterr().err
     assert peers.Main(["--history-status", *arguments]) == 0
     assert "history_sha256" in capsys.readouterr().out
 
@@ -207,6 +217,92 @@ def test_NormalPeerAndMaintenanceEntrypointsRefusePendingAuthorityButAllowHistor
         guest._ProtocolGate()
 
     assert Snapshot(tmp_path) == before
+
+
+@POSIX
+def test_CompletedNonceCannotBeReusedWithFreshAuthorityAndCurrentHistory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A new baseline cannot reserve an immutable completion filename that already belongs to a different parent/intent."""
+
+    _, _, data = Active(tmp_path, monkeypatch)
+    reservations.Reserve(guest, peers, data, allowMutation=True)
+    completed = reservations.Cancel(guest, peers, data, allowMutation=True)
+    repeated = {**data, "previous_authority_sha256": completed["authority_sha256"], "wireguard_history_sha256": completed["history_sha256"]}
+    before = Snapshot(tmp_path)
+
+    with pytest.raises(reservations.ReservationError, match="nonce cannot be reused"):
+        reservations.Reserve(guest, peers, repeated, allowMutation=True)
+
+    assert Snapshot(tmp_path) == before
+
+
+@POSIX
+@pytest.mark.parametrize("barrier", ["ingress", "flayer", "opt", "ancestor"])
+def test_PreexistingCrashCreatedNamespaceMustHaveEveryDirectoryBarrierBeforeFencing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, barrier: str,
+) -> None:
+    """A visible directory cannot authorize a durable fence if its own or any parent publication still fails."""
+
+    model, _, data = Active(tmp_path, monkeypatch)
+    root = reservations._Root(guest)
+    root.mkdir(mode=0o700)
+    directories = {"ingress": root, "flayer": root.parent, "opt": root.parent.parent, "ancestor": root.parent.parent.parent}
+    targets = {(path.stat().st_dev, path.stat().st_ino): name for name, path in directories.items()}
+    original = reservations.os.fsync
+    before = Snapshot(model.root)
+
+    def Fail(descriptor: int) -> None:
+        """Model an ancestor entry that is visible after process death but not yet durable after power loss."""
+
+        info = os.fstat(descriptor)
+
+        if targets.get((info.st_dev, info.st_ino)) == barrier:
+            raise OSError("Synthetic namespace durability interruption")
+
+        original(descriptor)
+
+    monkeypatch.setattr(reservations.os, "fsync", Fail)
+
+    with pytest.raises(OSError, match="Synthetic namespace"):
+        reservations.Reserve(guest, peers, data, allowMutation=True)
+
+    assert peers._History(guest, data["owner"]) == data["wireguard_history_sha256"]
+    assert reservations._Pending(guest, data) is None and Snapshot(model.root) == before
+
+
+@POSIX
+def test_RecoveredNamespaceAncestorsAreSyncedBeforeTheFenceAndBeforeDispatchGrant(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Reserving/exposing reestablishes all publication barriers even when every managed directory already exists."""
+
+    _, _, data = Active(tmp_path, monkeypatch)
+    root = reservations._Root(guest)
+    root.mkdir(mode=0o700)
+    paths = (root, root.parent, root.parent.parent, root.parent.parent.parent)
+    identifiers = {(path.stat().st_dev, path.stat().st_ino): index for index, path in enumerate(paths)}
+    originalSync, originalCancel = reservations.os.fsync, peers._Cancel
+    synced = []
+
+    def Sync(descriptor: int) -> None:
+        """Record actual pinned directory barriers and preserve their real fsync behavior."""
+
+        info = os.fstat(descriptor)
+
+        if (info.st_dev, info.st_ino) in identifiers:
+            synced.append(identifiers[(info.st_dev, info.st_ino)])
+
+        originalSync(descriptor)
+
+    def Fence(*args: Any, **options: Any) -> None:
+        """All namespace ancestors must be durable before the first legacy-compatible peer audit is written."""
+
+        assert synced[:4] == [0, 1, 2, 3]
+        originalCancel(*args, **options)
+
+    monkeypatch.setattr(reservations.os, "fsync", Sync)
+    monkeypatch.setattr(peers, "_Cancel", Fence)
+    reserved = reservations.Reserve(guest, peers, data, allowMutation=True)
+    synced.clear()
+    reservations.Expose(guest, peers, data, reserved["reservation_sha256"], allowMutation=True)
+    assert synced[:4] == [0, 1, 2, 3]
 
 
 @POSIX

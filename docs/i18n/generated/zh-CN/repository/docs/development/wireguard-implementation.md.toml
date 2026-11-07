@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:3929508fecef60a0b0b5b949d44a4ea677cb30b86cc06044d85e00afb7293f1b"
-reviewedTranslationHash = "sha256:48f3f4906f2db1e454e1c95ddad21b87e8ee06860d873889a247c492f3316874"
+sourceHash = "sha256:aa5eba3146bc62e45ccd5997f33a10cf4bd031ec43375055caf54f18482bf572"
+reviewedTranslationHash = "sha256:4320108b21c05255a2dbda87ec83488209afb66d3a813a891874a9b11cda39ec"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T00:44:02.202336Z"
+reviewedAt = "2026-11-07T00:54:12.019322Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -399,7 +399,7 @@ Read 只接受绑定精确计划的已保存引用，要求文档化的 `UpdateS
 
 ## 来宾协议预留与对等端历史权限撤销
 
-仅依赖 stdlib 的私有预留后端接受一个封闭的纯哈希意图，绑定完整 owner、永久创建、前序公共权限/状态、计划 nonce/有效期，以及活动 WG 回执或完整命名空间缺失证明。先获取公共入口协调锁，再获取现有 WG 锁。持久私有准备日志先于历史撤销；复制的控制器不能通过自己的本地项目锁替换意图。
+仅依赖 stdlib 的私有预留后端接受一个封闭的纯哈希意图，绑定完整 owner、永久创建、前序公共权限/状态、计划 nonce/有效期，以及活动 WG 回执或完整命名空间缺失证明。先获取公共入口协调锁，再获取现有 WG 锁。持久私有准备日志先于历史撤销；复制的控制器不能通过自己的本地项目锁替换意图。恢复写入在撤销历史或授予发送权限前，通过固定目录句柄重新同步受管命名空间及全部发布祖先，即使目录在崩溃后已经可见。完成操作的 nonce 不能随新父项/历史重复使用。
 
 活动 WG 在其锁内使用现有有效 v1 等回执取消审计。运行根回执、凭据、配置、二进制、接口和服务保持不变，链式对等端历史前进。已排队的旧对等端驱动识别历史变化并拒绝旧预期权限。待处理对等端/安装事务阻止预留。WG 缺失要求实际根/unit/接口/NAT/启用链接缺失及保留历史，不会为撤销权限虚构运行回执或安装。
 

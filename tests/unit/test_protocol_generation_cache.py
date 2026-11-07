@@ -337,3 +337,52 @@ def test_PreparingCacheResyncsVisibleFilesAndCompletesRecordedSparsePublication(
     assert record["phase"] == "preparing" and fired
     monkeypatch.setattr(generations, "_Directories", directories)
     assert Prepare(value, intent, cached, candidate)["phase"] == "prepared"
+
+
+@pytest.mark.parametrize("replacement", ["file", "directory"])
+def test_SameByteReplacementDuringFinalDirectoryBarriersCannotCommitPreparation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, replacement: str,
+) -> None:
+    """Identical hashes do not prove replacement inodes durable; retain replacements and the preparing journal."""
+
+    _, value, intent, cached, candidate = Prepared(tmp_path, monkeypatch)
+    receipt = value["generation"]["cached_receipt"]
+    root = generations._CachePath(guest, receipt)
+    synchronize = generations._SyncPinned
+    fired = False
+
+    def Sync(descriptor: int) -> None:
+        nonlocal fired
+
+        synchronize(descriptor)
+        info = os.fstat(descriptor)
+        linked = root.stat()
+
+        if (info.st_dev, info.st_ino) == (linked.st_dev, linked.st_ino) and not fired:
+            fired = True
+
+            if replacement == "file":
+                path = root / "COPYING"
+                temporary = root / ".identical-test"
+                temporary.write_bytes(path.read_bytes())
+                temporary.chmod(0o600)
+                temporary.replace(path)
+
+            else:
+                old = root.with_name("old-test-cache")
+                root.rename(old)
+                root.mkdir(mode=0o700)
+
+                for entry in old.iterdir():
+                    path = root / entry.name
+                    path.write_bytes(entry.read_bytes())
+                    path.chmod(0o755 if entry.name == "wg" else 0o600)
+
+    monkeypatch.setattr(generations, "_SyncPinned", Sync)
+
+    with pytest.raises(generations.GenerationError, match="snapshot"):
+        Prepare(value, intent, cached, candidate)
+
+    assert fired and (root / "COPYING").exists()
+    assert (root / "COPYING").read_bytes() == (cached / "COPYING").read_bytes()
+    assert authority._Decode(guest, authority._Root(guest) / "generation.json")["phase"] == "preparing"

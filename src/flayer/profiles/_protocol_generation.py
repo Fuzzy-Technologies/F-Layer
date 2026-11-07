@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import os
 import stat
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, cast
 
@@ -271,6 +273,94 @@ def _Copy(guest: Any, receipt: dict[str, Any], payload: dict[str, bytes], *, res
     _Prefix(guest, receipt, partial=False)
 
 
+def _SyncPinned(descriptor: int) -> None:
+    """Sync the exact retained inode rather than reopening a possibly replaced cache path."""
+
+    os.fsync(descriptor)
+
+
+@contextmanager
+def _DurableCaches(guest: Any, receipts: list[dict[str, Any]]) -> Iterator[Callable[[], None]]:
+    """Pin complete file and directory snapshots through final barriers, authority rechecks and prepared publication."""
+
+    directories: dict[Path, tuple[int, os.stat_result]] = {}
+    files: dict[Path, tuple[int, os.stat_result]] = {}
+    members: dict[Path, set[str]] = {}
+
+    def Verify() -> None:
+        """Reject same-byte replacement, metadata drift and changed membership without deleting the replacement."""
+
+        for path, (descriptor, expected) in (*directories.items(), *files.items()):
+            current = os.fstat(descriptor)
+            linked = path.lstat()
+
+            if ((expected.st_dev, expected.st_ino) != (current.st_dev, current.st_ino)
+                    or (expected.st_dev, expected.st_ino) != (linked.st_dev, linked.st_ino)
+                    or (expected.st_mode, expected.st_uid, expected.st_nlink) != (current.st_mode, current.st_uid, current.st_nlink)
+                    or (expected.st_mode, expected.st_uid, expected.st_nlink) != (linked.st_mode, linked.st_uid, linked.st_nlink)
+                    or path in files and (expected.st_size, expected.st_mtime_ns, expected.st_ctime_ns)
+                    != (current.st_size, current.st_mtime_ns, current.st_ctime_ns)):
+                raise GenerationError("Generation cache snapshot changed during durable publication")
+
+        for path, names in members.items():
+            if set(os.listdir(directories[path][0])) != names:
+                raise GenerationError("Generation cache membership changed during durable publication")
+
+    try:
+        for receipt in receipts:
+            path = _CachePath(guest, receipt)
+            _Directories(guest, path, create=False)
+            paths = (guest.BASE.parent.parent.parent, guest.BASE.parent.parent, guest.BASE.parent, path.parent.parent, path.parent, path)
+
+            for directory in paths:
+                if directory not in directories:
+                    descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+                    directories[directory] = descriptor, os.fstat(descriptor)
+                    info = directories[directory][1]
+
+                    if (not stat.S_ISDIR(info.st_mode) or info.st_uid != guest._ROOT_UID or info.st_mode & 0o022
+                            or directory.is_relative_to(guest.BASE.parent / "wireguard-cache") and stat.S_IMODE(info.st_mode) != 0o700):
+                        raise GenerationError("Generation cache ancestor changed before synchronization")
+
+            members[path] = set(receipt["files"]) | {"receipt.json"}
+
+            for name in sorted(members[path]):
+                filePath = path / name
+                descriptor = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directories[path][0])
+                files[filePath] = descriptor, os.fstat(descriptor)
+                info = files[filePath][1]
+                limit = 8 * 1024 * 1024 if name == "wg" else 1048576
+
+                if (not stat.S_ISREG(info.st_mode) or info.st_uid != guest._ROOT_UID or info.st_nlink != 1
+                        or stat.S_IMODE(info.st_mode) != (0o755 if name == "wg" else 0o600) or not 0 < info.st_size <= limit):
+                    raise GenerationError("Generation cache file changed before synchronization")
+
+                with os.fdopen(descriptor, "rb", closefd=False) as stream:
+                    content = stream.read(limit + 1)
+
+                exact = content == guest._Encode(receipt) if name == "receipt.json" else guest._Digest(content) == receipt["files"][name]
+
+                if len(content) > limit or not exact:
+                    raise GenerationError("Generation cache pinned bytes differ from their exact receipt")
+
+        Verify()
+
+        for descriptor, _ in files.values():
+            _SyncPinned(descriptor)
+
+        for path in sorted(directories, key=lambda item: len(item.parts), reverse=True):
+            _SyncPinned(directories[path][0])
+
+        Verify()
+
+        yield Verify
+        Verify()
+
+    finally:
+        for descriptor, _ in (*files.values(), *reversed(directories.values())):
+            os.close(descriptor)
+
+
 def Prepare(
     guest: Any, peer: Any, authority: Any, policy: Any, value: object, rawIntent: object,
     cached: Path | None = None, candidate: Path | None = None, *, allowMutation: bool = False,
@@ -315,15 +405,17 @@ def Prepare(
         for (_, receipt), payload in zip(sources, payloads):
             _Copy(guest, receipt, payload, resume=record["phase"] == "preparing")
 
-        for (path, receipt), payload in zip(sources, payloads):
-            if _Source(guest, path, receipt, request["input"]["listener"]) != payload:
-                raise GenerationError("Private generation source changed before cache commitment")
+        with _DurableCaches(guest, receipts) as verify:
+            for (path, receipt), payload in zip(sources, payloads):
+                if _Source(guest, path, receipt, request["input"]["listener"]) != payload:
+                    raise GenerationError("Private generation source changed before cache commitment")
 
-        if _Reservation(guest, peer, authority, intent) != (pending, history):
-            raise GenerationError("Protocol authority changed during generation cache preparation")
+            if _Reservation(guest, peer, authority, intent) != (pending, history):
+                raise GenerationError("Protocol authority changed during generation cache preparation")
 
-        record = {**expected, "phase": "prepared"}
-        authority._Publish(guest, "generation.json", record)
+            verify()
+            record = {**expected, "phase": "prepared"}
+            authority._Publish(guest, "generation.json", record)
 
         return {"status": "generation-cache", "phase": "prepared", "journal_sha256": guest._Digest(guest._Encode(record)), "history_sha256": history}
 

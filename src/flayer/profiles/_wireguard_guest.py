@@ -1539,7 +1539,7 @@ def _BuildPayload(
     payload = {name: _Read(stage / name) for name in ("server.conf", "deployment.json", "install.py")}
 
     if (_Digest(payload["server.conf"]) != request["config_sha256"] or _Digest(payload["install.py"]) != request["program_sha256"]
-            or _Json(payload["deployment.json"]) != request):
+            or _Encode(_Json(payload["deployment.json"])) != _Encode(request)):
         raise GuestError("WireGuard private build source differs from its complete validated request")
 
     buildFacts = _BuildFacts()

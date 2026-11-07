@@ -806,10 +806,27 @@ bodies also refuses; completed retries verify/resync the retained cache without
 the original transient sources. Read-only status performs no repair and never
 reports a prepared cache as an active generation.
 
-The common reservation remains exposed. The input-only backend and committed
-epoch model still refuse the new composite; sealed generation context, actual
-root/service/history transitions, common completion, controller publication and
-public CLI admission remain unavailable pending full integration.
+Generation-record schema 2 binds a fresh schema-2 candidate for both enable and
+disable. On disable the candidate is reserved for restoration, retaining the exact
+cached configuration/keys, runtime and kernel facts under a new operation nonce and
+unit identity. An uncertain old stop must never target a restored old unit name.
+Schema-1 generation records remain readable for cache recovery but cannot gain
+host-input authority or an unplanned candidate beneath an existing exposed hash.
+
+The input backend accepts this versioned composite only after the exact generation
+journal is prepared and both complete recovery caches verify. Common then WG locks
+still protect the original actual runtime/history observation. Cache preparation
+does not itself authorize input: the trusted cache backend must keep the exact file
+and ancestor descriptors pinned and synchronized across boot/live changes and
+recheck them before a terminal input journal is published. Missing/unfinished caches,
+copied journal intent/history, changed bytes or replaced inodes refuse further writes.
+Read-only input status verifies recovery readiness without repairing/resynchronizing
+the cache. Legacy schema-1 input composites retain their existing private behavior.
+
+The common reservation remains exposed. The committed epoch model still refuses
+the new composite; sealed native generation context, actual root/service/history
+transitions, common completion, controller publication and public CLI admission
+remain unavailable pending full integration.
 
 ## Remaining integration
 

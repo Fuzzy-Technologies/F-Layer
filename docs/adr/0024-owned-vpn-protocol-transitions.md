@@ -203,11 +203,28 @@ An absent journal cannot authorize torn-file recovery. Prepared caches are immut
 retries verify/resync them without needing discarded transient source directories.
 Read-only status neither repairs a publication nor claims service activation.
 
-This backend does not mutate an active root, unit, input policy or cloud resource.
-The input-only backend and committed epoch reader still reject the new composite
-until sealed generation context, native transition/recovery, common completion and
-controller publication are integrated. Cache preparation alone cannot retire an
-exposed reservation, reset its history or authorize a service command.
+Generation-record schema 2 additionally requires a preplanned fresh schema-2
+candidate when disabling WG: this is the restoration identity, not a second active
+service. Retain identical configuration, keys, binary, license and executing-kernel
+evidence while binding a new operation nonce, helper, unit and network proof. An
+uncertain stop must never be followed by restoring the old unit identity, which a
+delayed command could still select. Legacy generation-record schema 1 remains
+readable for cache-only recovery; its exposed plan hash cannot gain a candidate or
+host-input authority without a new explicit plan/reservation.
+
+The host-input backend accepts the versioned composite only with the exact prepared
+generation journal and both complete recovery caches under common then WG locks.
+Recheck its original actual WG state/history and retain verified cache file/directory
+descriptors across boot publication, native input replacement and terminal input
+journal publication. Cache loss, changed inodes, copied intent/history or an unfinished
+preparation refuses before further input mutation; read-only status performs no repair.
+The input-only schema-1 composite keeps its existing private transaction contract.
+
+Cache preparation itself does not mutate an active root, unit, input policy or cloud
+resource. The committed epoch reader still rejects the generation-bearing composite
+until sealed native generation context, transition/recovery, common completion and
+controller publication are integrated. Neither cache nor input preparation can retire
+an exposed reservation, reset its history or authorize a service command.
 
 A change to another protocol preserves active WireGuard keys/configuration/root
 receipt but must consume its peer history under that same existing WireGuard lock

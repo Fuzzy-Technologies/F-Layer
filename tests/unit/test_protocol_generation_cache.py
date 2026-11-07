@@ -25,7 +25,7 @@ pytestmark = pytest.mark.skipif(os.name != "posix", reason="Reserved cache files
 
 
 def Prepared(
-    tmpPath: Path, monkeypatch: pytest.MonkeyPatch, change: str = "disable",
+    tmpPath: Path, monkeypatch: pytest.MonkeyPatch, change: str = "disable", version: int = 1,
 ) -> tuple[Any, dict[str, Any], dict[str, Any], Path, Path | None]:
     """Expose one exact generation plan while retaining independent old runtime and source snapshots."""
 
@@ -36,12 +36,14 @@ def Prepared(
     desired = None
     transition = Delta()
 
-    if change == "enable":
+    if change == "enable" or version == 2:
         candidate = tmpPath / "candidate"
         candidate.mkdir(mode=0o700)
         helper = (model.root / "install.py").read_bytes()
         desired = cachedGenerations.PrepareCached(guest, cached, candidate, guest._Digest(guest._Encode(receipt)),
                                                   intent["operation_id"], helper, guest._Digest(helper))
+
+    if change == "enable":
         with monkeypatch.context() as stop:
             stop.setattr(guest, "_Run", model.Run)
             guest._Stop(model.root, model.unit, model.originalRequest)
@@ -56,7 +58,7 @@ def Prepared(
         intent.update(wireguard_state="absent", wireguard_receipt_sha256="", wireguard_absence_sha256=guest._AbsenceDigest(model.owner))
 
     value = {"schema_version": 2, "cloud_plan_sha256": "a" * 64, "input": transition.Record(),
-             "generation": {"schema_version": 1, "change": change, "source_sha256": "f" * 64,
+             "generation": {"schema_version": version, "change": change, "source_sha256": "f" * 64,
                             "source_files": {name: receipt["files"][name] for name in generations._SOURCE_FILES},
                             "cached_receipt": receipt, "candidate_receipt": desired}}
     intent["plan_sha256"] = policy.Digest(policy.Json(value))

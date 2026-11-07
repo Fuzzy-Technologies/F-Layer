@@ -66,7 +66,7 @@ def test_InputRequestBindsEveryPublicDeltaBeforeAnyGuestAccess(fault: str) -> No
         intent[{"owner": "owner", "creation": "creation_sha256", "operation": "operation_id", "plan": "plan_sha256"}[fault]] = "f" * (32 if fault == "operation" else 64)
 
     with pytest.raises(inputs.InputError):
-        inputs.Request(policy, request, intent)
+        inputs.Request(guest, policy, request, intent)
 
 
 class InputModel:

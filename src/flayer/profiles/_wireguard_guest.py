@@ -509,12 +509,14 @@ def _Unit(root: Path, owner: str, *, nonce: str = "") -> bytes:
         program = "lifecycle.py"
         guard = " --expected-generation-nonce " + nonce
 
+    rootText = root.as_posix()
+
     return (f"# F-Layer WireGuard owner {owner}\n[Unit]\nDescription=F-Layer standard WireGuard\n"
             "Wants=network-online.target\nAfter=network-online.target nftables.service\n[Service]\n"
             "Type=oneshot\nRemainAfterExit=yes\nUMask=0077\n"
             "StandardOutput=null\nStandardError=null\n"
-            f"ExecStart=/usr/bin/python3 {root}/{program} --start --allow-mutation{guard}\n"
-            f"ExecStop=/usr/bin/python3 {root}/{program} --stop --allow-mutation{guard}\n"
+            f"ExecStart=/usr/bin/python3 {rootText}/{program} --start --allow-mutation{guard}\n"
+            f"ExecStop=/usr/bin/python3 {rootText}/{program} --stop --allow-mutation{guard}\n"
             "[Install]\nWantedBy=multi-user.target\n").encode()
 
 
@@ -979,6 +981,53 @@ def _Receipt(root: Path, unit: Path, owner: str, *, staged: bool = False) -> dic
         raise GuestError("Owned WireGuard systemd unit is absent")
 
     return receipt
+
+
+def _GenerationRecord(value: object, intent: dict[str, Any]) -> dict[str, Any]:
+    """Bind versioned activation/restoration receipts for both cache preparation and host-input admission."""
+
+    sourceFiles = {"server.conf", "deployment.json", "install.py"}
+    fields = {"schema_version", "change", "source_sha256", "source_files", "cached_receipt", "candidate_receipt"}
+
+    if (type(value) is not dict or set(value) != fields or type(value["schema_version"]) is not int or value["schema_version"] not in {1, 2}
+            or type(value["change"]) is not str or value["change"] not in {"enable", "disable"}
+            or type(value["source_sha256"]) is not str or _HASH.fullmatch(value["source_sha256"]) is None
+            or type(value["source_files"]) is not dict or set(value["source_files"]) != sourceFiles
+            or any(type(digest) is not str or _HASH.fullmatch(digest) is None for digest in value["source_files"].values())):
+        raise GuestError("WG generation requires closed versioned source and receipt metadata")
+
+    cached = _ReceiptData(value["cached_receipt"], intent["owner"], staged=True)
+    candidate = value["candidate_receipt"]
+
+    if any(cached["files"][name] != digest for name, digest in value["source_files"].items()):
+        raise GuestError("Cached generation does not retain its exact source file pins")
+
+    if value["change"] == "disable":
+        if (intent["wireguard_state"] != "active" or cached["status"] != "installed"
+                or _Digest(_Encode(cached)) != intent["wireguard_receipt_sha256"]
+                or value["schema_version"] == 1 and candidate is not None):
+            raise GuestError("WG disable requires its actual installed receipt and a versioned restoration contract")
+
+    elif intent["wireguard_state"] != "absent":
+        raise GuestError("WG activation requires its exact original namespace absence")
+
+    if candidate is None:
+        if value["schema_version"] == 2 or value["change"] == "enable":
+            raise GuestError("Native generation capability requires a preplanned fresh activation or restoration receipt")
+
+    else:
+        desired = _ReceiptData(candidate, intent["owner"], staged=True)
+
+        if (desired["schema_version"] != 2 or desired["status"] != "staged"
+                or desired["nonce"] != intent["operation_id"] or desired["nonce"] == cached["nonce"]
+                or {key: item for key, item in desired.items() if key not in {"schema_version", "nonce", "status", "files", "network_sha256"}}
+                != {key: item for key, item in cached.items() if key not in {"schema_version", "nonce", "status", "files", "network_sha256"}}
+                or any(desired["files"][name] != cached["files"][name] for name in sourceFiles | {"wg", "COPYING"})
+                or desired["files"]["firewall.nft"] == cached["files"]["firewall.nft"] or desired["network_sha256"] == cached["network_sha256"]
+                or desired["files"]["service.service"] != _Digest(_Unit(_Paths(intent["owner"])[0], intent["owner"], nonce=intent["operation_id"]))):
+            raise GuestError("WG generation must retain cached credentials, runtime and kernel facts under its fresh exact nonce")
+
+    return value
 
 
 def _WireGuardState(root: Path, request: dict[str, Any], *, partial: bool = False) -> None:

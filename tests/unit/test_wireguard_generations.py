@@ -35,7 +35,7 @@ def test_ExplicitGenerationKeepsTheLegacyUnitContractAndOriginalProgramPin() -> 
     root = Path("/opt/flayer/wireguard") / owner
     legacy = guest._Unit(root, owner)
     assert b"lifecycle.py" not in legacy and b"--expected-generation" not in legacy
-    assert f"ExecStart=/usr/bin/python3 {root}/install.py --start --allow-mutation\n".encode() in legacy
+    assert f"ExecStart=/usr/bin/python3 {root.as_posix()}/install.py --start --allow-mutation\n".encode() in legacy
     assert guest._Unit(root, owner, nonce="") == legacy
     current = guest._Unit(root, owner, nonce="b" * 32)
     assert current.count(b"--expected-generation-nonce " + b"b" * 32) == 2

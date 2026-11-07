@@ -12,7 +12,6 @@ from typing import Any, cast
 MAX_REQUEST_BYTES = 32768
 MAX_CACHE_BYTES = 12 * 1024 * 1024
 _SOURCE_FILES = frozenset({"server.conf", "deployment.json", "install.py"})
-_PRESERVED_FILES = _SOURCE_FILES | {"wg", "COPYING"}
 
 
 class GenerationError(ValueError):
@@ -29,43 +28,13 @@ def Request(guest: Any, policy: Any, value: object, intent: dict[str, Any]) -> d
         raise GenerationError("Generation requires its closed composite protocol plan")
 
     before, after, _ = policy.Transition(value["input"])
-    generation = value["generation"]
-    fields = {"schema_version", "change", "source_sha256", "source_files", "cached_receipt", "candidate_receipt"}
+    generation = guest._GenerationRecord(value["generation"], intent)
 
-    if (type(generation) is not dict or set(generation) != fields or type(generation["schema_version"]) is not int or generation["schema_version"] != 1
-            or type(generation["change"]) is not str or generation["change"] not in {"enable", "disable"}
-            or type(generation["source_sha256"]) is not str or guest._HASH.fullmatch(generation["source_sha256"]) is None
-            or type(generation["source_files"]) is not dict or set(generation["source_files"]) != _SOURCE_FILES
-            or any(type(digest) is not str or guest._HASH.fullmatch(digest) is None for digest in generation["source_files"].values())
-            or value["input"]["listener"]["transport"] != "wireguard" or value["input"]["change"] != generation["change"]
+    if (value["input"]["listener"]["transport"] != "wireguard" or value["input"]["change"] != generation["change"]
             or policy.Owner(before) != intent["owner"] or before["creation_sha256"] != intent["creation_sha256"]
             or after["operation_id"] != intent["operation_id"] or policy.Digest(policy.Json(value)) != intent["plan_sha256"]
             or len(policy.Json(value)) > MAX_REQUEST_BYTES):
         raise GenerationError("Generation plan differs from its exact owner, source, operation or reserved composite hash")
-
-    cached = guest._ReceiptData(generation["cached_receipt"], intent["owner"], staged=True)
-
-    if any(cached["files"][name] != digest for name, digest in generation["source_files"].items()):
-        raise GenerationError("Cached generation does not retain its exact source file pins")
-
-    candidate = generation["candidate_receipt"]
-
-    if generation["change"] == "disable":
-        if (intent["wireguard_state"] != "active" or cached["status"] != "installed" or candidate is not None
-                or guest._Digest(guest._Encode(cached)) != intent["wireguard_receipt_sha256"]):
-            raise GenerationError("Disabling WG requires its actual installed receipt and no replacement generation")
-
-    else:
-        desired = guest._ReceiptData(candidate, intent["owner"], staged=True)
-
-        if (intent["wireguard_state"] != "absent" or desired["schema_version"] != 2 or desired["status"] != "staged"
-                or desired["nonce"] != intent["operation_id"] or desired["nonce"] == cached["nonce"]
-                or {key: item for key, item in desired.items() if key not in {"schema_version", "nonce", "status", "files", "network_sha256"}}
-                != {key: item for key, item in cached.items() if key not in {"schema_version", "nonce", "status", "files", "network_sha256"}}
-                or any(desired["files"][name] != cached["files"][name] for name in _PRESERVED_FILES)
-                or desired["files"]["firewall.nft"] == cached["files"]["firewall.nft"] or desired["network_sha256"] == cached["network_sha256"]
-                or desired["files"]["service.service"] != guest._Digest(guest._Unit(guest._Paths(intent["owner"])[0], intent["owner"], nonce=intent["operation_id"]))):
-            raise GenerationError("Enabling WG requires a fresh exact generation retaining cached credentials, runtime and kernel evidence")
 
     return cast(dict[str, Any], policy.Decode(policy.Json(value)))
 
@@ -359,6 +328,82 @@ def _DurableCaches(guest: Any, receipts: list[dict[str, Any]]) -> Iterator[Calla
     finally:
         for descriptor, _ in (*files.values(), *reversed(directories.values())):
             os.close(descriptor)
+
+
+def Prepared(
+    guest: Any, authority: Any, policy: Any, value: object, intent: dict[str, Any], history: str,
+) -> list[dict[str, Any]]:
+    """Observe complete exact recovery caches; an old cache-only request cannot authorize a host-input change."""
+
+    request = Request(guest, policy, value, intent)
+    record = _Load(guest, authority, _Expected(guest, intent, request, history))
+
+    temporary = authority._Root(guest) / ".generation.json.new"
+
+    if (request["generation"]["schema_version"] != 2 or record is None or record["phase"] != "prepared"
+            or temporary.exists() or temporary.is_symlink()):
+        raise GenerationError("Host input requires its prepared versioned activation/restoration cache")
+
+    receipts = [request["generation"]["cached_receipt"], request["generation"]["candidate_receipt"]]
+
+    for receipt in receipts:
+        _Source(guest, _CachePath(guest, receipt), receipt, request["input"]["listener"])
+
+    return receipts
+
+
+@contextmanager
+def Ready(
+    guest: Any, authority: Any, policy: Any, value: object, intent: dict[str, Any], history: str,
+) -> Iterator[Callable[[], None]]:
+    """Keep both complete recovery caches pinned and durable across the caller's locked host-input mutation."""
+
+    receipts = Prepared(guest, authority, policy, value, intent, history)
+    expected = {**_Expected(guest, intent, Request(guest, policy, value, intent), history), "phase": "prepared"}
+
+    with _DurableCaches(guest, receipts) as verifyCaches:
+        root = authority._DurableRoot(guest)
+        path = root / "generation.json"
+        temporary = root / ".generation.json.new"
+        directory = os.open(root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+
+        try:
+            descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+
+            try:
+                initial = os.fstat(descriptor)
+                rootInfo = os.fstat(directory)
+
+                def Verify() -> None:
+                    """Recheck the same durable recovery authority as well as both immutable cache snapshots."""
+
+                    verifyCaches()
+                    current = os.fstat(descriptor)
+                    linked = path.lstat()
+                    linkedRoot = root.lstat()
+
+                    if (not stat.S_ISREG(current.st_mode) or current.st_uid != guest._ROOT_UID or current.st_nlink != 1 or stat.S_IMODE(current.st_mode) != 0o600
+                            or (initial.st_dev, initial.st_ino) != (linked.st_dev, linked.st_ino)
+                            or (initial.st_size, initial.st_mtime_ns, initial.st_ctime_ns) != (current.st_size, current.st_mtime_ns, current.st_ctime_ns)
+                            or not stat.S_ISDIR(linkedRoot.st_mode) or linkedRoot.st_uid != guest._ROOT_UID or stat.S_IMODE(linkedRoot.st_mode) != 0o700
+                            or (rootInfo.st_dev, rootInfo.st_ino) != (linkedRoot.st_dev, linkedRoot.st_ino)
+                            or temporary.exists() or temporary.is_symlink()
+                            or guest._Read(path, limit=65536) != guest._Encode(expected)):
+                        raise GenerationError("Prepared recovery authority changed during host-input admission")
+
+                Verify()
+                authority._SyncFile(guest, path, guest._Encode(expected))
+                guest._SyncDirectory(root)
+                Verify()
+
+                yield Verify
+                Verify()
+
+            finally:
+                os.close(descriptor)
+
+        finally:
+            os.close(directory)
 
 
 def Prepare(

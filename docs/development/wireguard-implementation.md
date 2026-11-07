@@ -775,11 +775,11 @@ Status, peer operations and reservation observations target the verified unit.
 
 The cache preparer writes only a complete unpublished private candidate outside
 managed runtime/unit paths; it neither activates it nor grants authority. Schema-2
-callbacks currently reject pending common reservations; ordinary remove/recover
-refuse these generations before publishing a legacy cleanup intent. The protocol
-coordinator still needs a sealed generation journal and asynchronous systemd job
-handoff after releasing locks, terminal observation and nonce/history publication.
-Those workflows are unavailable, and normal epoch admission remains blocked.
+callbacks reject pending reservations unless the exact sealed native context binds
+their current generation, request/head and consumed history. Ordinary remove/recover
+refuse these generations before publishing a legacy cleanup intent. The private
+native backend below implements scoped generation transitions; normal epoch/public
+protocol admission remains blocked pending the complete controller coordinator.
 POSIX tests exercise real private files and locks with simulated networking only.
 
 ## Reserved generation cache journal
@@ -823,10 +823,44 @@ copied journal intent/history, changed bytes or replaced inodes refuse further w
 Read-only input status verifies recovery readiness without repairing/resynchronizing
 the cache. Legacy schema-1 input composites retain their existing private behavior.
 
-The common reservation remains exposed. The committed epoch model still refuses
-the new composite; sealed native generation context, actual root/service/history
-transitions, common completion, controller publication and public CLI admission
-remain unavailable pending full integration.
+## Sealed native WG transitions
+
+The private native backend implements generation enable/disable and rollback while
+the common reservation stays exposed. Native admission requires generation-record
+schema 3 and its explicit callback ABI. Its candidate helper must match the approved
+current private receiver source before any original disarm; records 1/2 stay readable
+without acquiring this capability. Persist the admitted helper pin, allowing a later
+approved receiver for the same ABI to recover the sealed operation without replacing
+its immutable candidate. Kernel/runtime/configuration/key pins remain unchanged.
+
+The original root is disarmed under common then WG locks before any WG unlock.
+The parent keeps common while systemctl callbacks take only WG; native children
+inherit the applicable descriptors. Reconcile the exact loaded file-backed unit,
+then verify no queued job, main/control process or populated cgroup-v2 subtree
+before retiring a unit or acknowledging activation. Job observation uses explicit
+empty properties; no job is Job=, not Job=0. The unique retired unit can safely be
+stopped again after death between intent and dispatch. Never reuse its name for
+restoration. Shared forwarding and unrelated transports remain intact.
+
+Publication/recovery retains exact caches and verifies both original and fresh
+generation history. A disable rollback uses the preplanned fresh unit and a second
+consumed history link, preserving all keys and addresses. Installed roots require
+strict peer/address state even during interrupted removal; only staged roots admit
+known partial activation. Torn candidate bytes may match only the pinned source
+prefix; cleanup uses validated bounded member sets and preserves unexpected files.
+
+Pin and resync the actual root payload, unit, link and directory inodes across final
+barriers and acknowledgment. Stage/installed receipt replacement has separate pinned
+scopes. Same-byte replacements are detected or explicitly resynchronized before a
+later acknowledgment. Every starting retry reconciles PID1's loaded definition.
+After reboot, a complete terminal journal temp can be reconciled before restarting
+only an exact installed candidate with complete kernel absence and a drained unit.
+Read-only status reports recovery required without repairing the journal or claiming
+activation. Installed partial peer/address drift is not a reboot-recovery prefix.
+
+Cloud ordering, common completion, generation-bearing epoch publication, first-ever
+private runtime staging and public protocol CLI admission remain integration work.
+No live server/client or traffic acceptance is implied by these private primitives.
 
 ## Remaining integration
 

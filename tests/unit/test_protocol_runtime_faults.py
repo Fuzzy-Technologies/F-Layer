@@ -266,3 +266,46 @@ def test_UnknownFileAppearingDuringCandidateCleanupIsNeverEnumeratedIntoDeletion
 
     assert fired and foreign.read_bytes() == b"foreign-owned-byte-canary"
     assert authority._Decode(guest, authority._Root(guest) / "runtime.json")["phase"] == "removing-candidate"
+
+
+def test_LostTerminalAcknowledgmentResyncsTheActualReplacementInodeBeforeRetry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A durable terminal record does not bypass the actual root/unit durability barrier on an identical retry."""
+
+    _, _, controller, request, intent = Environment(tmp_path, monkeypatch, "enable")
+    write = runtime._Write
+    fired = False
+
+    def Write(*arguments: Any, **options: Any) -> dict[str, Any]:
+        nonlocal fired
+        record = write(*arguments, **options)
+
+        if record["phase"] == "active" and not fired:
+            fired = True
+            replacement = controller.newUnit.with_name(".replacement")
+            replacement.write_bytes(controller.newUnit.read_bytes())
+            replacement.chmod(0o644)
+            os.replace(replacement, controller.newUnit)
+
+        return record
+
+    with monkeypatch.context() as fault:
+        fault.setattr(runtime, "_Write", Write)
+
+        with pytest.raises(runtime.RuntimeError):
+            Execute(controller, request, intent)
+
+    assert fired and authority._Decode(guest, authority._Root(guest) / "runtime.json")["phase"] == "active"
+    sync = os.fsync
+    synced = False
+
+    def Sync(descriptor: int) -> None:
+        nonlocal synced
+        sync(descriptor)
+
+        if Path(os.readlink("/proc/self/fd/" + str(descriptor))) == controller.newUnit:
+            synced = True
+
+    monkeypatch.setattr(os, "fsync", Sync)
+    assert Execute(controller, request, intent)["phase"] == "active" and synced

@@ -16,9 +16,9 @@ peer and protocol changes.
 
 This decision defines protocol-transition integration. Private code now provides
 the `IngressDelta` planner, scoped asynchronous ingress operations, common guest
-reservations, owned input transactions, committed graph readers and generation
-cache preparation. The public protocol CLI, legacy migration, complete guest
-generation coordinator and epoch-publication workflow remain unavailable until
+reservations, owned input transactions, committed graph readers, generation
+cache preparation and private native WG transitions. The public protocol CLI,
+legacy migration, complete controller coordinator and epoch-publication workflow remain unavailable until
 integrated and tested. Ordinary deployment still refuses a changed protocol
 selection; these private backends do not bypass that admission boundary.
 
@@ -181,10 +181,11 @@ and complete-absence checks refuse retained other-generation/unknown owner units
 and broken enablement links. Never adopt or delete those entries implicitly.
 
 Synchronous systemd callbacks beneath a controller-held WG lock would deadlock;
-callbacks refuse contention. The future coordinator must dispatch jobs after
-releasing its locks and re-observe their terminal outcome. Until its sealed
-generation journal/context is implemented, schema-2 callbacks refuse a pending
-common reservation and ordinary removal/recovery refuse schema-2 generations.
+callbacks refuse contention. The native parent retains common ingress coordination
+while releasing only WG around its systemctl client; the leaf takes WG and never
+acquires common. A pending reservation permits only a complete sealed native
+context for the exact generation, current head/request and consumed history.
+Ordinary removal/recovery still refuse schema-2 generations.
 The current cache preparer writes only an unpublished private candidate; it does
 not fence history, publish a root, authorize a transition or attest active health.
 Cached runtime reuse verifies complete receipt/file hashes and the same executing
@@ -220,11 +221,47 @@ journal publication. Cache loss, changed inodes, copied intent/history or an unf
 preparation refuses before further input mutation; read-only status performs no repair.
 The input-only schema-1 composite keeps its existing private transaction contract.
 
+Native generation-record schema 3 adds the explicit callback ABI. Before the first
+native journal, require its helper pin to equal the explicitly approved current
+private receiver program source. Existing schema-1/2 cache plans cannot acquire this
+capability under their old hashes. Persist the admitted helper identity in the native
+journal; a later approved receiver supporting that same ABI may recover the existing
+operation without substituting its immutable helper or candidate. Unknown ABIs refuse.
+
+Disarm the original root under WG before releasing WG for a stop job. This prevents
+a legacy WG-only peer driver from acquiring fresh healthy old-root authority during
+handoff. Retain exact private caches and consume the new installed-candidate history
+before publishing a replacement root. A restored disable consumes both the original
+reservation fence and this fresh-generation fence; never restore old history or the
+retired old unit name. Installed-root deletion requires strict peer/address evidence;
+only staged candidates admit known partial activation. Cleanup selects only already
+validated file members and preserves unexpected new entries.
+
+Reconcile the exact file-backed loaded unit before job submission. Observe an empty
+Job, zero main/control PID and an empty cgroup-v2 subtree before unit retirement or
+activation acknowledgment; client-descriptor inheritance alone cannot prove PID1's
+jobs drained. Repeated stop of the permanently retired exact unit recovers death
+between stop intent and dispatch. A pending/unknown job retains recovery state.
+Pin/resync actual root payload, unit, enablement link and directory identities across
+publication and terminal acknowledgment, including the intentional staged/installed
+receipt replacement. Equal bytes on an unsynced replacement inode are insufficient.
+
+Complete known forward journal temps may require explicit reconciliation after a
+reboot prevented the sealed callback from starting. Only exact installed candidate
+files/history, complete owned kernel absence and a drained unit permit the recorded
+restart phases. Partial installed peer/address drift remains refused. Read-only status
+reports recovery required without repairing files or asserting active health.
+
+These process rules use the [systemd 255 Job rendering contract](https://github.com/systemd/systemd/blob/v255/src/systemctl/systemctl-show.c),
+[systemd unit/process properties](https://www.freedesktop.org/software/systemd/man/255/org.freedesktop.systemd1.html),
+and [recursive cgroup-v2 populated state](https://docs.kernel.org/admin-guide/cgroup-v2.html#un-populated-notification).
+With systemctl show --all, no job renders an empty Job value rather than a numeric zero.
+
 Cache preparation itself does not mutate an active root, unit, input policy or cloud
-resource. The committed epoch reader still rejects the generation-bearing composite
-until sealed native generation context, transition/recovery, common completion and
-controller publication are integrated. Neither cache nor input preparation can retire
-an exposed reservation, reset its history or authorize a service command.
+resource. Native transitions remain private and keep the common reservation exposed.
+Cloud ordering, common completion, generation-bearing epoch publication and public
+CLI admission still require controller integration. Neither cache nor input preparation
+alone authorizes a service command or retires an exposed reservation.
 
 A change to another protocol preserves active WireGuard keys/configuration/root
 receipt but must consume its peer history under that same existing WireGuard lock

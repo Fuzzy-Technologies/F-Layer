@@ -6,7 +6,7 @@ import os
 import re
 import stat
 from collections.abc import Callable, Iterator
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from typing import Any, cast
 
@@ -59,6 +59,7 @@ def _Load(guest: Any, authority: Any, request: dict[str, Any], intent: dict[str,
         if (guest._Encode({key: item for key, item in before.items() if key not in {"phase", "rollback"}})
                 != guest._Encode({key: item for key, item in after.items() if key not in {"phase", "rollback"}})
                 or before["rollback"] and not after["rollback"]
+                or before["rollback"] != after["rollback"] and before["phase"] != after["phase"]
                 or (before["phase"] != after["phase"] and (before["phase"], after["phase"]) not in _NEXT)
                 or before["phase"] == after["phase"] and before["rollback"] == after["rollback"]):
             raise RuntimeError("Native generation publication is outside its recorded forward prefix")
@@ -892,10 +893,15 @@ def Execute(
 
             verify()
             _Reservation(guest, authority, intent)
-            actual = _Observe(guest, peer, authority, cache, request, intent, record)
+            candidate = {**request["generation"]["candidate_receipt"], "status": "installed"}
+            root, unit, _ = guest._Paths(intent["owner"], nonce=candidate["nonce"])
 
-            return {"status": "native-generation", "phase": record["phase"], "history_sha256": actual,
-                    "journal_sha256": guest._Digest(guest._Encode(record))}
+            with _Published(guest, root, unit, candidate) if record["phase"] in {"active", "restored"} else nullcontext():
+                _Guard(guest, authority, record, verify)
+                actual = _Observe(guest, peer, authority, cache, request, intent, record)
+
+                return {"status": "native-generation", "phase": record["phase"], "history_sha256": actual,
+                        "journal_sha256": guest._Digest(guest._Encode(record))}
 
 
 def Status(guest: Any, peer: Any, authority: Any, policy: Any, cache: Any, value: object, rawIntent: object) -> dict[str, str]:

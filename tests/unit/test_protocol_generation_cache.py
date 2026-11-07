@@ -25,7 +25,7 @@ pytestmark = pytest.mark.skipif(os.name != "posix", reason="Reserved cache files
 
 
 def Prepared(
-    tmpPath: Path, monkeypatch: pytest.MonkeyPatch, change: str = "disable", version: int = 1,
+    tmpPath: Path, monkeypatch: pytest.MonkeyPatch, change: str = "disable", version: int = 1, helper: bytes | None = None,
 ) -> tuple[Any, dict[str, Any], dict[str, Any], Path, Path | None]:
     """Expose one exact generation plan while retaining independent old runtime and source snapshots."""
 
@@ -39,7 +39,7 @@ def Prepared(
     if change == "enable" or version >= 2:
         candidate = tmpPath / "candidate"
         candidate.mkdir(mode=0o700)
-        helper = (model.root / "install.py").read_bytes()
+        helper = (model.root / "install.py").read_bytes() if helper is None else helper
         desired = cachedGenerations.PrepareCached(guest, cached, candidate, guest._Digest(guest._Encode(receipt)),
                                                   intent["operation_id"], helper, guest._Digest(helper))
 

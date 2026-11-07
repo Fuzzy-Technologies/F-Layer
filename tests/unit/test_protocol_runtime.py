@@ -42,6 +42,7 @@ class NativeModel:
         self.effects: list[tuple[str, str]] = []
         self.fault = ""
         self.fired = False
+        self.resetPeers = False
         self.program = guest._Digest(Path(guest.__file__).read_bytes())
 
     def Point(self, name: str) -> None:
@@ -131,6 +132,9 @@ class NativeModel:
 
             raise AssertionError("Unrecognized native service command")
 
+        if Path(command[0]).name == "wg" and command[1] == "show" and self.resetPeers:
+            return 0, b"(none)\t(none)\t0\toff\n"
+
         if command[:2] == ["nft", "-f"] and command[-1] != "-":
             self.model.policy = Path(command[-1]).read_bytes()
             self.model.network = True
@@ -145,10 +149,12 @@ class NativeModel:
         return self.original(command, payload=payload, **options)
 
 
-def Environment(tmpPath: Path, monkeypatch: pytest.MonkeyPatch, change: str = "disable") -> tuple[Any, Any, NativeModel, dict[str, Any], dict[str, Any]]:
+def Environment(
+    tmpPath: Path, monkeypatch: pytest.MonkeyPatch, change: str = "disable", version: int = 3, helper: bytes | None = None,
+) -> tuple[Any, Any, NativeModel, dict[str, Any], dict[str, Any]]:
     """Prepare exact generation3 caches and actual input files before admitting the new native backend."""
 
-    model, network, request, intent, cached, candidate = generationInputs.Environment(tmpPath, monkeypatch, change, 3)
+    model, network, request, intent, cached, candidate = generationInputs.Environment(tmpPath, monkeypatch, change, version, helper)
     controller = NativeModel(model, request, monkeypatch)
     groupRoot = tmpPath / "cgroup"
     groupRoot.mkdir(mode=0o755)

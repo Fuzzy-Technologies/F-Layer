@@ -1084,11 +1084,19 @@ def _RuntimeRecord(value: object, intent: dict[str, Any]) -> dict[str, Any]:
             or _Encode(_ProtocolIntent(value["intent"])) != _Encode(intent) or type(value["request"]) is not dict
             or set(value["request"]) != {"schema_version", "cloud_plan_sha256", "input", "generation"}
             or type(value["request"]["schema_version"]) is not int or value["request"]["schema_version"] != 2
+            or type(value["request"]["cloud_plan_sha256"]) is not str or _HASH.fullmatch(value["request"]["cloud_plan_sha256"]) is None
             or _Digest(_Encode(value["request"])) != intent["plan_sha256"] or len(_Encode(value["request"])) > 32768
             or type(value["rollback"]) is not bool or type(value["phase"]) is not str):
         raise GuestError("Native generation journal differs from its complete reserved intent")
 
     generation = _GenerationRecord(value["request"]["generation"], intent)
+    transition = value["request"]["input"]
+
+    if (type(transition) is not dict or set(transition) != {"schema_version", "before", "listener", "change", "operation_id"}
+            or type(transition["schema_version"]) is not int or transition["schema_version"] != 1
+            or transition["change"] != generation["change"] or transition["operation_id"] != intent["operation_id"]
+            or type(transition["listener"]) is not dict or transition["listener"].get("transport") != "wireguard"):
+        raise GuestError("Native generation callback input scope differs from its complete request")
     phases = ({"ready", "publishing", "starting", "active", "restarting-active"} if generation["change"] == "enable"
               else {"ready", "removing-original", "stopping-original", "inactive"})
 
@@ -1144,6 +1152,9 @@ def _RuntimeContext(root: Path, unit: Path, nonce: str, *, start: bool) -> dict[
         return None
 
     _Directory(authority, private=True)
+
+    if not (authority / "runtime.json").exists() or (authority / "runtime.json").is_symlink():
+        raise GuestError("Pending protocol reservation has no sealed native generation authority")
 
     if any((authority / name).exists() or (authority / name).is_symlink() for name in
            (".pending.json.new", ".head.json.new", ".generation.json.new", ".runtime.json.new")):

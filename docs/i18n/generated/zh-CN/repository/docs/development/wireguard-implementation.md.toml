@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
 sourceHash = "sha256:fb4ff02b2c6dcbc19451e7cd5069c45b200f12f28acca940b2adcd7cad10867b"
-reviewedTranslationHash = "sha256:48fd8fea70bde71082f5370697ba20a31caf010f1282f7733101eec01505c5fe"
+reviewedTranslationHash = "sha256:a4382b5b568873fba18244e5afa91129ba64d7b9dc2005a00a7c5f194ec1a94f"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T11:19:00.803888Z"
+reviewedAt = "2026-11-07T11:23:39.848544Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -585,7 +585,7 @@ unit 及空 cgroup。部分内核状态、外来文件/unit、任务/PID 和陈�
 首次发布持有公共 → WG 锁，验证已准备代际、实际内核/服务状态及已消耗历史、精确安装
 文件身份、终态入站日志/策略，并通过可信观察器依赖验证其他服务。请求 JSON 不能选择
 该依赖。云证明和本地图验证仍属于协调器。具体 AWG/VLESS 观察器在下文说明；
-及公共 CLI 仍待集成。本地发布单独说明。
+公共 CLI 仍待集成。本地发布单独说明。
 
 精确不可变模式 2 完成记录提交测得的历史结果。先发布公共头，再移除已验证入站/代际/
 原生旁车日志，最后移除预留。未知项、已变历史及重新出现的规范旁车会拒绝最终移除。

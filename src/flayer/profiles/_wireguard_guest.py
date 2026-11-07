@@ -1630,6 +1630,18 @@ def _OpenLock(*, readOnly: bool) -> int:
     return descriptor
 
 
+def _ProtocolGate() -> None:
+    """Under WG coordination, refuse a common protocol reservation before ordinary maintenance; service callbacks stay separate."""
+
+    root = BASE.parent / "ingress"
+
+    if root.exists() or root.is_symlink():
+        _Directory(root, private=True)
+
+        if any((root / name).exists() or (root / name).is_symlink() for name in ("pending.json", ".pending.json.new", ".head.json.new")):
+            raise GuestError("Pending protocol reservation requires explicit protocol recovery before WireGuard maintenance")
+
+
 def Main(argv: list[str] | None = None) -> int:
     """Require exact owned inputs and explicit mutation consent before running privileged operations."""
 
@@ -1716,6 +1728,8 @@ def Main(argv: list[str] | None = None) -> int:
         try:
             if descriptor is not None:
                 fcntl.flock(descriptor, (fcntl.LOCK_SH if readOnly else fcntl.LOCK_EX) | fcntl.LOCK_NB)
+
+            _ProtocolGate()
 
             if arguments.remove:
                 _Remove(owner, arguments.expectedReceipt)

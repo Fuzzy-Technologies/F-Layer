@@ -6,6 +6,8 @@ import os
 import re
 import stat
 import tempfile
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, cast
 
@@ -19,16 +21,23 @@ class InputError(ValueError):
     """A fixed transaction diagnostic without native output or private transport material."""
 
 
-def Request(policy: Any, value: object, intent: dict[str, Any]) -> tuple[dict[str, Any], tuple[dict[str, Any], ...]]:
+def Request(guest: Any, policy: Any, value: object, intent: dict[str, Any]) -> tuple[dict[str, Any], tuple[dict[str, Any], ...]]:
     """Bind one closed input delta and cloud-plan digest to the reservation's complete immutable plan hash."""
 
-    if (type(value) is not dict or set(value) != {"schema_version", "cloud_plan_sha256", "input"}
-            or type(value["schema_version"]) is not int or value["schema_version"] != 1
+    if (type(value) is not dict or type(value.get("schema_version")) is not int or value["schema_version"] not in {1, 2}
+            or set(value) != ({"schema_version", "cloud_plan_sha256", "input"} | ({"generation"} if value["schema_version"] == 2 else set()))
             or type(value["cloud_plan_sha256"]) is not str or _HASH.fullmatch(value["cloud_plan_sha256"]) is None):
         raise InputError("Host input request requires its closed composite protocol plan")
 
     policies = policy.Transition(value["input"])
     before, after, _ = policies
+
+    if value["schema_version"] == 2:
+        generation = guest._GenerationRecord(value["generation"], intent)
+
+        if (generation["schema_version"] != 2 or value["input"]["listener"]["transport"] != "wireguard"
+                or value["input"]["change"] != generation["change"]):
+            raise InputError("Host input requires the exact versioned WG activation/restoration contract")
 
     if (policy.Owner(before) != intent["owner"] or before["creation_sha256"] != intent["creation_sha256"]
             or after["operation_id"] != intent["operation_id"] or policy.Digest(policy.Json(value)) != intent["plan_sha256"]
@@ -53,6 +62,33 @@ def _Reservation(guest: Any, peer: Any, authority: Any, intent: dict[str, Any]) 
         raise InputError("Host input operation has stale WireGuard history")
 
     return cast(dict[str, Any], pending)
+
+
+@contextmanager
+def _Caches(
+    guest: Any, authority: Any, policy: Any, request: dict[str, Any], intent: dict[str, Any], pending: dict[str, Any],
+    generationCache: Any, *, readOnly: bool = False,
+) -> Iterator[Callable[[], None]]:
+    """Require prepared exact private recovery bytes before admitting a generation-bearing input plan."""
+
+    if request["schema_version"] == 1:
+        yield lambda: None
+
+        return
+
+    if generationCache is None:
+        raise InputError("Generation-bearing input requires its trusted cache backend")
+
+    history = authority._FencedHistory(guest, intent, pending["deployment_sha256"])
+
+    if readOnly:
+        generationCache.Prepared(guest, authority, policy, request, intent, history)
+
+        yield lambda: None
+
+    else:
+        with generationCache.Ready(guest, authority, policy, request, intent, history) as verify:
+            yield verify
 
 
 def _Compiled(guest: Any, policy: Any, values: tuple[dict[str, Any], ...]) -> list[str]:
@@ -220,92 +256,111 @@ def _Result(policy: Any, values: tuple[dict[str, Any], ...], record: dict[str, A
             "native_sha256": record["fingerprints"][index] if index is not None else ""}
 
 
-def Prepare(guest: Any, peer: Any, authority: Any, policy: Any, value: object, rawIntent: object, *, allowMutation: bool = False) -> dict[str, str]:
+def Prepare(
+    guest: Any, peer: Any, authority: Any, policy: Any, value: object, rawIntent: object, *,
+    allowMutation: bool = False, generationCache: Any = None,
+) -> dict[str, str]:
     """Verify original/committed boot and actual native input before publishing the durable exact recovery request."""
 
     intent = authority.Intent(rawIntent)
-    request, values = Request(policy, value, intent)
+    request, values = Request(guest, policy, value, intent)
 
     if allowMutation is not True:
         raise InputError("Host input preparation requires explicit mutation consent")
 
     with authority._Locks(guest, readOnly=False):
         pending = _Reservation(guest, peer, authority, intent)
-        fingerprints = _Compiled(guest, policy, values)
-        expected = _Expected(policy, intent, request, fingerprints)
-        record = _Load(guest, authority, expected)
-        _State(guest, policy, values, fingerprints, record["phase"] if record is not None else "prepared")
-        authority._Publish(guest, "pending.json", pending)
-        record = record if record is not None else {**expected, "phase": "prepared"}
-        authority._Publish(guest, "input.json", record)
 
-        return _Result(policy, values, record)
+        with _Caches(guest, authority, policy, request, intent, pending, generationCache) as verify:
+            fingerprints = _Compiled(guest, policy, values)
+            expected = _Expected(policy, intent, request, fingerprints)
+            record = _Load(guest, authority, expected)
+            _State(guest, policy, values, fingerprints, record["phase"] if record is not None else "prepared")
+            verify()
+            authority._Publish(guest, "pending.json", pending)
+            record = record if record is not None else {**expected, "phase": "prepared"}
+            authority._Publish(guest, "input.json", record)
+
+            return _Result(policy, values, record)
 
 
-def Apply(guest: Any, peer: Any, authority: Any, policy: Any, value: object, rawIntent: object, *, allowMutation: bool = False, rollback: bool = False) -> dict[str, str]:
+def Apply(
+    guest: Any, peer: Any, authority: Any, policy: Any, value: object, rawIntent: object, *,
+    allowMutation: bool = False, rollback: bool = False, generationCache: Any = None,
+) -> dict[str, str]:
     """Move only verified boot-first prefixes forward or restore old listeners under the consumed new operation marker."""
 
     intent = authority.Intent(rawIntent)
-    request, values = Request(policy, value, intent)
+    request, values = Request(guest, policy, value, intent)
 
     if allowMutation is not True or type(rollback) is not bool:
         raise InputError("Host input mutation requires explicit consent and an exact rollback selection")
 
     with authority._Locks(guest, readOnly=False) as locks:
         pending = _Reservation(guest, peer, authority, intent)
-        fingerprints = _Compiled(guest, policy, values)
-        record = _Load(guest, authority, _Expected(policy, intent, request, fingerprints))
 
-        if record is None or not rollback and record["phase"] in {"rolling-back", "rolled-back"}:
-            raise InputError("Host input requires its prepared journal and cannot revive a rolled-back operation")
+        with _Caches(guest, authority, policy, request, intent, pending, generationCache) as verify:
+            fingerprints = _Compiled(guest, policy, values)
+            record = _Load(guest, authority, _Expected(policy, intent, request, fingerprints))
 
-        _State(guest, policy, values, fingerprints, record["phase"])
-        authority._Publish(guest, "pending.json", pending)
-        authority._Publish(guest, "input.json", record)
-        final = "rolled-back" if rollback else "applied"
+            if record is None or not rollback and record["phase"] in {"rolling-back", "rolled-back"}:
+                raise InputError("Host input requires its prepared journal and cannot revive a rolled-back operation")
 
-        if record["phase"] == final:
+            _State(guest, policy, values, fingerprints, record["phase"])
+            verify()
+            authority._Publish(guest, "pending.json", pending)
+            authority._Publish(guest, "input.json", record)
+            final = "rolled-back" if rollback else "applied"
+
+            if record["phase"] == final:
+                return _Result(policy, values, record)
+
+            nextPhase = "rolling-back" if rollback else "applying"
+            record = {**record, "phase": nextPhase}
+            authority._Publish(guest, "input.json", record)
+            _, _, staged = _State(guest, policy, values, fingerprints, nextPhase)
+            _FinishBoot(guest, staged)
+            boot, live, _ = _State(guest, policy, values, fingerprints, nextPhase)
+            target = 2 if rollback else 1
+            verify()
+
+            if boot != target:
+                _PublishBoot(guest, policy.Boot(values[target]))
+
+            _SyncBoot(guest, BOOT, policy.Boot(values[target]))
+            guest._SyncDirectory(BOOT.parent)
+
+            if live != target:
+                # Live batches delete only the proved owned table. Historical global-flush boot bytes are never executed.
+                verify()
+                guest._Run(["nft", "-f", "-"], payload=b"delete table inet flayer_bootstrap\n" + policy.Table(values[target]), passFds=locks)
+
+            _State(guest, policy, values, fingerprints, final)
+            verify()
+            record = {**record, "phase": final}
+            authority._Publish(guest, "input.json", record)
+
             return _Result(policy, values, record)
 
-        nextPhase = "rolling-back" if rollback else "applying"
-        record = {**record, "phase": nextPhase}
-        authority._Publish(guest, "input.json", record)
-        _, _, staged = _State(guest, policy, values, fingerprints, nextPhase)
-        _FinishBoot(guest, staged)
-        boot, live, _ = _State(guest, policy, values, fingerprints, nextPhase)
-        target = 2 if rollback else 1
 
-        if boot != target:
-            _PublishBoot(guest, policy.Boot(values[target]))
-
-        _SyncBoot(guest, BOOT, policy.Boot(values[target]))
-        guest._SyncDirectory(BOOT.parent)
-
-        if live != target:
-            # Live batches delete only the proved owned table. Historical global-flush boot bytes are never executed.
-            guest._Run(["nft", "-f", "-"], payload=b"delete table inet flayer_bootstrap\n" + policy.Table(values[target]), passFds=locks)
-
-        _State(guest, policy, values, fingerprints, final)
-        record = {**record, "phase": final}
-        authority._Publish(guest, "input.json", record)
-
-        return _Result(policy, values, record)
-
-
-def Status(guest: Any, peer: Any, authority: Any, policy: Any, value: object, rawIntent: object) -> dict[str, str]:
+def Status(
+    guest: Any, peer: Any, authority: Any, policy: Any, value: object, rawIntent: object, *, generationCache: Any = None,
+) -> dict[str, str]:
     """Observe only an exactly reserved known prefix without creating a durable file or repairing a temporary publication."""
 
     intent = authority.Intent(rawIntent)
-    request, values = Request(policy, value, intent)
+    request, values = Request(guest, policy, value, intent)
 
     with authority._Locks(guest, readOnly=True):
-        _Reservation(guest, peer, authority, intent)
-        fingerprints = _Compiled(guest, policy, values)
-        record = _Load(guest, authority, _Expected(policy, intent, request, fingerprints))
+        pending = _Reservation(guest, peer, authority, intent)
 
-        if record is None:
-            raise InputError("No exact prepared host input transaction is recorded")
+        with _Caches(guest, authority, policy, request, intent, pending, generationCache, readOnly=True):
+            fingerprints = _Compiled(guest, policy, values)
+            record = _Load(guest, authority, _Expected(policy, intent, request, fingerprints))
 
-        _State(guest, policy, values, fingerprints, record["phase"])
+            if record is None:
+                raise InputError("No exact prepared host input transaction is recorded")
 
-        return _Result(policy, values, record)
+            _State(guest, policy, values, fingerprints, record["phase"])
+
+            return _Result(policy, values, record)

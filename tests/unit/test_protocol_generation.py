@@ -16,7 +16,7 @@ from flayer.profiles import _protocol_generation as generations
 from flayer.profiles import _wireguard_guest as guest
 
 
-def Composite(change: str = "disable") -> tuple[dict[str, Any], dict[str, Any]]:
+def Composite(change: str = "disable", version: int = 1) -> tuple[dict[str, Any], dict[str, Any]]:
     """Construct only synthetic public hash metadata; no declared receipt attests a running server."""
 
     transition = Delta()
@@ -30,14 +30,14 @@ def Composite(change: str = "disable") -> tuple[dict[str, Any], dict[str, Any]]:
     cached = {**Receipt(1), "owner": owner}
     candidate = None
 
-    if change == "enable":
+    if change == "enable" or version == 2:
         candidate = {**copy.deepcopy(cached), "schema_version": 2, "nonce": transition.operationId, "status": "staged", "network_sha256": "e" * 64}
         candidate["files"]["lifecycle.py"] = "f" * 64
         candidate["files"]["firewall.nft"] = "e" * 64
         candidate["files"]["service.service"] = guest._Digest(guest._Unit(guest._Paths(owner)[0], owner, nonce=transition.operationId))
 
     value = {"schema_version": 2, "cloud_plan_sha256": "a" * 64, "input": transition.Record(),
-             "generation": {"schema_version": 1, "change": change, "source_sha256": "f" * 64,
+             "generation": {"schema_version": version, "change": change, "source_sha256": "f" * 64,
                             "source_files": {name: cached["files"][name] for name in generations._SOURCE_FILES},
                             "cached_receipt": cached, "candidate_receipt": candidate}}
     intent = {"owner": owner, "creation_sha256": transition.before.creationSha256, "operation_id": transition.operationId,
@@ -55,7 +55,7 @@ def test_GenerationRequestBindsExactSourceCloudInputAndReceiptMetadata(change: s
     assert generations.Request(guest, policy, value, intent) == value
 
     with pytest.raises(inputs.InputError):
-        inputs.Request(policy, value, intent)
+        inputs.Request(guest, policy, value, intent)
 
 
 @pytest.mark.parametrize("fault", ["extra", "version", "cloud", "owner", "creation", "operation", "plan", "source", "source-files", "cache", "target", "candidate"])
@@ -97,10 +97,11 @@ def test_GenerationRequestRefusesCopiedOrUnboundMetadata(change: str, fault: str
 
 
 @pytest.mark.parametrize("fault", ["nonce", "runtime", "credentials", "kernel", "unit", "generation-version", "firewall", "network"])
-def test_RehashedCompositeCannotAuthorizeAChangedRuntimeOrCredential(fault: str) -> None:
+@pytest.mark.parametrize("change,version", [("enable", 1), ("enable", 2), ("disable", 2)])
+def test_RehashedCompositeCannotAuthorizeAChangedRuntimeOrCredential(fault: str, change: str, version: int) -> None:
     """Structural generation invariants survive recomputing the outer plan hash."""
 
-    value, intent = Composite("enable")
+    value, intent = Composite(change, version)
     candidate = value["generation"]["candidate_receipt"]
 
     if fault == "nonce":
@@ -125,6 +126,46 @@ def test_RehashedCompositeCannotAuthorizeAChangedRuntimeOrCredential(fault: str)
 
     with pytest.raises(ValueError):
         generations.Request(guest, policy, value, intent)
+
+
+@pytest.mark.parametrize("change", ["enable", "disable"])
+def test_VersionedGenerationSharesExactActivationOrRestorationBindingWithInput(change: str) -> None:
+    """The same sealed request is understood by both modules without authorizing a native service command."""
+
+    value, intent = Composite(change, 2)
+    assert generations.Request(guest, policy, value, intent) == value
+    decoded, policies = inputs.Request(guest, policy, value, intent)
+    assert decoded == value and policies == policy.Transition(value["input"])
+    assert decoded["generation"]["candidate_receipt"]["nonce"] == intent["operation_id"]
+    assert decoded["generation"]["candidate_receipt"]["nonce"] != decoded["generation"]["cached_receipt"]["nonce"]
+
+
+@pytest.mark.parametrize("change", ["enable", "disable"])
+@pytest.mark.parametrize("fault", ["missing-candidate", "old-contract", "unknown-contract", "boolean-contract", "old-nonce"])
+def test_RehashedCacheOnlyOrUnplannedRestorationCannotAuthorizeHostInput(change: str, fault: str) -> None:
+    """Keep old cache metadata readable while refusing to add restoration authority beneath its existing hash."""
+
+    value, intent = Composite(change, 2)
+
+    if fault == "missing-candidate":
+        value["generation"]["candidate_receipt"] = None
+
+    elif fault == "old-nonce":
+        value["generation"]["candidate_receipt"]["nonce"] = value["generation"]["cached_receipt"]["nonce"]
+
+    else:
+        value["generation"]["schema_version"] = {"old-contract": 1, "unknown-contract": 3, "boolean-contract": True}[fault]
+
+        if fault == "old-contract" and change == "disable":
+            value["generation"]["candidate_receipt"] = None
+
+    intent["plan_sha256"] = policy.Digest(policy.Json(value))
+
+    if fault == "old-contract":
+        assert generations.Request(guest, policy, value, intent) == value
+
+    with pytest.raises(ValueError):
+        inputs.Request(guest, policy, value, intent)
 
 
 def test_CompositeCapacityIsCheckedBeforeAnyGuestAccess(monkeypatch: pytest.MonkeyPatch) -> None:

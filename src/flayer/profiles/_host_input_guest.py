@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 import stat
+import tempfile
 from pathlib import Path
 from typing import Any, cast
 
@@ -59,9 +60,18 @@ def _Compiled(guest: Any, policy: Any, values: tuple[dict[str, Any], ...]) -> li
 
     result = []
 
-    for value in values:
-        _, content = guest._Run(["unshare", "--net", "--", "nft", "-j", "-e", "-f", "-"], payload=policy.Table(value))
-        result.append(policy.NativeFingerprint(value, content))
+    guest._Directory(guest.LOCK.parent)
+
+    with tempfile.TemporaryDirectory(prefix=".flayer-input-", dir=guest.LOCK.parent) as directory:
+        for index, value in enumerate(values):
+            path = Path(directory) / ("policy-" + str(index) + ".nft")
+            descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+
+            with os.fdopen(descriptor, "wb") as stream:
+                stream.write(policy.Table(value))
+
+            _, content = guest._Run(["unshare", "--net", "--", "nft", "-j", "-e", "-f", str(path)])
+            result.append(policy.NativeFingerprint(value, content))
 
     return result
 

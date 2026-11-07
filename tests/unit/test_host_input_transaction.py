@@ -93,8 +93,9 @@ class InputModel:
     def Run(self, command: list[str], *, payload: bytes | None = None, **options: Any) -> tuple[int, bytes]:
         """Allow no real process, service, interface or network operation from the input backend."""
 
-        if command == ["unshare", "--net", "--", "nft", "-j", "-e", "-f", "-"]:
-            index = next(index for index, value in enumerate(self.values) if value.Table() == payload)
+        if command[:-1] == ["unshare", "--net", "--", "nft", "-j", "-e", "-f"]:
+            program = Path(command[-1]).read_bytes()
+            index = next(index for index, value in enumerate(self.values) if value.Table() == program)
 
             return 0, self.Native(index)
 

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import copy
+import os
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -124,3 +126,47 @@ def test_GuestRunPassesOnlyExplicitCoordinationDescriptorsToTheNativeChild(monke
     guest._Run(["nft", "-f", "-"], payload=b"public fixture", passFds=(10, 11))
     guest._Run(["nft", "-j", "list", "tables"])
     assert calls[0]["pass_fds"] == (10, 11) and calls[1]["pass_fds"] == ()
+
+
+@pytest.mark.skipif(os.name != "posix", reason="Private compiler scratch files require POSIX; no WSL is started")
+@pytest.mark.parametrize("failure", [False, True])
+def test_ExpectedInputCompilationUsesCompleteTemporaryFilesAndCleansScratchOnFailure(tmp_path: Path, failure: bool) -> None:
+    """The JSON-first native parser may consume stdin; compile the same fixed file form used by existing WG validation."""
+
+    import stat
+    from types import SimpleNamespace
+
+    from test_vpn_host_input import Native
+
+    from flayer.profiles import _host_input_guest as inputs
+
+    transition = Delta()
+    typed = (transition.before, transition.After(), transition.Restored())
+    values = policy.Transition(transition.Record())
+    commands = []
+
+    def Run(command: list[str]) -> tuple[int, bytes]:
+        """Read complete public source bytes from their private scratch location without starting a real process."""
+
+        path = Path(command[-1])
+        assert command[:-1] == ["unshare", "--net", "--", "nft", "-j", "-e", "-f"]
+        assert path.parent.parent == tmp_path and stat.S_IMODE(path.stat().st_mode) & 0o077 == 0
+        index = len(commands)
+        assert path.read_bytes() == typed[index].Table()
+        commands.append(command)
+
+        if failure:
+            raise ValueError("Synthetic compile failure")
+
+        return 0, policy.Json(Native(typed[index]))
+
+    helper = SimpleNamespace(LOCK=tmp_path / "operation.lock", _Directory=lambda path: None, _Run=Run)
+
+    if failure:
+        with pytest.raises(ValueError, match="Synthetic compile failure"):
+            inputs._Compiled(helper, policy, values)
+
+    else:
+        assert len(inputs._Compiled(helper, policy, values)) == 3 and len(commands) == 3
+
+    assert list(tmp_path.iterdir()) == []

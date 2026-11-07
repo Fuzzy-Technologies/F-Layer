@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:28cf89d8e8abf05b8eaadf200f5cb50ff8c6713a35cd4152325597778784fc32"
-reviewedTranslationHash = "sha256:47975b61051576d4aa72f413168292ce4a09d1aaed08ac5568a77f3b9b78e488"
+sourceHash = "sha256:f9b075c0234e6c0ed4d5e3206e7476908b729417a34152ca494079e4453b2e57"
+reviewedTranslationHash = "sha256:3195cbdfe3bba92e17dc39d9530fe66322a0ea045510aad231ddf04e88d51b4d"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T12:44:34.671580Z"
+reviewedAt = "2026-11-07T13:28:56.275200Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -686,6 +686,12 @@ WG 来源；准备 status 拒绝私有包。纯验证在 SSH 或程序暂存前�
 resolver 仅在已准入 common/WG 排他锁内、且仍需要缓存来源字节时执行。已准备重试验证
 自身缓存，不读取早期快照。未准备来源缺失或漂移时，保留已暴露预留供恢复；路径和依赖
 不来自请求。固定 helper 哈希及操作/包响应绑定覆盖所有动作。
+
+`origin-status` 提供一致只读计划 origin：在同一共享 common/WG 锁内，读取精确公共头、
+权限摘要/计数及完整公共 WG 回执/历史。要求预期权限、回执或命名空间缺失、历史及三个
+原始来源文件固定值。待处理预留、旧头、不同文件、排队任务、残留 PID 或静止单元均拒绝。
+回执只含公共文件/内核/构建哈希及事实，不含密钥/配置主体。探测不创建锁也不修复状态。
+现有仅元数据 `authority-status` 仍单独存在，不成为原生健康断言。
 
 ## 尚待集成
 

@@ -516,6 +516,17 @@ loss of the earlier snapshot cannot break exact prepared-cache recovery. Request
 cannot supply a resolver, dependency or path; executable helpers remain bootstrap
 pins. Cleanup, cloud ordering and public CLI integration remain separate work.
 
+Planning also needs a read-only unreserved origin observation: under shared common
+then WG coordination, return the exact verified common head/digest and original WG
+receipt/history together. Bind the full intent owner, expected common authority, installed receipt
+or namespace absence, expected history and all three original source-file pins.
+Reject pending reservations, sidecars, stale history, different source files and
+queued or nonterminal service state. The complete receipt contains only public
+file/kernel/build hashes and facts; configuration/key bodies are never returned.
+This supplies the later preparation request without guessing a receipt from its
+digest. The pointer, count, receipt and hashes remain closed action/package-bound
+response data, and observation neither creates coordination files nor repairs state.
+
 ## Consequences and validation
 
 This requires extra bounded metadata and recovery paths, but keeps original

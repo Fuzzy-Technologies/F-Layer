@@ -666,3 +666,74 @@ def Status(guest: Any, peer: Any, value: object) -> dict[str, Any]:
                 "phase": pending["phase"] if pending is not None else "completed" if latest is not None and latest["schema_version"] == 2
                 else "cancelled" if latest is not None else "initial",
                 "reservation_sha256": guest._Digest(_Json(pending)) if pending is not None else "", "completion_count": count}
+
+
+def OriginRequest(guest: Any, value: object, sourceFiles: object) -> tuple[dict[str, Any], dict[str, str]]:
+    """Validate original source role pins before any observation; this read model grants no mutation or reservation capability."""
+
+    intent = Intent(value)
+    expected = {"server.conf", "deployment.json", "install.py"} if intent["wireguard_state"] == "active" else set()
+
+    if (type(sourceFiles) is not dict or set(sourceFiles) != expected or any(not _Hash(digest) for digest in sourceFiles.values())
+            or intent["wireguard_state"] == "absent" and intent["wireguard_absence_sha256"] != guest._AbsenceDigest(intent["owner"])):
+        raise ReservationError("Origin observation requires exact original source or namespace absence pins")
+
+    return intent, dict(sourceFiles)
+
+
+def OriginResult(guest: Any, value: object, sourceFiles: object, result: object) -> dict[str, Any]:
+    """Close one coherent public authority/receipt observation without returning configuration, credentials or arbitrary native output."""
+
+    intent, sources = OriginRequest(guest, value, sourceFiles)
+    fields = {"status", "head", "authority_sha256", "history_sha256", "wireguard_state", "wireguard_receipt", "completion_count"}
+
+    if (type(result) is not dict or set(result) != fields or result["status"] != "protocol-origin-observation"
+            or result["wireguard_state"] != intent["wireguard_state"] or result["history_sha256"] != intent["wireguard_history_sha256"]
+            or result["authority_sha256"] != intent["previous_authority_sha256"] or type(result["completion_count"]) is not int
+            or not 0 <= result["completion_count"] <= MAX_COMPLETIONS or len(_Json(result)) > 32768):
+        raise ReservationError("Origin observation has unknown, stale or private-bearing public facts")
+
+    head = _Pointer(result["head"])
+
+    if (result["authority_sha256"] != (head["sha256"] if head is not None else _Initial(guest, intent))
+            or (head is None) != (result["completion_count"] == 0)):
+        raise ReservationError("Origin observation head and complete authority count differ")
+
+    receipt = result["wireguard_receipt"]
+
+    if intent["wireguard_state"] == "active":
+        guest._ReceiptData(receipt, intent["owner"])
+
+        if guest._Digest(_Json(receipt)) != intent["wireguard_receipt_sha256"] or any(receipt["files"][name] != digest for name, digest in sources.items()):
+            raise ReservationError("Origin observation receipt differs from its expected original source")
+
+    elif receipt is not None:
+        raise ReservationError("Absent origin observation cannot contain an installed receipt")
+
+    return cast(dict[str, Any], json.loads(_Json(result)))
+
+
+def OriginStatus(guest: Any, peer: Any, value: object, sourceFiles: object, *, runtimeBackend: Any = None) -> dict[str, Any]:
+    """Read exact unreserved common authority and healthy original WG state atomically; neither stage files nor repair or grant authority."""
+
+    intent, sources = OriginRequest(guest, value, sourceFiles)
+
+    if runtimeBackend is None:
+        raise ReservationError("Origin observation requires the approved native observation backend")
+
+    with _Locks(guest, readOnly=True):
+        pending = _Pending(guest, intent)
+        head, digest, _, count = _Authority(guest, intent, pending)
+
+        if pending is not None or digest != intent["previous_authority_sha256"]:
+            raise ReservationError("Origin observation requires its exact unreserved common authority")
+
+        receipt, history = _Observe(guest, peer, intent)
+
+        if receipt is not None:
+            root, unit, _ = guest._ActivePaths(intent["owner"])
+            runtimeBackend._Units(guest, intent["owner"], unit, guest._Read(root / "service.service"))
+            runtimeBackend._Active(guest, unit)
+
+        return OriginResult(guest, intent, sources, {"status": "protocol-origin-observation", "head": head, "authority_sha256": digest,
+                            "history_sha256": history, "wireguard_state": intent["wireguard_state"], "wireguard_receipt": receipt, "completion_count": count})

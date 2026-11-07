@@ -1069,6 +1069,15 @@ cache without reading the earlier snapshot. Missing or drifted unprepared source
 retain the exposed reservation for recovery; no path or dependency comes from the
 request. Fixed helper pins and operation/package response binding cover all actions.
 
+`origin-status` supplies a coherent read-only planning origin: exact common head,
+authority digest/count and complete public WG receipt/history under the same shared
+common/WG locks. It requires the expected authority, receipt or namespace absence,
+history and all three original source-file pins. Pending reservations, old heads,
+different files, queued jobs, residual PIDs and quiescent units refuse. Returned
+receipt fields contain public file/kernel/build hashes and facts, never key/config
+bodies. The probe neither creates locks nor repairs state. Existing metadata-only
+`authority-status` remains separate and does not become a native-health claim.
+
 ## Remaining integration
 
 Adding/removing a protocol on an existing guest, schema-1 migration, explicit

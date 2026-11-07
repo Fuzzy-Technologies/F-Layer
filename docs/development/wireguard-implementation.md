@@ -1034,6 +1034,31 @@ every dispatch branch, stale operation/package replies, exact terminal witnesses
 and secret exception-chain refusal. Isolated POSIX CI loads the real standalone
 helpers and checks staging/readback without real SSH, cloud or desktop networking.
 
+## Private generation preparation
+
+Private `_protocol_preparation` supplies the generation metadata needed to finish
+a composite plan before reservation. Its closed request binds full identity,
+unreserved origin, complete retained WG source/file pins, optional exact old runtime
+receipt and approved maintenance-helper hash. The origin omits `plan_sha256`; a
+codec-only placeholder is never submitted to reservation or native execution.
+Fresh work requires exact scope/consent before I/O, no reservation, current common
+authority/WG history, healthy original active/absent state and an unexpired unused
+nonce. It invokes only trusted `PrepareFresh`/`PrepareCached`, preserving source
+keys, binary/kernel provenance and all original service/network bytes.
+
+Fixed private owner/operation directories contain source, baseline and candidate
+snapshots with a closed manifest. A Linux no-replace rename publishes the whole
+verified tree, and descriptor leases survive that rename and every ancestor/file
+barrier through acknowledgment. Same-byte inode swaps and membership ABA refuse.
+Complete retries resynchronize the exact historical snapshot after expiry/fencing
+without rebuilding; status performs no repair. Scratch has no authority, is never
+adopted or silently removed, and is bounded separately from complete snapshots.
+Unknown entries refuse fresh writes. Later fixed-path selection requires the full
+reserved origin and exact sealed generation; the actual cache backend still needs
+Reserve/Expose. Preparation retention/cleanup and its RPC/coordinator integration
+remain separate #128 work. Isolated tests build only synthetic runtime bytes and
+intercept every kernel, service, native/network and provider boundary.
+
 ## Remaining integration
 
 Adding/removing a protocol on an existing guest, schema-1 migration, explicit

@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:fb4ff02b2c6dcbc19451e7cd5069c45b200f12f28acca940b2adcd7cad10867b"
-reviewedTranslationHash = "sha256:a4382b5b568873fba18244e5afa91129ba64d7b9dc2005a00a7c5f194ec1a94f"
+sourceHash = "sha256:c89ec4530567e0f81c20ddd71c7bc71fc9d0b92e58458f14d3dbeb5e2acfc6be"
+reviewedTranslationHash = "sha256:303dc9192acd40669bf1c1fea093ce732dc27c4df59a1efbf86603c0c58eab7f"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T11:23:39.848544Z"
+reviewedAt = "2026-11-07T12:02:58.613548Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -662,6 +662,23 @@ VLESS 保留原格式化身份 owner 算法、当前受管回执及已验证提�
 初始/新代际来源、不排序云变更，也不准入公共协议命令。这些仍属于 #128。确定性测试
 覆盖 runner/暂存前拒绝、全部分派分支、过期操作/包响应、精确终态证明及异常链隐私。
 隔离 POSIX CI 加载真实独立模块并检查暂存/读回，不使用真实 SSH、云或桌面网络。
+
+## 私有代际准备
+
+私有 `_protocol_preparation` 提供预留前完成复合计划所缺失的代际元数据。封闭请求绑定
+完整身份、未预留 origin、完整保留 WG 来源/文件固定值、可选精确旧 runtime 回执及批准
+维护 helper 的哈希。Origin 不带 `plan_sha256`；编解码占位值绝不提交到预留或 native
+执行。新工作在 I/O 前要求精确 scope/授权、无预留、当前公共权限/WG 历史、健康原始
+active/absent 状态及未过期未使用 nonce。仅调用可信 `PrepareFresh`/`PrepareCached`，
+保留来源凭据、二进制/内核来源和全部原服务/网络字节。
+
+固定私有所有者/操作目录含 source、baseline、candidate 快照及封闭清单。Linux
+no-replace rename 发布完整已验证树；描述符租约跨 rename 和所有文件/祖先屏障直到确认。
+同字节 inode 替换及成员 ABA 均拒绝。完整重试在过期/围栏后仅同步同一历史快照，不重建；
+status 不修复。Scratch 无权限、不采纳也不自动删除，与完整快照分别限制容量。未知项
+拒绝新写入。后续固定路径选择要求完整预留 origin 和精确封存代际；实际缓存后端仍要求
+Reserve/Expose。准备保留/清理及 RPC/协调器集成仍属于 #128。隔离测试仅构建合成
+runtime 字节，拦截所有内核、服务、native/网络及提供方边界。
 
 ## 尚待集成
 

@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/adr/0024-owned-vpn-protocol-transitions.md"
-sourceHash = "sha256:be3391f68e95e7cad1aa0ea43c506f6da93b6ad955fe180410bd152cf592e65d"
-reviewedTranslationHash = "sha256:4cdc80e5ebb91f78604f1ff6bf01d04457c0f27a7da180685b4ae0e4fed40c39"
+sourceHash = "sha256:8d159bd0e27b2f9d685f9c0b136d0270380ad9078315670527550ceb3fcdebd9"
+reviewedTranslationHash = "sha256:d3de8c4303b702792ef1d1db36baea90721714f01aa9b7de391197fedeb9e6aa"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T10:28:27.601352Z"
+reviewedAt = "2026-11-07T11:19:01.751434Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# ADR 0024：受管 VPN 协议迁移与不可变纪元
 
@@ -191,7 +191,7 @@ WG 事务、根、unit、预留、历史屏障或网络变更。原直接安装�
 与来源绑定的服务证明。I/O 前重建所有原生终态记录。在公共 → WG 锁内，首次发布重新
 验证固定代际文件、实际原生状态/历史、已安装文件身份及终态入站策略。可信观察器依赖
 必须测量每项其他服务；调用方给出的摘要不足以满足要求。云和本地图证明仍由协调器负责，
-目前没有 RPC 或公共 CLI 调用此后端。
+下述私有 RPC 已提供此后端；公共 CLI 集成仍单独进行。
 
 精确不可变模式 2 完成记录是提交点。先发布公共头，再仅移除已验证的规范入站/代际/原生
 旁车日志，最后移除预留。重新出现的旁车或无法解释的临时项会保留预留。完整精确记录
@@ -226,7 +226,7 @@ cgroup。通过固定 PID 挂载命名空间读取实际加载的 systemd creden
 及 [Go UAPI](https://github.com/amnezia-vpn/amneziawg-go/blob/b5928efb6ca19f0153958460c3d141f04abc5c2e/device/uapi.go) 定义。
 systemd 255 [credential 处理](https://github.com/systemd/systemd/blob/v255/src/core/exec-credential.c)
 定义只读副本和动态 UID 访问布局。上述探测证明受管配置/服务被保留，不证明端到端
-隧道或媒体播放。RPC 和完整控制器/公共 CLI 集成仍单独进行。
+隧道或媒体播放。完整控制器/公共 CLI 集成仍单独进行。
 
 ## 私有控制器发布
 
@@ -243,8 +243,27 @@ systemd 255 [credential 处理](https://github.com/systemd/systemd/blob/v255/src
 同一纪元及来宾响应。只读状态不执行修复。
 
 项目锁的变更准入在后续对等端/来宾写入前同步已发布项目命名空间，封闭最终日志 unlink
-后目录屏障失败的窗口。只读协调不执行同步。这些是本地发布原语；认证 RPC、实时证明、
+后目录屏障失败的窗口。只读协调不执行同步。这些是本地发布原语；端到端实时证明、
 云顺序及公共 CLI 准入仍待集成，任何本地记录本身均不能证明这些事实。
+
+## 私有认证来宾 RPC
+
+私有控制器传输复用已独立固定主机密钥的 SSH provisioner。它仅接受封闭动作、完整栈
+身份、精确预留意图/复合计划，以及对应变更动作的明确授权和精确 scope。只读动作拒绝
+变更授权。请求不能选择路径、命令、依赖或端点。保留的 AWG/VLESS 包按完整来源固定值
+验证且始终是数据，安装器字节不会成为可执行依赖。
+
+独立 root-Linux 接收器只接受固定完整的标准库模块集，其规范化已安装包字节的哈希固定
+在 bootstrap 中。创建私有暂存文件前验证有界无重复字段 JSON、全部模块哈希及请求语义。
+每次响应同时绑定完整操作和模块集。入站响应从同一仍匹配的加锁日志读取三个公共编译器
+指纹，控制器据此重建精确日志/boot 哈希。Native/cache 响应重建请求绑定的历史和终态
+日志并拒绝动作/变更不可能的阶段。完成响应必须是独立重建的精确不可变记录。未知/私有
+输出、非标准 JSON 及非零 SSH 结果仅产生固定诊断；解析器异常不保留在上下文链中。
+
+此 RPC 仅提供已有的预留、观测、入站、native 和完成原语。初始/新代际准备、云操作
+排序、公共入口恢复/准入及 CLI 仍属于 #128。此私有传输不代表自动协议部署、真实服务器
+验收或媒体结果。测试拦截 SSH/native 边界；独立加载器及暂存检查仅在隔离 Linux CI
+运行，不触碰桌面网络。
 
 ## 后果与验证
 

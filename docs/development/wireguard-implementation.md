@@ -660,7 +660,7 @@ contract. Frozen original server bundles are still retained; introducing current
 maintenance guards does not rewrite an existing private bundle or install it on a
 server implicitly.
 
-This is a private backend with no RPC/public protocol command yet. It does not
+This is a private backend exposed by the private RPC below, with no public protocol command yet. It does not
 attest cloud/input policy from a preceding-state hash alone, apply nft policy,
 publish a boot file, change a service or resolve a submitted cloud outcome.
 Completion after exposure and known rollback prefixes require the full coordinator.
@@ -691,7 +691,7 @@ drift refuse recovery. Repeated terminal calls verify their exact result; a roll
 back operation cannot be applied again. Read-only status performs no persistent
 repair. Its intermediate phases do not claim a terminal boot/native fingerprint.
 
-This is an input backend, with no public protocol CLI or SSH RPC yet. It neither
+This is an input backend exposed by the private RPC below, with no public protocol CLI yet. It neither
 changes cloud rules nor orders transport service activation/removal. The exposed
 reservation remains pending until the full protocol coordinator records all cloud,
 service and input receipts in an epoch; no input result alone retires it. Tests
@@ -921,7 +921,7 @@ actual kernel/service state and consumed history, exact installed file identitie
 terminal input journal/policy and unrelated services through a trusted observer
 dependency. Request JSON cannot choose that dependency. Cloud proof and local graph
 attestation still belong to the controller. The concrete AWG/VLESS observer is
-described below; RPC and public CLI integration remain separate. Local publication is separate below.
+described below; public CLI integration remains separate. Local publication is separate below.
 
 An exact immutable schema-2 completion commits the measured historical result.
 Its common head is published before retiring verified input/generation/runtime
@@ -973,7 +973,7 @@ legacy installers are preserved. Probes expose only source/receipt/absence hashe
 repair no metadata and establish no client traffic or YouTube result. Deterministic
 fixtures intercept every service/process/network operation; Linux CI additionally
 checks real retained AWG nft echo/list normalization in an ephemeral namespace.
-Protocol RPC and full controller/public admission remain #128 work.
+Full controller/public admission remains #128 work.
 
 ## Journaled local epoch publication
 
@@ -1000,8 +1000,39 @@ read-only coordination remains free of synchronization or repair.
 Historical metadata recovery uses retained public manifests when private source
 bodies are lost; it never reconstructs credentials. Repeated native epochs retain
 all prior segments and source files. There is no real guest/provider dispatch or
-live attestation in this local backend. Protocol RPC, the coordinator and public
+live attestation in this local backend. The coordinator and public
 entrypoint integration remain #128 work.
+
+## Private protocol SSH operations
+
+`_vpn_protocol_transport` reuses the existing `SshGuestProvisioner` command and
+runner. The package-selected standalone receiver and eleven stdlib-only helpers
+are immutable executable dependencies; their complete canonical hashes are frozen
+in the bootstrap. Private AWG/VLESS server bundles travel only in the bounded stdin
+frame and remain data. No request-supplied installer, command, path or endpoint is
+executable. Before SSH packing or guest file staging, validate the full owner,
+reserved plan, exact scope and action-specific consent. Read actions carry no
+mutation consent. The receiver requires root Linux, uses private ephemeral program
+files and dispatches only fixed existing primitives.
+
+Both ends close all JSON shapes, reject duplicate/nonfinite/oversized frames, and
+bind every success response to the entire operation and installed helper set.
+Input witnesses re-read the fixed journal under shared common/WG coordination;
+concurrent advancement refuses rather than inventing an earlier proof. Three
+compiler fingerprints let the controller reconstruct its exact journal and boot
+policy without local nft execution. Native/cache proofs bind their histories and
+journals to the same request, with change-specific phases. Completion compares the
+entire reconstructed record and unrelated services retain full source binding.
+Raw native/SSH output never becomes a public result; parser failure objects are
+discarded before fixed exceptions are raised.
+
+This private surface exposes reservation/status, cache status, input, native and
+completion actions. It does not prepare initial/fresh generation sources, order
+cloud changes or admit public protocol commands. Those coordinator integrations
+remain #128 work. Deterministic tests cover rejected requests before runner/staging,
+every dispatch branch, stale operation/package replies, exact terminal witnesses
+and secret exception-chain refusal. Isolated POSIX CI loads the real standalone
+helpers and checks staging/readback without real SSH, cloud or desktop networking.
 
 ## Remaining integration
 

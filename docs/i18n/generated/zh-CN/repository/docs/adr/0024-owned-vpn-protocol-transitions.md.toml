@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/adr/0024-owned-vpn-protocol-transitions.md"
-sourceHash = "sha256:4715f31c2a033cfc1a101445de1ffc05a328d3bd2019100e8b8dfc18391fff76"
-reviewedTranslationHash = "sha256:23ec5513f50724beec610e110b7efddccec177705a8273832359004cbb8ab91f"
+sourceHash = "sha256:6c9e7d96384237b5a585b0864b0cac338cfba3a47fdecb8f2775dba5ab2dac4d"
+reviewedTranslationHash = "sha256:f3ce13e92dbed4161dce29ce6bcb7558aca462b73271ec28db96e1f5c3e91e80"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T06:31:57.780330Z"
+reviewedAt = "2026-11-07T07:06:45.787823Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# ADR 0024：受管 VPN 协议迁移与不可变纪元
 
@@ -154,6 +154,15 @@ systemctl show --all 将无任务表示为空 Job 值，而不是数字零。
 段的起点，从而避免完成记录与最终纪元摘要之间的循环依赖。请求来宾完成前须准备并记录
 完整预期候选，只有验证精确来宾完成后才发布本地纪元头。现有模式 1 暴露前取消只能闭合
 无活动变化、入站不变且未提交云操作的纪元，并保留预留摘要。
+
+模式 2 纪元意图将完整代际记录 3 和原生终态日志摘要与既有证据绑定。验证时重建精确的
+模式 2 复合计划及原生终态记录，绑定已配置 WG 来源记录摘要，并用保留的公共清单核对
+全部三个来源文件固定值。启用、移除、恢复和回滚代际必须对应精确 installed 回执或缺失
+以及已消耗历史。停用恢复先消耗原根屏障，再消耗新 installed 根屏障；直接从前序对等端
+历史计算一次新屏障并不足够。未启动且未应用的操作不声明新代际或原生变更，保留原有
+已消耗屏障，真正尚未屏障且未暴露的取消除外。原生回滚要求已恢复入站事务。保持模式 1
+意图兼容性。若前序纪元已有其他协议的完整服务回执或缺失证明，原生纪元必须精确保留。
+这些元数据检查不会把自行提供的摘要变成实时证明，也不单独授权发布或完成。
 
 保留完整已知终态云操作和读回，以及每个原始或补偿入站意图制品。补偿绑定独立有效窗口，
 记录实际恢复的提供方 ID 和标签。发送前预留完整恢复及纪元容量。与旧规则相同的快照不能

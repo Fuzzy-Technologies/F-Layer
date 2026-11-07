@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:29181a9e2cf96ca90ab78348b8dd8b4e7921f64f345d0ec27d9273c00ea7206f"
-reviewedTranslationHash = "sha256:c9f81c83692d6ab94a46758899376120bdb5476fffed3de9bc59ef354d837758"
+sourceHash = "sha256:5ebef483496e3c7c584a07a44c22e5bd8a417c995843db9035bd603a1bfd7869"
+reviewedTranslationHash = "sha256:2e5fc7f091a86c737756af2a2880aee31f021f0c68ed393e7e6be1e487455f0c"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T06:31:56.708583Z"
+reviewedAt = "2026-11-07T07:06:44.938072Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -461,6 +461,14 @@ material/server 角色摘要。必需的公共意图和请求文件仍须通过�
 配置来源始终非空，活动子集可以为空。历史通过保留公共清单中的 deployment 摘要验证，
 无需打开私有载荷即可保留旧驱动理解的历史撤销。客户端/私有来源文件丢失后仍可遍历元数据；
 普通使用仍要求完整私有内容。消耗来宾或云权限前须执行容量检查。
+
+模式 2 纪元意图还绑定完整代际记录 3、精确原生终态日志摘要，以及重建的含代际复合计划。
+代际来源摘要选择精确已配置 WG 来源；图遍历用保留的公共服务器元数据核对全部三个来源
+文件固定值。停用恢复按顺序记录原根屏障和新 installed 根屏障，在替换回执下保留密钥及
+地址。启用尝试即使回滚至缺失，也记录新代际屏障。未启动且未应用的意图不声明原生变更
+或替换回执。原生回滚要求已恢复入站；真正未消耗屏障的模式 1 取消仍单独处理。模式 1
+意图加载不变，以上检查无需私有来源正文。原生纪元还精确保留每个其他协议此前的完整
+服务回执或缺失证明；来源选择不变本身不能授权替换该证明。
 
 读取器尚无发布工作流、来宾模式 2 完成器或公共协议 CLI。普通入口仍拒绝纪元元数据，直到
 协调器、传输代际、认证实时证明和恢复完成集成。读取器不执行来宾、云或桌面操作，也不会

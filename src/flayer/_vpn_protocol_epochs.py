@@ -24,7 +24,9 @@ from flayer._vpn_protocol_sources import DecodeSource, ProtocolSource, ReadSourc
 from flayer.core.contracts import StackIdentity, _WireDict
 from flayer.guest import PrivatePath, ReadPrivate
 from flayer.profiles import _host_input_policy as inputCodec
+from flayer.profiles import _protocol_generation as generationCodec
 from flayer.profiles import _protocol_reservation as reservations
+from flayer.profiles import _wireguard_guest as guestCodec
 from flayer.profiles.artifacts import (
     MAX_ARTIFACT_BYTES,
     Artifact,
@@ -420,8 +422,9 @@ def _Metadata(content: bytes, identity: StackIdentity) -> dict[str, Any]:
               "wireguard_history_sha256", "generation_receipt_sha256", "reservation", "authority_parent", "ingress_intents", "cloud_sha256", "input_sha256", "services_sha256"}
 
     if (type(identity) is not StackIdentity or any(type(item) is not str for item in (identity.project, identity.stack, identity.provider, identity.scopeId, identity.ownerId))
-            or type(content) is not bytes or not 1 <= len(content) <= 32768 or set(value) != fields
-            or type(value["schema_version"]) is not int or value["schema_version"] != 1 or value["identity"] != _WireDict(identity)
+            or type(content) is not bytes or not 1 <= len(content) <= 32768
+            or type(value.get("schema_version")) is not int or value["schema_version"] not in {1, 2}
+            or set(value) != fields | ({"generation", "native_sha256"} if value["schema_version"] == 2 else set()) or value["identity"] != _WireDict(identity)
             or any(not _Hash(value[key]) for key in ("creation_sha256", "closed_peer_head_sha256", "previous_state_sha256", "static_fingerprint",
                                                    "wireguard_history_sha256", "cloud_sha256", "input_sha256", "services_sha256"))
             or any(not _Hash(value[key], empty=True) for key in ("wireguard_receipt_sha256", "generation_receipt_sha256"))
@@ -435,6 +438,12 @@ def _Metadata(content: bytes, identity: StackIdentity) -> dict[str, Any]:
     peer = _Pointer(value["closed_peer_head"], re.escape(identity.stack) + r"-wc-[0-9a-f]{16}")
     _Pointer(value["authority_parent"], r"done-[0-9a-f]{32}\.json")
     reservation = reservations.Intent(value["reservation"])
+
+    if value["schema_version"] == 2:
+        generation = guestCodec._GenerationRecord(value["generation"], reservation)
+
+        if generation["schema_version"] != 3 or not _Hash(value["native_sha256"], empty=True):
+            raise VpnError("Native epoch requires its versioned generation contract and bounded native proof")
     sources = tuple(DecodeSource(item, identity) for item in value["sources"])
     protocols = tuple(source.pin.protocol for source in sources)
     active = value["active_protocols"]
@@ -477,6 +486,59 @@ def _UnfencedCancellation(epoch: EpochCommit, metadata: dict[str, Any], completi
             and metadata["wireguard_history_sha256"] == reservation["wireguard_history_sha256"])
 
 
+def _NativeEvidence(epoch: EpochCommit, metadata: dict[str, Any], request: dict[str, Any]) -> None:
+    """Bind native terminal bytes and both history fences without mistaking public records for live service attestation."""
+
+    reservation = metadata["reservation"]
+    generation = request["generation"]
+    sources = [DecodeSource(value, epoch.identity) for value in metadata["sources"]]
+    source = next((value for value in sources if value.pin.protocol == "wireguard"), None)
+
+    if source is None or generation["source_sha256"] != hashlib.sha256(_Json(source.Record())).hexdigest():
+        raise VpnError("Native epoch generation does not bind its exact configured WG source")
+
+    candidate = {**generation["candidate_receipt"], "status": "installed"}
+    freshReceipt = hashlib.sha256(_Json(candidate)).hexdigest()
+    originalHistory = guestCodec._ProtocolHistory(reservation, request)
+    freshHistory = hashlib.sha256(_Json(guestCodec._GenerationAudit(reservation, request))).hexdigest()
+    change = epoch.cloud.plan.change
+    committed = epoch.cloud.outcome == "committed"
+    generated = metadata["generation_receipt_sha256"]
+    native = metadata["native_sha256"]
+
+    if native:
+        if not committed and epoch.input.outcome != "rolled-back":
+            raise VpnError("Native rollback epoch requires the exact restored host-input transaction")
+
+        phase = (("active" if change == "enable" else "inactive") if committed
+                 else "rolled-back" if change == "enable" else "restored" if generated else "unchanged")
+        expected = {"schema_version": 1, "intent": reservation, "request": request, "history_sha256": originalHistory,
+                    "admitted_program_sha256": generation["candidate_receipt"]["files"]["lifecycle.py"], "phase": phase, "rollback": not committed}
+        guestCodec._RuntimeRecord(expected, reservation)
+
+        if native != hashlib.sha256(_Json(expected)).hexdigest():
+            raise VpnError("Native epoch proof differs from its exact complete terminal journal")
+
+    elif committed or generated:
+        raise VpnError("Native epoch cannot claim activation, removal or a fresh generation without its terminal proof")
+
+    useFresh = bool(native) and (change == "enable" or bool(generated))
+    expectedReceipt = ""
+    expectedHistory = freshHistory if useFresh else originalHistory
+
+    if not native and _UnfencedCancellation(epoch, metadata, _Decode(epoch.completion)):
+        expectedHistory = reservation["wireguard_history_sha256"]
+
+    if "wireguard" in metadata["active_protocols"]:
+        expectedReceipt = freshReceipt if committed or generated else reservation["wireguard_receipt_sha256"]
+
+    if (generation["change"] != change or epoch.cloud.plan.listener.transport != "wireguard"
+            or metadata["wireguard_receipt_sha256"] != expectedReceipt or generated != (freshReceipt if useFresh else "")
+            or metadata["wireguard_history_sha256"] != expectedHistory
+            or not native and epoch.cloud.outcome != "not-applied"):
+        raise VpnError("Native epoch loses its exact terminal WG state or the original/fresh consumed history")
+
+
 @dataclass(frozen=True, slots=True)
 class EpochCommit:
     """Immutable authorizing intent and verified guest completion, with no cyclic dependence on its final bundle digest."""
@@ -507,6 +569,11 @@ class EpochCommit:
         expected = {source["pin"]["protocol"]: source["pin"]["server_digest"] for source in metadata["sources"]}
         configured = {_Listener(item).transport: _Listener(item) for item in metadata["configured_listeners"]}
         ingressRoles = {item["role"] for item in metadata["ingress_intents"]}
+        request = {"schema_version": 1, "cloud_plan_sha256": plan.Fingerprint(), "input": transition.Record()}
+
+        if metadata["schema_version"] == 2:
+            request = {**request, "schema_version": 2, "generation": metadata["generation"]}
+            generationCodec.Request(guestCodec, inputCodec, request, reservation)
 
         if (self.cloud.outcome == "committed" and self.input.outcome != "applied"
                 or self.cloud.outcome == "not-applied" and self.input.outcome == "applied"
@@ -517,8 +584,7 @@ class EpochCommit:
                 or self.cloud.operation is not None and "change" not in ingressRoles
                 or self.cloud.restoration is not None and "restoration" not in ingressRoles
                 or self.cloud.restoration is None and "restoration" in ingressRoles
-                or reservation["plan_sha256"] != hashlib.sha256(_Json({"schema_version": 1, "cloud_plan_sha256": plan.Fingerprint(),
-                                                                       "input": transition.Record()})).hexdigest()
+                or reservation["plan_sha256"] != hashlib.sha256(_Json(request)).hexdigest()
                 or tuple(proof.protocol for proof in self.services) != tuple(expected) or set(services) != set(expected)
                 or {listener.transport: listener for listener in policy.listeners} != {protocol: configured[protocol] for protocol in metadata["active_protocols"]}
                 or any(proof.sourceSha256 != expected[proof.protocol] or (proof.state == "active") != (proof.protocol in metadata["active_protocols"])
@@ -545,10 +611,13 @@ class EpochCommit:
         completion = _Decode(self.completion)
         unfenced = _UnfencedCancellation(self, metadata, completion)
 
+        if metadata["schema_version"] == 2:
+            _NativeEvidence(self, metadata, request)
+
         if (previousActive != (reservation["wireguard_state"] == "active")
                 or previousActive and metadata["wireguard_history_sha256"] == reservation["wireguard_history_sha256"] and not unfenced
                 or plan.listener.transport != "wireguard" and generation
-                or plan.listener.transport == "wireguard" and plan.change == "disable" and generation
+                or metadata["schema_version"] == 1 and plan.listener.transport == "wireguard" and plan.change == "disable" and generation
                 or plan.listener.transport == "wireguard" and plan.change == "enable" and self.cloud.outcome == "committed"
                 and (not generation or generation != metadata["wireguard_receipt_sha256"])
                 or generation and metadata["wireguard_history_sha256"] == reservation["wireguard_history_sha256"]
@@ -767,6 +836,28 @@ def _History(project: SelectedVpnProject, epoch: EpochCommit, before: ProtocolGr
     receipt = value["generation_receipt_sha256"] if value["generation_receipt_sha256"] else reservation["wireguard_receipt_sha256"]
     expected = before.revision.history
 
+    if value["schema_version"] == 2:
+        _, summary, _ = summaries["wireguard"]
+        files = {item.name: item.sha256 for item in summary.files}
+        generation = value["generation"]
+
+        if generation["source_files"] != files:
+            raise VpnError("Native epoch generation source pins differ from retained public server metadata")
+
+        if not _UnfencedCancellation(epoch, value, _Decode(epoch.completion)):
+            if oldActive:
+                expected = revisions.CommittedHistory(project, "revoke", "protocol-" + reservation["operation_id"],
+                    reservation["wireguard_receipt_sha256"], reservation["wireguard_receipt_sha256"], files["deployment.json"], expected)
+
+            if value["generation_receipt_sha256"]:
+                receipt = value["generation_receipt_sha256"]
+                expected = revisions.CommittedHistory(project, "revoke", "protocol-" + reservation["operation_id"], receipt, receipt, files["deployment.json"], expected)
+
+        if value["wireguard_history_sha256"] != expected:
+            raise VpnError("Native epoch does not retain both exact original and fresh-generation history fences")
+
+        return
+
     if receipt and not _UnfencedCancellation(epoch, value, _Decode(epoch.completion)):
         source = summaries["wireguard"][1]
         deployment = next(item.sha256 for item in source.files if item.name == "deployment.json")
@@ -810,6 +901,12 @@ def _Continue(project: SelectedVpnProject, before: ProtocolGraph, epoch: EpochCo
 
     elif plan.before != before.epochs[-1].cloud.result:
         raise VpnError("Protocol epoch does not start from the exact preceding complete cloud receipt")
+
+    if value["schema_version"] == 2 and before.epochs:
+        previousServices = {proof.protocol: proof for proof in before.epochs[-1].services}
+
+        if any(proof.protocol != target and proof != previousServices.get(proof.protocol) for proof in epoch.services):
+            raise VpnError("Native protocol epoch changes an unrelated complete service receipt or absence proof")
 
     if _Json(epoch.input.transition.before.Record()) != _Json(initial.Record()):
         raise VpnError("Protocol epoch input policy does not continue its exact preceding owned generation")

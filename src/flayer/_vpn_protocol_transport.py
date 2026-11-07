@@ -12,10 +12,12 @@ from flayer.profiles import _host_input_guest as inputs
 from flayer.profiles import _host_input_policy as policy
 from flayer.profiles import _protocol_completion as completion
 from flayer.profiles import _protocol_generation as cache
+from flayer.profiles import _protocol_preparation as preparation
 from flayer.profiles import _protocol_reservation as authority
 from flayer.profiles import _protocol_rpc as rpc
 from flayer.profiles import _protocol_runtime as runtime
 from flayer.profiles import _protocol_services as services
+from flayer.profiles import _wireguard_generation as generationTools
 from flayer.profiles import _wireguard_guest as guest
 from flayer.profiles.vless import LEGACY_XRAY_VERSION, XRAY_VERSION
 from flayer.profiles.vpn import VpnError
@@ -30,7 +32,7 @@ def _Codecs() -> SimpleNamespace:
     versions = SimpleNamespace(XRAY_VERSION=XRAY_VERSION, LEGACY_VERSION=LEGACY_XRAY_VERSION)
 
     return SimpleNamespace(guest=guest, authority=authority, policy=policy, inputs=inputs, cache=cache, runtime=runtime,
-                           completion=completion, services=services, vless=versions)
+                           completion=completion, services=services, vless=versions, preparation=preparation, tools=generationTools)
 
 
 def Encode(operation: object) -> tuple[bytes, bytes]:

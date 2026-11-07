@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/adr/0024-owned-vpn-protocol-transitions.md"
-sourceHash = "sha256:d679637edf11d749d7a2d09ffa43683ce7e9eb73c8ecf8135e44adf6817d41ff"
-reviewedTranslationHash = "sha256:eac25e544fc36bf95bdbbb057dfdb37f7dc6cec02733d6658113cc1870168bde"
+sourceHash = "sha256:cf80724695038449a80318045c2887531e04d1628f17898d39a0381041d9b64e"
+reviewedTranslationHash = "sha256:ee2049dc33b986d2d678dda634a620ac42a8bd77e0a8dfccbd476b1db3d4c203"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T12:02:59.726466Z"
+reviewedAt = "2026-11-07T12:44:35.675654Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# ADR 0024：受管 VPN 协议迁移与不可变纪元
 
@@ -260,7 +260,7 @@ systemd 255 [credential 处理](https://github.com/systemd/systemd/blob/v255/src
 日志并拒绝动作/变更不可能的阶段。完成响应必须是独立重建的精确不可变记录。未知/私有
 输出、非标准 JSON 及非零 SSH 结果仅产生固定诊断；解析器异常不保留在上下文链中。
 
-此 RPC 仅提供已有的预留、观测、入站、native 和完成原语。初始/新代际准备集成、云操作
+此 RPC 提供已有的预留、观测、入站、native 和完成原语，包括下述准备/缓存集成。云操作
 排序、公共入口恢复/准入及 CLI 仍属于 #128。此私有传输不代表自动协议部署、真实服务器
 验收或媒体结果。测试拦截 SSH/native 边界；独立加载器及暂存检查仅在隔离 Linux CI
 运行，不触碰桌面网络。
@@ -279,7 +279,17 @@ systemd 255 [credential 处理](https://github.com/systemd/systemd/blob/v255/src
 验证/同步同一历史字节；后续缓存变更仍检查当前权限。观测不修复。中断 scratch 有独立
 上限、不带权限且不采纳为完整准备。未知命名空间拒绝写入。后续缓存集成必须选择固定
 路径并绑定完整原始请求/代际；恢复缓存复制仍必须满足精确已暴露预留。保留/清理及
-RPC/控制器准入仍单独集成。
+完整控制器准入仍单独集成。
+
+私有 RPC 也提供准备/status 与缓存准备。准备动作没有最终预留意图；封闭请求体保留明确
+未预留 origin 及完整 source/helper 固定值。只有准备写入接受精确私有 WG 来源包，并在
+来宾程序暂存前按数据验证。缓存准备要求完整已预留复合计划和精确公共准备请求；完整
+origin 与封存代际均必须匹配。
+
+缓存后端仅在现有 common/WG 锁内、已暴露预留准入后且仍需要来源时调用包选择的 resolver。
+它读取固定完整准备快照。已准备缓存验证自身保留字节而不调用 resolver，因此丢失早期
+快照不会破坏精确缓存恢复。请求不能提供 resolver、依赖或路径；可执行 helpers 仍是
+bootstrap 固定值。清理、云排序及公共 CLI 集成仍单独进行。
 
 ## 后果与验证
 

@@ -1006,7 +1006,7 @@ entrypoint integration remain #128 work.
 ## Private protocol SSH operations
 
 `_vpn_protocol_transport` reuses the existing `SshGuestProvisioner` command and
-runner. The package-selected standalone receiver and eleven stdlib-only helpers
+runner. The package-selected standalone receiver and thirteen stdlib-only helpers
 are immutable executable dependencies; their complete canonical hashes are frozen
 in the bootstrap. Private AWG/VLESS server bundles travel only in the bounded stdin
 frame and remain data. No request-supplied installer, command, path or endpoint is
@@ -1026,9 +1026,8 @@ entire reconstructed record and unrelated services retain full source binding.
 Raw native/SSH output never becomes a public result; parser failure objects are
 discarded before fixed exceptions are raised.
 
-This private surface exposes reservation/status, cache status, input, native and
-completion actions. It does not prepare initial/fresh generation sources, order
-cloud changes or admit public protocol commands. Those coordinator integrations
+This private surface exposes reservation/status, preparation, cache, input, native and
+completion actions. It does not order cloud changes or admit public protocol commands. Those coordinator integrations
 remain #128 work. Deterministic tests cover rejected requests before runner/staging,
 every dispatch branch, stale operation/package replies, exact terminal witnesses
 and secret exception-chain refusal. Isolated POSIX CI loads the real standalone
@@ -1055,9 +1054,20 @@ without rebuilding; status performs no repair. Scratch has no authority, is neve
 adopted or silently removed, and is bounded separately from complete snapshots.
 Unknown entries refuse fresh writes. Later fixed-path selection requires the full
 reserved origin and exact sealed generation; the actual cache backend still needs
-Reserve/Expose. Preparation retention/cleanup and its RPC/coordinator integration
+Reserve/Expose. Preparation retention/cleanup and its coordinator integration
 remain separate #128 work. Isolated tests build only synthetic runtime bytes and
 intercept every kernel, service, native/network and provider boundary.
+
+Preparation/status RPC uses that closed unreserved request, without a final intent.
+Only preparation writes carry the exact private three-file WG source; preparation
+status rejects private bundles. Pure validation checks all owner/source/consent fields
+before SSH or program staging. Cache preparation carries the complete composite
+and public preparation request and binds their full origin and sealed generation.
+Its package-selected resolver runs under admitted common/WG exclusive locks only
+when retained cache bytes are still needed. A prepared retry verifies its own
+cache without reading the earlier snapshot. Missing or drifted unprepared sources
+retain the exposed reservation for recovery; no path or dependency comes from the
+request. Fixed helper pins and operation/package response binding cover all actions.
 
 ## Remaining integration
 

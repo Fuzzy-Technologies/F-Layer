@@ -10,9 +10,10 @@ from typing import Any
 
 MAX_OPERATION_BYTES = 1024 * 1024
 MAX_RESULT_BYTES = 65536
-READ_ACTIONS = frozenset({"authority-status", "cache-status", "input-status", "native-status", "services"})
-WRITE_ACTIONS = frozenset({"reserve", "expose", "cancel", "input-prepare", "input-apply", "input-rollback", "native-apply", "native-rollback", "complete"})
-_COMPOSITE = frozenset({"cache-status", "input-status", "input-prepare", "input-apply", "input-rollback", "native-status", "native-apply", "native-rollback"})
+READ_ACTIONS = frozenset({"authority-status", "cache-status", "input-status", "native-status", "services", "preparation-status"})
+WRITE_ACTIONS = frozenset({"reserve", "expose", "cancel", "input-prepare", "input-apply", "input-rollback", "native-apply", "native-rollback", "complete", "preparation-prepare", "cache-prepare"})
+_COMPOSITE = frozenset({"cache-status", "input-status", "input-prepare", "input-apply", "input-rollback", "native-status", "native-apply", "native-rollback", "cache-prepare"})
+_UNRESERVED = frozenset({"services", "preparation-status", "preparation-prepare"})
 _HASH = re.compile(r"[0-9a-f]{64}\Z")
 _NAME = re.compile(r"[a-z][a-z0-9-]{0,62}\Z")
 _NATIVE_PHASES = {
@@ -91,13 +92,13 @@ def _Bundles(value: object) -> list[dict[str, Any]]:
     """Decode only retained server-role bytes; supplied installers remain data and can never select receiver code."""
 
     if type(value) is not list or len(value) > 2:
-        raise RpcError("Protocol RPC requires bounded unrelated server sources")
+        raise RpcError("Protocol RPC requires bounded retained server sources")
 
     result = []
 
     for bundle in value:
         if (type(bundle) is not dict or set(bundle) != {"protocol", "name", "files"} or type(bundle["protocol"]) is not str
-                or bundle["protocol"] not in {"amneziawg", "vless-reality"} or type(bundle["name"]) is not str
+                or bundle["protocol"] not in {"amneziawg", "vless-reality", "wireguard"} or type(bundle["name"]) is not str
                 or type(bundle["files"]) is not dict or not 1 <= len(bundle["files"]) <= 5
                 or any(type(name) is not str or type(content) is not str for name, content in bundle["files"].items())):
             raise RpcError("Protocol RPC server source envelope is malformed")
@@ -150,7 +151,7 @@ def Request(modules: Any, value: object) -> dict[str, Any]:
 
     intent = None
 
-    if action != "services":
+    if action not in _UNRESERVED:
         intent = modules.authority.Intent(value["intent"])
         owner = modules.guest._Digest(json.dumps(identity, sort_keys=True, separators=(",", ":")).encode())
 
@@ -158,14 +159,27 @@ def Request(modules: Any, value: object) -> dict[str, Any]:
             raise RpcError("Protocol RPC intent belongs to another complete owner")
 
     elif value["intent"] is not None:
-        raise RpcError("Unrelated service observation accepts no protocol mutation intent")
+        raise RpcError("Unreserved protocol RPC accepts no final mutation intent")
 
     if action in _COMPOSITE:
+        body = value["body"]
+
+        if action == "cache-prepare":
+            if type(body) is not dict or set(body) != {"request", "preparation"} or intent is None:
+                raise RpcError("Cache RPC requires its complete composite and preparation selection")
+
+            selection = modules.preparation.Request(modules.guest, modules.authority, modules.completion, body["preparation"])
+            body = body["request"]
+
+            if (Json(selection["identity"]) != Json(identity)
+                    or Json(selection["origin"]) != Json({key: item for key, item in intent.items() if key != "plan_sha256"})):
+                raise RpcError("Cache RPC preparation belongs to a different reserved origin")
+
         if action.startswith("input-"):
-            request, policies = modules.inputs.Request(modules.guest, modules.policy, value["body"], intent)
+            request, policies = modules.inputs.Request(modules.guest, modules.policy, body, intent)
 
         else:
-            request = modules.cache.Request(modules.guest, modules.policy, value["body"], intent)
+            request = modules.cache.Request(modules.guest, modules.policy, body, intent)
             policies = modules.policy.Transition(request["input"])
 
         if Json(policies[0]["identity"]) != Json(identity):
@@ -173,6 +187,15 @@ def Request(modules: Any, value: object) -> dict[str, Any]:
 
         if action.startswith("native-") and request["generation"]["schema_version"] != 3:
             raise RpcError("Native protocol RPC requires the sealed generation contract")
+
+        if action == "cache-prepare":
+            modules.preparation.Result(modules.guest, modules.authority, modules.completion, selection, request["generation"])
+
+    elif action.startswith("preparation-"):
+        selection = modules.preparation.Request(modules.guest, modules.authority, modules.completion, value["body"])
+
+        if Json(selection["identity"]) != Json(identity):
+            raise RpcError("Preparation RPC belongs to a different complete identity")
 
     elif action == "complete":
         candidate = modules.completion.Candidate(modules.guest, modules.authority, modules.policy, modules.cache, value["body"], intent)
@@ -188,6 +211,12 @@ def Request(modules: Any, value: object) -> dict[str, Any]:
     if action in {"complete", "services"}:
         modules.services.ServiceObserver(modules.guest, modules.authority, modules.completion, modules.runtime, modules.vless,
                                          identity, value["sources"], bundles)
+
+    elif action == "preparation-prepare":
+        if value["sources"] or len(bundles) != 1 or bundles[0]["protocol"] != "wireguard" or bundles[0]["name"] != identity["stack"] + "-wireguard":
+            raise RpcError("Preparation RPC requires only its complete private WG server source")
+
+        modules.preparation._Bundle(modules.guest, selection, bundles[0]["files"])
 
     elif value["sources"] or bundles:
         raise RpcError("Protocol RPC action accepts no private service sources")
@@ -318,14 +347,23 @@ def Result(modules: Any, operation: dict[str, Any], value: object) -> dict[str, 
                   else {"reservation_sha256", "history_sha256"} if action == "expose" else {"authority_sha256", "history_sha256"})
         valid = set(value) == {"status", *fields} and value["status"] == {"reserve": "reserved", "expose": "exposed", "cancel": "cancelled"}[action] and _Hashes(value, fields)
 
-    elif action == "cache-status":
+    elif action in {"cache-status", "cache-prepare"}:
         valid = (set(value) == {"status", "phase", "journal_sha256", "history_sha256"} and value["status"] == "generation-cache"
                  and type(value["phase"]) is str and value["phase"] in {"preparing", "prepared"} and _Hashes(value, {"journal_sha256", "history_sha256"}))
 
         if valid:
-            history = modules.guest._ProtocolHistory(operation["intent"], operation["body"])
-            record = {**modules.cache._Expected(modules.guest, operation["intent"], operation["body"], history), "phase": value["phase"]}
+            request = operation["body"]["request"] if action == "cache-prepare" else operation["body"]
+            history = modules.guest._ProtocolHistory(operation["intent"], request)
+            record = {**modules.cache._Expected(modules.guest, operation["intent"], request, history), "phase": value["phase"]}
             valid = value["history_sha256"] == history and value["journal_sha256"] == modules.guest._Digest(modules.guest._Encode(record))
+
+            if action == "cache-prepare":
+                valid = valid and value["phase"] == "prepared"
+
+    elif action.startswith("preparation-"):
+        if set(value) == {"status", "request_sha256", "preparation_sha256", "generation"}:
+            expected = modules.preparation.Result(modules.guest, modules.authority, modules.completion, operation["body"], value["generation"])
+            valid = Json(value) == Json(expected)
 
     elif action.startswith("input-"):
         valid = _InputResult(modules, operation, value)
@@ -361,6 +399,23 @@ def Dispatch(modules: Any, value: object) -> dict[str, Any]:
 
     elif action == "cache-status":
         result = cache.Status(guest, peer, authority, policy, body, intent, runtimeBackend=runtime)
+
+    elif action == "cache-prepare":
+        def Sources() -> tuple[Path, Path]:
+            """Run only beneath cache admission's existing locks and only when its own recovery caches are not already prepared."""
+
+            _, cached, candidate = modules.preparation.Read(guest, authority, modules.completion, cache, body["preparation"], intent, body["request"]["generation"])
+
+            return cached, candidate
+
+        result = cache.Prepare(guest, peer, authority, policy, body["request"], intent, allowMutation=True, runtimeBackend=runtime, sourceResolver=Sources)
+
+    elif action == "preparation-status":
+        result = modules.preparation.Status(guest, peer, authority, modules.completion, cache, body)
+
+    elif action == "preparation-prepare":
+        result = modules.preparation.Prepare(guest, peer, authority, modules.completion, modules.tools, cache, body,
+                                             operation["decoded_bundles"][0]["files"], allowMutation=True, scopeConfirm=operation["scope_confirm"])
 
     elif action.startswith("input-"):
         arguments = {"generationCache": cache if body["schema_version"] == 2 else None, "runtimeBackend": runtime if body["schema_version"] == 2 else None}

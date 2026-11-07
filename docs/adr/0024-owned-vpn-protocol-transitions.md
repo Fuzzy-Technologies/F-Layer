@@ -469,7 +469,7 @@ nonstandard JSON and nonzero SSH results fail with fixed diagnostics; discarded
 parser exceptions are not retained through exception context chains.
 
 This RPC exposes existing reservation, observation, input, native and completion
-primitives only. Initial/fresh generation preparation integration, ordered cloud coordination,
+primitives, including the preparation/cache integration below. Ordered cloud coordination,
 recovery/admission through public entrypoints and the public CLI remain #128 work.
 No automatic protocol deployment, real-server acceptance or media result follows
 from this private transport. Tests intercept SSH/native boundaries; standalone
@@ -499,7 +499,22 @@ nothing. Interrupted scratch is bounded, has no authority and is never adopted a
 a completed preparation. Unknown namespaces refuse writes. Later cache integration
 must select fixed prepared paths and bind the complete original request/generation;
 it must still satisfy the exposed reservation before copying recovery caches.
-Retention/cleanup and RPC/controller admission remain separate integration work.
+Retention/cleanup and full controller admission remain separate integration work.
+
+The private RPC also exposes preparation/status and cache preparation. Preparation
+actions have no final reservation intent; their closed body retains the explicit
+unreserved origin and full source/helper pins. Only the preparation write accepts
+the exact private WG source bundle, validated as data before guest staging. Cache
+preparation instead requires the complete reserved composite plus the exact public
+preparation request. Both full origin and sealed generation must match.
+
+The cache backend invokes a package-selected source resolver only under its existing
+common/WG locks, after exposed-reservation admission and only when sources are still
+needed. That resolver reads the fixed complete preparation snapshot. A previously
+prepared cache verifies its own retained bytes without invoking the resolver, so
+loss of the earlier snapshot cannot break exact prepared-cache recovery. Requests
+cannot supply a resolver, dependency or path; executable helpers remain bootstrap
+pins. Cleanup, cloud ordering and public CLI integration remain separate work.
 
 ## Consequences and validation
 

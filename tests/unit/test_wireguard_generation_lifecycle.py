@@ -125,7 +125,13 @@ def test_CachedPreparationCannotWriteManagedPathsThroughDotDotAliases(
     managed = guest.BASE if boundary == "base" else guest.SYSTEMD
     target = managed / "empty-test-stage"
     target.mkdir(mode=0o700)
-    destination = managed / ".." / managed.name / target.name if alias else target
+    sibling = managed.parent / "scratch-test-prefix"
+    sibling.mkdir(mode=0o700)
+    destination = sibling / ".." / managed.name / target.name if alias else target
+
+    if alias:
+        assert not destination.is_relative_to(managed) and destination.resolve() == target
+
     before = len(model.commands)
 
     with pytest.raises(guest.GuestError):

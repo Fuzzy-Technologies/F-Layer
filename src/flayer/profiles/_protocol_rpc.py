@@ -10,7 +10,7 @@ from typing import Any
 
 MAX_OPERATION_BYTES = 1024 * 1024
 MAX_RESULT_BYTES = 65536
-READ_ACTIONS = frozenset({"authority-status", "cache-status", "input-status", "native-status", "services", "preparation-status"})
+READ_ACTIONS = frozenset({"authority-status", "cache-status", "input-status", "native-status", "services", "preparation-status", "origin-status"})
 WRITE_ACTIONS = frozenset({"reserve", "expose", "cancel", "input-prepare", "input-apply", "input-rollback", "native-apply", "native-rollback", "complete", "preparation-prepare", "cache-prepare"})
 _COMPOSITE = frozenset({"cache-status", "input-status", "input-prepare", "input-apply", "input-rollback", "native-status", "native-apply", "native-rollback", "cache-prepare"})
 _UNRESERVED = frozenset({"services", "preparation-status", "preparation-prepare"})
@@ -197,6 +197,14 @@ def Request(modules: Any, value: object) -> dict[str, Any]:
         if Json(selection["identity"]) != Json(identity):
             raise RpcError("Preparation RPC belongs to a different complete identity")
 
+    elif action == "origin-status":
+        body = value["body"]
+
+        if type(body) is not dict or set(body) != {"schema_version", "source_files"} or type(body["schema_version"]) is not int or body["schema_version"] != 1:
+            raise RpcError("Origin RPC requires its closed original source role pins")
+
+        modules.authority.OriginRequest(modules.guest, intent, body["source_files"])
+
     elif action == "complete":
         candidate = modules.completion.Candidate(modules.guest, modules.authority, modules.policy, modules.cache, value["body"], intent)
 
@@ -342,6 +350,10 @@ def Result(modules: Any, operation: dict[str, Any], value: object) -> dict[str, 
                  and _Hashes(value, {"authority_sha256", "history_sha256", "reservation_sha256"}, empty={"reservation_sha256"})
                  and bool(value["reservation_sha256"]) == (value["phase"] in {"preparing", "reserved", "exposed", "cancelling"}))
 
+    elif action == "origin-status":
+        expected = modules.authority.OriginResult(modules.guest, operation["intent"], operation["body"]["source_files"], value)
+        valid = Json(value) == Json(expected)
+
     elif action in {"reserve", "expose", "cancel"}:
         fields = ({"reservation_sha256", "history_sha256", "authority_sha256"} if action == "reserve"
                   else {"reservation_sha256", "history_sha256"} if action == "expose" else {"authority_sha256", "history_sha256"})
@@ -387,6 +399,9 @@ def Dispatch(modules: Any, value: object) -> dict[str, Any]:
 
     if action == "authority-status":
         result = authority.Status(guest, peer, intent)
+
+    elif action == "origin-status":
+        result = authority.OriginStatus(guest, peer, intent, body["source_files"], runtimeBackend=runtime)
 
     elif action == "reserve":
         result = authority.Reserve(guest, peer, intent, allowMutation=True)

@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/adr/0024-owned-vpn-protocol-transitions.md"
-sourceHash = "sha256:cf80724695038449a80318045c2887531e04d1628f17898d39a0381041d9b64e"
-reviewedTranslationHash = "sha256:ee2049dc33b986d2d678dda634a620ac42a8bd77e0a8dfccbd476b1db3d4c203"
+sourceHash = "sha256:2afdee622f0ca52c7f19766c3f79b5a1d7c7ba0ca04aa6e86261567a47a7eeaf"
+reviewedTranslationHash = "sha256:1d1e93088a8a49e596a0a0b35cc71b36341114cca20f3b598db2fb936f4dbbe1"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T12:44:35.675654Z"
+reviewedAt = "2026-11-07T13:28:57.297601Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# ADR 0024：受管 VPN 协议迁移与不可变纪元
 
@@ -290,6 +290,13 @@ origin 与封存代际均必须匹配。
 它读取固定完整准备快照。已准备缓存验证自身保留字节而不调用 resolver，因此丢失早期
 快照不会破坏精确缓存恢复。请求不能提供 resolver、依赖或路径；可执行 helpers 仍是
 bootstrap 固定值。清理、云排序及公共 CLI 集成仍单独进行。
+
+计划还需要只读未预留 origin 观测：在共享 common、再 WG 协调内，同时返回精确已验证
+公共头/摘要及原始 WG 回执/历史。绑定完整意图所有者、预期公共权限、已安装回执或命名
+空间缺失、预期历史及三个原始来源文件固定值。待处理预留/旁车、旧历史、不同文件、
+排队任务或非终态服务均拒绝。完整回执仅含公共文件/内核/构建哈希及事实，绝不返回配置
+或密钥主体。它为后续准备请求提供输入，无须由摘要猜测回执。指针、计数、回执和哈希仍
+是封闭动作/包绑定的响应数据；观测不创建协调文件，也不修复状态。
 
 ## 后果与验证
 

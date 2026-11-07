@@ -55,6 +55,11 @@ def Operation(action: str = "native-status", phase: str = "active") -> dict[str,
     sources, bundles = [], []
     body = candidate["request"] if action in rpc._COMPOSITE else None
 
+    if action == "origin-status":
+        files = candidate["request"]["generation"]["cached_receipt"]["files"]
+        body = {"schema_version": 1, "source_files": {name: files[name] for name in ("server.conf", "deployment.json", "install.py")}
+                if intent["wireguard_state"] == "active" else {}}
+
     if action in {"complete", "services"}:
         _, sources, rawBundles = Sources(stackIdentity=ParseIdentity(identity))
         bundles = [{**bundle, "files": {name: base64.b64encode(content).decode("ascii") for name, content in bundle["files"].items()}} for bundle in rawBundles]
@@ -364,6 +369,10 @@ def test_DispatchRoutesOnlyTheClosedActionAndFixedTrustedBackendArguments(action
     if action.startswith("preparation-"):
         result = modules.preparation.Result(modules.guest, modules.authority, modules.completion, operation["body"], preparations.Generation(operation["body"]))
         target, method = "preparation", "Status" if action == "preparation-status" else "Prepare"
+    elif action == "origin-status":
+        result = {"status": "protocol-origin-observation", "head": None, "authority_sha256": modules.authority._Initial(modules.guest, operation["intent"]),
+                  "history_sha256": operation["intent"]["wireguard_history_sha256"], "wireguard_state": "absent", "wireguard_receipt": None, "completion_count": 0}
+        target, method = "authority", "OriginStatus"
     elif action == "authority-status":
         result = {"status": "protocol-authority", "authority_sha256": "a" * 64, "history_sha256": "b" * 64,
                   "phase": "initial", "reservation_sha256": "", "completion_count": 0}

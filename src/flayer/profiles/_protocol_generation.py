@@ -39,7 +39,9 @@ def Request(guest: Any, policy: Any, value: object, intent: dict[str, Any]) -> d
     return cast(dict[str, Any], policy.Decode(policy.Json(value)))
 
 
-def _Reservation(guest: Any, peer: Any, authority: Any, intent: dict[str, Any]) -> tuple[dict[str, Any], str]:
+def _Reservation(
+    guest: Any, peer: Any, authority: Any, intent: dict[str, Any], request: dict[str, Any], runtimeBackend: Any = None,
+) -> tuple[dict[str, Any], str]:
     """Require the exposed exact common authority and original actual WG state under common then WG locks."""
 
     pending = authority._Pending(guest, intent)
@@ -48,7 +50,11 @@ def _Reservation(guest: Any, peer: Any, authority: Any, intent: dict[str, Any]) 
     if pending is None or pending["phase"] != "exposed" or pending["parent"] != head or digest != intent["previous_authority_sha256"]:
         raise GenerationError("Generation preparation requires its exact current exposed reservation")
 
-    _, history = authority._Observe(guest, peer, intent)
+    if request["generation"]["schema_version"] == 3 and runtimeBackend is not None:
+        history = runtimeBackend.Origin(guest, peer, authority, request, intent)["history_sha256"]
+
+    else:
+        _, history = authority._Observe(guest, peer, intent)
 
     if history != authority._FencedHistory(guest, intent, pending["deployment_sha256"]):
         raise GenerationError("Generation preparation has stale WG authority")
@@ -408,7 +414,7 @@ def Ready(
 
 def Prepare(
     guest: Any, peer: Any, authority: Any, policy: Any, value: object, rawIntent: object,
-    cached: Path | None = None, candidate: Path | None = None, *, allowMutation: bool = False,
+    cached: Path | None = None, candidate: Path | None = None, *, allowMutation: bool = False, runtimeBackend: Any = None,
 ) -> dict[str, str]:
     """Journal and freeze complete private rollback/runtime bytes without changing a root, service, input rule or cloud resource."""
 
@@ -419,7 +425,7 @@ def Prepare(
         raise GenerationError("Generation preparation requires explicit mutation consent")
 
     with authority._Locks(guest, readOnly=False):
-        pending, history = _Reservation(guest, peer, authority, intent)
+        pending, history = _Reservation(guest, peer, authority, intent, request, runtimeBackend)
         expected = _Expected(guest, intent, request, history)
         record = _Load(guest, authority, expected)
         generation = request["generation"]
@@ -455,7 +461,7 @@ def Prepare(
                 if _Source(guest, path, receipt, request["input"]["listener"]) != payload:
                     raise GenerationError("Private generation source changed before cache commitment")
 
-            if _Reservation(guest, peer, authority, intent) != (pending, history):
+            if _Reservation(guest, peer, authority, intent, request, runtimeBackend) != (pending, history):
                 raise GenerationError("Protocol authority changed during generation cache preparation")
 
             verify()
@@ -465,14 +471,14 @@ def Prepare(
         return {"status": "generation-cache", "phase": "prepared", "journal_sha256": guest._Digest(guest._Encode(record)), "history_sha256": history}
 
 
-def Status(guest: Any, peer: Any, authority: Any, policy: Any, value: object, rawIntent: object) -> dict[str, str]:
+def Status(guest: Any, peer: Any, authority: Any, policy: Any, value: object, rawIntent: object, *, runtimeBackend: Any = None) -> dict[str, str]:
     """Observe only verified reservation/cache prefixes without repairs or a claim that a generation is active."""
 
     intent = authority.Intent(rawIntent)
     request = Request(guest, policy, value, intent)
 
     with authority._Locks(guest, readOnly=True):
-        _, history = _Reservation(guest, peer, authority, intent)
+        _, history = _Reservation(guest, peer, authority, intent, request, runtimeBackend)
         record = _Load(guest, authority, _Expected(guest, intent, request, history))
 
         if record is None:

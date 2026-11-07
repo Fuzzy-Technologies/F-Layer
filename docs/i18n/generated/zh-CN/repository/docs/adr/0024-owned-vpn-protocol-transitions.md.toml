@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/adr/0024-owned-vpn-protocol-transitions.md"
-sourceHash = "sha256:60275955e85e2de7237e564d39f1eacc6f9e3381d870a7fa3e35bbb72dd72692"
-reviewedTranslationHash = "sha256:2fb3dd7e9a1a089e94eba17668e901d54ac0e2033924006d9f44d29986aabe0c"
+sourceHash = "sha256:81e2df46a70f3781a4060976d2fd386fbceeb6b0d25651d8c368dc5cabdc65b6"
+reviewedTranslationHash = "sha256:9b797a83c6fe294eaf7a0acfddaf9653e18f05b393f2c53b73e45f019288447c"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T07:29:35.747845Z"
+reviewedAt = "2026-11-07T08:00:48.180642Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# ADR 0024：受管 VPN 协议迁移与不可变纪元
 
@@ -110,6 +110,15 @@ nonce、辅助程序、unit 和网络证明。旧停止命令结果不确定后�
 重启使密封回调无法启动后，完整已知后继日志临时文件可能需要显式协调发布。只有精确
 installed 候选文件/历史、完整受管内核空间缺失及已排空 unit，才允许已记录重启阶段。
 installed 对等端/地址部分漂移仍拒绝。只读状态报告需要恢复，不修复文件或声称活动健康。
+
+首个原生日志之前，或处于 `ready`/`unchanged` 时，已精确暴露的代际记录 3 可以将原
+installed 身份观测为静止。要求精确完整的原回执、文件、unit 和来源固定值、未变执行
+内核、已消耗原历史、完整受管内核缺失，以及无任务/PID、无 populated cgroup 的已排空
+unit。这既不声明健康，也不推断发生重启。部分或外来状态仍拒绝。缓存和原生前入站恢复
+要求显式可信运行时观察器；初始 Reserve/Expose 准入不变。移交锁前永久退役旧 unit；
+回滚只恢复预先规划的新候选，保留密钥/运行时及两个历史屏障。此前健康的 `unchanged`
+回滚在停止后也可能需要相同恢复。静止时不能新授权开放入站；若入站此前已恢复，则在
+新服务恢复期间保留其精确策略。只读状态报告需要恢复。
 
 这些规则依据 [systemd 255 Job 输出](https://github.com/systemd/systemd/blob/v255/src/systemctl/systemctl-show.c)、
 [systemd unit/进程属性](https://www.freedesktop.org/software/systemd/man/255/org.freedesktop.systemd1.html)

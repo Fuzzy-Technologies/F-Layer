@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from test_wireguard_guest import Prepared
 
 from flayer.profiles import _wireguard_generation as generations
 from flayer.profiles import _wireguard_guest as guest
@@ -46,3 +47,32 @@ def test_FreshGenerationMetadataRefusalPrecedesEveryFilesystemOrNativeAction(mon
 
     with pytest.raises(guest.GuestError):
         generations.PrepareFresh(guest, Path("/source"), Path("/cache"), Path("/candidate"), pins, nonce, callback, digest, allowMutation=allow)
+
+
+@pytest.mark.parametrize("field,kind", [("schema_version", "bool"), ("schema_version", "float"), ("port", "float"), ("mtu", "float")])
+def test_SharedPrivateBuilderRejectsDescriptorNumericAliasesBeforeBuildingOrPublishing(monkeypatch: pytest.MonkeyPatch, field: str, kind: str) -> None:
+    """Use only in-memory source bytes: bool/float aliases cannot impersonate previously validated integer descriptor fields."""
+
+    payload = {item.name: item.content for item in Prepared().serverBundle.files}
+    request = guest._Json(payload["deployment.json"])
+    alias = True if kind == "bool" else float(request[field])
+    assert request[field] == alias and type(request[field]) is not type(alias)
+    payload["deployment.json"] = guest._Encode({**request, field: alias})
+    reads = []
+
+    def Read(path: Path, **kwargs: Any) -> bytes:
+        """Serve the exact three private fixture bodies without any filesystem access."""
+
+        reads.append(path.name)
+
+        return payload[path.name]
+
+    monkeypatch.setattr(guest, "_Read", Read)
+    monkeypatch.setattr(guest, "_BuildFacts", lambda: pytest.fail("A descriptor alias must be refused before toolchain observation"))
+    monkeypatch.setattr(guest, "_BuildTools", lambda *args: pytest.fail("A descriptor alias must be refused before tool construction"))
+    monkeypatch.setattr(guest, "_Run", lambda *args, **kwargs: pytest.fail("A descriptor alias must not run a native command"))
+
+    with pytest.raises(guest.GuestError, match="complete validated request"):
+        guest._BuildPayload(Path("/source"), request, Path("/root"), Path("/work"), {})
+
+    assert reads == ["server.conf", "deployment.json", "install.py"]

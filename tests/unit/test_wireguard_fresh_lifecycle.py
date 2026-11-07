@@ -203,28 +203,6 @@ def test_TemporaryValidSourceCannotHideTheInvalidPinnedConfigurationReturnedInAS
     Unpublished(model)
 
 
-@pytest.mark.parametrize("field,alias", [("schema_version", True), ("schema_version", 1.0), ("port", 51821.0), ("mtu", 1420.0)])
-def test_SharedPrivateBuilderRejectsDescriptorNumericAliasesBeforeBuildingOrPublishing(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str, alias: Any,
-) -> None:
-    """Python equality must not let a changed bool/float descriptor impersonate the exact previously validated integer fields."""
-
-    model, source, cached, candidate, _, _ = Sources(tmp_path, monkeypatch)
-    descriptor = json.loads((source / "deployment.json").read_bytes())
-    assert descriptor[field] == alias and type(descriptor[field]) is not type(alias)
-    descriptor[field] = alias
-    (source / "deployment.json").write_bytes(guest._Encode(descriptor))
-    work = tmp_path / "build-work"
-    work.mkdir(mode=0o700)
-    monkeypatch.setattr(guest, "_BuildTools", lambda *args: pytest.fail("A descriptor alias must be refused before tool construction"))
-
-    with pytest.raises(guest.GuestError, match="complete validated request"):
-        guest._BuildPayload(source, model.request, model.root, work, {})
-
-    assert not tuple(work.iterdir()) and not tuple(cached.iterdir()) and not tuple(candidate.iterdir())
-    Unpublished(model)
-
-
 @pytest.mark.parametrize("directory,filename", [("fresh-cache", "wg"), ("fresh-cache", "receipt.json"), ("candidate", "wg"), ("candidate", "receipt.json")])
 def test_InterruptedFreshSnapshotsRemainUnpublishedAndCannotBeAdoptedByARetry(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, directory: str, filename: str,

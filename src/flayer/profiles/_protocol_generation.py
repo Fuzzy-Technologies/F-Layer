@@ -50,6 +50,11 @@ def _Reservation(
     if pending is None or pending["phase"] != "exposed" or pending["parent"] != head or digest != intent["previous_authority_sha256"]:
         raise GenerationError("Generation preparation requires its exact current exposed reservation")
 
+    completion = authority._Root(guest) / ("done-" + intent["operation_id"] + ".json")
+
+    if completion.exists() or completion.is_symlink():
+        raise GenerationError("Native completion publication requires finalization before cache preparation")
+
     if request["generation"]["schema_version"] == 3 and runtimeBackend is not None:
         history = runtimeBackend.Origin(guest, peer, authority, request, intent)["history_sha256"]
 

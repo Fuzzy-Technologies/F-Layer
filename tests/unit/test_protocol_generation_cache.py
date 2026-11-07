@@ -26,6 +26,7 @@ pytestmark = pytest.mark.skipif(os.name != "posix", reason="Reserved cache files
 
 def Prepared(
     tmpPath: Path, monkeypatch: pytest.MonkeyPatch, change: str = "disable", version: int = 1, helper: bytes | None = None,
+    *, sourceSha256: str = "f" * 64,
 ) -> tuple[Any, dict[str, Any], dict[str, Any], Path, Path | None]:
     """Expose one exact generation plan while retaining independent old runtime and source snapshots."""
 
@@ -58,7 +59,7 @@ def Prepared(
         intent.update(wireguard_state="absent", wireguard_receipt_sha256="", wireguard_absence_sha256=guest._AbsenceDigest(model.owner))
 
     value = {"schema_version": 2, "cloud_plan_sha256": "a" * 64, "input": transition.Record(),
-             "generation": {"schema_version": version, "change": change, "source_sha256": "f" * 64,
+             "generation": {"schema_version": version, "change": change, "source_sha256": sourceSha256,
                             "source_files": {name: receipt["files"][name] for name in generations._SOURCE_FILES},
                             "cached_receipt": receipt, "candidate_receipt": desired}}
 

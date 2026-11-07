@@ -200,11 +200,11 @@ def test_NormalPeerAndMaintenanceEntrypointsRefusePendingAuthorityButAllowHistor
     originalGate = peers._ProtocolGate
     checked = []
 
-    def Check(current: Any) -> None:
+    def Check(current: Any, *, mutate: bool = False) -> None:
         """Prove that failure comes from the intended gate, retaining the entrypoint's fixed sanitized diagnostic."""
 
         checked.append(True)
-        originalGate(current)
+        originalGate(current, mutate=mutate)
 
     monkeypatch.setattr(peers, "_ProtocolGate", Check)
 

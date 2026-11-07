@@ -756,8 +756,8 @@ Schema-1 intent loading is unchanged, and these checks need no private source bo
 Native epochs also preserve each unrelated protocol's preceding complete service
 receipt or absence proof; unchanged source selection alone cannot replace that proof.
 
-This reader has no publication workflow, guest schema-2 finalizer or public
-protocol CLI yet. Existing ordinary entrypoints still reject epoch metadata until
+This reader has no publication workflow or public protocol CLI yet. A separate
+private guest schema-2 finalizer is described below. Existing ordinary entrypoints still reject epoch metadata until
 the coordinator, transport-generation handling, authenticated live attestation and
 recovery are integrated. The reader performs no guest, cloud or desktop operation
 and never infers actual runtime health from a locally authored proof record.
@@ -904,9 +904,41 @@ planned identity on rollback with the same credentials/runtime and a new history
 link. Read-only native status reports recovery required. A stopped `unchanged`
 rollback cannot open input until restored; previously restored input stays unchanged.
 
-Cloud ordering, common completion, generation-bearing epoch publication, fresh-build
+Cloud ordering, invocation of common completion, generation-bearing epoch publication, fresh-build
 orchestration and public protocol CLI admission remain integration work.
 No live server/client or traffic acceptance is implied by these private primitives.
+
+## Native common completion
+
+The private finalizer validates its closed candidate before guest I/O or mutation:
+schema-2 epoch metadata, exact full composite, terminal native journal, applied or
+rolled-back input proof and source-bound service receipts/absence. It supports
+enabled, removed, restored, unchanged and rolled-back native outcomes. This is not
+an unstarted-operation producer; unexposed schema-1 cancellation remains separate.
+
+First publication holds common then WG locks and verifies the prepared generation,
+actual kernel/service state and consumed history, exact installed file identities,
+terminal input journal/policy and unrelated services through a trusted observer
+dependency. Request JSON cannot choose that dependency. Cloud proof and local graph
+attestation still belong to the controller. There is no concrete AWG/VLESS observer,
+RPC, controller publication workflow or public CLI integration in this primitive.
+
+An exact immutable schema-2 completion commits the measured historical result.
+Its common head is published before retiring verified input/generation/runtime
+sidecars and, last, the reservation. Unknown entries, changed history and reappearing
+canonical sidecars refuse that final retirement. Cleanup pins file/directory
+identities, verifies bytes and synchronizes every barrier; it does not enumerate or
+delete private runtime payloads. A complete exact record permits metadata recovery
+without live service health after a crash or reboot. This replay makes no current
+health or peer-history claim. Only an exact incomplete byte prefix can be appended,
+and only after all live terminal proofs are rechecked. Neither path rewinds history.
+
+If final reservation unlink succeeds but its directory synchronization fails, the
+next ordinary mutating WG guest/peer entrypoint must synchronize the completed
+namespace before any write. A failed barrier refuses admission. Read-only status
+does not perform this synchronization or repair. Deterministic fault tests cover
+publication/cleanup interruptions, incomplete records, reappearing sidecars and
+failed directory barriers; every service/network boundary remains synthetic.
 
 ## Remaining integration
 

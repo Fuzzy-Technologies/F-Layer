@@ -35,6 +35,11 @@ def _Reservation(guest: Any, authority: Any, intent: dict[str, Any]) -> dict[str
     if pending is None or pending["phase"] != "exposed" or pending["parent"] != head or digest != intent["previous_authority_sha256"]:
         raise RuntimeError("Native generation requires its exact current exposed reservation")
 
+    completion = authority._Root(guest) / ("done-" + intent["operation_id"] + ".json")
+
+    if completion.exists() or completion.is_symlink():
+        raise RuntimeError("Native completion publication requires finalization before further runtime mutation")
+
     return cast(dict[str, Any], pending)
 
 

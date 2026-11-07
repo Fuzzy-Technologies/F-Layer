@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:726da27dfa3f76246705d18aecb4c6bdf5e21b49a9bb90b5fd3e5150105a713d"
-reviewedTranslationHash = "sha256:1aa031b499b523ad3da117b6aad3a051450c5c8529e3949a6df4a60ba1b4ff03"
+sourceHash = "sha256:b674dd27116124de3adf0bdc3283f7fae8495825edc4bec11f0d28c9404971e0"
+reviewedTranslationHash = "sha256:34f3a28d087e48b37ab30af30ca28869c4f3392e8aedd1310bba8ede30d52a2d"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T02:38:11.899421Z"
+reviewedAt = "2026-11-07T03:14:38.476437Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -465,6 +465,22 @@ material/server 角色摘要。必需的公共意图和请求文件仍须通过�
 读取器尚无发布工作流、来宾模式 2 完成器或公共协议 CLI。普通入口仍拒绝纪元元数据，直到
 协调器、传输代际、认证实时证明和恢复完成集成。读取器不执行来宾、云或桌面操作，也不会
 从本地编写的证据记录推断实际运行健康。
+
+## 绑定 nonce 的 WireGuard 代际候选
+
+显式代际候选逐字节保留原始安装程序、deployment、服务端和对等端凭据、已验证二进制及
+许可证。模式 2 根目录增加一个单独固定的生命周期辅助程序，并将两个 systemd 回调绑定
+到新的 nonce。重用前验证完整文件及当前执行内核事实，不下载、重建或生成密钥。默认首次
+准备仍生成模式 1，并保留原有 unit 格式及厂商/构建门禁。
+
+回调在现有 WG 锁下重新读取根元数据，在运行时变更前拒绝陈旧或缺失 nonce、错误执行文件、
+漂移和锁竞争。原生命令子进程继承该锁描述符。对等端事务保留模式 2 的全部八个文件固定值，
+包括辅助程序，不授权替换辅助程序或 unit。未知文件和模式别名仍拒绝。
+
+缓存准备器只在受管运行时/unit 路径外写入完整、未发布的私有候选，既不激活，也不授予权限。
+模式 2 回调目前拒绝待处理公共预留；普通 remove/recover 在发布旧式清理意图前拒绝这些代际。
+协议协调器仍需密封代际日志、释放锁后的异步 systemd 任务交接、终态观测及 nonce/历史发布。
+这些工作流尚不可用，普通纪元准入仍受阻。POSIX 测试使用真实私有文件及锁，网络仅为模拟。
 
 ## 尚待集成
 

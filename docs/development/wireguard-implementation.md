@@ -719,6 +719,36 @@ cleanup after client-key loss. It does not activate protocol transitions or bypa
 complete cloud ownership/pending-operation checks. No epoch head is inferred from
 orphan artifacts, and ordinary entrypoints still refuse unintegrated epoch metadata.
 
+## Committed protocol graph reader
+
+The private committed graph reader now verifies immutable epoch bundles, exact
+closure of every preceding WG peer segment, retained source-role pins and complete
+cloud/input/service evidence references. It rejects missing parents/segments,
+orphan peer/protocol/ingress artifacts, pending journals, stale authority and
+operation/byte limits. The final epoch bundle digest starts the next separate peer
+segment; every old segment and creation spec stays unchanged.
+
+Cloud evidence distinguishes known terminal changes, never-dispatched cancellation
+and completed exact inverse operations. Restored provider IDs/descriptions remain
+the actual readback, with original and compensating intent artifacts retained.
+Input receipts bind applied, unchanged or restored policy bytes. Service references
+are closed and source-bound; their hashes alone do not attest a live service.
+The authorizing intent binds all evidence hashes, then the exact guest completion
+enters the final bundle, avoiding a circular digest. See ADR 0024 for publication
+ordering and the schema-1 unexposed cancellation boundary.
+
+Configured sources remain nonempty while the active subset may become empty.
+History checks use deployment hashes from retained public manifests, retaining the
+old-driver-compatible fence without opening private bodies. All metadata traversal
+continues after client/private source-file loss; ordinary use still needs complete
+private content. Capacity helpers must run before consuming guest/cloud authority.
+
+This reader has no publication workflow, guest schema-2 finalizer or public
+protocol CLI yet. Existing ordinary entrypoints still reject epoch metadata until
+the coordinator, transport-generation handling, authenticated live attestation and
+recovery are integrated. The reader performs no guest, cloud or desktop operation
+and never infers actual runtime health from a locally authored proof record.
+
 ## Remaining integration
 
 Adding/removing a protocol on an existing guest, schema-1 migration, explicit

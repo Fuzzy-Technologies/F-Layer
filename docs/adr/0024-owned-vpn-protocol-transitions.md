@@ -193,6 +193,29 @@ An older package rejects schema 2 before mutation. Migration itself changes only
 verified controller metadata, with read-only cloud/guest attestation; it does not
 relabel resources, change ingress, reinstall services or create a paid resource.
 
+## Intent and completion binding
+
+Keep the authorizing epoch intent separate from its completed immutable bundle.
+The canonical intent binds the permanent creation, preceding epoch/peer closure,
+configured and active sources, reservation and full cloud/input/service evidence
+hashes. A schema-2 guest completion consumes its nonce and preceding common head
+and binds that intent hash. The full final bundle includes both intent and exact
+completion; its complete bundle digest is the next peer segment's genesis. This
+avoids a circular hash dependency between completion and the final epoch digest.
+Prepare/journal the complete expected candidate before requesting guest completion;
+publish the local epoch head only after verifying that exact guest completion.
+The existing schema-1 unexposed cancellation may close only a no-op epoch with
+unchanged input and no submitted cloud operation, retaining its reservation hash.
+
+Retain complete known-terminal cloud operations/readbacks and each original or
+compensating ingress-intent artifact. Compensation uses an independently bound
+validity window and records actual restored provider IDs/tags. Reserve enough
+bounded recovery/epoch capacity before dispatch. A snapshot equal to the old rules
+does not turn an unknown submission into an undispatched cancellation. Local graph
+validation checks declared evidence and ancestry; authenticated live attestation,
+guest completion, publication recovery and public entrypoint admission remain the
+coordinator's separate obligations.
+
 ## Consequences and validation
 
 This requires extra bounded metadata and recovery paths, but keeps original

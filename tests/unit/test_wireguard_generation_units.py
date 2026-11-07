@@ -37,7 +37,7 @@ def test_ReceiptSelectsExactGenerationAndEveryHealthCommandUsesItsUnit(
     assert legacy not in guest._OwnedUnits(model.owner)
 
 
-@pytest.mark.parametrize("stale", ["legacy", "generation", "broken-link", "unknown"])
+@pytest.mark.parametrize("stale", ["legacy", "generation", "broken-link", "unknown", "legacy-drop-in", "generation-drop-in"])
 def test_ForeignOrOldUnitNamesBlockHealthAndCannotReceiveTheNewGeneration(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, stale: str,
 ) -> None:
@@ -48,7 +48,13 @@ def test_ForeignOrOldUnitNamesBlockHealthAndCannotReceiveTheNewGeneration(
     name = guest._Paths(model.owner)[1].name if stale == "legacy" else guest._Paths(model.owner, nonce="1" * 32)[1].name
     path = guest.SYSTEMD / (guest._Service(model.owner) + "-unknown" if stale == "unknown" else name)
 
-    if stale == "broken-link":
+    if stale.endswith("drop-in"):
+        name = guest._Paths(model.owner)[1].name if stale == "legacy-drop-in" else model.unit.name
+        path = guest.SYSTEMD / (name + ".d")
+        path.mkdir(mode=0o755)
+        (path / "override.conf").write_bytes(b"[Service]\nExecStart=/foreign\n")
+
+    elif stale == "broken-link":
         path = guest.SYSTEMD / "multi-user.target.wants" / name
         path.symlink_to(guest.SYSTEMD / name)
 
@@ -71,7 +77,7 @@ def test_ForeignOrOldUnitNamesBlockHealthAndCannotReceiveTheNewGeneration(
     assert len(model.commands) == before and (path.exists() or path.is_symlink())
 
 
-@pytest.mark.parametrize("stale", ["unit", "enablement", "unknown"])
+@pytest.mark.parametrize("stale", ["unit", "enablement", "unknown", "legacy-drop-in"])
 def test_AbsentRootDoesNotHideRetainedGenerationUnitsOrAllowAFreshInstall(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, stale: str,
 ) -> None:
@@ -80,7 +86,12 @@ def test_AbsentRootDoesNotHideRetainedGenerationUnitsOrAllowAFreshInstall(
     stage, request, model = Seed(tmp_path, monkeypatch)
     path = guest._Paths(model.owner, nonce="1" * 32)[1]
 
-    if stale == "enablement":
+    if stale == "legacy-drop-in":
+        path = guest.SYSTEMD / (guest._Paths(model.owner)[1].name + ".d")
+        path.mkdir(mode=0o755)
+        (path / "override.conf").write_bytes(b"[Service]\nExecStart=/foreign\n")
+
+    elif stale == "enablement":
         parent = guest.SYSTEMD / "multi-user.target.wants"
         parent.mkdir(mode=0o755)
         path = parent / path.name
@@ -103,6 +114,45 @@ def test_AbsentRootDoesNotHideRetainedGenerationUnitsOrAllowAFreshInstall(
 
     assert len(model.commands) == before and not guest.BASE.exists()
     assert path.exists() or path.is_symlink()
+
+
+@pytest.mark.parametrize("fault", ["regular", "broken", "misdirected", "missing", "loop"])
+def test_CurrentGenerationEnablementMustBeItsExactOwnedSymlink(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fault: str,
+) -> None:
+    """An exempted expected filename cannot hide a broken link, changed target or foreign regular file."""
+
+    model, candidate, receipt, _ = Candidate(tmp_path, monkeypatch)
+    PublishFixture(model, candidate, receipt, monkeypatch)
+    link = guest.SYSTEMD / "multi-user.target.wants" / model.unit.name
+    link.unlink()
+
+    if fault == "regular":
+        link.write_bytes(b"foreign unit at expected link name")
+
+    elif fault == "loop":
+        link.symlink_to(link)
+
+    elif fault in {"broken", "misdirected"}:
+        target = guest.SYSTEMD / "unrelated.service"
+
+        if fault == "misdirected":
+            target.write_bytes(b"unrelated service")
+            target.chmod(0o644)
+
+        link.symlink_to(target)
+
+    before = len(model.commands)
+
+    with pytest.raises(guest.GuestError, match="enablement"):
+        guest._Check(model.root, model.unit, model.request)
+
+    assert len(model.commands) == before
+    if fault == "missing":
+        assert not link.exists() and not link.is_symlink()
+
+    else:
+        assert link.exists() or link.is_symlink()
 
 
 def test_UnitSelectionDoesNotAdoptChangedReceiptBytesAsHealthyState(

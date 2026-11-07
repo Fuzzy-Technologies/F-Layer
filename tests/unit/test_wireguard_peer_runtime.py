@@ -186,7 +186,7 @@ def test_OnlyRecordedTransitionPrefixesAreAcceptedAndRevocationDeniesBeforeKerne
             calls.append("nft")
             state["policy"] = payload.split(b"\n", 1)[1].decode()
 
-    boundary = SimpleNamespace(GuestError=guest.GuestError, _Paths=lambda owner: (Path("root"), Path("unit"), Path("txn")),
+    boundary = SimpleNamespace(GuestError=guest.GuestError, _ActivePaths=lambda owner: (Path("root"), Path("unit"), Path("txn")),
                                _WireGuardState=WireGuard, _NftState=lambda owner, nonce: hashes[state["policy"]], _Run=Run,
                                _Table=lambda owner: "owned", _Interface=lambda owner: "owned", _Read=lambda path: path.parent.name.encode())
     monkeypatch.setattr(peers, "_Runtime", lambda *args: None)

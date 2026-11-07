@@ -831,7 +831,7 @@ def _OwnedUnits(owner: str) -> frozenset[Path]:
             if index >= 4096:
                 raise GuestError("WireGuard service namespace observation exceeds its bound")
 
-            if path.name == prefix + ".service" or path.name.startswith(prefix + "-"):
+            if path.name.startswith(prefix):
                 found.add(path)
 
     return frozenset(found)
@@ -1093,6 +1093,11 @@ def _Check(root: Path, unit: Path, request: dict[str, Any], *, staged: bool = Fa
             or _OwnedUnits(owner) - {unit, SYSTEMD / "multi-user.target.wants" / unit.name}):
         raise GuestError("WireGuard service namespace contains another generation or unknown unit")
 
+    _EnabledLink(unit)
+
+    if not (SYSTEMD / "multi-user.target.wants" / unit.name).is_symlink():
+        raise GuestError("WireGuard service has no exact owned enablement link")
+
     if (receipt["files"]["server.conf"] != request["config_sha256"]
             or _Json(_Read(root / "deployment.json")) != request):
         raise GuestError("Prepared WireGuard configuration differs from the active receipt")
@@ -1245,8 +1250,15 @@ def _EnabledLink(unit: Path) -> None:
 
     if link.exists() or link.is_symlink():
         info = link.lstat()
+        valid = False
 
-        if not stat.S_ISLNK(info.st_mode) or info.st_uid != _ROOT_UID or link.resolve(strict=True) != unit.resolve(strict=True):
+        try:
+            valid = stat.S_ISLNK(info.st_mode) and info.st_uid == _ROOT_UID and link.resolve(strict=True) == unit.resolve(strict=True)
+
+        except (OSError, RuntimeError):
+            pass
+
+        if not valid:
             raise GuestError("WireGuard enablement link has foreign ownership")
 
 

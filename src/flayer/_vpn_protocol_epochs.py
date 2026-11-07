@@ -999,7 +999,6 @@ def LoadCommittedGraph(project: SelectedVpnProject) -> ProtocolGraph:
         if path.exists() or path.is_symlink():
             raise VpnError("Pending protocol metadata requires exact coordinator recovery before committed graph traversal")
 
-    baseline = LoadCreationBaseline(project)
     path = project.root / "protocol-head.json"
     raw = ReadPrivate(path, limit=65536) if path.exists() or path.is_symlink() else None
     head = _Pointer(_Decode(raw), re.escape(project.vpn.identity.stack) + r"-ep-[0-9a-f]{16}") if raw is not None else None
@@ -1007,6 +1006,19 @@ def LoadCommittedGraph(project: SelectedVpnProject) -> ProtocolGraph:
     if raw is not None and (head is None or raw != _Json(head)):
         raise VpnError("Protocol epoch head must be its exact canonical nonempty pointer")
 
+    return _LoadGraph(project, head)
+
+
+def _LoadGraph(project: SelectedVpnProject, head: dict[str, str] | None, *, staged: EpochCommit | None = None) -> ProtocolGraph:
+    """Traverse an explicit retained prefix for publication recovery; staged names are confined by one closed expected epoch."""
+
+    if staged is not None:
+        EpochCommit.__post_init__(staged)
+
+        if staged.identity != project.vpn.identity or _Metadata(staged.metadata, staged.identity)["parent"] != head:
+            raise VpnError("Staged epoch cannot redirect its exact preceding graph")
+
+    baseline = LoadCreationBaseline(project)
     current = head
     epochs = []
     visited: set[str] = set()
@@ -1062,16 +1074,32 @@ def LoadCommittedGraph(project: SelectedVpnProject) -> ProtocolGraph:
     if parent.exists() or parent.is_symlink():
         PrivatePath(parent, directory=True)
 
-        if not segments or {item.name for item in parent.iterdir()} != segments:
+        actualSegments = {item.name for item in parent.iterdir()}
+        allowed = {staged.Digest()} if staged is not None else set()
+
+        if (not segments and staged is None or segments - actualSegments or actualSegments - segments - allowed):
             raise VpnError("Protocol graph has unknown or missing peer segment directories")
+
+        for name in actualSegments - segments:
+            directory = parent / name
+            PrivatePath(directory, directory=True)
+
+            if any(directory.iterdir()):
+                raise VpnError("Staged epoch peer segment must remain empty until its publication completes")
 
     elif segments:
         raise VpnError("Protocol graph lost its retained peer segment namespace")
 
     prefixes = tuple("server-" + project.vpn.identity.stack + "-" + role + "-" for role in ("wp", "wc", "tp", "ip", "ep"))
     actual = {item.name.removeprefix("server-") for item in project.Artifacts.iterdir() if item.name.startswith(prefixes)}
+    allowedArtifacts = set()
 
-    if actual - expected:
+    if staged is not None:
+        metadata = _Metadata(staged.metadata, staged.identity)
+        allowedArtifacts = {staged.Bundle().name, *(item["name"] for item in metadata["ingress_intents"]),
+                            *(item["request_name"] for item in metadata["sources"] if item["request_name"])}
+
+    if actual - expected - allowedArtifacts:
         raise VpnError("Unrecorded protocol/peer/ingress artifacts require recovery; no missing head was adopted")
 
     return ProtocolGraph(baseline, graph.epochs, graph.revision, head, graph.sources, graph.activeProtocols, frozenset(expected))

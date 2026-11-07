@@ -756,8 +756,8 @@ Schema-1 intent loading is unchanged, and these checks need no private source bo
 Native epochs also preserve each unrelated protocol's preceding complete service
 receipt or absence proof; unchanged source selection alone cannot replace that proof.
 
-This reader has no publication workflow or public protocol CLI yet. A separate
-private guest schema-2 finalizer is described below. Existing ordinary entrypoints still reject epoch metadata until
+This reader has no public protocol CLI yet. Separate private guest schema-2
+completion and controller publication primitives are described below. Existing ordinary entrypoints still reject epoch metadata until
 the coordinator, transport-generation handling, authenticated live attestation and
 recovery are integrated. The reader performs no guest, cloud or desktop operation
 and never infers actual runtime health from a locally authored proof record.
@@ -904,7 +904,7 @@ planned identity on rollback with the same credentials/runtime and a new history
 link. Read-only native status reports recovery required. A stopped `unchanged`
 rollback cannot open input until restored; previously restored input stays unchanged.
 
-Cloud ordering, invocation of common completion, generation-bearing epoch publication, fresh-build
+Cloud ordering, invocation of common completion and epoch publication, fresh-build
 orchestration and public protocol CLI admission remain integration work.
 No live server/client or traffic acceptance is implied by these private primitives.
 
@@ -921,7 +921,7 @@ actual kernel/service state and consumed history, exact installed file identitie
 terminal input journal/policy and unrelated services through a trusted observer
 dependency. Request JSON cannot choose that dependency. Cloud proof and local graph
 attestation still belong to the controller. There is no concrete AWG/VLESS observer,
-RPC, controller publication workflow or public CLI integration in this primitive.
+RPC or public CLI integration in this primitive. Local publication is separate below.
 
 An exact immutable schema-2 completion commits the measured historical result.
 Its common head is published before retiring verified input/generation/runtime
@@ -939,6 +939,34 @@ namespace before any write. A failed barrier refuses admission. Read-only status
 does not perform this synchronization or repair. Deterministic fault tests cover
 publication/cleanup interruptions, incomplete records, reappearing sidecars and
 failed directory barriers; every service/network boundary remains synthetic.
+
+## Journaled local epoch publication
+
+The private controller publisher requires caller-held project coordination. It
+retains a bounded complete candidate with four public epoch files before guest
+completion, distinguishing `prepared` expected bytes from an `observed` exact
+authenticated response supplied by the coordinator. It verifies complete previous
+graph ancestry, peer closure, sources, ingress intent and capacity. It does not
+infer an acknowledgment or lost authority from an orphan artifact. Public graph
+traversal continues to refuse pending publication.
+
+After the separate exact response, publication records `observed`, creates the
+empty next peer namespace, publishes the epoch head and removes only its known
+terminal ingress journal and, last, its own journal. Every prefix is recoverable
+from the same retained evidence; ordered immutable file prefixes are appended,
+never replaced. Unknown bytes, gaps, unexplained temporary files, stale authority,
+unknown dispatch, nonempty peer segments, inode replacements and membership ABA
+refuse. Complete immutable file/manifest descriptors remain pinned and verified
+through later head and cleanup barriers. Late snapshot drift preserves or restores
+the same observed journal before returning failure. A mutation-only project-lock
+barrier persists final namespace absence before later segment or guest writes;
+read-only coordination remains free of synchronization or repair.
+
+Historical metadata recovery uses retained public manifests when private source
+bodies are lost; it never reconstructs credentials. Repeated native epochs retain
+all prior segments and source files. There is no real guest/provider dispatch or
+live attestation in this local backend. Protocol RPC, the coordinator and public
+entrypoint integration remain #128 work.
 
 ## Remaining integration
 

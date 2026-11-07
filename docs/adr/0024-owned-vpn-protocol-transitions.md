@@ -384,6 +384,33 @@ proceeding, closing a failed final-unlink directory barrier. Read-only admission
 does not synchronize or repair metadata. This backend covers native terminal
 operations; schema-1 unexposed cancellation remains the separate no-op path.
 
+## Private controller publication
+
+Under the existing project lock, prepare a bounded journal containing all four
+expected public epoch files before requesting guest completion. Its predicted
+completion is not an acknowledgment and does not publish a head. Validate the
+complete old graph, closed peer segment, source/ingress manifests and capacity;
+allow only that candidate's confined additional artifacts. Ordinary graph readers
+continue to reject the pending journal. Missing publication authority is never
+reconstructed from an orphan bundle or peer directory.
+
+After the coordinator supplies the exact separately authenticated guest response,
+durably record `observed`, create the exact empty next peer namespace, publish the
+new head and retire terminal ingress metadata and, last, the publication journal.
+Retain complete known-terminal provider references; unknown dispatch cannot be
+retired. Immutable public files use manifest-last exact-prefix recovery; changed
+bytes, inode replacements, file-order gaps and directory membership ABA refuse.
+Keep the full immutable snapshot pinned across later head and cleanup barriers.
+Late snapshot drift preserves or restores the same observed protective journal;
+it grants no new guest/cloud authority. Repeated completion uses the same epoch
+and guest response. Read-only status repairs nothing.
+
+Mutating project-lock admission synchronizes the published project namespace before
+any subsequent peer/guest write, closing a failed final journal-unlink directory
+barrier. Read-only coordination does not synchronize. These are local publication
+primitives: authenticated RPC, live attestation, cloud ordering and public CLI
+admission still require integration, and no local record itself proves them.
+
 ## Consequences and validation
 
 This requires extra bounded metadata and recovery paths, but keeps original

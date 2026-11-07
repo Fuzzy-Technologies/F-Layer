@@ -340,7 +340,7 @@ def Prepared(
 
     temporary = authority._Root(guest) / ".generation.json.new"
 
-    if (request["generation"]["schema_version"] != 2 or record is None or record["phase"] != "prepared"
+    if (request["generation"]["schema_version"] not in {2, 3} or record is None or record["phase"] != "prepared"
             or temporary.exists() or temporary.is_symlink()):
         raise GenerationError("Host input requires its prepared versioned activation/restoration cache")
 

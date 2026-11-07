@@ -35,7 +35,7 @@ def Request(guest: Any, policy: Any, value: object, intent: dict[str, Any]) -> t
     if value["schema_version"] == 2:
         generation = guest._GenerationRecord(value["generation"], intent)
 
-        if (generation["schema_version"] != 2 or value["input"]["listener"]["transport"] != "wireguard"
+        if (generation["schema_version"] not in {2, 3} or value["input"]["listener"]["transport"] != "wireguard"
                 or value["input"]["change"] != generation["change"]):
             raise InputError("Host input requires the exact versioned WG activation/restoration contract")
 
@@ -47,7 +47,10 @@ def Request(guest: Any, policy: Any, value: object, intent: dict[str, Any]) -> t
     return policy.Decode(policy.Json(value)), policies
 
 
-def _Reservation(guest: Any, peer: Any, authority: Any, intent: dict[str, Any]) -> dict[str, Any]:
+def _Reservation(
+    guest: Any, peer: Any, authority: Any, policy: Any, request: dict[str, Any], intent: dict[str, Any], generationCache: Any, runtimeBackend: Any,
+    *, rollback: bool | None = None,
+) -> dict[str, Any]:
     """Require the same exposed reservation and actual retained WG fence under common then WG coordination."""
 
     pending = authority._Pending(guest, intent)
@@ -56,10 +59,23 @@ def _Reservation(guest: Any, peer: Any, authority: Any, intent: dict[str, Any]) 
     if (pending is None or pending["phase"] != "exposed" or pending["parent"] != head or digest != intent["previous_authority_sha256"]):
         raise InputError("Host input mutation requires the exact current exposed reservation")
 
-    _, history = authority._Observe(guest, peer, intent)
+    root = authority._Root(guest)
 
-    if history != authority._FencedHistory(guest, intent, pending["deployment_sha256"]):
-        raise InputError("Host input operation has stale WireGuard history")
+    if any((root / name).exists() or (root / name).is_symlink() for name in ("runtime.json", ".runtime.json.new")):
+        if request["schema_version"] != 2 or generationCache is None or runtimeBackend is None:
+            raise InputError("Native generation input recovery requires its exact trusted runtime and cache backends")
+
+        observed = runtimeBackend.Observe(guest, peer, authority, policy, generationCache, request, intent)
+
+        if (rollback is True and request["generation"]["change"] == "disable" and observed["phase"] not in {"restored", "unchanged"}
+                or rollback is False and request["generation"]["change"] == "enable" and observed["phase"] != "active"):
+            raise InputError("Native generation must reach its planned healthy state before opening host input")
+
+    else:
+        _, history = authority._Observe(guest, peer, intent)
+
+        if history != authority._FencedHistory(guest, intent, pending["deployment_sha256"]):
+            raise InputError("Host input operation has stale WireGuard history")
 
     return cast(dict[str, Any], pending)
 
@@ -258,7 +274,7 @@ def _Result(policy: Any, values: tuple[dict[str, Any], ...], record: dict[str, A
 
 def Prepare(
     guest: Any, peer: Any, authority: Any, policy: Any, value: object, rawIntent: object, *,
-    allowMutation: bool = False, generationCache: Any = None,
+    allowMutation: bool = False, generationCache: Any = None, runtimeBackend: Any = None,
 ) -> dict[str, str]:
     """Verify original/committed boot and actual native input before publishing the durable exact recovery request."""
 
@@ -269,7 +285,7 @@ def Prepare(
         raise InputError("Host input preparation requires explicit mutation consent")
 
     with authority._Locks(guest, readOnly=False):
-        pending = _Reservation(guest, peer, authority, intent)
+        pending = _Reservation(guest, peer, authority, policy, request, intent, generationCache, runtimeBackend)
 
         with _Caches(guest, authority, policy, request, intent, pending, generationCache) as verify:
             fingerprints = _Compiled(guest, policy, values)
@@ -286,7 +302,7 @@ def Prepare(
 
 def Apply(
     guest: Any, peer: Any, authority: Any, policy: Any, value: object, rawIntent: object, *,
-    allowMutation: bool = False, rollback: bool = False, generationCache: Any = None,
+    allowMutation: bool = False, rollback: bool = False, generationCache: Any = None, runtimeBackend: Any = None,
 ) -> dict[str, str]:
     """Move only verified boot-first prefixes forward or restore old listeners under the consumed new operation marker."""
 
@@ -297,7 +313,7 @@ def Apply(
         raise InputError("Host input mutation requires explicit consent and an exact rollback selection")
 
     with authority._Locks(guest, readOnly=False) as locks:
-        pending = _Reservation(guest, peer, authority, intent)
+        pending = _Reservation(guest, peer, authority, policy, request, intent, generationCache, runtimeBackend, rollback=rollback)
 
         with _Caches(guest, authority, policy, request, intent, pending, generationCache) as verify:
             fingerprints = _Compiled(guest, policy, values)
@@ -344,7 +360,7 @@ def Apply(
 
 
 def Status(
-    guest: Any, peer: Any, authority: Any, policy: Any, value: object, rawIntent: object, *, generationCache: Any = None,
+    guest: Any, peer: Any, authority: Any, policy: Any, value: object, rawIntent: object, *, generationCache: Any = None, runtimeBackend: Any = None,
 ) -> dict[str, str]:
     """Observe only an exactly reserved known prefix without creating a durable file or repairing a temporary publication."""
 
@@ -352,7 +368,7 @@ def Status(
     request, values = Request(guest, policy, value, intent)
 
     with authority._Locks(guest, readOnly=True):
-        pending = _Reservation(guest, peer, authority, intent)
+        pending = _Reservation(guest, peer, authority, policy, request, intent, generationCache, runtimeBackend)
 
         with _Caches(guest, authority, policy, request, intent, pending, generationCache, readOnly=True):
             fingerprints = _Compiled(guest, policy, values)

@@ -36,7 +36,7 @@ def Prepared(
     desired = None
     transition = Delta()
 
-    if change == "enable" or version == 2:
+    if change == "enable" or version >= 2:
         candidate = tmpPath / "candidate"
         candidate.mkdir(mode=0o700)
         helper = (model.root / "install.py").read_bytes()
@@ -61,6 +61,9 @@ def Prepared(
              "generation": {"schema_version": version, "change": change, "source_sha256": "f" * 64,
                             "source_files": {name: receipt["files"][name] for name in generations._SOURCE_FILES},
                             "cached_receipt": receipt, "candidate_receipt": desired}}
+
+    if version == 3:
+        value["generation"]["callback_abi"] = guest.PROTOCOL_RUNTIME_ABI
     intent["plan_sha256"] = policy.Digest(policy.Json(value))
     reserved = authority.Reserve(guest, peers, intent, allowMutation=True)
     authority.Expose(guest, peers, intent, reserved["reservation_sha256"], allowMutation=True)

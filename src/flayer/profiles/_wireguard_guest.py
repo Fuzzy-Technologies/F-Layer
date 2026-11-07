@@ -28,6 +28,7 @@ TOOLS_SHA256 = "af459827b80bfd31b83b08077f4b5843acb7d18ad9a33a2ef532d3090f291fbf
 TOOLS_URL = "https://git.zx2c4.com/wireguard-tools/snapshot/wireguard-tools-1.0.20260223.tar.xz"
 KERNEL_CVE = "CVE-2026-98432"
 KERNEL_CVE_URL = "https://ubuntu.com/security/cves/CVE-2026-98432.json"
+PROTOCOL_RUNTIME_ABI = "f-layer/wireguard/protocol-runtime/v1"
 BASE = Path("/opt/flayer/wireguard")
 SYSTEMD = Path("/etc/systemd/system")
 LOCK = Path("/run/flayer-wireguard.lock")
@@ -989,7 +990,9 @@ def _GenerationRecord(value: object, intent: dict[str, Any]) -> dict[str, Any]:
     sourceFiles = {"server.conf", "deployment.json", "install.py"}
     fields = {"schema_version", "change", "source_sha256", "source_files", "cached_receipt", "candidate_receipt"}
 
-    if (type(value) is not dict or set(value) != fields or type(value["schema_version"]) is not int or value["schema_version"] not in {1, 2}
+    if (type(value) is not dict or type(value.get("schema_version")) is not int or value["schema_version"] not in {1, 2, 3}
+            or set(value) != fields | ({"callback_abi"} if value["schema_version"] == 3 else set())
+            or value["schema_version"] == 3 and value["callback_abi"] != PROTOCOL_RUNTIME_ABI
             or type(value["change"]) is not str or value["change"] not in {"enable", "disable"}
             or type(value["source_sha256"]) is not str or _HASH.fullmatch(value["source_sha256"]) is None
             or type(value["source_files"]) is not dict or set(value["source_files"]) != sourceFiles
@@ -1012,7 +1015,7 @@ def _GenerationRecord(value: object, intent: dict[str, Any]) -> dict[str, Any]:
         raise GuestError("WG activation requires its exact original namespace absence")
 
     if candidate is None:
-        if value["schema_version"] == 2 or value["change"] == "enable":
+        if value["schema_version"] >= 2 or value["change"] == "enable":
             raise GuestError("Native generation capability requires a preplanned fresh activation or restoration receipt")
 
     else:
@@ -1028,6 +1031,169 @@ def _GenerationRecord(value: object, intent: dict[str, Any]) -> dict[str, Any]:
             raise GuestError("WG generation must retain cached credentials, runtime and kernel facts under its fresh exact nonce")
 
     return value
+
+
+def _ProtocolIntent(value: object) -> dict[str, Any]:
+    """Validate standalone callback authority without importing or executing a retained controller program."""
+
+    fields = {"schema_version", "owner", "creation_sha256", "previous_authority_sha256", "previous_state_sha256", "operation_id",
+              "plan_sha256", "plan_expires_at", "wireguard_state", "wireguard_receipt_sha256", "wireguard_absence_sha256", "wireguard_history_sha256"}
+
+    if (type(value) is not dict or set(value) != fields or type(value["schema_version"]) is not int or value["schema_version"] != 1
+            or any(type(value[key]) is not str or _HASH.fullmatch(value[key]) is None for key in
+                   ("owner", "creation_sha256", "previous_authority_sha256", "previous_state_sha256", "plan_sha256", "wireguard_history_sha256"))
+            or type(value["operation_id"]) is not str or re.fullmatch(r"[0-9a-f]{32}", value["operation_id"]) is None
+            or type(value["plan_expires_at"]) is not int or value["plan_expires_at"] <= 0
+            or type(value["wireguard_state"]) is not str or value["wireguard_state"] not in {"active", "absent"}
+            or type(value["wireguard_receipt_sha256"]) is not str or type(value["wireguard_absence_sha256"]) is not str
+            or value["wireguard_state"] == "active" and (_HASH.fullmatch(value["wireguard_receipt_sha256"]) is None or value["wireguard_absence_sha256"] != "")
+            or value["wireguard_state"] == "absent" and (_HASH.fullmatch(value["wireguard_absence_sha256"]) is None or value["wireguard_receipt_sha256"] != "")):
+        raise GuestError("Protocol callback intent is invalid")
+
+    return value
+
+
+def _ProtocolHistory(intent: dict[str, Any], request: dict[str, Any]) -> str:
+    """Derive the original consumed history without resetting the retained v1 peer-audit chain."""
+
+    if intent["wireguard_state"] == "absent":
+        return str(intent["wireguard_history_sha256"])
+
+    return _Digest(_Encode({"schema_version": 1, "owner": intent["owner"], "action": "revoke", "device_id": "protocol-" + intent["operation_id"],
+        "previous_receipt_sha256": intent["wireguard_receipt_sha256"], "receipt_sha256": intent["wireguard_receipt_sha256"],
+        "deployment_sha256": request["generation"]["cached_receipt"]["deployment_sha256"], "previous_history_sha256": intent["wireguard_history_sha256"]}))
+
+
+def _GenerationAudit(intent: dict[str, Any], request: dict[str, Any]) -> dict[str, Any]:
+    """Preplan the new generation's fence using its installed receipt, independently of activation success."""
+
+    receipt = {**request["generation"]["candidate_receipt"], "status": "installed"}
+    digest = _Digest(_Encode(receipt))
+
+    return {"schema_version": 1, "owner": intent["owner"], "action": "revoke", "device_id": "protocol-" + intent["operation_id"],
+            "previous_receipt_sha256": digest, "receipt_sha256": digest, "deployment_sha256": receipt["deployment_sha256"],
+            "previous_history_sha256": _ProtocolHistory(intent, request)}
+
+
+def _RuntimeRecord(value: object, intent: dict[str, Any]) -> dict[str, Any]:
+    """Decode one exact native generation intent; a phase or cache receipt alone never grants a callback capability."""
+
+    fields = {"schema_version", "intent", "request", "history_sha256", "admitted_program_sha256", "phase", "rollback"}
+
+    if (type(value) is not dict or set(value) != fields or type(value["schema_version"]) is not int or value["schema_version"] != 1
+            or _Encode(_ProtocolIntent(value["intent"])) != _Encode(intent) or type(value["request"]) is not dict
+            or set(value["request"]) != {"schema_version", "cloud_plan_sha256", "input", "generation"}
+            or type(value["request"]["schema_version"]) is not int or value["request"]["schema_version"] != 2
+            or _Digest(_Encode(value["request"])) != intent["plan_sha256"] or len(_Encode(value["request"])) > 32768
+            or type(value["rollback"]) is not bool or type(value["phase"]) is not str):
+        raise GuestError("Native generation journal differs from its complete reserved intent")
+
+    generation = _GenerationRecord(value["request"]["generation"], intent)
+    phases = ({"ready", "publishing", "starting", "active", "restarting-active"} if generation["change"] == "enable"
+              else {"ready", "removing-original", "stopping-original", "inactive"})
+
+    if value["rollback"]:
+        phases |= ({"removing-candidate", "stopping-candidate", "rolled-back"} if generation["change"] == "enable"
+                   else {"publishing", "starting", "restored", "unchanged", "restarting-restored"})
+
+    if (generation["schema_version"] != 3 or value["phase"] not in phases or value["history_sha256"] != _ProtocolHistory(intent, value["request"])
+            or value["admitted_program_sha256"] != generation["candidate_receipt"]["files"]["lifecycle.py"]):
+        raise GuestError("Native generation phase, restoration contract or original fence is invalid")
+
+    return value
+
+
+def _PeerAudit(owner: str) -> dict[str, Any] | None:
+    """Share the unchanged closed v1 peer proof with standalone nonce-bound callbacks."""
+
+    path = BASE / ("peer-" + owner + ".json")
+
+    if not path.exists() and not path.is_symlink():
+        return None
+
+    content = _Read(path)
+    value = _Json(content)
+
+    if (not isinstance(value, dict) or set(value) != {"schema_version", "owner", "action", "device_id", "previous_receipt_sha256",
+                                                    "receipt_sha256", "deployment_sha256", "previous_history_sha256"}
+            or type(value["schema_version"]) is not int or value["schema_version"] != 1 or value["owner"] != owner
+            or value["action"] not in {"enroll", "revoke"} or not isinstance(value["device_id"], str)
+            or _NAME.fullmatch(value["device_id"]) is None or content != _Encode(value)):
+        raise GuestError("WireGuard peer commit proof is invalid or noncanonical")
+
+    for key in ("previous_receipt_sha256", "receipt_sha256", "deployment_sha256", "previous_history_sha256"):
+        _RequireDigest(value[key])
+
+    return value
+
+
+def _PeerHistory(owner: str) -> str:
+    """Preserve the historical audit/genesis bytes understood by every retained old peer driver."""
+
+    audit = _PeerAudit(owner)
+
+    return _Digest(_Encode(audit if audit is not None else {"domain": "f-layer/wireguard/peer-history/v1", "owner": owner}))
+
+
+def _RuntimeContext(root: Path, unit: Path, nonce: str, *, start: bool) -> dict[str, Any] | None:
+    """Admit only the exact sealed callback while the parent retains common coordination and releases the WG leaf lock."""
+
+    authority = BASE.parent / "ingress"
+
+    if not (authority / "pending.json").exists() and not (authority / "pending.json").is_symlink():
+        return None
+
+    _Directory(authority, private=True)
+
+    if any((authority / name).exists() or (authority / name).is_symlink() for name in
+           (".pending.json.new", ".head.json.new", ".generation.json.new", ".runtime.json.new")):
+        raise GuestError("Protocol callback requires complete canonical authority publications")
+
+    def Record(name: str) -> dict[str, Any]:
+        """Read bounded canonical public metadata, never loading a cached executable."""
+
+        content = _Read(authority / name, limit=65536)
+        value = _Json(content)
+
+        if type(value) is not dict or content != _Encode(value):
+            raise GuestError("Protocol callback metadata is not canonical")
+
+        return value
+
+    pending = Record("pending.json")
+    intent = _ProtocolIntent(pending.get("intent"))
+    record = _RuntimeRecord(Record("runtime.json"), intent)
+    request = record["request"]
+    headPath = authority / "head.json"
+    head = Record("head.json") if headPath.exists() or headPath.is_symlink() else None
+    initial = _Digest(_Encode({"domain": "f-layer/ingress/authority/v1", "owner": intent["owner"], "creation_sha256": intent["creation_sha256"]}))
+
+    if head is not None:
+        if (set(head) != {"name", "sha256"} or type(head["name"]) is not str or re.fullmatch(r"done-[0-9a-f]{32}\.json", head["name"]) is None
+                or type(head["sha256"]) is not str or _HASH.fullmatch(head["sha256"]) is None
+                or _Digest(_Encode(Record(head["name"]))) != head["sha256"]):
+            raise GuestError("Protocol callback has invalid current common authority")
+
+    candidate = request["generation"]["candidate_receipt"]
+    generation = {"schema_version": 1, "intent_sha256": _Digest(_Encode(intent)), "request": request,
+                  "history_sha256": record["history_sha256"], "phase": "prepared"}
+    expected = {"schema_version": 1, "intent": intent, "parent": head,
+                "deployment_sha256": request["generation"]["cached_receipt"]["deployment_sha256"] if intent["wireguard_state"] == "active" else "",
+                "phase": "exposed", "fenced": intent["wireguard_state"] == "active"}
+
+    if (_Encode(pending) != _Encode(expected) or intent["previous_authority_sha256"] != (head["sha256"] if head is not None else initial)
+            or _Encode(Record("generation.json")) != _Encode(generation) or candidate["nonce"] != nonce
+            or root != _Paths(intent["owner"])[0] or unit != _Paths(intent["owner"], nonce=nonce)[1]
+            or _PeerAudit(intent["owner"]) != _GenerationAudit(intent, request)
+            or record["phase"] not in ({"starting", "active", "restored", "restarting-active", "restarting-restored"} if start else {"removing-candidate"})):
+        raise GuestError("Protocol callback does not match its exact generation, consumed history or native phase")
+
+    receipt = _Receipt(root, unit, intent["owner"], staged=True)
+
+    if receipt not in (candidate, {**candidate, "status": "installed"}):
+        raise GuestError("Protocol callback root differs from its preplanned complete candidate")
+
+    return record
 
 
 def _WireGuardState(root: Path, request: dict[str, Any], *, partial: bool = False) -> None:
@@ -1792,10 +1958,13 @@ def _GenerationCallback(root: Path, unit: Path, nonce: str, *, start: bool) -> N
     descriptor = _OpenLock(readOnly=False)
 
     try:
-        # Protocol controllers must dispatch systemd jobs asynchronously, release their locks,
-        # then observe completion in another call. A synchronous job beneath the lock must fail.
+        # A protocol parent retains common coordination but releases WG for the leaf callback.
+        # Its complete sealed journal must authorize this exact nonce and consumed history.
         fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        _ProtocolGate()
+        protocol = _RuntimeContext(root, unit, nonce, start=start)
+
+        if protocol is None:
+            _ProtocolGate()
         request = _Request(root)[0]
         owner = request["owner"]
         installed, expectedUnit, transaction = _ActivePaths(owner)
@@ -1803,12 +1972,12 @@ def _GenerationCallback(root: Path, unit: Path, nonce: str, *, start: bool) -> N
         if root != installed or unit != expectedUnit or Path(__file__).absolute() != root / "lifecycle.py":
             raise GuestError("Generation callback requires the exact installed lifecycle executable")
 
-        receipt = _Receipt(root, unit, owner, staged=transaction.exists())
+        receipt = _Receipt(root, unit, owner, staged=transaction.exists() or protocol is not None)
 
         if receipt["schema_version"] != 2 or receipt["nonce"] != nonce or _callbackFds:
             raise GuestError("Generation callback is stale or has unsupported authority")
 
-        if receipt["status"] == "staged":
+        if receipt["status"] == "staged" and protocol is None:
             journal, _ = _Transaction(owner)
 
             if journal["phase"] != "prepared" or journal["receipt"] != receipt:

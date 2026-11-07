@@ -77,7 +77,11 @@ def _Reservation(
                      or rollback is True and request["generation"]["change"] == "disable")):
             raise InputError("Opening host input requires its matching healthy native generation record")
 
-        _, history = authority._Observe(guest, peer, intent)
+        if request["schema_version"] == 2 and request["generation"]["schema_version"] == 3 and runtimeBackend is not None:
+            history = runtimeBackend.Origin(guest, peer, authority, request, intent)["history_sha256"]
+
+        else:
+            _, history = authority._Observe(guest, peer, intent)
 
         if history != authority._FencedHistory(guest, intent, pending["deployment_sha256"]):
             raise InputError("Host input operation has stale WireGuard history")

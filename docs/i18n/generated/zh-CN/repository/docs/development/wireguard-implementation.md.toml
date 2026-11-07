@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:4a885df56bb8316b201cbe1257cf5a8c1de54df5e477a1e4d1a8db34247132e6"
-reviewedTranslationHash = "sha256:cbe24458fcec9cc30c78469809678bd1f7c04d38c13ea8b898efc19260179a5d"
+sourceHash = "sha256:638bbd1a88db8547510debfc0af295a9fddd9158324fb3f1c0f2ec38f5f27ed6"
+reviewedTranslationHash = "sha256:750a2a1b6e40e9d20648bb6e788e49ce78f26ba13ca75acaa6c8dbe1a6be6749"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T07:29:34.895772Z"
+reviewedAt = "2026-11-07T08:00:47.331236Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -563,6 +563,15 @@ starting 重试均协调 PID1 的加载定义。重载前可识别静止的缓�
 确认加载身份，避免已知截断发布使恢复无法推进。重启后，完整终态日志临时文件可在重启激活之前
 协调，但仅限精确 installed 候选、完整内核缺失及已排空 unit。只读状态报告需要恢复，不
 修复日志或声称激活。installed 对等端/地址部分漂移不属于重启恢复前缀。
+
+可信 `Origin` 观察器还处理原 unit 在精确 Reserve/Expose 后、首次原生准入前，或处于
+`ready`/`unchanged` 时停止的情况。只有代际记录 3 具备此恢复路径。先验证完整原回执、
+来源及 unit 文件、当前内核和已消耗历史，才能认定完整受管内核缺失、非活动且已排空的
+unit 及空 cgroup。部分内核状态、外来文件/unit、任务/PID 和陈旧历史在缓存、入站或
+运行时变更前即被拒绝。静止不代表健康，也不能证明发生重启；初始预留/暴露仍要求原有
+健康证明。缓存/入站调用方通过代码依赖选择可信观察器，不能通过 JSON 选项选择。
+恢复永久退役旧 unit；回滚用相同凭据/运行时及新历史链恢复预先规划的新身份。只读原生
+状态报告需要恢复。停止的 `unchanged` 回滚在恢复前不能开放入站；此前已恢复入站保持不变。
 
 云顺序、公共完成、带代际纪元发布、首次构建编排及公共协议 CLI 准入仍需集成。
 这些私有机制不代表已完成生产服务器、客户端或流量验收。

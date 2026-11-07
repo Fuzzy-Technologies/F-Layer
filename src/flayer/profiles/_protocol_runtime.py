@@ -14,6 +14,7 @@ CGROUPS = Path("/sys/fs/cgroup")
 _NEXT = {("ready", "publishing"), ("publishing", "starting"), ("starting", "active"),
          ("ready", "removing-original"), ("removing-original", "stopping-original"), ("stopping-original", "inactive"),
          ("inactive", "publishing"), ("starting", "restored"), ("ready", "unchanged"),
+         ("unchanged", "removing-original"),
          ("ready", "removing-candidate"), ("publishing", "removing-candidate"), ("starting", "removing-candidate"),
          ("active", "removing-candidate"), ("removing-candidate", "stopping-candidate"), ("stopping-candidate", "rolled-back"),
          ("active", "restarting-active"), ("restarting-active", "active"), ("restored", "restarting-restored"), ("restarting-restored", "restored"),
@@ -423,6 +424,57 @@ def _Fence(guest: Any, peer: Any, request: dict[str, Any], intent: dict[str, Any
     peer._Cancel(guest, {**request["generation"]["candidate_receipt"], "status": "installed"}, "revoke", "protocol-" + intent["operation_id"], original)
 
 
+def Origin(guest: Any, peer: Any, authority: Any, request: dict[str, Any], intent: dict[str, Any]) -> dict[str, str]:
+    """Observe an already exposed native plan under caller-held common/WG locks; quiescence never means active health."""
+
+    intent = authority.Intent(intent)
+    generation = guest._GenerationRecord(request["generation"], intent)
+
+    if generation["schema_version"] != 3:
+        raise RuntimeError("Native origin recovery requires its explicit sealed generation contract")
+
+    history = guest._ProtocolHistory(intent, request)
+    guest._RuntimeRecord({"schema_version": 1, "intent": intent, "request": request, "history_sha256": history,
+                          "admitted_program_sha256": generation["candidate_receipt"]["files"]["lifecycle.py"], "phase": "ready", "rollback": False}, intent)
+    _Reservation(guest, authority, intent)
+    owner = intent["owner"]
+
+    if intent["wireguard_state"] == "absent":
+        _, actual = authority._Observe(guest, peer, intent)
+        phase = "absent"
+
+    else:
+        root, unit, transaction = guest._ActivePaths(owner)
+
+        if transaction.exists() or transaction.is_symlink():
+            raise RuntimeError("Native origin cannot overlap a legacy WG or peer transaction")
+
+        receipt = guest._Receipt(root, unit, owner)
+
+        if guest._Encode(receipt) != guest._Encode(generation["cached_receipt"]):
+            raise RuntimeError("Native origin differs from its exact reserved original receipt")
+
+        guest._Request(root)
+        guest._KernelMatches(receipt)
+        _Units(guest, owner, unit, guest._Read(root / "service.service"))
+
+        if guest._InterfaceState(owner) is None and guest._NftState(owner, receipt["nonce"]) is None:
+            _Quiet(guest, owner)
+            _Drained(guest, unit)
+            actual = peer._History(guest, owner)
+            phase = "quiescent"
+
+        else:
+            _, actual = authority._Observe(guest, peer, intent)
+            _Active(guest, unit)
+            phase = "active"
+
+    if actual != history:
+        raise RuntimeError("Native origin does not retain its exact already consumed history fence")
+
+    return {"status": "protocol-origin", "phase": phase, "history_sha256": str(actual)}
+
+
 def _Observe(
     guest: Any, peer: Any, authority: Any, cache: Any, request: dict[str, Any], intent: dict[str, Any], record: dict[str, Any],
 ) -> str:
@@ -444,7 +496,7 @@ def _Observe(
         raise RuntimeError("A legacy WG/peer transaction cannot overlap native protocol recovery")
 
     if phase in {"ready", "unchanged"}:
-        _, history = authority._Observe(guest, peer, intent)
+        history = Origin(guest, peer, authority, request, intent)["history_sha256"]
 
         if history != original:
             raise RuntimeError("Native generation original history differs")
@@ -592,8 +644,9 @@ def Observe(
     cache.Prepared(guest, authority, policy, request, intent, guest._ProtocolHistory(intent, request))
     absent = _TerminalAbsent(guest, peer, request, intent, record)
     history = _FreshHistory(guest, request, intent) if absent else _Observe(guest, peer, authority, cache, request, intent, record)
+    originStopped = record["phase"] in {"ready", "unchanged"} and Origin(guest, peer, authority, request, intent)["phase"] == "quiescent"
 
-    return {"status": "native-generation", "phase": "recovery-required" if absent else record["phase"], "history_sha256": history}
+    return {"status": "native-generation", "phase": "recovery-required" if absent or originStopped else record["phase"], "history_sha256": history}
 
 
 def _Remove(
@@ -830,7 +883,7 @@ def Execute(
             if change == "enable" and not rollback and record["phase"] in {"active", "restarting-active"}:
                 expectedInput.add("applied")
 
-            elif change == "disable" and rollback and record["phase"] in {"restored", "restarting-restored", "unchanged"}:
+            elif change == "disable" and rollback and record["rollback"] and record["phase"] != "ready":
                 expectedInput.add("rolled-back")
 
         if inputPhase not in expectedInput or record is not None and record["rollback"] and not rollback:
@@ -840,7 +893,7 @@ def Execute(
             if request["generation"]["candidate_receipt"]["files"]["lifecycle.py"] != expectedProgramSha256:
                 raise RuntimeError("Native admission requires the exact approved sealed callback program")
 
-            _, actual = authority._Observe(guest, peer, intent)
+            actual = Origin(guest, peer, authority, request, intent)["history_sha256"]
 
             if actual != history:
                 raise RuntimeError("Native generation begins with stale actual WG history")
@@ -865,7 +918,11 @@ def Execute(
 
             if change == "disable":
                 if record["phase"] == "ready":
-                    record = _Write(guest, authority, record, "unchanged" if rollback else "removing-original")
+                    healthy = Origin(guest, peer, authority, request, intent)["phase"] == "active"
+                    record = _Write(guest, authority, record, "unchanged" if rollback and healthy else "removing-original")
+
+                elif record["phase"] == "unchanged" and Origin(guest, peer, authority, request, intent)["phase"] == "quiescent":
+                    record = _Write(guest, authority, record, "removing-original")
 
                 if record["phase"] in {"removing-original", "stopping-original"}:
                     verify()

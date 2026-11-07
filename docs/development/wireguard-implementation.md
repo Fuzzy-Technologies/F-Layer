@@ -890,6 +890,20 @@ only an exact installed candidate with complete kernel absence and a drained uni
 Read-only status reports recovery required without repairing the journal or claiming
 activation. Installed partial peer/address drift is not a reboot-recovery prefix.
 
+The trusted `Origin` observer additionally handles an original unit that stops
+after exact Reserve/Expose but before first native admission, or in `ready` or
+`unchanged`. Only generation-record3 gains this recovery path. Validate complete
+original receipt/source/unit files, current kernel and consumed history before
+recognizing full owned kernel absence plus an inactive drained unit and empty
+cgroup. Partial kernel state, foreign files/units, jobs/PIDs and stale history refuse
+before cache, input or runtime mutation. Quiescence is not active health or proof
+that a reboot occurred; initial reservation/exposure still require their original
+healthy proof. Cache/input callers select the trusted observer as a code dependency,
+never a JSON option. Recovery permanently retires the old unit, restoring the fresh
+planned identity on rollback with the same credentials/runtime and a new history
+link. Read-only native status reports recovery required. A stopped `unchanged`
+rollback cannot open input until restored; previously restored input stays unchanged.
+
 Cloud ordering, common completion, generation-bearing epoch publication, fresh-build
 orchestration and public protocol CLI admission remain integration work.
 No live server/client or traffic acceptance is implied by these private primitives.

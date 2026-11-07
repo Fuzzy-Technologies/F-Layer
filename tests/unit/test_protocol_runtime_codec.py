@@ -58,6 +58,30 @@ def test_PreviousCacheContractsRemainReadableButCannotAuthorizeANativeJournal(ch
         guest._RuntimeRecord(record, intent)
 
 
+@pytest.mark.parametrize("fault", ["old-1", "old-2", "plan", "abi", "input"])
+def test_OriginRefusesAnOldOrReboundPlanBeforeReadingPrivateAuthority(monkeypatch: pytest.MonkeyPatch, fault: str) -> None:
+    """A recovery observer is an explicit sealed capability, never an I/O fallback for malformed or historical cache requests."""
+
+    record, intent = Record(version=int(fault[-1]) if fault.startswith("old-") else 3)
+    request = record["request"]
+
+    if fault == "plan":
+        request["cloud_plan_sha256"] = "0" * 64
+
+    elif fault == "abi":
+        request["generation"]["callback_abi"] = "unknown/native-abi"
+
+    elif fault == "input":
+        request["input"]["change"] = "enable"
+        intent["plan_sha256"] = guest._Digest(guest._Encode(request))
+
+    monkeypatch.setattr(authority, "_Pending", lambda *args: pytest.fail("Refused origin metadata must not inspect private authority"))
+    monkeypatch.setattr(guest, "_Run", lambda *args, **kwargs: pytest.fail("Refused origin metadata must not run a native command"))
+
+    with pytest.raises(ValueError):
+        runtime.Origin(guest, SimpleNamespace(), authority, request, intent)
+
+
 @pytest.mark.parametrize("fault", ["extra", "version", "intent", "history", "program", "phase", "rollback", "abi", "cloud", "input"])
 def test_RuntimeMetadataCannotAdoptAnUnboundCallbackCapability(fault: str) -> None:
     """Rehashing an outer plan does not bypass closed schema, recovery history, native ABI or exact input scope."""

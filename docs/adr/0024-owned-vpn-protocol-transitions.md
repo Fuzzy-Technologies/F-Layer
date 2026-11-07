@@ -267,6 +267,19 @@ files/history, complete owned kernel absence and a drained unit permit the recor
 restart phases. Partial installed peer/address drift remains refused. Read-only status
 reports recovery required without repairing files or asserting active health.
 
+Before the first native journal, or in `ready`/`unchanged`, an already exposed
+generation-record3 may observe its original installed identity as quiescent. Require
+the exact complete original receipt/files/unit, source pins, unchanged executing
+kernel, consumed original history, complete owned kernel absence and drained unit
+with no job/PIDs or populated cgroup. This is no health claim or inferred reboot.
+Partial/foreign state remains refused. Cache and pre-native input recovery require
+the explicit trusted runtime observer; initial Reserve/Expose admission is unchanged.
+Retire the original unit before handoff; rollback restores only the preplanned fresh
+candidate, retaining keys/runtime and both history fences. A previously healthy
+`unchanged` rollback can require that same recovery after stopping. While quiescent,
+it cannot newly authorize opening input; already restored input retains its exact
+policy during fresh service restoration. Read-only status reports recovery required.
+
 These process rules use the [systemd 255 Job rendering contract](https://github.com/systemd/systemd/blob/v255/src/systemctl/systemctl-show.c),
 [systemd unit/process properties](https://www.freedesktop.org/software/systemd/man/255/org.freedesktop.systemd1.html),
 and [recursive cgroup-v2 populated state](https://docs.kernel.org/admin-guide/cgroup-v2.html#un-populated-notification).

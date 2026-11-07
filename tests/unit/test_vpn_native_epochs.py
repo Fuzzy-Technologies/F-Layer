@@ -60,7 +60,7 @@ def Native(base: Any, generation: dict[str, Any], *, phase: str) -> epochs.Epoch
     native = {"schema_version": 1, "intent": reservation, "request": request, "history_sha256": originalHistory,
               "admitted_program_sha256": generation["candidate_receipt"]["files"]["lifecycle.py"], "phase": phase, "rollback": base.cloud.outcome != "committed"}
     metadata["native_sha256"] = "" if phase == "unstarted" else hashlib.sha256(_Json(native)).hexdigest()
-    metadata["active_protocols"] = [value["pin"]["protocol"] for value in metadata["sources"] if value["pin"]["protocol"] != "wireguard" or active]
+    metadata["active_protocols"] = [proof.protocol for proof in base.services if (active if proof.protocol == "wireguard" else proof.state == "active")]
     services = tuple(replace(proof, state="active" if active else "absent", receiptSha256=metadata["wireguard_receipt_sha256"],
                              absenceSha256="" if active else guest._AbsenceDigest(reservation["owner"])) if proof.protocol == "wireguard" else proof
                      for proof in base.services)

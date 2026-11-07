@@ -193,9 +193,10 @@ def test_NativeMetadataRetainsHistoryOnlyForAGenuineBeforeFenceLegacyCancellatio
     first = Commit(project, epochs.LoadCommittedGraph(project), "enable", "0" * 32)
     graphFixtures.Publish(project, first)
     before = epochs.LoadCommittedGraph(project)
-    planned = Commit(project, before, "disable", "1" * 32)
     base = graphFixtures.CancelBeforeFence(project, before, "1" * 32)
-    value = nativeFixtures.Native(base, epochs._Decode(planned.metadata)["generation"], phase="unstarted")
+    original = {**epochs._Decode(first.metadata)["generation"]["candidate_receipt"], "status": "installed"}
+    generation = nativeFixtures.Generation(epochs._Decode(base.metadata), "disable", "1" * 32, cached=original)
+    value = nativeFixtures.Native(base, generation, phase="unstarted")
     metadata = epochs._Decode(value.metadata)
     metadata["wireguard_history_sha256"] = before.revision.history
     completion = epochs._Decode(value.completion)

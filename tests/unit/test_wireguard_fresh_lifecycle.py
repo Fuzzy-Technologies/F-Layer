@@ -161,6 +161,48 @@ def test_ChangedBuildInputsCannotProduceAnAcknowledgedFreshSnapshot(tmp_path: Pa
     Unpublished(model)
 
 
+def test_TemporaryValidSourceCannotHideTheInvalidPinnedConfigurationReturnedInASnapshot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Validate captured bytes: a valid temporary source followed by restoration of invalid pinned bytes must not receive a receipt."""
+
+    model, source, cached, candidate, _, callback = Sources(tmp_path, monkeypatch)
+    valid = (source / "server.conf").read_bytes()
+    invalid = valid.replace(b"ListenPort = ", b"InvalidListenPort = ", 1)
+    assert invalid != valid
+    (source / "server.conf").write_bytes(invalid)
+    deployment = json.loads((source / "deployment.json").read_bytes())
+    deployment["config_sha256"] = guest._Digest(invalid)
+    (source / "deployment.json").write_bytes(guest._Encode(deployment))
+    pins = {path.name: guest._Digest(path.read_bytes()) for path in source.iterdir()}
+    build, parse = guest._BuildTools, guest._Config
+
+    def Build(work: Path) -> tuple[bytes, bytes]:
+        """Expose a different valid file only between payload construction and parsing."""
+
+        result = build(work)
+        (source / "server.conf").write_bytes(valid)
+
+        return result
+
+    def Parse(content: bytes, request: dict[str, Any], binary: Path) -> Any:
+        """Restore the original invalid source immediately after validation, as if its mutable path had never changed."""
+
+        try:
+            return parse(content, request, binary)
+
+        finally:
+            (source / "server.conf").write_bytes(invalid)
+
+    monkeypatch.setattr(guest, "_BuildTools", Build)
+    monkeypatch.setattr(guest, "_Config", Parse)
+
+    with pytest.raises(guest.GuestError):
+        Prepare(source, cached, candidate, pins, callback)
+
+    assert not tuple(cached.iterdir()) and not tuple(candidate.iterdir())
+    assert (source / "server.conf").read_bytes() == invalid
+    Unpublished(model)
+
+
 @pytest.mark.parametrize("directory,filename", [("fresh-cache", "wg"), ("fresh-cache", "receipt.json"), ("candidate", "wg"), ("candidate", "receipt.json")])
 def test_InterruptedFreshSnapshotsRemainUnpublishedAndCannotBeAdoptedByARetry(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, directory: str, filename: str,

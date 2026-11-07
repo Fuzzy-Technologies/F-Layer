@@ -75,7 +75,9 @@ def PrepareFresh(
         os.chmod(work, 0o700)
         receipt, built = guest._BuildPayload(source, request, root, work, {**facts, **evidence})
 
-        if receipt["nonce"] == nonce or any(built[name] != content for name, content in payload.items()):
+        if (receipt["nonce"] == nonce or any(built[name] != content for name, content in payload.items())
+                or {name: guest._Read(source / name) for name in sourceFiles} != payload
+                or {path.name for path in source.iterdir()} != set(sourceFiles)):
             raise guest.GuestError("Fresh runtime source or generation changed during its private build")
 
         guest._KernelMatches(receipt)

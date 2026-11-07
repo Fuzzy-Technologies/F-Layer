@@ -1536,6 +1536,12 @@ def _BuildPayload(
     """Build and validate private runtime bytes; the caller supplies verified vendor/kernel evidence and owns publication."""
 
     owner = request["owner"]
+    payload = {name: _Read(stage / name) for name in ("server.conf", "deployment.json", "install.py")}
+
+    if (_Digest(payload["server.conf"]) != request["config_sha256"] or _Digest(payload["install.py"]) != request["program_sha256"]
+            or _Json(payload["deployment.json"]) != request):
+        raise GuestError("WireGuard private build source differs from its complete validated request")
+
     buildFacts = _BuildFacts()
     binary, licenseText = _BuildTools(work)
 
@@ -1545,14 +1551,13 @@ def _BuildPayload(
     tool = work / "wg"
     tool.write_bytes(binary)
     tool.chmod(0o755)
-    _Config(_Read(stage / "server.conf"), request, tool)
+    _Config(payload["server.conf"], request, tool)
     nonce = os.urandom(16).hex()
     firewall = _Firewall(request, nonce)
     policy = work / "firewall.nft"
     policy.write_bytes(firewall)
     policy.chmod(0o600)
     network = _ExpectedNetwork(policy, owner, nonce)
-    payload = {name: _Read(stage / name) for name in ("server.conf", "deployment.json", "install.py")}
     payload.update({"wg": binary, "COPYING": licenseText, "firewall.nft": firewall, "service.service": _Unit(root, owner)})
     receipt: dict[str, Any] = {"schema_version": 1, "owner": owner, "nonce": nonce, "status": "staged",
                              "files": {name: _Digest(content) for name, content in payload.items()},

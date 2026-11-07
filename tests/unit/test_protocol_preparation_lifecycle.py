@@ -13,6 +13,7 @@ import pytest
 from test_protocol_generation import Composite
 from test_protocol_preparation import Request
 from test_protocol_reservation import Active
+from test_protocol_runtime import NativeModel
 from test_vpn_project_v2 import Snapshot
 from test_wireguard_lifecycle import Interrupted, Seed
 
@@ -107,7 +108,7 @@ def test_ReenableUsesRetainedPrivateCacheWithoutFetchingBuildingOrRotatingCreden
     original = first["generation"]["cached_receipt"]
     root = Root(request) / "cached"
     payload = {path.name: path.read_bytes() for path in root.iterdir()}
-    cache._Copy(guest, original, payload, resume=False)
+    cache._Copy(guest, original, payload, resume=True)
     request = copy.deepcopy(request)
     request["cached_receipt"] = original
     request["origin"]["operation_id"] = "d" * 32
@@ -122,10 +123,16 @@ def test_ReenableUsesRetainedPrivateCacheWithoutFetchingBuildingOrRotatingCreden
 def test_SelectedSnapshotsFeedTheActualExposedCachePreparationOnlyAfterFullIntentAndGenerationMatch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str) -> None:
     """A pre-plan manifest alone cannot invoke the cache backend: the exact full composite still needs Reserve and Expose."""
 
-    _, request, files = Setup(tmp_path, monkeypatch, kind)
+    model, request, files = Setup(tmp_path, monkeypatch, kind)
     prepared = Prepare(request, files)
     composite, _ = Composite("disable" if kind == "disable" else "enable", version=3)
     composite["generation"] = prepared["generation"]
+    controller = NativeModel(model, composite, monkeypatch)
+    groups = tmp_path / "cgroups"
+    groups.mkdir(mode=0o755)
+    (groups / "cgroup.controllers").write_bytes(b"cpu memory\n")
+    monkeypatch.setattr(runtime, "CGROUPS", groups)
+    monkeypatch.setattr(guest, "_Run", controller.Run)
     intent = {**request["origin"], "plan_sha256": guest._Digest(guest._Encode(composite))}
     selected, cached, candidate = preparations.Read(guest, authority, completion, cache, request, intent, prepared["generation"])
     assert selected == prepared

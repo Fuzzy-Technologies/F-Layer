@@ -14,12 +14,13 @@ transport also changes host input policy and cloud ingress. It must preserve the
 original resource identity while closing stale operation authority across both
 peer and protocol changes.
 
-This decision defines the next implementation boundary. The code accompanying
-this ADR normalizes optional security-group rule labels and provides a pure
-`IngressDelta` planner with complete expected-old/readback validation. It does not
-dispatch a cloud command or implement the protocol CLI, migration, epoch store or
-guest ingress transaction. Those workflows remain unavailable until integrated
-and tested; ordinary deployment still refuses a changed protocol selection.
+This decision defines protocol-transition integration. Private code now provides
+the `IngressDelta` planner, scoped asynchronous ingress operations, common guest
+reservations, owned input transactions, committed graph readers and generation
+cache preparation. The public protocol CLI, legacy migration, complete guest
+generation coordinator and epoch-publication workflow remain unavailable until
+integrated and tested. Ordinary deployment still refuses a changed protocol
+selection; these private backends do not bypass that admission boundary.
 
 ## Original creation identity and protocol epochs
 
@@ -189,6 +190,24 @@ not fence history, publish a root, authorize a transition or attest active healt
 Cached runtime reuse verifies complete receipt/file hashes and the same executing
 kernel facts, without fetching, building or regenerating credentials. First-ever
 runtime preparation still requires the original vendor/build gate.
+
+The private generation-cache backend binds a schema-2 composite request containing
+the cloud-plan hash, exact WG input delta, retained source/file pins and complete
+cached/candidate receipts. Under the exposed common reservation and WG fence,
+persist its preparation journal before copying any rollback/runtime bytes. Cache
+paths derive only from the full owner and receipt digest. Validate every private
+file and ancestor, synchronize the file inode and directory boundaries, and publish
+the cache receipt last. A recorded preparing operation may append only a proved
+matching source suffix or complete known missing entries after a namespace crash.
+An absent journal cannot authorize torn-file recovery. Prepared caches are immutable;
+retries verify/resync them without needing discarded transient source directories.
+Read-only status neither repairs a publication nor claims service activation.
+
+This backend does not mutate an active root, unit, input policy or cloud resource.
+The input-only backend and committed epoch reader still reject the new composite
+until sealed generation context, native transition/recovery, common completion and
+controller publication are integrated. Cache preparation alone cannot retire an
+exposed reservation, reset its history or authorize a service command.
 
 A change to another protocol preserves active WireGuard keys/configuration/root
 receipt but must consume its peer history under that same existing WireGuard lock

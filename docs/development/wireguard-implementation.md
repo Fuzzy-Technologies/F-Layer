@@ -782,6 +782,35 @@ handoff after releasing locks, terminal observation and nonce/history publicatio
 Those workflows are unavailable, and normal epoch admission remains blocked.
 POSIX tests exercise real private files and locks with simulated networking only.
 
+## Reserved generation cache journal
+
+The private cache backend now binds complete cached/candidate WG receipts and
+source-role pins beside the cloud-plan hash and exact input delta in a schema-2
+composite request. It requires the exact exposed common reservation and retained
+WG fence under common then WG locks. Journal preparation before writing any private
+cache bytes; never infer protocol authority from a cache or its receipt alone.
+
+Cache paths use the full owner and complete receipt digest. Verify all private
+runtime/configuration bytes and cached executing-kernel facts; retain the original
+installer as data. Preserve active root, service, key/configuration bytes and
+consumed peer history. No download, build, key generation, interface, input or
+cloud mutation occurs. Source/candidate bodies remain private and diagnostics are
+bounded hashes/phases. Cache preparation is limited to 12 MiB per retained root.
+
+Persist each exact file inode and every cache-directory boundary, publishing its
+receipt last. With its exact preparing journal and complete verified source bytes,
+retry may append only a matching truncated suffix or fill recorded missing entries
+after interrupted directory publication. Unknown/differing prefixes refuse. A
+missing journal grants no torn-file recovery. Prepared cache drift/missing private
+bodies also refuses; completed retries verify/resync the retained cache without
+the original transient sources. Read-only status performs no repair and never
+reports a prepared cache as an active generation.
+
+The common reservation remains exposed. The input-only backend and committed
+epoch model still refuse the new composite; sealed generation context, actual
+root/service/history transitions, common completion, controller publication and
+public CLI admission remain unavailable pending full integration.
+
 ## Remaining integration
 
 Adding/removing a protocol on an existing guest, schema-1 migration, explicit

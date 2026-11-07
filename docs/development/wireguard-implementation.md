@@ -668,6 +668,36 @@ Tests use real private POSIX fixture files and locks with modeled guest networki
 cover old queued peer refusal, copied intents, actual absence, publication/retry,
 expiry/capacity, unknown exposure and retention of original runtime/key bytes.
 
+## Reserved host input transaction
+
+The private stdlib input backend now consumes an exact exposed reservation. Its
+composite public plan binds a cloud-plan digest and one complete host input delta
+to the reservation hash; a hash of preceding state alone is not live attestation.
+The controller facade and guest share the same closed policy renderer and native
+normalizer. Compile expected tables in disposable guest network namespaces and
+compare their complete expressions with the running owned table before writing.
+
+Persist the exact public recovery request before replacing the boot file, then
+atomically replace only `inet flayer_bootstrap`. Preserve SSH, all unrelated
+listeners/tables and WG runtime/key bytes. Only the documented boot-first prefixes
+are accepted, including a reboot or complete interrupted temporary publication.
+Re-sync an already-visible target boot file and its parent before proceeding.
+The native writer inherits both coordination descriptors so it cannot outlive
+its SSH parent and race recovery after losing the protecting locks.
+
+Rollback restores the preceding listener semantics with the new operation marker;
+it never restores the old guest history. Complete/partial foreign files and native
+drift refuse recovery. Repeated terminal calls verify their exact result; a rolled
+back operation cannot be applied again. Read-only status performs no persistent
+repair. Its intermediate phases do not claim a terminal boot/native fingerprint.
+
+This is an input backend, with no public protocol CLI or SSH RPC yet. It neither
+changes cloud rules nor orders transport service activation/removal. The exposed
+reservation remains pending until the full protocol coordinator records all cloud,
+service and input receipts in an epoch; no input result alone retires it. Tests
+use simulated networking plus real nftables/stdlib backends exclusively inside
+the isolated Linux CI namespace. No desktop or deployed server is changed.
+
 ## Remaining integration
 
 Adding/removing a protocol on an existing guest, schema-1 migration, explicit

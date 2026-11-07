@@ -622,6 +622,52 @@ table/counter remains byte-equivalent. This component executes no command. Guest
 locks/reservations, receipt/history checks, durable boot-file publication and recovery
 must be integrated before exposing a public protocol mutation command.
 
+## Guest protocol reservation and peer-history fence
+
+The stdlib-only private reservation backend accepts one closed hash-only intent
+bound to the full owner, permanent creation, preceding common authority/state,
+plan nonce/expiry and actual active-WG receipt or complete namespace-absence proof.
+It acquires common ingress coordination before the existing WG lock. A persistent
+private preparation journal precedes the history fence, and a copied controller
+cannot substitute another intent through its own local project lock.
+Recovered writes re-sync the owned namespace and every publication ancestor through
+pinned directory handles before fencing or dispatch authority, even when all
+directories were already visible after a crash. Completed operation nonces cannot
+be reused with a new parent/history.
+
+For active WG, use the existing valid v1 equal-receipt cancellation audit under the
+WG lock. The running root receipt, credentials, configuration, binary, interfaces
+and service stay unchanged; the chained peer history advances. Already queued peer
+drivers recognize the changed history and refuse their old expected authority.
+Pending peer/install transactions block reservation. Absent WG requires actual
+root/unit/interface/NAT/enablement absence and retained peer history; no running
+receipt or installation is fabricated to fence it.
+
+`Reserve` durably publishes `preparing` then `reserved`, reusing its own exact
+history fence after an interruption. `Expose` consumes the single external-dispatch
+grant before a later write. Repeated calls and expired plans cannot issue another
+grant; a complete interrupted exposed temporary record is already uncertain.
+`Cancel` accepts only unexposed intent, retains any consumed WG history and publishes
+one immutable cancelled completion plus a new common head before retiring pending
+metadata. Exact retries reuse that completion. Bounded complete parent traversal
+rejects orphan records, lost heads, unknown files and unsupported metadata; it never
+infers a new initial authority from a missing mutable pointer.
+
+Normal peer/install and current standalone WG-maintenance entrypoints check the
+pending common journal under WG coordination. History observation remains available.
+Existing service callbacks retain their separate already-owned boot/start/stop
+contract. Frozen original server bundles are still retained; introducing current
+maintenance guards does not rewrite an existing private bundle or install it on a
+server implicitly.
+
+This is a private backend with no RPC/public protocol command yet. It does not
+attest cloud/input policy from a preceding-state hash alone, apply nft policy,
+publish a boot file, change a service or resolve a submitted cloud outcome.
+Completion after exposure and known rollback prefixes require the full coordinator.
+Tests use real private POSIX fixture files and locks with modeled guest networking,
+cover old queued peer refusal, copied intents, actual absence, publication/retry,
+expiry/capacity, unknown exposure and retention of original runtime/key bytes.
+
 ## Remaining integration
 
 Adding/removing a protocol on an existing guest, schema-1 migration, explicit

@@ -778,6 +778,12 @@ def _StageFile(guest: Any, path: Path, content: bytes) -> None:
         stream.write(content)
 
 
+def _ProtocolGate(guest: Any) -> None:
+    """Under the existing WG lock, refuse unresolved common protocol authority before normal peer/install actions."""
+
+    guest._ProtocolGate()
+
+
 def Main(argv: list[str] | None = None) -> int:
     """Run only an explicit owned peer action with root, fixed staging, consent and exact receipt guards."""
 
@@ -864,6 +870,9 @@ def Main(argv: list[str] | None = None) -> int:
         try:
             if descriptor is not None:
                 fcntl.flock(descriptor, (fcntl.LOCK_SH if readOnly else fcntl.LOCK_EX) | fcntl.LOCK_NB)
+
+            if not options.historyStatus:
+                _ProtocolGate(guest)
 
             if installing:
                 if HistoryStatus(guest, owner)["history_sha256"] != options.expectedHistory:

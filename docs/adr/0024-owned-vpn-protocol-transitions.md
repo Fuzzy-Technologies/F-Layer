@@ -469,11 +469,37 @@ nonstandard JSON and nonzero SSH results fail with fixed diagnostics; discarded
 parser exceptions are not retained through exception context chains.
 
 This RPC exposes existing reservation, observation, input, native and completion
-primitives only. Initial/fresh generation preparation, ordered cloud coordination,
+primitives only. Initial/fresh generation preparation integration, ordered cloud coordination,
 recovery/admission through public entrypoints and the public CLI remain #128 work.
 No automatic protocol deployment, real-server acceptance or media result follows
 from this private transport. Tests intercept SSH/native boundaries; standalone
 loader/staging conformance runs in isolated Linux CI without desktop networking.
+
+## Private generation preparation
+
+Before reservation, a private preparation backend builds complete WG baseline
+and candidate snapshots from one pinned server source. It observes the exact
+unreserved common authority and original WG history/state, retains credentials and
+uses only the approved package build helper. Exact scope and mutation consent
+precede directory creation or builds; completed nonces refuse fresh work.
+A closed origin omits the not-yet-known
+composite plan digest; an internal codec placeholder never grants reservation,
+native callback or cloud authority. Prepared public generation metadata supplies
+the missing input to the later full composite plan.
+
+Store private source/baseline/candidate files plus a closed public manifest in a
+separate fixed owner/operation preparation namespace. Publish a whole verified
+directory atomically, then synchronize pinned files and ancestors before response.
+The directory rename cannot replace even an empty target. File/directory leases
+remain pinned across rename, parent synchronization and final acknowledgment.
+Known completed retries verify/resynchronize the same historical bytes after
+expiry or fencing; subsequent cache mutation still checks current authority.
+Observation repairs
+nothing. Interrupted scratch is bounded, has no authority and is never adopted as
+a completed preparation. Unknown namespaces refuse writes. Later cache integration
+must select fixed prepared paths and bind the complete original request/generation;
+it must still satisfy the exposed reservation before copying recovery caches.
+Retention/cleanup and RPC/controller admission remain separate integration work.
 
 ## Consequences and validation
 

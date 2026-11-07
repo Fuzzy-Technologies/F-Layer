@@ -369,7 +369,8 @@ common then WG locks, first publication rechecks pinned generation files, actual
 native state/history, installed file identities and terminal input policy. A trusted
 observer dependency must measure every unrelated service; caller-supplied hashes
 alone cannot satisfy this requirement. Cloud and local graph attestation remain
-controller responsibilities, and no RPC or public CLI invokes this backend yet.
+controller responsibilities. The private RPC below exposes this backend; public
+CLI integration remains separate.
 
 The exact immutable schema-2 completion is the commit point. Publish its common
 head, retire only verified canonical input/generation/runtime sidecars and remove
@@ -417,7 +418,7 @@ define emitted configuration fields. Systemd 255
 [credential handling](https://github.com/systemd/systemd/blob/v255/src/core/exec-credential.c)
 defines the read-only copy and dynamic-UID access layout. These probes establish
 owned configuration/service preservation, not end-to-end tunnel or media playback.
-RPC and full controller/public CLI integration remain separate work.
+Full controller/public CLI integration remains separate work.
 
 ## Private controller publication
 
@@ -443,8 +444,36 @@ and guest response. Read-only status repairs nothing.
 Mutating project-lock admission synchronizes the published project namespace before
 any subsequent peer/guest write, closing a failed final journal-unlink directory
 barrier. Read-only coordination does not synchronize. These are local publication
-primitives: authenticated RPC, live attestation, cloud ordering and public CLI
+primitives: end-to-end live attestation, cloud ordering and public CLI
 admission still require integration, and no local record itself proves them.
+
+## Private authenticated guest RPC
+
+The private controller transport reuses the existing independently host-pinned SSH
+provisioner. It accepts a closed action, complete stack identity, exact reserved
+intent/composite and action-specific mutation consent with an exact scope. Read
+actions reject mutation consent. No request may choose a path, command, dependency
+or endpoint. Retained AWG/VLESS bundles are data validated against their complete
+source pins; their installer bytes are never executable dependencies.
+
+A standalone root-Linux receiver admits only a fixed complete set of stdlib-only
+helpers, pinned to canonical installed-package bytes in its bootstrap. It verifies
+the bounded duplicate-free frame, every helper digest and all request semantics
+before staging private program files. Every response binds both the full operation
+and package module pins. Input responses carry three public compiler fingerprints
+from the same still-matching locked journal; the controller reconstructs exact
+journal/boot hashes. Native and cache results reconstruct request-bound histories
+and terminal journals, rejecting impossible action/change phases. Completion is
+the exact independently reconstructed immutable record. Unknown/private output,
+nonstandard JSON and nonzero SSH results fail with fixed diagnostics; discarded
+parser exceptions are not retained through exception context chains.
+
+This RPC exposes existing reservation, observation, input, native and completion
+primitives only. Initial/fresh generation preparation, ordered cloud coordination,
+recovery/admission through public entrypoints and the public CLI remain #128 work.
+No automatic protocol deployment, real-server acceptance or media result follows
+from this private transport. Tests intercept SSH/native boundaries; standalone
+loader/staging conformance runs in isolated Linux CI without desktop networking.
 
 ## Consequences and validation
 

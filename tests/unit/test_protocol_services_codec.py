@@ -12,7 +12,7 @@ import pytest
 from test_amneziawg_profile import Profile
 
 from flayer._vpn_creation import BundleDigest
-from flayer.core.contracts import _WireDict
+from flayer.core.contracts import StackIdentity, _WireDict
 from flayer.profiles import _protocol_completion as completion
 from flayer.profiles import _protocol_reservation as authority
 from flayer.profiles import _protocol_runtime as runtime
@@ -29,10 +29,14 @@ from flayer.profiles.vless import (
 from flayer.profiles.vpn import VpnEndpoint, VpnListener
 
 
-def Sources(protocols: tuple[str, ...] = ("amneziawg", "vless-reality")) -> tuple[dict[str, str], list[dict[str, Any]], list[dict[str, Any]]]:
+def Sources(protocols: tuple[str, ...] = ("amneziawg", "vless-reality"), *, stackIdentity: StackIdentity | None = None) -> tuple[dict[str, str], list[dict[str, Any]], list[dict[str, Any]]]:
     """Generate only synthetic private in-memory bundles, pinned exactly as real retained source metadata would be."""
 
     profile = Profile()
+
+    if stackIdentity is not None:
+        profile = replace(profile, identity=stackIdentity)
+
     bundles = []
     records = []
     identity = _WireDict(profile.identity)

@@ -1530,6 +1530,43 @@ def _ClearTransaction(owner: str) -> None:
     _SyncDirectory(path.parent)
 
 
+def _BuildPayload(
+    stage: Path, request: dict[str, Any], root: Path, work: Path, kernel: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, bytes]]:
+    """Build and validate private runtime bytes; the caller supplies verified vendor/kernel evidence and owns publication."""
+
+    owner = request["owner"]
+    payload = {name: _Read(stage / name) for name in ("server.conf", "deployment.json", "install.py")}
+
+    if (_Digest(payload["server.conf"]) != request["config_sha256"] or _Digest(payload["install.py"]) != request["program_sha256"]
+            or _Encode(_Json(payload["deployment.json"])) != _Encode(request)):
+        raise GuestError("WireGuard private build source differs from its complete validated request")
+
+    buildFacts = _BuildFacts()
+    binary, licenseText = _BuildTools(work)
+
+    if _BuildFacts() != buildFacts:
+        raise GuestError("WireGuard toolchain changed during the private build")
+
+    tool = work / "wg"
+    tool.write_bytes(binary)
+    tool.chmod(0o755)
+    _Config(payload["server.conf"], request, tool)
+    nonce = os.urandom(16).hex()
+    firewall = _Firewall(request, nonce)
+    policy = work / "firewall.nft"
+    policy.write_bytes(firewall)
+    policy.chmod(0o600)
+    network = _ExpectedNetwork(policy, owner, nonce)
+    payload.update({"wg": binary, "COPYING": licenseText, "firewall.nft": firewall, "service.service": _Unit(root, owner)})
+    receipt: dict[str, Any] = {"schema_version": 1, "owner": owner, "nonce": nonce, "status": "staged",
+                             "files": {name: _Digest(content) for name, content in payload.items()},
+                             "network_sha256": network, "kernel": kernel, "build": buildFacts,
+                             "deployment_sha256": _Digest(payload["deployment.json"])}
+
+    return receipt, payload
+
+
 def _PrepareRoot(stage: Path, request: dict[str, Any], root: Path, unit: Path) -> tuple[dict[str, Any], Path]:
     """Stage a complete verified binary/configuration/policy before publishing any service or interface."""
 
@@ -1547,27 +1584,7 @@ def _PrepareRoot(stage: Path, request: dict[str, Any], root: Path, unit: Path) -
     with tempfile.TemporaryDirectory(prefix=".wg-build-", dir=BASE) as temporary:
         work = Path(temporary)
         os.chmod(work, 0o700)
-        buildFacts = _BuildFacts()
-        binary, licenseText = _BuildTools(work)
-
-        if _BuildFacts() != buildFacts:
-            raise GuestError("WireGuard toolchain changed during the private build")
-        tool = work / "wg"
-        tool.write_bytes(binary)
-        tool.chmod(0o755)
-        _Config(_Read(stage / "server.conf"), request, tool)
-        nonce = os.urandom(16).hex()
-        firewall = _Firewall(request, nonce)
-        policy = work / "firewall.nft"
-        policy.write_bytes(firewall)
-        policy.chmod(0o600)
-        network = _ExpectedNetwork(policy, owner, nonce)
-        payload = {name: _Read(stage / name) for name in ("server.conf", "deployment.json", "install.py")}
-        payload.update({"wg": binary, "COPYING": licenseText, "firewall.nft": firewall, "service.service": _Unit(root, owner)})
-        receipt: dict[str, Any] = {"schema_version": 1, "owner": owner, "nonce": nonce, "status": "staged",
-                                   "files": {name: _Digest(content) for name, content in payload.items()},
-                                   "network_sha256": network, "kernel": {**facts, **evidence}, "build": buildFacts,
-                                   "deployment_sha256": _Digest(payload["deployment.json"])}
+        receipt, payload = _BuildPayload(stage, request, root, work, {**facts, **evidence})
         _, _, transaction = _Paths(owner)
 
         if transaction.exists() or transaction.is_symlink():

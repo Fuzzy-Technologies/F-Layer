@@ -298,7 +298,7 @@ def _DurableCaches(guest: Any, receipts: list[dict[str, Any]]) -> Iterator[Calla
                     or (expected.st_dev, expected.st_ino) != (linked.st_dev, linked.st_ino)
                     or (expected.st_mode, expected.st_uid, expected.st_nlink) != (current.st_mode, current.st_uid, current.st_nlink)
                     or (expected.st_mode, expected.st_uid, expected.st_nlink) != (linked.st_mode, linked.st_uid, linked.st_nlink)
-                    or path in files and (expected.st_size, expected.st_mtime_ns, expected.st_ctime_ns)
+                    or (expected.st_size, expected.st_mtime_ns, expected.st_ctime_ns)
                     != (current.st_size, current.st_mtime_ns, current.st_ctime_ns)):
                 raise GenerationError("Generation cache snapshot changed during durable publication")
 

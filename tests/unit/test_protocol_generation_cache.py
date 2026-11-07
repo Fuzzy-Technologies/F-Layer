@@ -386,3 +386,41 @@ def test_SameByteReplacementDuringFinalDirectoryBarriersCannotCommitPreparation(
     assert fired and (root / "COPYING").exists()
     assert (root / "COPYING").read_bytes() == (cached / "COPYING").read_bytes()
     assert authority._Decode(guest, authority._Root(guest) / "generation.json")["phase"] == "preparing"
+
+
+def test_DirectoryMembershipAbaAcrossFsyncCannotAcknowledgeAStableCache(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Create-sync-unlink leaves visible names unchanged but must not acknowledge an older durable namespace."""
+
+    _, value, intent, cached, candidate = Prepared(tmp_path, monkeypatch)
+    root = generations._CachePath(guest, value["generation"]["cached_receipt"])
+    synchronize = generations._SyncPinned
+    fired = False
+
+    def Sync(descriptor: int) -> None:
+        nonlocal fired
+
+        info = os.fstat(descriptor)
+        linked = root.stat()
+
+        if (info.st_dev, info.st_ino) == (linked.st_dev, linked.st_ino) and not fired:
+            fired = True
+            path = root / "unexpected-during-sync"
+            path.write_bytes(b"retained only across the directory barrier")
+            path.chmod(0o600)
+            synchronize(descriptor)
+            path.unlink()
+
+            return
+
+        synchronize(descriptor)
+
+    monkeypatch.setattr(generations, "_SyncPinned", Sync)
+
+    with pytest.raises(generations.GenerationError, match="snapshot"):
+        Prepare(value, intent, cached, candidate)
+
+    assert fired and not (root / "unexpected-during-sync").exists()
+    assert (root / "COPYING").read_bytes() == (cached / "COPYING").read_bytes()
+    assert authority._Decode(guest, authority._Root(guest) / "generation.json")["phase"] == "preparing"

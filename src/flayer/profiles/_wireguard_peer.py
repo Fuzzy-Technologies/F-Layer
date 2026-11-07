@@ -188,7 +188,7 @@ def _Journal(guest: Any, owner: str) -> tuple[dict[str, Any], Path]:
 
     if ({key: value for key, value in before.items() if key not in {"files", "network_sha256", "deployment_sha256"}}
             != {key: value for key, value in after.items() if key not in {"files", "network_sha256", "deployment_sha256"}}
-            or any(before["files"][name] != after["files"][name] for name in guest._FILES - {"server.conf", "deployment.json", "firewall.nft"})
+            or any(before["files"][name] != after["files"][name] for name in set(before["files"]) - {"server.conf", "deployment.json", "firewall.nft"})
             or before["files"]["server.conf"] == after["files"]["server.conf"]
             or before["network_sha256"] == after["network_sha256"]
             or before["deployment_sha256"] == after["deployment_sha256"]):
@@ -236,7 +236,7 @@ def _Publish(guest: Any, desired: Path, action: str, deviceId: str, expected: st
         candidate = container / "new"
         candidate.mkdir(mode=0o700)
         payload = {name: guest._Read(root / name, limit=8 * 1024 * 1024 if name == "wg" else 1048576,
-                                     mode=0o755 if name == "wg" else 0o600) for name in guest._FILES}
+                                     mode=0o755 if name == "wg" else 0o600) for name in previous["files"]}
         payload.update({name: guest._Read(desired / name) for name in ("server.conf", "deployment.json")})
         payload["firewall.nft"] = guest._Firewall(request, previous["nonce"])
 
@@ -444,7 +444,7 @@ def _Clear(guest: Any, record: dict[str, Any], *, committed: bool) -> None:
         guest._Directory(candidate, private=True)
         names = {path.name for path in candidate.iterdir()}
 
-        if not names <= guest._FILES | {"receipt.json"}:
+        if not names <= set(discarded["files"]) | {"receipt.json"}:
             raise guest.GuestError("WireGuard peer backup contains unknown files")
 
         for name in names:

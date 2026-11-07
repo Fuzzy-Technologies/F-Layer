@@ -40,6 +40,8 @@ _ROOT_UID = 0
 _NAME = re.compile(r"[a-z][a-z0-9-]{0,62}\Z")
 _HASH = re.compile(r"[0-9a-f]{64}\Z")
 _FILES = frozenset({"server.conf", "deployment.json", "install.py", "firewall.nft", "service.service", "wg", "COPYING"})
+_GENERATION_FILES = _FILES | {"lifecycle.py"}
+_callbackFds: tuple[int, ...] = ()
 
 
 class GuestError(ValueError):
@@ -204,7 +206,7 @@ def _Run(command: list[str], *, payload: bytes | None = None, timeout: int = 30,
 
     try:
         result = subprocess.run(command, input=payload, stdin=subprocess.DEVNULL if payload is None else None,
-                                capture_output=True, check=False, timeout=timeout, pass_fds=passFds,
+                                capture_output=True, check=False, timeout=timeout, pass_fds=tuple(dict.fromkeys((*passFds, *_callbackFds))),
                                 env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LANG": "C", "LC_ALL": "C"})
 
     except (OSError, subprocess.SubprocessError):
@@ -408,7 +410,7 @@ def _Request(stage: Path) -> tuple[dict[str, Any], bytes, bytes]:
     _Directory(stage, private=True)
 
     if set(path.name for path in stage.iterdir()) not in (
-        {"server.conf", "deployment.json", "install.py"}, _FILES | {"receipt.json"},
+        {"server.conf", "deployment.json", "install.py"}, _FILES | {"receipt.json"}, _GENERATION_FILES | {"receipt.json"},
     ):
         raise GuestError("WireGuard stage has unknown or missing files")
 
@@ -493,15 +495,26 @@ def _Table(owner: str) -> str:
     return "flayer_wg_" + owner[:12]
 
 
-def _Unit(root: Path, owner: str) -> bytes:
-    """Generate only one owned oneshot service, without restarting shared networking units."""
+def _Unit(root: Path, owner: str, *, nonce: str = "") -> bytes:
+    """Keep legacy unit bytes stable; explicit new generations bind callbacks to their exact nonce."""
+
+    program = "install.py"
+    guard = ""
+
+    if type(nonce) is not str:
+        raise GuestError("WireGuard unit generation nonce is invalid")
+
+    if nonce:
+        _Nonce(nonce)
+        program = "lifecycle.py"
+        guard = " --expected-generation-nonce " + nonce
 
     return (f"# F-Layer WireGuard owner {owner}\n[Unit]\nDescription=F-Layer standard WireGuard\n"
             "Wants=network-online.target\nAfter=network-online.target nftables.service\n[Service]\n"
             "Type=oneshot\nRemainAfterExit=yes\nUMask=0077\n"
             "StandardOutput=null\nStandardError=null\n"
-            f"ExecStart=/usr/bin/python3 {root}/install.py --start --allow-mutation\n"
-            f"ExecStop=/usr/bin/python3 {root}/install.py --stop --allow-mutation\n"
+            f"ExecStart=/usr/bin/python3 {root}/{program} --start --allow-mutation{guard}\n"
+            f"ExecStop=/usr/bin/python3 {root}/{program} --stop --allow-mutation{guard}\n"
             "[Install]\nWantedBy=multi-user.target\n").encode()
 
 
@@ -857,9 +870,9 @@ def _ReceiptData(receipt: Any, owner: str, *, staged: bool = False) -> dict[str,
     fields = {"schema_version", "owner", "nonce", "status", "files", "network_sha256", "kernel", "build", "deployment_sha256"}
 
     if (not isinstance(receipt, dict) or set(receipt) != fields or type(receipt["schema_version"]) is not int
-            or receipt["schema_version"] != 1 or receipt["owner"] != owner
+            or receipt["schema_version"] not in {1, 2} or receipt["owner"] != owner
             or receipt["status"] not in ({"staged", "installed"} if staged else {"installed"})
-            or not isinstance(receipt["files"], dict) or set(receipt["files"]) != _FILES
+            or not isinstance(receipt["files"], dict) or set(receipt["files"]) != (_GENERATION_FILES if receipt["schema_version"] == 2 else _FILES)
             or not isinstance(receipt["network_sha256"], str) or _HASH.fullmatch(receipt["network_sha256"]) is None):
         raise GuestError("WireGuard ownership receipt is invalid")
 
@@ -894,10 +907,10 @@ def _Receipt(root: Path, unit: Path, owner: str, *, staged: bool = False) -> dic
 
     _Directory(root, private=True)
 
-    if {path.name for path in root.iterdir()} != _FILES | {"receipt.json"}:
-        raise GuestError("Owned WireGuard directory has changed or unknown files")
-
     receipt = _ReceiptData(_Json(_Read(root / "receipt.json")), owner, staged=staged)
+
+    if {path.name for path in root.iterdir()} != set(receipt["files"]) | {"receipt.json"}:
+        raise GuestError("Owned WireGuard directory has changed or unknown files")
 
     for name, digest in receipt["files"].items():
         content = _Read(root / name, limit=8 * 1024 * 1024 if name == "wg" else 1048576,
@@ -906,7 +919,7 @@ def _Receipt(root: Path, unit: Path, owner: str, *, staged: bool = False) -> dic
         if digest != _Digest(content):
             raise GuestError("Owned WireGuard file changed")
 
-    if _Read(root / "service.service") != _Unit(_Paths(owner)[0], owner):
+    if _Read(root / "service.service") != _Unit(_Paths(owner)[0], owner, nonce=receipt["nonce"] if receipt["schema_version"] == 2 else ""):
         raise GuestError("Owned WireGuard unit template differs")
 
     if unit.exists() or unit.is_symlink():
@@ -1144,7 +1157,9 @@ def _EraseRoot(root: Path, receipt: dict[str, Any]) -> None:
     _Directory(root, private=True)
     names = {path.name for path in root.iterdir()}
 
-    if not names <= _FILES | {"receipt.json"}:
+    _ReceiptData(receipt, receipt["owner"], staged=True)
+
+    if not names <= set(receipt["files"]) | {"receipt.json"}:
         raise GuestError("WireGuard cleanup found unknown files")
 
     for name in names - {"receipt.json"}:
@@ -1354,7 +1369,10 @@ def _Recover(owner: str, expectedReceipt: str, *, expectedAbsence: str = "") -> 
 
     if not tuple(transaction.iterdir()):
         if root.exists() or root.is_symlink():
-            _Receipt(root, unit, owner)
+            receipt = _Receipt(root, unit, owner)
+
+            if receipt["schema_version"] == 2:
+                raise GuestError("Protocol generation recovery requires the protocol coordinator")
 
             if _Digest(_Read(root / "receipt.json")) != expectedReceipt:
                 raise GuestError("WireGuard receipt changed before recovery")
@@ -1373,6 +1391,10 @@ def _Recover(owner: str, expectedReceipt: str, *, expectedAbsence: str = "") -> 
         return
 
     journal, transaction = _Transaction(owner)
+
+    if journal["receipt"]["schema_version"] == 2:
+        raise GuestError("Protocol generation recovery requires the protocol coordinator")
+
     staged = transaction / "new"
 
     if (root.exists() or root.is_symlink()) and (staged.exists() or staged.is_symlink()):
@@ -1472,6 +1494,9 @@ def _Remove(owner: str, expectedReceipt: str) -> None:
         raise GuestError("WireGuard recovery is required before removal")
 
     receipt = _Receipt(root, unit, owner)
+
+    if receipt["schema_version"] == 2:
+        raise GuestError("Protocol generation removal requires the protocol coordinator")
 
     if _Digest(_Read(root / "receipt.json")) != expectedReceipt:
         raise GuestError("WireGuard receipt changed before removal")
@@ -1642,6 +1667,52 @@ def _ProtocolGate() -> None:
             raise GuestError("Pending protocol reservation requires explicit protocol recovery before WireGuard maintenance")
 
 
+def _GenerationCallback(root: Path, unit: Path, nonce: str, *, start: bool) -> None:
+    """Serialize a nonce-bound leaf callback with WG mutations; native children retain its protecting descriptor."""
+
+    global _callbackFds
+
+    import fcntl
+
+    _Nonce(nonce)
+    descriptor = _OpenLock(readOnly=False)
+
+    try:
+        # Protocol controllers must dispatch systemd jobs asynchronously, release their locks,
+        # then observe completion in another call. A synchronous job beneath the lock must fail.
+        fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        _ProtocolGate()
+        request = _Request(root)[0]
+        owner = request["owner"]
+        installed, expectedUnit, transaction = _Paths(owner)
+
+        if root != installed or unit != expectedUnit or Path(__file__).absolute() != root / "lifecycle.py":
+            raise GuestError("Generation callback requires the exact installed lifecycle executable")
+
+        receipt = _Receipt(root, unit, owner, staged=transaction.exists())
+
+        if receipt["schema_version"] != 2 or receipt["nonce"] != nonce or _callbackFds:
+            raise GuestError("Generation callback is stale or has unsupported authority")
+
+        if receipt["status"] == "staged":
+            journal, _ = _Transaction(owner)
+
+            if journal["phase"] != "prepared" or journal["receipt"] != receipt:
+                raise GuestError("Provisional generation has no exact prepared journal")
+
+        _callbackFds = (descriptor,)
+
+        if start:
+            _Start(root, unit, request)
+
+        else:
+            _Stop(root, unit, request, partial=receipt["status"] == "staged")
+
+    finally:
+        _callbackFds = ()
+        os.close(descriptor)
+
+
 def Main(argv: list[str] | None = None) -> int:
     """Require exact owned inputs and explicit mutation consent before running privileged operations."""
 
@@ -1656,6 +1727,7 @@ def Main(argv: list[str] | None = None) -> int:
     parser.add_argument("--allow-mutation", action="store_true", dest="allowMutation")
     parser.add_argument("--expected-receipt-sha256", default="", dest="expectedReceipt")
     parser.add_argument("--expected-absence-sha256", default="", dest="expectedAbsence")
+    parser.add_argument("--expected-generation-nonce", default="", dest="expectedGeneration")
     arguments = parser.parse_args(argv)
     result: dict[str, object] | None = None
 
@@ -1670,6 +1742,9 @@ def Main(argv: list[str] | None = None) -> int:
         owner = request["owner"]
         root, unit, transaction = _Paths(owner)
         readOnly = arguments.check or arguments.status
+
+        if arguments.expectedGeneration and not (arguments.start or arguments.stop):
+            raise GuestError("Generation nonce is valid only for an owned service callback")
 
         if readOnly and (arguments.allowMutation or arguments.expectedReceipt or arguments.expectedAbsence):
             raise GuestError("WireGuard read-only actions do not accept mutation options")
@@ -1693,7 +1768,15 @@ def Main(argv: list[str] | None = None) -> int:
             if stage != root or not unit.exists():
                 raise GuestError("WireGuard service actions require the exact installed root and unit")
 
+            if arguments.expectedGeneration:
+                _GenerationCallback(root, unit, arguments.expectedGeneration, start=arguments.start)
+
+                return 0
+
             receipt = _Receipt(root, unit, owner, staged=transaction.exists())
+
+            if receipt["schema_version"] != 1 or Path(__file__).absolute() != root / "install.py":
+                raise GuestError("Protocol generation service requires its exact nonce-bound lifecycle callback")
 
             if receipt["status"] == "staged":
                 journal, _ = _Transaction(owner)

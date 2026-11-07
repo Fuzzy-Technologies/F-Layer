@@ -163,6 +163,24 @@ Keep the retained fence while its root is absent; publish the replacement
 generation and its new history under the existing WireGuard lock, without exposing
 an absent root with initial history that could authorize an old installer.
 
+An explicit new WG root uses receipt schema 2: retain the original `install.py`,
+deployment, keys, binary and license, and add a separately pinned `lifecycle.py`.
+Both unit callbacks bind the exact generation nonce. Under the existing WG lock,
+re-read complete root metadata and reject a stale nonce before any native write.
+Native children inherit that descriptor, retaining protection after parent loss.
+Leaf callbacks never acquire the common ingress lock after the WG lock.
+
+Synchronous systemd callbacks beneath a controller-held WG lock would deadlock;
+callbacks refuse contention. The future coordinator must dispatch jobs after
+releasing its locks and re-observe their terminal outcome. Until its sealed
+generation journal/context is implemented, schema-2 callbacks refuse a pending
+common reservation and ordinary removal/recovery refuse schema-2 generations.
+The current cache preparer writes only an unpublished private candidate; it does
+not fence history, publish a root, authorize a transition or attest active health.
+Cached runtime reuse verifies complete receipt/file hashes and the same executing
+kernel facts, without fetching, building or regenerating credentials. First-ever
+runtime preparation still requires the original vendor/build gate.
+
 A change to another protocol preserves active WireGuard keys/configuration/root
 receipt but must consume its peer history under that same existing WireGuard lock
 before the first protocol write. Use the existing valid equal-receipt cancellation

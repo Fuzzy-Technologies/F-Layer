@@ -749,6 +749,30 @@ the coordinator, transport-generation handling, authenticated live attestation a
 recovery are integrated. The reader performs no guest, cloud or desktop operation
 and never infers actual runtime health from a locally authored proof record.
 
+## Nonce-bound WireGuard generation candidates
+
+Explicit generation candidates retain the original installer, deployment,
+server/peer credentials, verified binary and license byte-for-byte. A schema-2
+root adds one separately pinned lifecycle helper and binds both systemd callbacks
+to a fresh nonce. Complete file and cached executing-kernel checks precede reuse;
+there is no download, rebuild or key generation. Default first-time preparation
+continues producing schema 1 and its unchanged unit format/vendor gate.
+
+The callback re-reads root metadata under the existing WG lock and rejects stale
+or absent nonce, wrong executable, drift and lock contention before runtime
+mutation. Its native children inherit that descriptor. Peer transactions preserve
+all eight schema-2 file pins, including the helper, without admitting helper/unit
+replacement. Unknown files and schema aliases remain errors.
+
+The cache preparer writes only a complete unpublished private candidate outside
+managed runtime/unit paths; it neither activates it nor grants authority. Schema-2
+callbacks currently reject pending common reservations; ordinary remove/recover
+refuse these generations before publishing a legacy cleanup intent. The protocol
+coordinator still needs a sealed generation journal and asynchronous systemd job
+handoff after releasing locks, terminal observation and nonce/history publication.
+Those workflows are unavailable, and normal epoch admission remains blocked.
+POSIX tests exercise real private files and locks with simulated networking only.
+
 ## Remaining integration
 
 Adding/removing a protocol on an existing guest, schema-1 migration, explicit

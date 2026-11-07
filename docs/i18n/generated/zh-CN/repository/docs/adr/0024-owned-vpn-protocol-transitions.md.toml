@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/adr/0024-owned-vpn-protocol-transitions.md"
-sourceHash = "sha256:69fc2e9696d9d7dbc54b378e64d1836a90ffd330c8abe04fcbdd67b2715bd67c"
-reviewedTranslationHash = "sha256:bed978dd66059b16e1d6564ea0c39e94917d70896488785eb3608f0062ae693f"
+sourceHash = "sha256:be3391f68e95e7cad1aa0ea43c506f6da93b6ad955fe180410bd152cf592e65d"
+reviewedTranslationHash = "sha256:4cdc80e5ebb91f78604f1ff6bf01d04457c0f27a7da180685b4ae0e4fed40c39"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T09:44:22.875277Z"
+reviewedAt = "2026-11-07T10:28:27.601352Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# ADR 0024：受管 VPN 协议迁移与不可变纪元
 
@@ -201,6 +201,32 @@ WG 事务、根、unit、预留、历史屏障或网络变更。原直接安装�
 普通 WG 变更入口继续前必须同步已完成公共命名空间，封闭最终 unlink 后目录屏障失败
 的窗口。只读准入不执行同步或修复。此后端覆盖原生终态操作；模式 1 未暴露取消仍是
 单独的无操作路径。
+
+## 具体的其他服务观察
+
+原生完成现在持有显式可信观察租约：公共/WG 协调后依次取得已有 AWG、VLESS 共享锁，
+不创建缺失锁。I/O 前将完整保留私有服务器包绑定公共来源摘要，不执行传入安装程序。
+文件、目录、启用链接及进程身份持续固定至两次实时观察和不可变完成发布。历史完成
+重放跳过该租约。
+
+AWG 保留紧凑 JSON owner 和原载荷标记；VLESS 保留不同的格式化 JSON 加换行 owner。
+不迁移标识、服务或密钥。AWG 比较实际私钥/header 密钥、对等端及声明参数，仅忽略
+学习到的 Endpoint。不支持的时序/security 覆盖会拒绝；固定默认 `DisableCookies=off`
+进行规范化。实际 IPv4 地址、MTU、转发和完整 nft 策略必须等于保留 firewall 在新的
+隔离网络命名空间中编译的结果，绝不修改主机规则集。
+
+VLESS 验证已有安装/已提交运行时升级回执，以及实际进程可执行文件、参数、启动标识和
+cgroup。通过固定 PID 挂载命名空间读取实际加载的 systemd credential，并与精确来源
+字节比较。仅接受所有者只读布局，或由 root 持有、仅向该动态 UID 授予读取的精确 ACL；
+额外读者/写入均拒绝。声明监听器必须属于该 PID。磁盘配置或同端口任意监听器均不足以
+证明。活动与缺失观察都拒绝意外 owner-unit 项，包括尚未加载的 drop-in。缺失要求完整
+原生命名空间/监听器缺失和已有协调锁；状态不执行修复。
+
+输出字段由固定的 [AWG showconf](https://github.com/amnezia-vpn/amneziawg-tools/blob/ee0f0a9aa34ff0a0da4b3433b9512781cfe02843/src/showconf.c)
+及 [Go UAPI](https://github.com/amnezia-vpn/amneziawg-go/blob/b5928efb6ca19f0153958460c3d141f04abc5c2e/device/uapi.go) 定义。
+systemd 255 [credential 处理](https://github.com/systemd/systemd/blob/v255/src/core/exec-credential.c)
+定义只读副本和动态 UID 访问布局。上述探测证明受管配置/服务被保留，不证明端到端
+隧道或媒体播放。RPC 和完整控制器/公共 CLI 集成仍单独进行。
 
 ## 私有控制器发布
 

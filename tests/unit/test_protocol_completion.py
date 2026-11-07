@@ -6,6 +6,8 @@ import copy
 import json
 import os
 import stat
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -45,11 +47,25 @@ class Services:
         """Keep observed service facts independent from the mutable candidate envelope."""
 
         self.sources, self.proofs, self.calls = copy.deepcopy(sources), copy.deepcopy(proofs), 0
+        self.pinned = False
+
+    @contextmanager
+    def Pinned(self) -> Iterator[Services]:
+        """Model an independently selected trusted observation lease held through immutable completion publication."""
+
+        assert not self.pinned
+        self.pinned = True
+
+        try:
+            yield self
+
+        finally:
+            self.pinned = False
 
     def Observe(self, receiver: Any, sources: list[dict[str, Any]]) -> list[dict[str, str]]:
         """Validate source selection and return only public measured facts, with no private data or native output."""
 
-        assert receiver is guest and receiver._Encode(sources) == receiver._Encode(self.sources)
+        assert self.pinned and receiver is guest and receiver._Encode(sources) == receiver._Encode(self.sources)
         self.calls += 1
 
         return copy.deepcopy(self.proofs)
@@ -135,14 +151,14 @@ def test_ExactCompletionCommitsOnceRetiresOnlySidecarsAndReplaysAsHistoricalMeta
     unrelated, effects = (model.unrelated, network.unrelated), tuple(controller.effects)
     expected = completion.Candidate(guest, authority, policy, cache, value, intent)["record"]
     result = Complete(value, intent, observer)
-    assert result == expected and observer.calls == 1
+    assert result == expected and observer.calls == 2 and not observer.pinned
     root = authority._Root(guest)
     assert {path.name for path in root.iterdir()} == {"head.json", "done-" + intent["operation_id"] + ".json"}
     assert json.loads((root / "head.json").read_bytes()) == {"name": "done-" + intent["operation_id"] + ".json", "sha256": guest._Digest(guest._Encode(result))}
     assert (Snapshot(model.root) if model.root.exists() else None) == before
     assert (model.unrelated, network.unrelated) == unrelated and tuple(controller.effects) == effects
     assert authority.Status(guest, peers, intent)["phase"] == "completed"
-    assert Complete(value, intent, None) == result and observer.calls == 1
+    assert Complete(value, intent, None) == result and observer.calls == 2
     assert tuple(controller.effects) == effects
 
 
@@ -216,7 +232,7 @@ def test_OnlyAnExactIncompleteCompletionPrefixCanBeFinishedAfterFreshTerminalVer
         Execute(controller, value["request"], intent)
 
     assert Snapshot(tmp_path) == before
-    assert Complete(value, intent, observer) == record and observer.calls == 1
+    assert Complete(value, intent, observer) == record and observer.calls == 2
     assert path.read_bytes() == guest._Encode(record)
 
 
@@ -396,3 +412,51 @@ def test_ReadOnlyAdmissionDoesNotSynchronizeOrRepairACompletedNamespace(tmp_path
     guest._ProtocolGate()
     peers._ProtocolGate(guest)
     assert Snapshot(tmp_path) == before
+
+
+def test_NativeCompletionKeepsTheTrustedServiceLeaseThroughItsImmutableCommitPoint(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Two actual observations and the done write share one lease; historical recovery neither reacquires nor invents live health."""
+
+    _, _, _, value, intent, observer = Environment(tmp_path, monkeypatch)
+    write = completion._WriteCompletion
+    committed = []
+
+    def Write(*args: Any) -> None:
+        """Require the observer's separately selected lease while publishing the first immutable completion bytes."""
+
+        assert observer.pinned and observer.calls == 2
+        committed.append(True)
+        write(*args)
+
+    with monkeypatch.context() as verify:
+        verify.setattr(completion, "_WriteCompletion", Write)
+        assert Complete(value, intent, observer)["outcome"] == "committed"
+
+    assert committed == [True] and not observer.pinned
+    assert Complete(value, intent, None)["outcome"] == "committed" and observer.calls == 2
+
+
+def test_DriftAtTheSecondLeasedServiceObservationCannotPublishCompletion(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A first healthy observation is insufficient when a later measured proof changes before the immutable commit point."""
+
+    _, _, _, value, intent, observer = Environment(tmp_path, monkeypatch)
+    observe = observer.Observe
+
+    def Observe(*args: Any) -> list[dict[str, str]]:
+        """Change only the second independently measured service result without editing the expected candidate."""
+
+        result = observe(*args)
+
+        if observer.calls == 2:
+            result[0]["receipt_sha256"] = "0" * 64
+
+        return result
+
+    monkeypatch.setattr(observer, "Observe", Observe)
+    before = Snapshot(tmp_path)
+
+    with pytest.raises(ValueError, match="changed before immutable"):
+        Complete(value, intent, observer)
+
+    assert Snapshot(tmp_path) == before and not observer.pinned
+    assert not (authority._Root(guest) / ("done-" + intent["operation_id"] + ".json")).exists()

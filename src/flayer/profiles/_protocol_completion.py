@@ -401,16 +401,24 @@ def Complete(
 
                     unrelated = [proof for proof in candidate["services"]["services"] if proof["protocol"] != "wireguard"]
 
-                    if unrelated and (serviceObserver is None or guest._Encode(serviceObserver.Observe(guest, candidate["metadata"]["sources"])) != guest._Encode(unrelated)):
+                    if unrelated and serviceObserver is None:
                         raise CompletionError("Native completion requires trusted exact live witnesses for every unrelated service")
 
-                    verify()
+                    with serviceObserver.Pinned() if unrelated else nullcontext() as observer:
+                        if unrelated and (observer is None or observer is not serviceObserver
+                                          or guest._Encode(observer.Observe(guest, candidate["metadata"]["sources"])) != guest._Encode(unrelated)):
+                            raise CompletionError("Native completion requires exact leased witnesses for every unrelated service")
 
-                    if _Files(guest, authority, cache, candidate, complete=False) != files:
-                        raise CompletionError("Native completion witnesses changed before immutable publication")
+                        verify()
 
-                    _WriteCompletion(guest, authority, record)
-                    verify()
+                        if _Files(guest, authority, cache, candidate, complete=False) != files:
+                            raise CompletionError("Native completion witnesses changed before immutable publication")
+
+                        if unrelated and (observer is None or guest._Encode(observer.Observe(guest, candidate["metadata"]["sources"])) != guest._Encode(unrelated)):
+                            raise CompletionError("Native completion unrelated services changed before immutable publication")
+
+                        _WriteCompletion(guest, authority, record)
+                        verify()
 
         else:
             _WriteCompletion(guest, authority, record)

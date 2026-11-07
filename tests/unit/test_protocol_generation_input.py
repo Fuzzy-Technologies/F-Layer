@@ -29,6 +29,16 @@ def Environment(
     """Expose one real common reservation while modeling boot/live input separately from WG forwarding."""
 
     model, request, intent, cached, candidate = Prepared(tmpPath, monkeypatch, change, version)
+    # Match the guest's separate /run namespace: compiling input must not create
+    # temporary entries directly in the ancestor whose cache identity is pinned.
+    runtime = tmpPath / "run"
+    runtime.mkdir(mode=0o755)
+    originalLock = guest.LOCK
+
+    for lock in (originalLock, originalLock.with_name("flayer-ingress.lock")):
+        lock.rename(runtime / lock.name)
+
+    monkeypatch.setattr(guest, "LOCK", runtime / originalLock.name)
     transition = Delta()
 
     if change == "enable":
@@ -39,7 +49,7 @@ def Environment(
     assert transition.Record() == request["input"]
     boot = tmpPath / "etc/nftables.conf"
     boot.parent.mkdir(mode=0o755, exist_ok=True)
-    boot.write_bytes(transition.before.BootFile())
+    boot.write_bytes(transition.before.BootFile() if transition.before.operationId else transition.before._OriginalFile())
     boot.chmod(0o644)
     monkeypatch.setattr(inputs, "BOOT", boot)
     network = InputModel(guest._Run, transition)

@@ -309,3 +309,41 @@ def test_LostTerminalAcknowledgmentResyncsTheActualReplacementInodeBeforeRetry(
 
     monkeypatch.setattr(os, "fsync", Sync)
     assert Execute(controller, request, intent)["phase"] == "active" and synced
+
+
+@pytest.mark.parametrize("cachedState", ["bad-setting", "error"])
+def test_StartingRetryReconcilesAQuiescentCachedParseErrorBeforeStrictLoadedIdentity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, cachedState: str,
+) -> None:
+    """PID1 may have read the earlier torn prefix; intact disk bytes alone do not refresh that cached definition."""
+
+    model, _, controller, request, intent = Environment(tmp_path, monkeypatch, "enable")
+    controller.fault = "before-reload"
+
+    with pytest.raises(Interrupted):
+        Execute(controller, request, intent)
+
+    assert authority._Decode(guest, authority._Root(guest) / "runtime.json")["phase"] == "starting"
+    controller.loadErrors[controller.newUnit.name] = cachedState
+
+    with pytest.raises(runtime.RuntimeError):
+        runtime._Service(guest, controller.newUnit)
+
+    assert Execute(controller, request, intent)["phase"] == "active"
+    assert controller.newUnit.name not in controller.loadErrors and model.active
+
+
+def test_SealedEnableCannotOpenInputBeforeItsHealthyNativeGenerationExists(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Schema3 admission is enforced even before a runtime journal exists; legacy schema2 private behavior stays separate."""
+
+    model, network, controller, request, intent = Environment(tmp_path, monkeypatch, "enable")
+    before = Snapshot(tmp_path)
+
+    with pytest.raises(ValueError):
+        Input(request, intent)
+
+    assert Snapshot(tmp_path) == before and network.mutations == 0 and not model.root.exists()
+    assert Execute(controller, request, intent)["phase"] == "active"
+    assert Input(request, intent)["phase"] == "applied"

@@ -227,6 +227,8 @@ private receiver program source. Existing schema-1/2 cache plans cannot acquire 
 capability under their old hashes. Persist the admitted helper identity in the native
 journal; a later approved receiver supporting that same ABI may recover the existing
 operation without substituting its immutable helper or candidate. Unknown ABIs refuse.
+Schema-3 input opening requires its healthy native record even before a runtime
+journal exists; preparation and closing retain their pre-native paths.
 
 Disarm the original root under WG before releasing WG for a stop job. This prevents
 a legacy WG-only peer driver from acquiring fresh healthy old-root authority during
@@ -237,7 +239,9 @@ retired old unit name. Installed-root deletion requires strict peer/address evid
 only staged candidates admit known partial activation. Cleanup selects only already
 validated file members and preserves unexpected new entries.
 
-Reconcile the exact file-backed loaded unit before job submission. Observe an empty
+Reconcile the exact file-backed loaded unit before job submission. A quiescent cached
+parse-error state may precede reload, but the post-reload identity must be strict.
+Observe an empty
 Job, zero main/control PID and an empty cgroup-v2 subtree before unit retirement or
 activation acknowledgment; client-descriptor inheritance alone cannot prove PID1's
 jobs drained. Repeated stop of the permanently retired exact unit recovers death

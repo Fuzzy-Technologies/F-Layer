@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:83c1bc4b074de08e77679f00bc227699dc26f31ba7369ac35ed6fa429fd307f2"
-reviewedTranslationHash = "sha256:912d33a1eba3922cda3fc77cd95b884a5b252104bd163dfb8d9ccbe9fa94b9da"
+sourceHash = "sha256:29181a9e2cf96ca90ab78348b8dd8b4e7921f64f345d0ec27d9273c00ea7206f"
+reviewedTranslationHash = "sha256:c9f81c83692d6ab94a46758899376120bdb5476fffed3de9bc59ef354d837758"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T06:20:22.417564Z"
+reviewedAt = "2026-11-07T06:31:56.708583Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -524,6 +524,8 @@ material/server 角色摘要。必需的公共意图和请求文件仍须通过�
 程序源；模式 1/2 记录仍可读，但不能获得此能力。保存已准入辅助程序固定值，使支持同一
 ABI 的后续已批准接收程序能够恢复密封操作，不替换不可变候选。内核、运行时、配置及密钥
 固定值均保持不变。
+模式 3 开放入站即使在尚无运行时日志时，也必须具备匹配的健康原生记录；准备和关闭操作
+保留其原生变更前的合法路径。
 
 任何 WG 解锁前，先在公共锁、WG 锁内解除原根授权。父进程保留公共锁，systemctl 叶回调
 只获取 WG；原生命令子进程继承适用描述符。协调精确文件支持的已加载 unit，再确认无排队
@@ -538,7 +540,8 @@ unit，但绝不将其名称用于恢复。共享转发及无关协议保持不�
 
 在最终屏障及确认全程固定并同步实际根载荷、unit、链接及目录 inode。staged/installed
 回执替换使用独立固定范围。相同字节替换会被检测，或在后续确认前显式重新同步。每次
-starting 重试均协调 PID1 的加载定义。重启后，完整终态日志临时文件可在重启激活之前
+starting 重试均协调 PID1 的加载定义。重载前可识别静止的缓存解析错误，但重载后必须严格
+确认加载身份，避免已知截断发布使恢复无法推进。重启后，完整终态日志临时文件可在重启激活之前
 协调，但仅限精确 installed 候选、完整内核缺失及已排空 unit。只读状态报告需要恢复，不
 修复日志或声称激活。installed 对等端/地址部分漂移不属于重启恢复前缀。
 

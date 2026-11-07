@@ -72,6 +72,11 @@ def _Reservation(
             raise InputError("Native generation must reach its planned healthy state before opening host input")
 
     else:
+        if (request["schema_version"] == 2 and request["generation"]["schema_version"] == 3
+                and (rollback is False and request["generation"]["change"] == "enable"
+                     or rollback is True and request["generation"]["change"] == "disable")):
+            raise InputError("Opening host input requires its matching healthy native generation record")
+
         _, history = authority._Observe(guest, peer, intent)
 
         if history != authority._FencedHistory(guest, intent, pending["deployment_sha256"]):

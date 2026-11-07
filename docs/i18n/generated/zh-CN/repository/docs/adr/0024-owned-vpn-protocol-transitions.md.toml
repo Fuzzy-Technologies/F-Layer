@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/adr/0024-owned-vpn-protocol-transitions.md"
-sourceHash = "sha256:4b32df93c4b9d3fde5a038731bf6c72107f5bef1a078dc5f0aa81e1dbf7cb6d1"
-reviewedTranslationHash = "sha256:9c37972d0809e80be9f6baaf7d2281db68e9ec7de49ea754ccf2cf55f2b3a849"
+sourceHash = "sha256:4715f31c2a033cfc1a101445de1ffc05a328d3bd2019100e8b8dfc18391fff76"
+reviewedTranslationHash = "sha256:23ec5513f50724beec610e110b7efddccec177705a8273832359004cbb8ab91f"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T06:20:23.315282Z"
+reviewedAt = "2026-11-07T06:31:57.780330Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# ADR 0024：受管 VPN 协议迁移与不可变纪元
 
@@ -91,6 +91,8 @@ nonce、辅助程序、unit 和网络证明。旧停止命令结果不确定后�
 的当前私有接收程序源字节。模式 1/2 缓存计划不能在原摘要下获得此能力。原生日志保存已
 准入辅助程序身份；支持相同 ABI 的后续已批准接收程序可以恢复密封操作，不替换其不可变
 辅助程序或候选。未知 ABI 拒绝。
+模式 3 开放入站即使在尚无运行时日志时，也要求健康原生记录；准备和关闭保留其原生变更
+前路径。
 
 释放 WG 锁交给停止任务前，先在 WG 锁内解除原根的授权，避免只识别 WG 锁的旧对等端驱动
 在交接期间获得健康旧根的新权限。保留精确私有缓存，发布替代根前先消耗新 installed 候选
@@ -98,7 +100,8 @@ nonce、辅助程序、unit 和网络证明。旧停止命令结果不确定后�
 删除 installed 根必须严格校验对等端/地址；只有 staged 候选允许已知部分激活。清理仅选择
 已验证文件成员，保留随后出现的意外项。
 
-提交任务前协调精确文件支持的已加载 unit 定义。退役 unit 或确认激活前，必须观测空 Job、
+提交任务前协调精确文件支持的已加载 unit 定义。重载前允许静止的缓存解析错误，但重载后
+身份必须严格。退役 unit 或确认激活前，必须观测空 Job、
 主/控制 PID 为零及空 cgroup v2 子树；客户端继承描述符不能证明 PID1 任务已排空。重复停止
 永久退役的精确 unit 可恢复“已记录意图但尚未提交”的崩溃边界。待处理/未知任务保留恢复
 状态。发布与终态确认全程固定并同步实际根载荷、unit、启用链接及目录身份；staged/installed

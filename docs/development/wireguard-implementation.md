@@ -832,6 +832,8 @@ current private receiver source before any original disarm; records 1/2 stay rea
 without acquiring this capability. Persist the admitted helper pin, allowing a later
 approved receiver for the same ABI to recover the sealed operation without replacing
 its immutable candidate. Kernel/runtime/configuration/key pins remain unchanged.
+Schema-3 input opening requires the matching healthy native record even when no
+runtime journal exists yet; preparation and closing keep their pre-native paths.
 
 The original root is disarmed under common then WG locks before any WG unlock.
 The parent keeps common while systemctl callbacks take only WG; native children
@@ -853,6 +855,8 @@ Pin and resync the actual root payload, unit, link and directory inodes across f
 barriers and acknowledgment. Stage/installed receipt replacement has separate pinned
 scopes. Same-byte replacements are detected or explicitly resynchronized before a
 later acknowledgment. Every starting retry reconciles PID1's loaded definition.
+A quiescent cached parse error is recognized before reload; strict loaded identity
+is required afterward, so known torn publication does not strand recovery.
 After reboot, a complete terminal journal temp can be reconciled before restarting
 only an exact installed candidate with complete kernel absence and a drained unit.
 Read-only status reports recovery required without repairing the journal or claiming

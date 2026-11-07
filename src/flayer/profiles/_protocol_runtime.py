@@ -77,7 +77,7 @@ def _Write(guest: Any, authority: Any, record: dict[str, Any], phase: str, *, ro
     return updated
 
 
-def _Service(guest: Any, unit: Path) -> dict[str, str]:
+def _Service(guest: Any, unit: Path, *, allowCachedError: bool = False) -> dict[str, str]:
     """Read explicit empty properties: systemd 255 renders no queued job as Job=, not Job=0."""
 
     _, content = guest._Run(["systemctl", "show", "--all", "--no-pager", "--property=" + ",".join(_PROPERTIES), unit.name])
@@ -92,8 +92,10 @@ def _Service(guest: Any, unit: Path) -> dict[str, str]:
 
             values[name] = value
 
-        if (set(values) != set(_PROPERTIES) or values["Id"] != unit.name or values["LoadState"] not in {"loaded", "not-found"}
-                or values["FragmentPath"] != (str(unit) if values["LoadState"] == "loaded" else "") or values["DropInPaths"]
+        cached = allowCachedError and values.get("LoadState") in {"bad-setting", "error"}
+
+        if (set(values) != set(_PROPERTIES) or values["Id"] != unit.name or values["LoadState"] not in ({"loaded", "not-found", "bad-setting", "error"} if cached else {"loaded", "not-found"})
+                or values["FragmentPath"] not in ({"", str(unit)} if cached else {str(unit)} if values["LoadState"] == "loaded" else {""}) or values["DropInPaths"]
                 or values["Job"] and re.fullmatch(r"[1-9][0-9]{0,9}", values["Job"]) is None
                 or any(re.fullmatch(r"0|[1-9][0-9]{0,9}", values[name]) is None for name in ("MainPID", "ControlPID"))
                 or values["ControlGroup"] not in {"", "/system.slice/" + unit.name}):
@@ -181,7 +183,7 @@ def _Active(guest: Any, unit: Path) -> None:
 def _Reconcile(guest: Any, unit: Path, locks: tuple[int, ...]) -> None:
     """Reload only after a quiescent observation so a stale cached definition cannot supply a retired unit's stop command."""
 
-    before = _Service(guest, unit)
+    before = _Service(guest, unit, allowCachedError=True)
 
     if before["Job"] or before["MainPID"] != "0" or before["ControlPID"] != "0":
         raise RuntimeError("Owned unit has an unresolved job before definition reconciliation")

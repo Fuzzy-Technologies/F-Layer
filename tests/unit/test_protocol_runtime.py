@@ -39,6 +39,7 @@ class NativeModel:
         self.jobs: dict[str, str] = {}
         self.controls: dict[str, str] = {}
         self.mains: dict[str, str] = {}
+        self.loadErrors: dict[str, str] = {}
         self.effects: list[tuple[str, str]] = []
         self.fault = ""
         self.fired = False
@@ -87,11 +88,15 @@ class NativeModel:
                           "SubState": "exited" if self.active.get(name) else "dead", "Job": self.jobs.get(name, ""), "MainPID": self.mains.get(name, "0"),
                           "ControlPID": self.controls.get(name, "0"), "ControlGroup": "", "FragmentPath": str(unit) if unit.exists() else "", "DropInPaths": ""}
 
+                if name in self.loadErrors:
+                    values["LoadState"] = self.loadErrors[name]
+
                 return 0, ("\n".join(key + "=" + value for key, value in values.items()) + "\n").encode()
 
             if action == "daemon-reload":
                 self.Point("before-reload")
                 self.effects.append((action, ""))
+                self.loadErrors.clear()
 
                 return 0, b""
 

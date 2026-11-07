@@ -883,7 +883,7 @@ def Execute(
             if change == "enable" and not rollback and record["phase"] in {"active", "restarting-active"}:
                 expectedInput.add("applied")
 
-            elif change == "disable" and rollback and record["phase"] in {"restored", "restarting-restored", "unchanged"}:
+            elif change == "disable" and rollback and record["rollback"] and record["phase"] != "ready":
                 expectedInput.add("rolled-back")
 
         if inputPhase not in expectedInput or record is not None and record["rollback"] and not rollback:

@@ -190,6 +190,75 @@ def test_AnUnchangedRollbackThatLaterBecomesQuiescentRestoresOnlyItsFreshPreplan
     assert Input(request, intent, rollback=True)["phase"] == "rolled-back"
 
 
+@pytest.mark.parametrize("phase", ["removing-original", "stopping-original", "inactive", "publishing", "starting", "restored"])
+@pytest.mark.parametrize("temporary", [False, True])
+def test_InterruptedQuiescentRestorationKeepsAlreadyRestoredInputAcrossEveryForwardPublication(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, phase: str, temporary: bool,
+) -> None:
+    """A complete next journal temp and a canonical next phase both retain the exact previously restored input transaction."""
+
+    model, _, controller, request, intent, cached, candidate = Environment(tmp_path, monkeypatch)
+    Cache(request, intent, cached, candidate)
+    PrepareInput(request, intent)
+    Input(request, intent)
+    assert Execute(controller, request, intent, rollback=True)["phase"] == "unchanged"
+    restored = Input(request, intent, rollback=True)
+    boot = inputs.BOOT.read_bytes()
+    Stop(model, controller)
+    publish, replace = authority._Publish, authority.os.replace
+
+    def Publish(receiver: Any, filename: str, record: dict[str, Any], **kwargs: Any) -> None:
+        """Die only after the selected exact canonical next phase has become visible."""
+
+        publish(receiver, filename, record, **kwargs)
+
+        if filename == "runtime.json" and record["phase"] == phase:
+            raise Interrupted
+
+    def Replace(source: Any, destination: Any, *args: Any, **kwargs: Any) -> None:
+        """Leave the exact complete next temporary publication beside its preceding canonical journal."""
+
+        if Path(destination) == authority._Root(guest) / "runtime.json" and authority._Decode(guest, Path(source))["phase"] == phase:
+            raise Interrupted
+
+        replace(source, destination, *args, **kwargs)
+
+    with monkeypatch.context() as crash:
+        if temporary:
+            crash.setattr(authority.os, "replace", Replace)
+
+        else:
+            crash.setattr(authority, "_Publish", Publish)
+
+        with pytest.raises(Interrupted):
+            Execute(controller, request, intent, rollback=True)
+
+    assert inputs.BOOT.read_bytes() == boot
+    result = Execute(controller, request, intent, rollback=True)
+    assert result["phase"] == "restored" and result["history_sha256"] == runtime._FreshHistory(guest, request, intent)
+    assert inputs.Status(guest, peers, authority, policy, request, intent, generationCache=cache, runtimeBackend=runtime) == restored
+    assert inputs.BOOT.read_bytes() == boot and controller.active[controller.newUnit.name]
+    assert not controller.oldUnit.exists()
+
+
+def test_RestoredInputWithoutItsNativeRecordCannotAcquireFirstAdmission(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The continuation exception needs the recorded rollback; losing that journal cannot recreate new native authority."""
+
+    _, _, controller, request, intent, cached, candidate = Environment(tmp_path, monkeypatch)
+    Cache(request, intent, cached, candidate)
+    PrepareInput(request, intent)
+    Input(request, intent)
+    assert Execute(controller, request, intent, rollback=True)["phase"] == "unchanged"
+    Input(request, intent, rollback=True)
+    (authority._Root(guest) / "runtime.json").unlink()
+    before, effects = Snapshot(tmp_path), tuple(controller.effects)
+
+    with pytest.raises(ValueError, match="input phase"):
+        Execute(controller, request, intent, rollback=True)
+
+    assert Snapshot(tmp_path) == before and tuple(controller.effects) == effects
+
+
 @pytest.mark.parametrize("fault", ["interface", "table", "job", "main", "control", "cgroup", "foreign-file", "history"])
 def test_QuiescentOriginNeverAdoptsPartialOrForeignStateBeforeNativeAdmission(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fault: str,

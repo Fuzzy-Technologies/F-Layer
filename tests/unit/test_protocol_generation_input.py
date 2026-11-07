@@ -24,11 +24,11 @@ pytestmark = pytest.mark.skipif(os.name != "posix", reason="Pinned recovery/inpu
 
 
 def Environment(
-    tmpPath: Path, monkeypatch: pytest.MonkeyPatch, change: str = "disable", version: int = 2,
+    tmpPath: Path, monkeypatch: pytest.MonkeyPatch, change: str = "disable", version: int = 2, helper: bytes | None = None,
 ) -> tuple[Any, InputModel, dict[str, Any], dict[str, Any], Path, Path | None]:
     """Expose one real common reservation while modeling boot/live input separately from WG forwarding."""
 
-    model, request, intent, cached, candidate = Prepared(tmpPath, monkeypatch, change, version)
+    model, request, intent, cached, candidate = Prepared(tmpPath, monkeypatch, change, version, helper)
     # Match the guest's separate /run namespace: compiling input must not create
     # temporary entries directly in the ancestor whose cache identity is pinned.
     runtime = tmpPath / "run"

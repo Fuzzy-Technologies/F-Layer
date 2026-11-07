@@ -218,7 +218,7 @@ def _DurableRoot(guest: Any) -> Path:
 def _Publish(guest: Any, filename: str, record: dict[str, Any], *, immutable: bool = False) -> None:
     """Publish only fixed canonical authority paths, retaining interrupted bytes and never replacing an immutable completion."""
 
-    if filename not in {"pending.json", "head.json", "input.json", "generation.json"} and re.fullmatch(r"done-[0-9a-f]{32}\.json", filename) is None:
+    if filename not in {"pending.json", "head.json", "input.json", "generation.json", "runtime.json"} and re.fullmatch(r"done-[0-9a-f]{32}\.json", filename) is None:
         raise ReservationError("Unsupported protocol authority path")
 
     root = _DurableRoot(guest)
@@ -329,12 +329,13 @@ def _Authority(guest: Any, intent: dict[str, Any], pending: dict[str, Any] | Non
 
     root = _Root(guest)
     names = {path.name for path in root.iterdir()} if root.exists() else set()
-    allowed = {"head.json", ".head.json.new", "pending.json", ".pending.json.new", "input.json", ".input.json.new", "generation.json", ".generation.json.new"}
+    allowed = {"head.json", ".head.json.new", "pending.json", ".pending.json.new", "input.json", ".input.json.new", "generation.json", ".generation.json.new",
+               "runtime.json", ".runtime.json.new"}
 
     if len(names) > MAX_COMPLETIONS + len(allowed) or any(name not in allowed and re.fullmatch(r"done-[0-9a-f]{32}\.json", name) is None for name in names):
         raise ReservationError("Common protocol namespace contains unknown or unbounded metadata")
 
-    if names & {"input.json", ".input.json.new", "generation.json", ".generation.json.new"} and (pending is None or pending["phase"] != "exposed"):
+    if names & {"input.json", ".input.json.new", "generation.json", ".generation.json.new", "runtime.json", ".runtime.json.new"} and (pending is None or pending["phase"] != "exposed"):
         raise ReservationError("Host input or generation transaction requires its exact exposed protocol reservation")
 
     head = _Pointer(_Decode(guest, root / "head.json")) if "head.json" in names else None

@@ -30,7 +30,7 @@ def Composite(change: str = "disable", version: int = 1) -> tuple[dict[str, Any]
     cached = {**Receipt(1), "owner": owner}
     candidate = None
 
-    if change == "enable" or version == 2:
+    if change == "enable" or version >= 2:
         candidate = {**copy.deepcopy(cached), "schema_version": 2, "nonce": transition.operationId, "status": "staged", "network_sha256": "e" * 64}
         candidate["files"]["lifecycle.py"] = "f" * 64
         candidate["files"]["firewall.nft"] = "e" * 64
@@ -40,6 +40,9 @@ def Composite(change: str = "disable", version: int = 1) -> tuple[dict[str, Any]
              "generation": {"schema_version": version, "change": change, "source_sha256": "f" * 64,
                             "source_files": {name: cached["files"][name] for name in generations._SOURCE_FILES},
                             "cached_receipt": cached, "candidate_receipt": candidate}}
+
+    if version == 3:
+        value["generation"]["callback_abi"] = guest.PROTOCOL_RUNTIME_ABI
     intent = {"owner": owner, "creation_sha256": transition.before.creationSha256, "operation_id": transition.operationId,
               "plan_sha256": policy.Digest(policy.Json(value)), "wireguard_state": "active" if change == "disable" else "absent",
               "wireguard_receipt_sha256": guest._Digest(guest._Encode(cached)) if change == "disable" else ""}

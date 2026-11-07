@@ -12,7 +12,7 @@ import stat
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 HELPER_SHA256 = "__FLAYER_WIREGUARD_HELPER_SHA256__"
 
@@ -342,36 +342,13 @@ def _Converge(
 def _Audit(guest: Any, owner: str) -> dict[str, Any] | None:
     """Read the last committed operation proof without treating a changed root as a normal retry."""
 
-    path = guest.BASE / ("peer-" + owner + ".json")
-
-    if not path.exists() and not path.is_symlink():
-        return None
-
-    content = guest._Read(path)
-    value = guest._Json(content)
-
-    if (not isinstance(value, dict) or set(value) != {"schema_version", "owner", "action", "device_id", "previous_receipt_sha256",
-                                                    "receipt_sha256", "deployment_sha256", "previous_history_sha256"}
-            or type(value["schema_version"]) is not int or value["schema_version"] != 1 or value["owner"] != owner
-            or value["action"] not in {"enroll", "revoke"} or not isinstance(value["device_id"], str)
-            or guest._NAME.fullmatch(value["device_id"]) is None):
-        raise guest.GuestError("WireGuard peer commit proof is invalid")
-
-    if content != guest._Encode(value):
-        raise guest.GuestError("WireGuard peer commit proof has changed noncanonical bytes")
-
-    for key in ("previous_receipt_sha256", "receipt_sha256", "deployment_sha256", "previous_history_sha256"):
-        guest._RequireDigest(value[key])
-
-    return value
+    return cast(dict[str, Any] | None, guest._PeerAudit(owner))
 
 
 def _History(guest: Any, owner: str) -> str:
     """Chain each completion to its exact parent so unchanged configuration cannot authorize stale replay."""
 
-    audit = _Audit(guest, owner)
-
-    return hashlib.sha256(guest._Encode(audit if audit is not None else {"domain": "f-layer/wireguard/peer-history/v1", "owner": owner})).hexdigest()
+    return cast(str, guest._PeerHistory(owner))
 
 
 def _CommitRecord(guest: Any, record: dict[str, Any]) -> dict[str, Any]:

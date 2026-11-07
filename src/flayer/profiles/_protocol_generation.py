@@ -420,6 +420,7 @@ def Ready(
 def Prepare(
     guest: Any, peer: Any, authority: Any, policy: Any, value: object, rawIntent: object,
     cached: Path | None = None, candidate: Path | None = None, *, allowMutation: bool = False, runtimeBackend: Any = None,
+    sourceResolver: Callable[[], tuple[Path, Path]] | None = None,
 ) -> dict[str, str]:
     """Journal and freeze complete private rollback/runtime bytes without changing a root, service, input rule or cloud resource."""
 
@@ -428,6 +429,9 @@ def Prepare(
 
     if allowMutation is not True:
         raise GenerationError("Generation preparation requires explicit mutation consent")
+
+    if sourceResolver is not None and (not callable(sourceResolver) or cached is not None or candidate is not None):
+        raise GenerationError("Generation preparation requires one unambiguous trusted source selection")
 
     with authority._Locks(guest, readOnly=False):
         pending, history = _Reservation(guest, peer, authority, intent, request, runtimeBackend)
@@ -440,6 +444,9 @@ def Prepare(
             sources = [(_CachePath(guest, receipt), receipt) for receipt in receipts]
 
         else:
+            if sourceResolver is not None:
+                cached, candidate = sourceResolver()
+
             if cached is None or (candidate is None) != (generation["candidate_receipt"] is None):
                 raise GenerationError("Unprepared generation requires its exact complete private sources")
 

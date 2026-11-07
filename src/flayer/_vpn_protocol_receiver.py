@@ -20,6 +20,7 @@ PROGRAM_FILES = {
     "policy": "_host_input_policy.py", "inputs": "_host_input_guest.py", "cache": "_protocol_generation.py",
     "runtime": "_protocol_runtime.py", "completion": "_protocol_completion.py", "services": "_protocol_services.py",
     "vless": "_vless_guest.py", "rpc": "_protocol_rpc.py",
+    "preparation": "_protocol_preparation.py", "tools": "_wireguard_generation.py",
 }
 
 

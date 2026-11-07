@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:c89ec4530567e0f81c20ddd71c7bc71fc9d0b92e58458f14d3dbeb5e2acfc6be"
-reviewedTranslationHash = "sha256:303dc9192acd40669bf1c1fea093ce732dc27c4df59a1efbf86603c0c58eab7f"
+sourceHash = "sha256:28cf89d8e8abf05b8eaadf200f5cb50ff8c6713a35cd4152325597778784fc32"
+reviewedTranslationHash = "sha256:47975b61051576d4aa72f413168292ce4a09d1aaed08ac5568a77f3b9b78e488"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T12:02:58.613548Z"
+reviewedAt = "2026-11-07T12:44:34.671580Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -646,7 +646,7 @@ VLESS 保留原格式化身份 owner 算法、当前受管回执及已验证提�
 ## 私有协议 SSH 操作
 
 `_vpn_protocol_transport` 复用现有 `SshGuestProvisioner` 命令和 runner。包选择的独立
-接收器及十一个标准库模块是不可变可执行依赖，其完整规范化哈希固定于 bootstrap。
+接收器及十三个标准库模块是不可变可执行依赖，其完整规范化哈希固定于 bootstrap。
 私有 AWG/VLESS 服务端包仅经有界 stdin 帧传输并始终是数据；请求提供的安装器、命令、
 路径或端点均不执行。SSH 打包或来宾文件暂存前，验证完整所有者、预留计划、精确 scope
 和对应动作的变更授权。只读动作不带变更授权。接收器要求 root Linux，以私有临时程序
@@ -658,8 +658,8 @@ VLESS 保留原格式化身份 owner 算法、当前受管回执及已验证提�
 证明将历史和日志绑定同一请求，并限制各变更阶段。完成比对整个重建记录，其他服务保留
 完整来源绑定。原始 native/SSH 输出不成为公共结果；固定异常在丢弃解析异常后才抛出。
 
-此私有接口提供预留/status、cache status、入站、native 及 completion 动作，不准备
-初始/新代际来源、不排序云变更，也不准入公共协议命令。这些仍属于 #128。确定性测试
+此私有接口提供预留/status、准备、缓存、入站、native 及 completion 动作，不排序云变更，
+也不准入公共协议命令。这些仍属于 #128。确定性测试
 覆盖 runner/暂存前拒绝、全部分派分支、过期操作/包响应、精确终态证明及异常链隐私。
 隔离 POSIX CI 加载真实独立模块并检查暂存/读回，不使用真实 SSH、云或桌面网络。
 
@@ -677,8 +677,15 @@ no-replace rename 发布完整已验证树；描述符租约跨 rename 和所有
 同字节 inode 替换及成员 ABA 均拒绝。完整重试在过期/围栏后仅同步同一历史快照，不重建；
 status 不修复。Scratch 无权限、不采纳也不自动删除，与完整快照分别限制容量。未知项
 拒绝新写入。后续固定路径选择要求完整预留 origin 和精确封存代际；实际缓存后端仍要求
-Reserve/Expose。准备保留/清理及 RPC/协调器集成仍属于 #128。隔离测试仅构建合成
+Reserve/Expose。准备保留/清理及协调器集成仍属于 #128。隔离测试仅构建合成
 runtime 字节，拦截所有内核、服务、native/网络及提供方边界。
+
+准备/status RPC 使用该封闭未预留请求，不带最终意图。只有准备写入携带精确私有三文件
+WG 来源；准备 status 拒绝私有包。纯验证在 SSH 或程序暂存前检查所有所有者/source/授权
+字段。缓存准备携带完整复合计划及公共准备请求，绑定完整 origin 和封存代际。包选择
+resolver 仅在已准入 common/WG 排他锁内、且仍需要缓存来源字节时执行。已准备重试验证
+自身缓存，不读取早期快照。未准备来源缺失或漂移时，保留已暴露预留供恢复；路径和依赖
+不来自请求。固定 helper 哈希及操作/包响应绑定覆盖所有动作。
 
 ## 尚待集成
 

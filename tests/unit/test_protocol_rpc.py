@@ -9,7 +9,9 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+import test_protocol_preparation as preparations
 from test_protocol_completion_codec import Envelope
+from test_protocol_generation import Composite
 from test_protocol_services_codec import Sources
 
 from flayer import _vpn_protocol_receiver as receiver
@@ -19,8 +21,34 @@ from flayer.profiles import _protocol_rpc as rpc
 from flayer.profiles.vpn import VpnError
 
 
+def PreparationOperation(action: str) -> dict[str, Any]:
+    """Keep preparation origins unreserved and bind cache admission to the later complete composite without inventing paths."""
+
+    request, files = preparations.Request()
+    body = request
+    intent = None
+    bundles = []
+
+    if action == "cache-prepare":
+        composite, _ = Composite("enable", version=3)
+        composite["generation"] = preparations.Generation(request)
+        intent = {**request["origin"], "plan_sha256": transport.guest._Digest(rpc.Json(composite))}
+        body = {"request": composite, "preparation": request}
+
+    elif action == "preparation-prepare":
+        bundles = [{"protocol": "wireguard", "name": request["identity"]["stack"] + "-wireguard",
+                    "files": {name: base64.b64encode(content).decode("ascii") for name, content in files.items()}}]
+
+    return {"schema_version": 1, "identity": request["identity"], "action": action, "allow_mutation": action in rpc.WRITE_ACTIONS,
+            "scope_confirm": request["identity"]["scope_id"] if action in rpc.WRITE_ACTIONS else "", "intent": intent, "body": body,
+            "expected_reservation_sha256": "", "sources": [], "bundles": bundles}
+
+
 def Operation(action: str = "native-status", phase: str = "active") -> dict[str, Any]:
     """Build a full synthetic operation with real retained service source bytes only when the selected action needs them."""
+
+    if action.startswith("preparation-") or action == "cache-prepare":
+        return PreparationOperation(action)
 
     candidate, intent, _ = Envelope(phase)
     identity = candidate["metadata"]["identity"]
@@ -333,7 +361,10 @@ def test_DispatchRoutesOnlyTheClosedActionAndFixedTrustedBackendArguments(action
 
         return result
 
-    if action == "authority-status":
+    if action.startswith("preparation-"):
+        result = modules.preparation.Result(modules.guest, modules.authority, modules.completion, operation["body"], preparations.Generation(operation["body"]))
+        target, method = "preparation", "Status" if action == "preparation-status" else "Prepare"
+    elif action == "authority-status":
         result = {"status": "protocol-authority", "authority_sha256": "a" * 64, "history_sha256": "b" * 64,
                   "phase": "initial", "reservation_sha256": "", "completion_count": 0}
         target, method = "authority", "Status"
@@ -341,11 +372,12 @@ def test_DispatchRoutesOnlyTheClosedActionAndFixedTrustedBackendArguments(action
         fields = {"reservation_sha256", "history_sha256", "authority_sha256"} if action == "reserve" else {"reservation_sha256", "history_sha256"} if action == "expose" else {"authority_sha256", "history_sha256"}
         result = {"status": {"reserve": "reserved", "expose": "exposed", "cancel": "cancelled"}[action], **dict.fromkeys(fields, "a" * 64)}
         target, method = "authority", action.title()
-    elif action == "cache-status":
-        history = modules.guest._ProtocolHistory(operation["intent"], operation["body"])
-        record = {**modules.cache._Expected(modules.guest, operation["intent"], operation["body"], history), "phase": "prepared"}
+    elif action in {"cache-status", "cache-prepare"}:
+        request = operation["body"]["request"] if action == "cache-prepare" else operation["body"]
+        history = modules.guest._ProtocolHistory(operation["intent"], request)
+        record = {**modules.cache._Expected(modules.guest, operation["intent"], request, history), "phase": "prepared"}
         result = {"status": "generation-cache", "phase": "prepared", "history_sha256": history, "journal_sha256": modules.guest._Digest(rpc.Json(record))}
-        target, method = "cache", "Status"
+        target, method = "cache", "Prepare" if action == "cache-prepare" else "Status"
     elif action.startswith("input-"):
         wire, _ = Input(operation, "rolled-back" if action == "input-rollback" else "applied" if action == "input-apply" else "prepared")
         result = {key: value for key, value in wire.items() if key != "fingerprints"}

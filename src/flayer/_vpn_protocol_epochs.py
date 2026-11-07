@@ -902,6 +902,12 @@ def _Continue(project: SelectedVpnProject, before: ProtocolGraph, epoch: EpochCo
     elif plan.before != before.epochs[-1].cloud.result:
         raise VpnError("Protocol epoch does not start from the exact preceding complete cloud receipt")
 
+    if value["schema_version"] == 2 and before.epochs:
+        previousServices = {proof.protocol: proof for proof in before.epochs[-1].services}
+
+        if any(proof.protocol != target and proof != previousServices.get(proof.protocol) for proof in epoch.services):
+            raise VpnError("Native protocol epoch changes an unrelated complete service receipt or absence proof")
+
     if _Json(epoch.input.transition.before.Record()) != _Json(initial.Record()):
         raise VpnError("Protocol epoch input policy does not continue its exact preceding owned generation")
 

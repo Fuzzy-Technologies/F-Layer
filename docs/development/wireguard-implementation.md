@@ -743,6 +743,19 @@ old-driver-compatible fence without opening private bodies. All metadata travers
 continues after client/private source-file loss; ordinary use still needs complete
 private content. Capacity helpers must run before consuming guest/cloud authority.
 
+Epoch intent schema 2 additionally binds the full generation-record3, exact native
+terminal-journal digest and reconstructed generation-bearing composite plan.
+The generation source digest selects the exact configured WG source; graph traversal
+checks all three source-file pins against retained public server metadata. A disable
+restoration records both the original-root fence and the fresh installed-root fence
+in order, retaining keys and addresses under the replacement receipt. An attempted
+enable rolled back to absence still records its fresh generation fence. Unstarted
+not-applied intent claims no native mutation or replacement receipt. Native rollback
+requires restored input; genuine unfenced schema-1 cancellations remain distinct.
+Schema-1 intent loading is unchanged, and these checks need no private source bodies.
+Native epochs also preserve each unrelated protocol's preceding complete service
+receipt or absence proof; unchanged source selection alone cannot replace that proof.
+
 This reader has no publication workflow, guest schema-2 finalizer or public
 protocol CLI yet. Existing ordinary entrypoints still reject epoch metadata until
 the coordinator, transport-generation handling, authenticated live attestation and

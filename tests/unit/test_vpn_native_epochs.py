@@ -185,3 +185,32 @@ def test_NativeEpochRefusesReboundSourcesMissingProofsOrAReplayedOriginalGenerat
 
     with pytest.raises(ValueError):
         replace(value, metadata=encoded, completion=_Json(completion))
+
+
+@pytest.mark.parametrize("fault", ["source", "candidate"])
+def test_RehashedCompositeAndNativeProofCannotAuthorizeAnotherSourceOrCredentialPin(fault: str) -> None:
+    """Recompute the entire reserved plan, native record and completion rather than failing only on a stale outer hash."""
+
+    value = Disabled(phase="restored")
+    generation = copy.deepcopy(epochs._Decode(value.metadata)["generation"])
+
+    if fault == "source":
+        generation["source_sha256"] = "1" * 64
+
+    else:
+        generation["candidate_receipt"]["files"]["server.conf"] = "1" * 64
+
+    with pytest.raises(ValueError):
+        Native(value, generation, phase="restored")
+
+
+def test_NativeRollbackCannotUseUnchangedInputEvenWithARehashedCompleteComposite() -> None:
+    """A native terminal rollback must retain the exact restored marker, including when no cloud operation was submitted."""
+
+    value = Enabled(phase="rolled-back")
+    carrier = SimpleNamespace(identity=value.identity, metadata=value.metadata, cloud=value.cloud,
+                              input=replace(value.input, outcome="unchanged", journalSha256=""),
+                              services=value.services, completion=value.completion)
+
+    with pytest.raises(ValueError, match="restored host-input"):
+        Native(carrier, epochs._Decode(value.metadata)["generation"], phase="rolled-back")

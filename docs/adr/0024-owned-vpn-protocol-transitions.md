@@ -311,6 +311,22 @@ publish the local epoch head only after verifying that exact guest completion.
 The existing schema-1 unexposed cancellation may close only a no-op epoch with
 unchanged input and no submitted cloud operation, retaining its reservation hash.
 
+Epoch intent schema 2 binds the complete generation-record3 and native terminal
+journal digest beside the existing evidence. Reconstruct the exact schema-2
+composite plan and terminal native record; bind the configured WG source record
+digest and verify all three retained source-file pins from public manifests.
+Enabled, removed, restored and rolled-back generations must match their exact
+installed receipt/absence and consumed history. A disable restoration consumes the
+original-root fence first and the fresh installed-root fence second; one fresh
+fence rooted directly in the preceding peer history is insufficient.
+An unstarted not-applied operation claims no fresh generation/native mutation and
+retains the original consumed fence, except a genuine unfenced unexposed cancellation.
+Native rollback requires the restored input transaction. Preserve schema-1 intent
+compatibility. A native epoch preserves the exact complete service receipts/absence
+proofs of every non-target protocol from the preceding epoch when those proofs exist.
+These metadata checks do not turn a self-supplied digest into live
+attestation or authorize publication/completion by themselves.
+
 Retain complete known-terminal cloud operations/readbacks and each original or
 compensating ingress-intent artifact. Compensation uses an independently bound
 validity window and records actual restored provider IDs/tags. Reserve enough

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from dataclasses import replace
@@ -14,6 +15,8 @@ import test_vpn_native_epochs as nativeFixtures
 import test_vpn_protocol_graph as graphFixtures
 
 from flayer import _vpn_protocol_epochs as epochs
+from flayer import _vpn_revisions as revisions
+from flayer._vpn_creation import _Json
 from flayer._vpn_ingress_journal import IngressJournal
 from flayer._vpn_protocol_sources import DecodeSource, ReadSourceMetadata
 from flayer.profiles.artifacts import WriteArtifactBundle
@@ -157,3 +160,96 @@ def test_LegacyEpochCanFollowNativeGenerationWithoutRewritingItsRootReceipt(tmp_
     after = epochs.LoadCommittedGraph(project)
     assert after.revision.receipt == before.revision.receipt and after.revision.history != before.revision.history
     assert "wireguard" in after.activeProtocols and "amneziawg" not in after.activeProtocols
+
+
+@pytest.mark.parametrize("absent", [False, True])
+def test_NativeTransitionPreservesEveryUnrelatedCompleteServiceProof(tmp_path: Path, absent: bool) -> None:
+    """Rehash a valid complete envelope: a stable source/active selection cannot authorize a different unrelated receipt."""
+
+    project = graphFixtures.Initial(tmp_path)
+    first = Commit(project, epochs.LoadCommittedGraph(project), "enable", "0" * 32)
+    graphFixtures.Publish(project, first)
+
+    if absent:
+        changed = graphFixtures.Commit(project, epochs.LoadCommittedGraph(project), "amneziawg", "disable", "1" * 32)
+        graphFixtures.Publish(project, changed)
+
+    value = Commit(project, epochs.LoadCommittedGraph(project), "disable", "2" * 32)
+    services = tuple(replace(proof, **({"absenceSha256": "e" * 64} if absent else {"receiptSha256": "e" * 64}))
+                     if proof.protocol == "amneziawg" else proof for proof in value.services)
+    carrier = SimpleNamespace(identity=value.identity, metadata=value.metadata, cloud=value.cloud,
+                              input=value.input, services=services, completion=value.completion)
+    rebound = nativeFixtures.Native(carrier, epochs._Decode(value.metadata)["generation"], phase="inactive")
+    graphFixtures.Publish(project, rebound)
+
+    with pytest.raises(ValueError, match="unrelated complete service"):
+        epochs.LoadCommittedGraph(project)
+
+
+def test_NativeMetadataRetainsHistoryOnlyForAGenuineBeforeFenceLegacyCancellation(tmp_path: Path) -> None:
+    """A schema-1 completion may represent unfenced preparation; the same schema-2 completion cannot skip that fence."""
+
+    project = graphFixtures.Initial(tmp_path)
+    first = Commit(project, epochs.LoadCommittedGraph(project), "enable", "0" * 32)
+    graphFixtures.Publish(project, first)
+    before = epochs.LoadCommittedGraph(project)
+    planned = Commit(project, before, "disable", "1" * 32)
+    base = graphFixtures.CancelBeforeFence(project, before, "1" * 32)
+    value = nativeFixtures.Native(base, epochs._Decode(planned.metadata)["generation"], phase="unstarted")
+    metadata = epochs._Decode(value.metadata)
+    metadata["wireguard_history_sha256"] = before.revision.history
+    completion = epochs._Decode(value.completion)
+    completion.update(schema_version=1, outcome="cancelled", history_sha256=before.revision.history,
+                      intent_sha256=hashlib.sha256(_Json(metadata["reservation"])).hexdigest())
+    cancelled = replace(value, metadata=_Json(metadata), completion=_Json(completion))
+    graphFixtures.Publish(project, cancelled)
+    after = epochs.LoadCommittedGraph(project)
+    assert after.revision.history == before.revision.history and after.activeProtocols == before.activeProtocols
+    completion.update(schema_version=2, outcome="not-applied", intent_sha256=hashlib.sha256(cancelled.metadata).hexdigest())
+
+    with pytest.raises(ValueError):
+        replace(cancelled, completion=_Json(completion))
+
+
+@pytest.mark.parametrize("restored", [False, True])
+def test_NativeTransitionContinuesTheExactReceiptAndSourceAfterAPeerRevision(tmp_path: Path, restored: bool) -> None:
+    """The following native fence consumes updated peer configuration and deployment pins rather than the old epoch receipt."""
+
+    project = graphFixtures.Initial(tmp_path)
+    first = Commit(project, epochs.LoadCommittedGraph(project), "enable", "0" * 32)
+    graphFixtures.Publish(project, first)
+    before = epochs.LoadCommittedGraph(project)
+    changed, pending, material, server, pin, facts = graphFixtures.Change(project, before.revision)
+    segment = before.revision.segment
+    assert segment is not None
+    original = {**epochs._Decode(first.metadata)["generation"]["candidate_receipt"], "status": "installed"}
+    original["files"].update({item.name: hashlib.sha256(item.content).hexdigest() for item in server.files})
+    original["deployment_sha256"] = original["files"]["deployment.json"]
+    facts["receipt_sha256"] = hashlib.sha256(_Json(original)).hexdigest()
+    facts["history_sha256"] = revisions.CommittedHistory(changed, pending["change"], pending["device_id"], pending["previous_receipt_sha256"],
+        facts["receipt_sha256"], facts["deployment_sha256"], pending["previous_history_sha256"])
+    revisions.AtomicRecord(changed, "wireguard-pending.json", pending, segment=segment)
+    digest = revisions.PublishRequest(changed, pending, material, server, segment=segment)
+    pending = {**pending, "request_sha256": digest}
+    revisions.AtomicRecord(changed, "wireguard-pending.json", pending, segment=segment)
+    revisions.Commit(changed, before.revision, pending, pin, facts, outcome="committed")
+    current = epochs.LoadCommittedGraph(changed)
+    assert current.revision.receipt != before.revision.receipt
+    value = Commit(changed, current, "disable", "1" * 32, restored=restored)
+    graphFixtures.Publish(changed, value)
+    after = epochs.LoadCommittedGraph(changed)
+    assert ("wireguard" in after.activeProtocols) == restored
+    assert after.revision.history != current.revision.history
+
+
+@pytest.mark.parametrize("limit", ["MAX_PROTOCOL_EPOCHS", "MAX_GRAPH_BYTES"])
+def test_NativeEpochGraphStillEnforcesItsCompleteHistoryBudget(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, limit: str) -> None:
+    """The larger native intent remains subject to the same bounded ancestry and retained evidence budgets."""
+
+    project = graphFixtures.Initial(tmp_path)
+    value = Commit(project, epochs.LoadCommittedGraph(project), "enable", "0" * 32)
+    graphFixtures.Publish(project, value)
+    monkeypatch.setattr(epochs, limit, 0)
+
+    with pytest.raises(ValueError):
+        epochs.LoadCommittedGraph(project)

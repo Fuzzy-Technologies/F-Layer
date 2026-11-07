@@ -1,10 +1,10 @@
 schemaVersion = 1
 sourcePath = "docs/development/wireguard-implementation.md"
-sourceHash = "sha256:ae291e6ae276ec2a768f488bae86a117f35900c5e17f8926263d1f4c780f2c9a"
-reviewedTranslationHash = "sha256:0259098c53d6468925459d6ee14dee461df72c13ca55102bae41c8428a61cd27"
+sourceHash = "sha256:4b4417f6355271cf8aebd040b2feef4c28c8bdc90ae9538e4de2ecf972ba12ae"
+reviewedTranslationHash = "sha256:399e049a97c1c15816a38a0647c2c1db6698d5a5d59f01deddb2eb957514521d"
 reviewer = "Codex"
 reviewerType = "ai"
-reviewedAt = "2026-11-07T01:14:43.625289Z"
+reviewedAt = "2026-11-07T01:46:39.047510Z"
 reviewRoles = ["editorial", "technical"]
 body = '''# 标准 WireGuard 实现边界
 
@@ -429,6 +429,22 @@ SSH、其他监听器和表以及 WG 的运行时和密钥字节均保持不变�
 已暴露预留会一直保留，直到完整协调器将云、服务和入站凭据写入新纪元；仅有入站结果
 不能结束预留。测试通过网络模型以及隔离 Linux CI 命名空间内的真实 nftables 和标准库
 后端完成，不修改桌面网络或已部署服务器。
+
+## 不读取私有载荷的保留来源遍历
+
+来源元数据遍历验证清单的完整所有者、文件角色、大小、敏感标记和外部固定的完整包摘要，
+不打开任何私有载荷。原始、对等端和协议来源即使丢失私有文件，仍保留相同的规范
+material/server 角色摘要。必需的公共意图和请求文件仍须通过精确内容摘要和严格解码；
+仅有所属清单不能覆盖矛盾的请求元数据。
+
+读取器固定目录、清单和公共文件身份，拒绝未知成员、不安全链接或权限、成员变化及可检测
+的快照漂移。丢失已声明私有文件不同于外来文件。声明的私有摘要仅为保留引用，不能证明
+未读取载荷存在或完整。私有使用、导出及制品删除仍执行原有完整内容检查；元数据遍历不
+授予这些权限。
+
+此能力为后续纪元图和客户端密钥丢失后的完整云清理提供非秘密引用，不激活协议转换，也不
+绕过完整云所有权及待处理操作检查。不会从孤立制品推断纪元头；普通入口仍拒绝尚未集成的
+纪元元数据。
 
 ## 尚待集成
 

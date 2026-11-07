@@ -152,11 +152,11 @@ guest, peer, authority, policy, inputs = [Load(path) for path in sys.argv[3:]]
 fixture = Path(sys.argv[1])
 fixture.mkdir(mode=0o700)
 guest.BASE = fixture / "opt/flayer/wireguard"
-guest.SYSTEMD = fixture / "systemd"
+guest.SYSTEMD = fixture / "etc/systemd/system"
 guest.LOCK = fixture / "operation.lock"
-guest.SYSTEMD.mkdir(mode=0o755)
+guest.SYSTEMD.mkdir(mode=0o755, parents=True)
 inputs.BOOT = fixture / "etc/nftables.conf"
-inputs.BOOT.parent.mkdir(mode=0o755)
+inputs.BOOT.parent.mkdir(mode=0o755, exist_ok=True)
 request = json.loads(Path(sys.argv[2]).read_bytes())
 values = policy.Transition(request["input"])
 inputs.BOOT.write_bytes(policy.Boot(values[0]))
